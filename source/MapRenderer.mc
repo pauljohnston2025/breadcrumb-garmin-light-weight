@@ -8,12 +8,7 @@ const PIXEL_SIZE = 4;
 const TILE_SIZE = DATA_TILE_SIZE * PIXEL_SIZE;
 const TILE_PADDING = 0;
 
-class Handler
-{
-    function run(data as Dictionary) as Void;
-}
-
-class WebTileRequestHandler extends Handler {
+class WebTileRequestHandler {
     var _mapRenderer as MapRenderer;
     var _x as Number;
     var _y as Number;
@@ -28,23 +23,8 @@ class WebTileRequestHandler extends Handler {
         _y = y;
     }
 
-    function run(data as Dictionary) as Void
+    function handle(responseCode as Number, data as Dictionary or String or Iterator or Null) as Void
     {
-        _mapRenderer.setTileData(_x, _y, (data["data"] as String).toUtf8Array());
-    }
-}
-
-class Router {
-    var handlers as Dictionary<String, Handler> = {};
-
-    function add(id as String, handler as Handler) as Void
-    {
-        handlers.put(id, handler);
-    }
-
-    function handle(responseCode as Number, data as Dictionary or String or Iterator or Null)
-    {
-        // todo on error clear old ids
         if (responseCode != 200)
         {
             System.println("failed with: " + responseCode);
@@ -52,37 +32,28 @@ class Router {
         }
 
         // todo check type is dictionary (json response)
-        var id = (data as Dictionary)["id"];
-        if (id == null)
-        {
-            System.println("id not found");
-            return;
-        }
-
-        var handler = handlers.get(id);
-        if (handler ==  null)   
-        {
-            System.println("no handler for: " + id);
-            return;
-        }
-
-        handler.run(data);
-        handlers.remove(id);
+        _mapRenderer.setTileData(_x, _y, (data["data"] as String).toUtf8Array());
     }
 }
 
 class MapRenderer {
     // single dim array might be better performance? 
     // Could do multidim array to make calling code slightly easier
-    var currentId = 0;
     var _bitmap as BufferedBitmap;
-    var router as Router = new Router();
     // todo: get screen size and factor in some amount of padding
     var _screenSize as Float = 360f;
     var _tileCountXY as Number = Math.ceil(_screenSize/TILE_SIZE + 2 * TILE_PADDING).toNumber();
+    var _urlPrefix as String;
     function initialize() {
         // todo persist to storage and load from storage in init
         _bitmap = newBitmap(_tileCountXY * TILE_SIZE);
+        // to make this work on the emulator you ned to run 
+        // adb forward tcp:8080 tcp:8080
+        _urlPrefix = "http://127.0.0.1:8080";
+        // if (isSimulator())
+        // {
+        //     _urlPrefix = "http://192.168.1.101:81";
+        // }
         // test code
         // var red = [];
         // var green = [];
@@ -193,17 +164,9 @@ class MapRenderer {
         {
             for (var y=0 ; y<_tileCountXY; ++y)
             {
-                ++currentId;
-                var id = "" + currentId; // needs to be a string, should probably be a uuid
-
-                // could just launch the Communications.makeWebRequest from inside the class, then do not need router?
-                // but likely need to keep memory active until it runs, so router is safer
-                router.add(id, new WebTileRequestHandler(me, x, y));
                 Communications.makeWebRequest(
-                    "http://127.0.0.1:8080/loadtile",
-                    // "http://192.168.1.101:81/loadtile.php",
+                    _urlPrefix + "/loadtile",
                     {
-                        "id" => id,
                         "lat" => lat,
                         "long" => long,
                         "scale" => scale,
@@ -221,15 +184,11 @@ class MapRenderer {
                         },
                         :responseType => Communications.HTTP_RESPONSE_CONTENT_TYPE_JSON,
                     }, // options
-                    method(:makeWebRequestResponseCallback)
+                    // see https://forums.garmin.com/developer/connect-iq/f/discussion/2289/documentation-clarification-object-method-and-lang-method
+                    (new WebTileRequestHandler(me, x, y)).method(:handle)
                 );
             }
         }
-    }
-    
-    function makeWebRequestResponseCallback(responseCode as Number, data as Dictionary or String or Iterator or Null) as Void
-    {
-        router.handle(responseCode, data);
     }
 
     function renderMap(
