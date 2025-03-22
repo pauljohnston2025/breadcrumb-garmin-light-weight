@@ -86,6 +86,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     dc.clear();
 
     var renderer = _breadcrumbContext.trackRenderer();
+    var mapRenderer = _breadcrumbContext.mapRenderer();
     if (renderer.renderUi(dc))
     {
       return;
@@ -107,6 +108,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       // edge case on startup when we have not got any readings yet (also when
       // viewing in settings) just render the route if we have one
       if (route != null) {
+        mapRenderer.renderMap(dc, route.boundingBoxCenter, renderer.rotationRadians());
         renderer.updateCurrentScale(route.boundingBox);
         renderer.renderTrack(dc, route, ROUTE_COLOUR, route.boundingBoxCenter);
         renderer.renderCurrentScale(dc);
@@ -119,11 +121,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // zoom in or out
     if (_speedMPS > 1.0) {
       if (renderer._zoomAtPace) {
-        renderCloseAroundCurrentPosition(dc, renderer, lastPoint, route, track);
+        renderCloseAroundCurrentPosition(dc, mapRenderer, renderer, lastPoint, route, track);
         return;
       }
 
-      renderZoomedOut(dc, renderer, lastPoint, route, track);
+      renderZoomedOut(dc, mapRenderer, renderer, lastPoint, route, track);
       return;
     }
 
@@ -133,15 +135,17 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // (rather than having to manually zoom in from the outer level) once zoomed
     // in we lock onto the user position anyway
     if (renderer._zoomAtPace) {
-      renderZoomedOut(dc, renderer, lastPoint, route, track);
+      renderZoomedOut(dc, mapRenderer, renderer, lastPoint, route, track);
       return;
     }
 
-    renderCloseAroundCurrentPosition(dc, renderer, lastPoint, route, track);
+    renderCloseAroundCurrentPosition(dc, mapRenderer, renderer, lastPoint, route, track);
   }
 
   function renderZoomedOut(
-      dc as Dc, renderer as BreadcrumbRenderer, lastPoint as RectangularPoint,
+      dc as Dc, 
+      mapRenderer as MapRenderer,
+      renderer as BreadcrumbRenderer, lastPoint as RectangularPoint,
       route as BreadcrumbTrack or Null, track as BreadcrumbTrack) as Void {
     // when the scale is locked, we need to be where the user is, otherwise we
     // could see a blank part of the map, when we are zoomed in and have no
@@ -169,6 +173,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         centerPoint = lastPoint;
       }
 
+      mapRenderer.renderMap(dc, centerPoint, renderer.rotationRadians());
       renderer.updateCurrentScale(outerBoundingBox);
       renderer.renderTrack(dc, route, ROUTE_COLOUR, centerPoint);
       renderer.renderTrack(dc, track, TRACK_COLOUR, centerPoint);
@@ -189,7 +194,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   }
 
   function renderCloseAroundCurrentPosition(
-      dc as Dc, renderer as BreadcrumbRenderer, lastPoint as RectangularPoint,
+      dc as Dc, 
+      mapRenderer as MapRenderer,
+      renderer as BreadcrumbRenderer, lastPoint as RectangularPoint,
       route as BreadcrumbTrack or Null, track as BreadcrumbTrack) as Void {
     // note: this renders around the users position, but may result in a
     // different zoom level if the scale is set in the renderer render around
@@ -202,6 +209,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       lastPoint.y + renderDistanceM,
     ];
 
+    mapRenderer.renderMap(dc, lastPoint, renderer.rotationRadians());
     renderer.updateCurrentScale(outerBoundingBox);
 
     if (route != null) {

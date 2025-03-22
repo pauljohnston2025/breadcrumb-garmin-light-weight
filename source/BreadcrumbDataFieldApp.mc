@@ -7,6 +7,7 @@ import Toybox.Communications;
 
 enum Protocol {
   PROTOCOL_ROUTE_DATA = 0,
+  PROTOCOL_MAP_TILE = 1,
 }
 
 class BreadcrumbDataFieldApp extends Application.AppBase {
@@ -44,12 +45,14 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         return;
       }
 
-      if (data[0] == PROTOCOL_ROUTE_DATA) {
+      var type = data[0];
+      var rawData = data.slice(1, null);
+
+      if (type == PROTOCOL_ROUTE_DATA) {
         // protocol:
         //  RawData... [x, y, z]...  // latitude <float> and longitude <float>
         //  in degrees, altitude <float> too
 
-        var rawData = data.slice(1, null);
         if (rawData.size() % 3 == 0) {
           var route = _breadcrumbContext.newRoute();
           for (var i = 0; i < rawData.size(); i += 3) {
@@ -63,6 +66,25 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
         System.println("Failed to parse route data, bad length: " +
                        rawData.size() + " remainder: " + rawData.size() % 3);
+        return;
+      }
+      else if (type == PROTOCOL_MAP_TILE) {
+        if (rawData.size() < 3) {
+          System.println("Failed to parse map tile, bad length: " + rawData.size());
+          return;
+        }
+
+        var tileData = rawData.slice(2, null);
+        if (tileData.size() != TILE_SIZE*TILE_SIZE)
+        {
+          System.println("Failed to parse map tile, bad tile length: " + tileData.size());
+          return;
+        }
+
+        var x = rawData[0] as Number;
+        var y = rawData[1] as Number;
+        _breadcrumbContext.mapRenderer().setTileData(x, y, tileData as Array<Number>);
+        
         return;
       }
 

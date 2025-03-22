@@ -86,6 +86,11 @@ class BreadcrumbRenderer {
     }
   }
 
+  function rotationRadians()
+  {
+    return _rotationRad;
+  }
+
   function calculateScale(
       outerBoundingBox as[Float, Float, Float, Float]) as Float {
     if (_scale != null) {
