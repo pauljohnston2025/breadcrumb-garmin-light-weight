@@ -1,23 +1,21 @@
 import Toybox.Lang;
 import Toybox.Graphics;
 
-const TILE_SIZE = 128;
+const DATA_TILE_SIZE = 50;
+const PIXEL_SIZE = 4;
+const TILE_SIZE = DATA_TILE_SIZE * PIXEL_SIZE;
 const TILE_PADDING = 0;
 
 class MapRenderer {
     // single dim array might be better performance? 
     // Could do multidim array to make calling code slightly easier
-    var _bitmaps as Array = [];
+    var _bitmap as BufferedBitmap;
     // todo: get screen size and factor in some amount of padding
     var _screenSize as Float = 360f;
     var _tileCountXY as Number = Math.ceil(_screenSize/TILE_SIZE + 2 * TILE_PADDING).toNumber();
     function initialize() {
         // todo persist to storage and load from storage in init
-        for (var i=0; i<_tileCountXY*_tileCountXY; ++i)
-        {
-            _bitmaps.add(newBitmap());
-        }
-
+        _bitmap = newBitmap(_tileCountXY * TILE_SIZE);
         // test code
         // var red = [];
         // var green = [];
@@ -42,11 +40,11 @@ class MapRenderer {
         // setTileData(11, 11, blue);
     }
 
-    function newBitmap() as BufferedBitmap
+    function newBitmap(size as Number) as BufferedBitmap
     {
         var options = {
-			:width => TILE_SIZE,
-			:height => TILE_SIZE,
+			:width => size,
+			:height => size,
 		};
 
         return Graphics.createBufferedBitmap(options).get();
@@ -56,12 +54,12 @@ class MapRenderer {
     {
         System.println("setting map tile " + tileX + " " + tileY);
         var tile = tileX * _tileCountXY + tileY;
-        if (tile >= _bitmaps.size())
+        if (tile >= _tileCountXY * _tileCountXY)
         {
             return;
         }
 
-        if (arr.size() != TILE_SIZE*TILE_SIZE)
+        if (arr.size() != DATA_TILE_SIZE*DATA_TILE_SIZE)
         {
             // we could load tile partially, but that would require checking each itteration of the for loop, 
             // want to avoid any extra work for perf
@@ -70,18 +68,31 @@ class MapRenderer {
 
         System.println("processing tile data, first colour is: " + arr[0]);
 
-        var bitmapDc = _bitmaps[tile].getDc();
+        var localBitmap = newBitmap(TILE_SIZE);
+        var localDc = localBitmap.getDc();
         var it = 0;
-        for (var i=0; i<TILE_SIZE; ++i)
+        for (var i=0; i<DATA_TILE_SIZE; ++i)
         {
-            for (var j=0; j<TILE_SIZE; ++j)
+            for (var j=0; j<DATA_TILE_SIZE; ++j)
             {
-                var colour = arr[it];
+                var byteColour = arr[it];
+                // System.println("processing colour" + byteColour);
+                // 2 bits per colour (todo set up colour pallete instead)
+                var red = ((byteColour & 0x030) >> 4) * 255 / 3;
+                var green = ((byteColour & 0x0C) >> 2) * 255 / 3;
+                var blue = (byteColour & 0x03) * 255 / 3;
+                var colour = (red << 16) | (green << 8) | blue;
                 it++;
-                bitmapDc.setColor(colour, colour);
-                bitmapDc.drawPoint(i, j);
+                localDc.setColor(colour, colour);
+                // localDc.drawPoint(i, j);
+                localDc.fillRectangle(i * PIXEL_SIZE, j * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
             }
         }
+
+        // might be faster to calculate x/y and render to larger tile, rather than 2 renders?
+        // would sure be bettter for memory
+        var globalDc = _bitmap.getDc();
+        globalDc.drawBitmap(tileX * TILE_SIZE, tileY * TILE_SIZE, localBitmap);
     }
 
     function renderMap(
@@ -90,40 +101,27 @@ class MapRenderer {
         rotationRad as Float) as Void
     {
         var it = 0;
-        var xyOffset = (_tileCountXY * TILE_SIZE - _screenSize) / 2.0f;
-        var halfXY = _screenSize / 2.0f;
-        var halfTile = TILE_SIZE / 2.0f;
-        for (var x=0; x<_tileCountXY; ++x)
-        {
-            for (var y=0; y<_tileCountXY; ++y)
-            {
-                var xPos = -xyOffset + x * TILE_SIZE; 
-                var yPos = -xyOffset + y * TILE_SIZE;
-                var xTranslate = halfXY - (xPos + halfTile);
-                var yTranslate = halfXY - (yPos + halfTile);
-                var transform = new AffineTransform();
-                transform.translate(xTranslate, yTranslate); // move to center
-                transform.rotate(rotationRad); // rotate
-                transform.translate(-xTranslate, -yTranslate); // move back to position
+        var xyOffset = (_tileCountXY * TILE_SIZE) / 2.0f;
+        
+        var transform = new AffineTransform();
+        // transform.translate(xyOffset, xyOffset); // move to center
+        // transform.rotate(rotationRad); // rotate
+        // transform.translate(-xyOffset, -xyOffset); // move back to position
 
-                var bitmap = _bitmaps[it];
-                it++;
-                dc.drawBitmap2(
-                    xPos,
-                    yPos,
-                    bitmap,
-                    {
-                        // :bitmapX =>
-                        // :bitmapY =>
-                        // :bitmapWidth =>
-                        // :bitmapHeight =>
-                        // :tintColor =>
-                        // :filterMode =>
-                        :transform => transform
-                    }
-                );
+        dc.drawBitmap2(
+            0,
+            0,
+            _bitmap,
+            {
+                // :bitmapX =>
+                // :bitmapY =>
+                // :bitmapWidth =>
+                // :bitmapHeight =>
+                // :tintColor =>
+                // :filterMode =>
+                :transform => transform
             }
-        }
+        );
     }
 }
 
