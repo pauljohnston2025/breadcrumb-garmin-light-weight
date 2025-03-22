@@ -1,5 +1,7 @@
 import Toybox.Lang;
 import Toybox.Graphics;
+import Toybox.WatchUi;
+import Toybox.PersistedContent;
 
 const DATA_TILE_SIZE = 50;
 const PIXEL_SIZE = 4;
@@ -56,6 +58,7 @@ class MapRenderer {
         var tile = tileX * _tileCountXY + tileY;
         if (tile >= _tileCountXY * _tileCountXY)
         {
+            System.println("bad tile position: " + tileX + " " + tileY);
             return;
         }
 
@@ -63,7 +66,8 @@ class MapRenderer {
         {
             // we could load tile partially, but that would require checking each itteration of the for loop, 
             // want to avoid any extra work for perf
-            return;
+            System.println("bad tile length: " + arr.size());
+            // return;
         }
 
         System.println("processing tile data, first colour is: " + arr[0]);
@@ -92,7 +96,38 @@ class MapRenderer {
         // might be faster to calculate x/y and render to larger tile, rather than 2 renders?
         // would sure be bettter for memory
         var globalDc = _bitmap.getDc();
+        // Communications.makeImageRequest(
+        //     "https://www.shutterstock.com/image-vector/pixel-image-super-mario-260nw-2391997417.jpg", 
+        //     null, 
+        //     {}, 
+        //     method( :responseCallback)
+        // );
+        Communications.makeWebRequest(
+            "http://127.0.0.1:8080/",
+            null, // paramaters
+            {
+                :responseType => Communications.HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN
+            }, // options
+            method(:makeWebRequestResponseCallback)
+        );
         globalDc.drawBitmap(tileX * TILE_SIZE, tileY * TILE_SIZE, localBitmap);
+    }
+
+    function responseCallback(responseCode as Number, image as BitmapResource or BitmapReference or Null) as Void
+    {
+        var globalDc = _bitmap.getDc();
+        globalDc.drawBitmap(0, 0, image);
+    }
+    
+    function makeWebRequestResponseCallback(responseCode as Number, data as Dictionary or String or Iterator or Null) as Void
+    {
+        if (responseCode != 200)
+        {
+            System.println("failed with: " + responseCode);
+            return;
+        }
+
+        setTileData(0, 0, (data as String).toUtf8Array());
     }
 
     function renderMap(
