@@ -8,10 +8,75 @@ const PIXEL_SIZE = 4;
 const TILE_SIZE = DATA_TILE_SIZE * PIXEL_SIZE;
 const TILE_PADDING = 0;
 
+class Handler
+{
+    function run(data as Dictionary) as Void;
+}
+
+class WebTileRequestHandler extends Handler {
+    var _mapRenderer as MapRenderer;
+    var _x as Number;
+    var _y as Number;
+
+    function initialize(
+        mapRenderer as MapRenderer,
+        x as Number, 
+        y as Number)
+    {
+        _mapRenderer = mapRenderer;
+        _x = x;
+        _y = y;
+    }
+
+    function run(data as Dictionary) as Void
+    {
+        _mapRenderer.setTileData(_x, _y, (data["data"] as String).toUtf8Array());
+    }
+}
+
+class Router {
+    var handlers as Dictionary<String, Handler> = {};
+
+    function add(id as String, handler as Handler) as Void
+    {
+        handlers.put(id, handler);
+    }
+
+    function handle(responseCode as Number, data as Dictionary or String or Iterator or Null)
+    {
+        // todo on error clear old ids
+        if (responseCode != 200)
+        {
+            System.println("failed with: " + responseCode);
+            return;
+        }
+
+        // todo check type is dictionary (json response)
+        var id = (data as Dictionary)["id"];
+        if (id == null)
+        {
+            System.println("id not found");
+            return;
+        }
+
+        var handler = handlers.get(id);
+        if (handler ==  null)   
+        {
+            System.println("no handler for: " + id);
+            return;
+        }
+
+        handler.run(data);
+        handlers.remove(id);
+    }
+}
+
 class MapRenderer {
     // single dim array might be better performance? 
     // Could do multidim array to make calling code slightly easier
+    var currentId = 0;
     var _bitmap as BufferedBitmap;
+    var router as Router = new Router();
     // todo: get screen size and factor in some amount of padding
     var _screenSize as Float = 360f;
     var _tileCountXY as Number = Math.ceil(_screenSize/TILE_SIZE + 2 * TILE_PADDING).toNumber();
@@ -52,7 +117,7 @@ class MapRenderer {
         return Graphics.createBufferedBitmap(options).get();
     }
 
-    function setTileData(tileX as Number ,tileY as Number, arr as Array)
+    function setTileData(tileX as Number, tileY as Number, arr as Array)
     {
         System.println("setting map tile " + tileX + " " + tileY);
         var tile = tileX * _tileCountXY + tileY;
@@ -102,14 +167,11 @@ class MapRenderer {
         //     {}, 
         //     method( :responseCallback)
         // );
-        Communications.makeWebRequest(
-            "http://127.0.0.1:8080/",
-            null, // paramaters
-            {
-                :responseType => Communications.HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN
-            }, // options
-            method(:makeWebRequestResponseCallback)
-        );
+
+        // note: this does not appear to work on the sim, but does work on a real deivce
+        // this makes it hard to develop, sine we have to keep sending the new app the the real device
+        // the watch code should be fairly small compared to the android app though
+        // I think the sim sends the request direclty, rather than through the android emulator
         globalDc.drawBitmap(tileX * TILE_SIZE, tileY * TILE_SIZE, localBitmap);
     }
 
@@ -118,16 +180,56 @@ class MapRenderer {
         var globalDc = _bitmap.getDc();
         globalDc.drawBitmap(0, 0, image);
     }
+
+    function loadMapTilesForPosition(
+        lat as Float, 
+        long as Float, 
+        scale as Float) as Void
+    {
+        // todo only call this when we have moved far enough, should cache a large distance around us
+        // only when we move off the edge of the map do we need to get the next tiles
+        // and we could move a bunch of them across ourselves, and only get the ones needed off the edge
+        for (var x=0 ; x<_tileCountXY; ++x)
+        {
+            for (var y=0 ; y<_tileCountXY; ++y)
+            {
+                ++currentId;
+                var id = "" + currentId; // needs to be a string, should probably be a uuid
+
+                // could just launch the Communications.makeWebRequest from inside the class, then do not need router?
+                // but likely need to keep memory active until it runs, so router is safer
+                router.add(id, new WebTileRequestHandler(me, x, y));
+                Communications.makeWebRequest(
+                    "http://127.0.0.1:8080/loadtile",
+                    // "http://192.168.1.101:81/loadtile.php",
+                    {
+                        "id" => id,
+                        "lat" => lat,
+                        "long" => long,
+                        "scale" => scale,
+                        "tileSize" => DATA_TILE_SIZE,
+                    },
+                    {
+                        :method => Communications.HTTP_REQUEST_METHOD_GET,
+                        :headers => {
+                            // docs say you can do this (or ommit it), but i found its not sent, or is sent as application/x-www-form-urlencoded when using HTTP_RESPONSE_CONTENT_TYPE_JSON
+                            // "Content-Type" => Communications.HTTP_RESPONSE_CONTENT_TYPE_JSON,
+                            // my local server does not like content type being supplied when its a get or post
+                            // the android server does not seem to get 
+                            // "Content-Type" => "application/json",
+
+                        },
+                        :responseType => Communications.HTTP_RESPONSE_CONTENT_TYPE_JSON,
+                    }, // options
+                    method(:makeWebRequestResponseCallback)
+                );
+            }
+        }
+    }
     
     function makeWebRequestResponseCallback(responseCode as Number, data as Dictionary or String or Iterator or Null) as Void
     {
-        if (responseCode != 200)
-        {
-            System.println("failed with: " + responseCode);
-            return;
-        }
-
-        setTileData(0, 0, (data as String).toUtf8Array());
+        router.handle(responseCode, data);
     }
 
     function renderMap(

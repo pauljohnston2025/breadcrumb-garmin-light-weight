@@ -8,6 +8,7 @@ import Toybox.Communications;
 enum Protocol {
   PROTOCOL_ROUTE_DATA = 0,
   PROTOCOL_MAP_TILE = 1,
+  PROTOCOL_REQUEST_TILE_LOAD = 2,
 }
 
 class BreadcrumbDataFieldApp extends Application.AppBase {
@@ -85,7 +86,10 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         var x = rawData[0] as Number;
         var y = rawData[1] as Number;
         _breadcrumbContext.mapRenderer().setTileData(x, y, tileData as Array<Number>);
-        
+        return;
+      }
+      else if (type == PROTOCOL_REQUEST_TILE_LOAD) {
+        _breadcrumbContext.mapRenderer().loadMapTilesForPosition(0f, 0f, _breadcrumbContext.trackRenderer()._currentScale);
         return;
       }
 

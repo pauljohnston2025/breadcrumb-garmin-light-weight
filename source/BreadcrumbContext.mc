@@ -14,9 +14,9 @@ class BreadcrumbContext {
     _breadcrumbRenderer = new BreadcrumbRenderer(me);
     _mapRenderer = new MapRenderer();
     _route = null;
-    _track = new BreadcrumbTrack();
+    _track = new BreadcrumbTrack(me);
 
-    var route = BreadcrumbTrack.readFromDisk(ROUTE_KEY);
+    var route = BreadcrumbTrack.readFromDisk(ROUTE_KEY, me);
     if (route != null) {
       _route = route;
     }
@@ -27,7 +27,7 @@ class BreadcrumbContext {
   function track() as BreadcrumbTrack { return _track; }
   function route() as BreadcrumbTrack or Null { return _route; }
   function newRoute() as BreadcrumbTrack {
-    _route = new BreadcrumbTrack();
+    _route = new BreadcrumbTrack(me);
     return _route;
   }
   function clearRoute() as Void {

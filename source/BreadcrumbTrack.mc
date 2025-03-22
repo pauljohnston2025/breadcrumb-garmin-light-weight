@@ -42,6 +42,11 @@ class BreadcrumbTrack {
   var distanceTotal as Decimal = 0f;
   var elevationMin as Float = FLOAT_MAX;
   var elevationMax as Float = FLOAT_MIN;
+  var _breadcrumbContext as BreadcrumbContext;
+
+  function initialize(breadcrumbContext as BreadcrumbContext) {
+    _breadcrumbContext = breadcrumbContext;
+  }
 
   function writeToDisk(key as String) as Void {
     Storage.setValue(key + "bb", boundingBox);
@@ -55,7 +60,7 @@ class BreadcrumbTrack {
     Storage.setValue(key + "elevationMax", elevationMax);
   }
 
-  static function readFromDisk(key as String) as BreadcrumbTrack or Null {
+  static function readFromDisk(key as String, breadcrumbContext as BreadcrumbContext) as BreadcrumbTrack or Null {
     try {
       var bb = Storage.getValue(key + "bb");
       if (bb == null) {
@@ -90,7 +95,7 @@ class BreadcrumbTrack {
         return null;
       }
 
-      var track = new BreadcrumbTrack();
+      var track = new BreadcrumbTrack(breadcrumbContext);
       track.boundingBox = bb as[Float, Float, Float, Float];
       if (track.boundingBox.size() != 4) {
         return null;
@@ -214,6 +219,7 @@ class BreadcrumbTrack {
 
   function onTimerResume() as Void
   {
+    _breadcrumbContext.mapRenderer().loadMapTilesForPosition(0f, 0f, _breadcrumbContext.trackRenderer()._currentScale);
     // check from startup
     seenStartupPoints = 0;
     possibleBadPointsAdded = 0;
@@ -305,6 +311,10 @@ class BreadcrumbTrack {
     {
       return;
     }
+
+    // todo only call this when a point is added (some points are skipped on smaller distances)
+    // _breadcrumbContext.mapRenderer().loadMapTilesForPosition(lat, lon, _breadcrumbContext.trackRenderer()._currentScale);
+    
     
     if (inRestartMode)
     {
