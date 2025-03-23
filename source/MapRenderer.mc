@@ -157,10 +157,13 @@ class MapRenderer {
             Graphics.createColor(255, 242, 242, 242),      // White
             Graphics.createColor(255, 179, 179, 179),       // Light Gray
             Graphics.createColor(255, 77, 77, 77),         // Dark Gray
-            Graphics.createColor(255, 0, 0, 0)         // Black
+            Graphics.createColor(255, 0, 0, 0),         // Black
 
-            // still need 4 more to get to 64, do not make them blacks, or dark greys as too many 
-            // colours merge to them
+            // manually picked to match map tiles
+            Graphics.createColor(255, 246, 230, 98), // road colours (yellow)
+            Graphics.createColor(255, 194, 185, 108), // slightly darker yellow road
+            Graphics.createColor(255, 214, 215, 216), // some mountains (light grey)
+            Graphics.createColor(255, 213, 237, 168), // some greenery that was not a nice colour
         ];
 
         if (_palette.size() != 64)
