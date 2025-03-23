@@ -28,6 +28,7 @@ class WebTileRequestHandler extends WebHandler {
     {
         if (responseCode != 200)
         {
+            // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
             System.println("failed with: " + responseCode);
             return;
         }
