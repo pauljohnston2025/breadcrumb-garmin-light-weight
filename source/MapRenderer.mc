@@ -3,7 +3,7 @@ import Toybox.Graphics;
 import Toybox.WatchUi;
 import Toybox.PersistedContent;
 
-const DATA_TILE_SIZE = 50;
+const DATA_TILE_SIZE = 64; // should be a multiple of 256 (since thats how tiles are stored, though the companion app will render them scaled for you)
 const PIXEL_SIZE = 1;
 const TILE_SIZE = DATA_TILE_SIZE * PIXEL_SIZE;
 const TILE_PADDING = 0;
@@ -12,6 +12,24 @@ const TILE_PALLET_MODE_OPTIMISED_STRING = 1;
 const TILE_PALLET_MODE_LIST = 2;
 const TILE_PALLET_MODE_OPTIMISED_STRING_WITH_PALLET = 3;
 const TILE_PALLET_MODE = TILE_PALLET_MODE_OPTIMISED_STRING_WITH_PALLET;
+
+class TileCoordinates
+{
+    var x as Number;
+    var y as Number;
+    var z as Number;
+
+    function initialize(
+        _x as Number, 
+        _y as Number,
+        _z as Number)
+    {
+        x = _x;
+        y = _y;
+        z = _z;
+    }
+
+}
 
 class WebTileRequestHandler extends WebHandler {
     var _mapRenderer as MapRenderer;
@@ -172,6 +190,26 @@ class MapRenderer {
         }
     }
 
+    
+    function epsg3857ToTile(xIn as Float, yIn as Float, z as Number) as TileCoordinates {
+        System.println("converting point to tile: " + xIn + " " + yIn + " " + z);
+
+        var smallTilesPerBigTile = 256f/DATA_TILE_SIZE;
+        var originShift = 2 * Math.PI * 6378137 / 2.0; // Half circumference
+
+        var x = (xIn + originShift) / (2 * originShift) * Math.pow(2, z);
+        var y = (originShift - yIn) / (2 * originShift) * Math.pow(2, z);
+
+        var tileX = Math.floor(x * smallTilesPerBigTile).toNumber();
+        var tileY = Math.floor(y * smallTilesPerBigTile).toNumber();
+
+        var tileXStandard = Math.floor(x).toNumber();
+        var tileYStandard = Math.floor(y).toNumber();
+        System.println("tile url should be: https://a.tile.opentopomap.org/" + z + "/" + tileXStandard + "/" + tileYStandard + ".png");
+
+        return new TileCoordinates(tileX, tileY, z);
+    }
+
     function newBitmap(size as Number) as BufferedBitmap
     {
         var options = {
@@ -269,28 +307,42 @@ class MapRenderer {
     }
 
     function loadMapTilesForPosition(
-        lat as Float, 
-        long as Float, 
+        point as RectangularPoint,
         scale as Float) as Void
     {
         // todo only call this when we have moved far enough, should cache a large distance around us
         // only when we move off the edge of the map do we need to get the next tiles
         // and we could move a bunch of them across ourselves, and only get the ones needed off the edge
+        var z = 10;
+        var originShift = 2 * Math.PI * 6378137 / 2.0; // Half circumference
+        var tileWidthM = (2 * originShift) / Math.pow(2, z);
+        // smaller since we only have 64*64 tiles, so its /4
+        var smallTilesPerBigTile = 256f/DATA_TILE_SIZE;
+        var tileWidthMPartTile = tileWidthM/smallTilesPerBigTile;
         for (var x=0 ; x<_tileCountXY; ++x)
         {
             for (var y=0 ; y<_tileCountXY; ++y)
             {
+                // todo calculate zoom base off scale
+                // calculate a different tile for each x/y coordintate
+                // add a cache for the tiles loaded
+                // todo figure out actual meters per tile size based of scale
+                // this is intentionally backwards, our latLon2xy is currently flipped
+                var tile = epsg3857ToTile(
+                    point.y + x * tileWidthMPartTile, 
+                    point.x - y * tileWidthMPartTile, 
+                    z
+                );
+                
+                System.println("starting load tile: " + tile.x + " " + tile.y + " " + tile.z);
                 _webRequestHandler.add(
                     new JsonRequest(
                         "/loadtile",
                         {
-                            "lat" => lat,
-                            "long" => long,
-                            "tileX" => x,
-                            "tileY" => y,
-                            "scale" => scale,
+                            "x" => tile.x,
+                            "y" => tile.y,
+                            "z" => tile.z,
                             "tileSize" => DATA_TILE_SIZE,
-                            "tileCountXY" => _tileCountXY,
                         },
                         new WebTileRequestHandler(me, x, y)
                     )

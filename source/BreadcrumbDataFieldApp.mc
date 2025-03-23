@@ -111,10 +111,15 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
           return;
         }
 
+        System.println("parsing load tile req: " + rawData);
+
         _breadcrumbContext.mapRenderer().loadMapTilesForPosition(
-            rawData[0] as Float,
-            rawData[1] as Float, 
-            _breadcrumbContext.trackRenderer()._currentScale
+          _breadcrumbContext.track().latLon2xy(
+            rawData[0] as Float, 
+            rawData[1] as Float,
+            0f // altitude
+          ),
+          _breadcrumbContext.trackRenderer()._currentScale
         );
         return;
       }

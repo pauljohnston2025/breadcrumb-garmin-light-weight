@@ -151,8 +151,6 @@ class WebRequestHandler
         if (pending.size() == 0)
         {
             noOutstanding = true;
-            // testing when finished get the next tile
-            _mapRenderer.loadMapTilesForPosition(0f, 0f, 1f);
             return;
         }
 

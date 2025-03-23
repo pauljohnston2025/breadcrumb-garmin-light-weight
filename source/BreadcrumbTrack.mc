@@ -314,7 +314,7 @@ class BreadcrumbTrack {
     }
 
     // todo only call this when a point is added (some points are skipped on smaller distances)
-    _breadcrumbContext.mapRenderer().loadMapTilesForPosition(lat, lon, _breadcrumbContext.trackRenderer()._currentScale);
+    _breadcrumbContext.mapRenderer().loadMapTilesForPosition(newPoint, _breadcrumbContext.trackRenderer()._currentScale);
     
     
     if (inRestartMode)
@@ -348,6 +348,7 @@ class BreadcrumbTrack {
   }
 
   // inverse of https://gis.stackexchange.com/a/387677
+  // Converting lat, lon (epsg:4326) into EPSG:3857
   function latLon2xy(lat as Float, lon as Float,
                      altitude as Float) as RectangularPoint or Null {
 
