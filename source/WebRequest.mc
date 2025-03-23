@@ -69,6 +69,8 @@ class WebRequestHandler
         // connections where the watch is tethered to the android phone (fater than bluetooth): http://<android teather host ip>:8080
         // note: depending on the network the watch is on, only 1 of these will work at any point
         // could auto detect, but seems complicated (maybe have a list to try in settings, and on failed web requests try the next url)
+        // to make this work on the emulator you ned to run 
+        // adb forward tcp:8080 tcp:8080
         // eg.
         // _urlPrefix = "http://127.0.0.1:8080"; // localhost (bluetooth bridge)
         // _urlPrefix = "http://192.168.1.103:8080/"; // android phone ip on wlan
@@ -79,36 +81,48 @@ class WebRequestHandler
         // }
 
         // todo load from settings
+        // to make this work on the emulator you ned to run 
+        // adb forward tcp:8080 tcp:8080
         _urlPrefix = "http://127.0.0.1:8080";
         _ipsToTry = ["127.0.0.1", "192.168.1.103", "192.168.79.82"];
         _ipsToTryIndex = 0;
     }
 
-    function connectionStatusCallback(result as { :wifiAvailable as Lang.Boolean, :errorCode as Communications.WifiConnectionStatus }) as Void
-    {
-        System.println("wifi status: " + result[:wifiAvailable] + " " + result[:errorCode]);
-        // think if we start a request whilst wifi is active it will keep it active for us (with any hope)
-        realStartNext();
-    }
+    // function connectionStatusCallback(result as { :wifiAvailable as Lang.Boolean, :errorCode as Communications.WifiConnectionStatus }) as Void
+    // {
+    //     System.println("wifi status: " + result[:wifiAvailable] + " " + result[:errorCode]);
+    //     // think if we start a request whilst wifi is active it will keep it active for us (with any hope)
+    //     realStartNext();
+    // }
 
     function updateUrlPrefix() as Void
     {
-        System.println("updating url");
-        if (_ipsToTry.size() == 0)
-        {
-            _urlPrefix = "http://127.0.0.1:8080";
-            System.println("url changed to " + _urlPrefix);
-            return;
-        }
+        // keeping since we way experiment with wifi again at some point, but it appear there is no way to force a connection to use wifi .
+        // I never saw a single request pass, even if bluetooth was disabled, seems like wifi can only be used for a sync (but we want it always in for the lifetime of our activity)
+        // it would probbaly use too much power anyway, so falling back to slower bluetooth and smaller colour pallete images
+        // this does rotate the url fine though
 
-        _ipsToTryIndex++;
-        if (_ipsToTryIndex >= _ipsToTry.size())
-        {
-            _ipsToTryIndex = 0;
-        }
+        // to make this work on the emulator you ned to run 
+        // adb forward tcp:8080 tcp:8080
+        _urlPrefix = "http://127.0.0.1:8080";
+        return;
 
-        _urlPrefix = "http://" + _ipsToTry[_ipsToTryIndex] + ":8080";
-        System.println("url changed to " + _urlPrefix);
+        // System.println("updating url");
+        // if (_ipsToTry.size() == 0)
+        // {
+        //     _urlPrefix = "http://127.0.0.1:8080";
+        //     System.println("url changed to " + _urlPrefix);
+        //     return;
+        // }
+
+        // _ipsToTryIndex++;
+        // if (_ipsToTryIndex >= _ipsToTry.size())
+        // {
+        //     _ipsToTryIndex = 0;
+        // }
+
+        // _urlPrefix = "http://" + _ipsToTry[_ipsToTryIndex] + ":8080";
+        // System.println("url changed to " + _urlPrefix);
     }
 
     function add(jsonReq as JsonRequest) as Void 
@@ -123,12 +137,12 @@ class WebRequestHandler
         }
     }
 
-    function startNext() as Void 
-    {
-        Communications.checkWifiConnection(method(:connectionStatusCallback));
-    }
+    // function startNext() as Void 
+    // {
+    //     Communications.checkWifiConnection(method(:connectionStatusCallback));
+    // }
 
-    function realStartNext() as Void 
+    function startNext() as Void 
     {
         // todo: may need to handle race where one completes and one is added at the same time?
         // think its all single threaded, so should not matter

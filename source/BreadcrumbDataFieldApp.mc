@@ -78,7 +78,8 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
           return;
         }
 
-        var tileData = rawData[2] as Array<Number>;
+        var tileDataStr = rawData[2] as String;
+        var tileData = tileDataStr.toUtf8Array();
         if (tileData.size() != DATA_TILE_SIZE*DATA_TILE_SIZE)
         {
           System.println("Failed to parse map tile, bad tile length: " + tileData.size());

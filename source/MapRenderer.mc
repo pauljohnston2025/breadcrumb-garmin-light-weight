@@ -41,7 +41,12 @@ class WebTileRequestHandler extends WebHandler {
 
         // System.print("data: " + data);
         var mapTile = data["data"];
-        _mapRenderer.setTileData(_x, _y, mapTile as Array<Number>);
+        if (!(mapTile instanceof String))
+        {
+            System.println("wrong data type, not string");
+            return;
+        }
+        _mapRenderer.setTileData(_x, _y, mapTile.toUtf8Array());
     }
 }
 
@@ -56,13 +61,11 @@ class MapRenderer {
     function initialize() {
         // todo persist to storage and load from storage in init
         _bitmap = newBitmap(_tileCountXY * TILE_SIZE);
-        // to make this work on the emulator you ned to run 
-        // adb forward tcp:8080 tcp:8080
         // test code
         // var red = [];
         // var green = [];
         // var blue = [];
-        // for (var i=0 ; i<TILE_SIZE*TILE_SIZE; ++i)
+        // for (var i=0 ; i<DATA_TILE_SIZE*DATA_TILE_SIZE; ++i)
         // {
         //     red.add(Graphics.COLOR_RED);
         //     green.add(Graphics.COLOR_GREEN);
@@ -131,7 +134,13 @@ class MapRenderer {
         {
             for (var j=0; j<DATA_TILE_SIZE; ++j)
             {
-                var colour = arr[it];
+                var byteColour = arr[it] as Number;
+                // System.println("processing colour" + byteColour);
+                // 2 bits per colour (todo set up colour pallete instead)
+                var red = ((byteColour & 0x030) >> 4) * 255 / 3;
+                var green = ((byteColour & 0x0C) >> 2) * 255 / 3;
+                var blue = (byteColour & 0x03) * 255 / 3;
+                var colour = (red << 16) | (green << 8) | blue;
                 it++;
                 localDc.setColor(colour, colour);
                 if (PIXEL_SIZE == 1)
