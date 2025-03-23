@@ -79,7 +79,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         }
 
         var tileData = null;
-        if (TILE_PALLET_MODE == TILE_PALLET_MODE_OPTIMISED_STRING)
+        if (TILE_PALLET_MODE == TILE_PALLET_MODE_OPTIMISED_STRING || TILE_PALLET_MODE == TILE_PALLET_MODE_OPTIMISED_STRING_WITH_PALLET)
         {
           var tileDataStr = rawData[2] as String;
           tileData = tileDataStr.toUtf8Array();
