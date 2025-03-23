@@ -75,32 +75,99 @@ class MapRenderer {
     // todo: get screen size and factor in some amount of padding
     var _screenSize as Float = 360f;
     var _tileCountXY as Number = Math.ceil(_screenSize/TILE_SIZE + 2 * TILE_PADDING).toNumber();
-    var _webRequestHandler as WebRequestHandler = new WebRequestHandler();
+    var _webRequestHandler as WebRequestHandler = new WebRequestHandler(me);
+    var _palette as Array<Number>;
     function initialize() {
         // todo persist to storage and load from storage in init
         _bitmap = newBitmap(_tileCountXY * TILE_SIZE);
-        // test code
-        // var red = [];
-        // var green = [];
-        // var blue = [];
-        // for (var i=0 ; i<DATA_TILE_SIZE*DATA_TILE_SIZE; ++i)
-        // {
-        //     red.add(Graphics.COLOR_RED);
-        //     green.add(Graphics.COLOR_GREEN);
-        //     blue.add(Graphics.COLOR_BLUE);
-        // }
-        // setTileData(0, 0, red);
-        // setTileData(1, 1, green);
-        // setTileData(2, 2, blue);
-        // setTileData(3, 3, red);
-        // setTileData(4, 4, green);
-        // setTileData(5, 5, blue);
-        // setTileData(6, 6, red);
-        // setTileData(7, 7, green);
-        // setTileData(8, 8, blue);
-        // setTileData(9, 9, red);
-        // setTileData(10, 10, green);
-        // setTileData(11, 11, blue);
+
+        // note: these need to match whats in the app
+        // would like tho use the bitmaps colour pallet, but we cannot :( because it erros with
+        // Exception: Source must not use a color palette
+        _palette = [
+            // Greens (Emphasis) - 22 colors
+            Graphics.createColor(255, 61, 179, 61),       // Vibrant Green
+            Graphics.createColor(255, 102, 179, 102),      // Medium Green
+            Graphics.createColor(255, 153, 204, 153),      // Light Green
+            Graphics.createColor(255, 0, 102, 0),         // Dark Green
+            Graphics.createColor(255, 128, 179, 77),      // Slightly Yellowish Green
+            Graphics.createColor(255, 77, 179, 128),      // Slightly Bluish Green
+            Graphics.createColor(255, 179, 179, 179),       // Pale Green
+            Graphics.createColor(255, 92, 128, 77),      // Olive Green
+            Graphics.createColor(255, 148, 209, 23),
+            Graphics.createColor(255, 107, 142, 35),  // OliveDrab
+            Graphics.createColor(255, 179, 230, 0),        // Lime Green
+            Graphics.createColor(255, 102, 179, 0),        // Spring Green
+            Graphics.createColor(255, 77, 204, 77),      // Bright Green
+            Graphics.createColor(255, 128, 153, 128),      // Grayish Green
+            Graphics.createColor(255, 153, 204, 153),      // Soft Green
+            Graphics.createColor(255, 0, 128, 0),         // Forest Green
+            Graphics.createColor(255, 34, 139, 34),    // ForestGreen
+            Graphics.createColor(255, 50, 205, 50),    // LimeGreen
+            Graphics.createColor(255, 144, 238, 144),  // LightGreen
+            Graphics.createColor(255, 0, 100, 0),       // DarkGreen
+            Graphics.createColor(255, 60, 179, 113),     // Medium Sea Green
+            Graphics.createColor(255, 46, 139, 87),      // SeaGreen
+
+            // Reds - 8 colors
+            Graphics.createColor(255, 230, 0, 0),         // Bright Red
+            Graphics.createColor(255, 204, 102, 102),      // Light Red (Pink)
+            Graphics.createColor(255, 153, 0, 0),         // Dark Red
+            Graphics.createColor(255, 230, 92, 77),      // Coral Red
+            Graphics.createColor(255, 179, 0, 38),         // Crimson
+            Graphics.createColor(255, 204, 102, 102),      // Rose
+            Graphics.createColor(255, 255, 0, 0),     // Pure Red
+            Graphics.createColor(255, 255, 69, 0),    // RedOrange
+
+            // Blues - 8 colors
+            Graphics.createColor(255, 0, 0, 230),         // Bright Blue
+            Graphics.createColor(255, 102, 102, 204),      // Light Blue
+            Graphics.createColor(255, 0, 0, 153),         // Dark Blue
+            Graphics.createColor(255, 102, 153, 230),      // Sky Blue
+            Graphics.createColor(255, 38, 0, 179),         // Indigo
+            Graphics.createColor(255, 77, 128, 179),      // Steel Blue
+            Graphics.createColor(255, 0, 0, 255),       // Pure Blue
+            Graphics.createColor(255, 0, 191, 255),      // DeepSkyBlue
+
+            // Yellows - 6 colors
+            Graphics.createColor(255, 230, 230, 0),        // Bright Yellow
+            Graphics.createColor(255, 204, 204, 102),      // Light Yellow
+            Graphics.createColor(255, 153, 153, 0),        // Dark Yellow (Gold)
+            Graphics.createColor(255, 179, 153, 77),      // Mustard Yellow
+            Graphics.createColor(255, 255, 255, 0),   // Pure Yellow
+            Graphics.createColor(255, 255, 215, 0),   // Gold
+
+            // Oranges - 6 colors
+            Graphics.createColor(255, 230, 115, 0),        // Bright Orange
+            Graphics.createColor(255, 204, 153, 102),      // Light Orange
+            Graphics.createColor(255, 153, 77, 0),         // Dark Orange
+            Graphics.createColor(255, 179, 51, 0),         // Burnt Orange
+            Graphics.createColor(255, 255, 165, 0),    // Orange
+            Graphics.createColor(255, 255, 140, 0),    // DarkOrange
+
+            // Purples - 6 colors
+            Graphics.createColor(255, 230, 0, 230),        // Bright Purple
+            Graphics.createColor(255, 204, 102, 204),      // Light Purple
+            Graphics.createColor(255, 153, 0, 153),        // Dark Purple
+            Graphics.createColor(255, 230, 153, 230),      // Lavender
+            Graphics.createColor(255, 128, 0, 128),   // Purple
+            Graphics.createColor(255, 75, 0, 130),   // Indigo
+
+            // Neutral/Grayscale - 8 colors
+            Graphics.createColor(255, 255, 255, 255),   // White
+            Graphics.createColor(255, 220, 220, 220),      // Almost White
+            Graphics.createColor(255, 192, 192, 192),      // Silver
+            Graphics.createColor(255, 179, 179, 179),       // Light Gray
+            Graphics.createColor(255, 128, 128, 128),  // Gray
+            Graphics.createColor(255, 105, 105, 105), // DimGray
+            Graphics.createColor(255, 77, 77, 77),         // Dark Gray
+            Graphics.createColor(255, 0, 0, 0),         // Black
+        ];
+
+        if (_palette.size() != 64)
+        {
+            System.println("colour pallet has only: " + _palette.size() + "elements");
+        }
     }
 
     function newBitmap(size as Number) as BufferedBitmap
@@ -130,6 +197,8 @@ class MapRenderer {
             return;
         }
 
+        // System.println("tile data " + arr);
+
         if (arr.size() < DATA_TILE_SIZE*DATA_TILE_SIZE)
         {
             System.println("tile length too short: " + arr.size());
@@ -144,80 +213,6 @@ class MapRenderer {
         }
 
         // System.println("processing tile data, first colour is: " + arr[0]);
-        // note: these need to match whats in the app
-        // would like tho use the bitmaps colour pallet, but we cannot :( because it erros with
-        // Exception: Source must not use a color palette
-
-        var palette = [
-            // Greens (Emphasis) - 16 colors
-            Graphics.createColor(255, 61, 179, 61),       // Vibrant Green
-            Graphics.createColor(255, 102, 179, 102),      // Medium Green
-            Graphics.createColor(255, 153, 204, 153),      // Light Green
-            Graphics.createColor(255, 0, 102, 0),         // Dark Green
-            Graphics.createColor(255, 128, 179, 77),      // Slightly Yellowish Green
-            Graphics.createColor(255, 77, 179, 128),      // Slightly Bluish Green
-            Graphics.createColor(255, 179, 179, 179),       // Pale Green
-            Graphics.createColor(255, 92, 128, 77),      // Olive Green
-            Graphics.createColor(255, 179, 230, 0),        // Lime Green
-            Graphics.createColor(255, 102, 179, 0),        // Spring Green
-            Graphics.createColor(255, 77, 204, 77),      // Bright Green
-            Graphics.createColor(255, 128, 153, 128),      // Grayish Green
-            Graphics.createColor(255, 153, 204, 153),      // Soft Green
-            Graphics.createColor(255, 0, 128, 0),         // Forest Green
-            Graphics.createColor(255, 128, 128, 128),      // Earthy Green
-            Graphics.createColor(255, 97, 153, 153),         // Sea Green
-
-            // Reds - 6 colors
-            Graphics.createColor(255, 230, 0, 0),         // Bright Red
-            Graphics.createColor(255, 204, 102, 102),      // Light Red (Pink)
-            Graphics.createColor(255, 153, 0, 0),         // Dark Red
-            Graphics.createColor(255, 230, 92, 77),      // Coral Red
-            Graphics.createColor(255, 179, 0, 38),         // Crimson
-            Graphics.createColor(255, 204, 102, 102),      // Rose
-
-            // Blues - 6 colors
-            Graphics.createColor(255, 0, 0, 230),         // Bright Blue
-            Graphics.createColor(255, 102, 102, 204),      // Light Blue
-            Graphics.createColor(255, 0, 0, 153),         // Dark Blue
-            Graphics.createColor(255, 102, 153, 230),      // Sky Blue
-            Graphics.createColor(255, 38, 0, 179),         // Indigo
-            Graphics.createColor(255, 77, 128, 179),      // Steel Blue
-
-            // Yellows - 4 colors
-            Graphics.createColor(255, 230, 230, 0),        // Bright Yellow
-            Graphics.createColor(255, 204, 204, 102),      // Light Yellow
-            Graphics.createColor(255, 153, 153, 0),        // Dark Yellow (Gold)
-            Graphics.createColor(255, 179, 153, 77),      // Mustard Yellow
-
-            // Oranges - 4 colors
-            Graphics.createColor(255, 230, 115, 0),        // Bright Orange
-            Graphics.createColor(255, 204, 153, 102),      // Light Orange
-            Graphics.createColor(255, 153, 77, 0),         // Dark Orange
-            Graphics.createColor(255, 179, 51, 0),         // Burnt Orange
-
-            // Purples - 4 colors
-            Graphics.createColor(255, 230, 0, 230),        // Bright Purple
-            Graphics.createColor(255, 204, 102, 204),      // Light Purple
-            Graphics.createColor(255, 153, 0, 153),        // Dark Purple
-            Graphics.createColor(255, 230, 153, 230),      // Lavender
-
-            // Neutral/Grayscale - 4 colors
-            Graphics.createColor(255, 242, 242, 242),      // White
-            Graphics.createColor(255, 179, 179, 179),       // Light Gray
-            Graphics.createColor(255, 77, 77, 77),         // Dark Gray
-            Graphics.createColor(255, 13, 13, 13),          // Black
-
-            //Extra Greens - 4 colors to meet 48 colors
-            Graphics.createColor(255, 34, 139, 34),    // ForestGreen
-            Graphics.createColor(255, 50, 205, 50),    // LimeGreen
-            Graphics.createColor(255, 144, 238, 144),  // LightGreen
-            Graphics.createColor(255, 0, 100, 0),       // DarkGreen
-        ];
-
-        if (palette.size() != 48)
-        {
-            System.println("colour pallet has only: " + palette.size() + "elements");
-        }
 
         var localBitmap = newBitmap(TILE_SIZE);
         var localDc = localBitmap.getDc();
@@ -240,7 +235,7 @@ class MapRenderer {
                 else if (TILE_PALLET_MODE == TILE_PALLET_MODE_OPTIMISED_STRING_WITH_PALLET)
                 {
                     var byteColour = arr[it] as Number;
-                    colour = palette[byteColour & 0x3F]; // todo check array size? or we just know its 48 and never change that
+                    colour = _palette[byteColour & 0x3F]; // todo check array size? or we just know its 48 and never change that
                 }
                 else if (TILE_PALLET_MODE == TILE_PALLET_MODE_LIST) 
                 {

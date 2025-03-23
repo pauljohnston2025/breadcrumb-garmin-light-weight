@@ -205,6 +205,7 @@ class BreadcrumbTrack {
 
   function onTimerStart() as Void
   {
+    System.println("onTimerStart");
     // check from startup, and also clear the current coordinates, 
     // anything we got before start is invalid
     coordinates.clear();
@@ -219,6 +220,7 @@ class BreadcrumbTrack {
 
   function onTimerResume() as Void
   {
+    System.println("onTimerResume");
     // check from startup
     seenStartupPoints = 0;
     possibleBadPointsAdded = 0;

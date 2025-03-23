@@ -59,8 +59,10 @@ class WebRequestHandler
     var _urlPrefix as String;
     var _ipsToTry as Array<String>;
     var _ipsToTryIndex as Number;
+    var _mapRenderer as MapRenderer;
 
-    function initialize() {
+    function initialize(mapRenderer as MapRenderer) {
+        _mapRenderer = mapRenderer;
         // todo: expose this through settings
         // we want to allow 
         // local connections through bluetooth bridge (slow but doess work): http://127.0.0.1:8080
@@ -149,6 +151,8 @@ class WebRequestHandler
         if (pending.size() == 0)
         {
             noOutstanding = true;
+            // testing when finished get the next tile
+            _mapRenderer.loadMapTilesForPosition(0f, 0f, 1f);
             return;
         }
 
