@@ -8,10 +8,6 @@ const PIXEL_SIZE = 1;
 const TILE_SIZE = DATA_TILE_SIZE * PIXEL_SIZE;
 const TILE_PADDING = 0;
 
-class WebHandler {
-    function handle(responseCode as Number, data as Dictionary or String or Iterator or Null) as Void;
-}
-
 class WebTileRequestHandler extends WebHandler {
     var _mapRenderer as MapRenderer;
     var _x as Number;
@@ -22,6 +18,7 @@ class WebTileRequestHandler extends WebHandler {
         x as Number, 
         y as Number)
     {
+        WebHandler.initialize();
         _mapRenderer = mapRenderer;
         _x = x;
         _y = y;
@@ -35,101 +32,20 @@ class WebTileRequestHandler extends WebHandler {
             return;
         }
 
-        // todo check type is dictionary (json response)
-        _mapRenderer.setTileData(_x, _y, (data["data"] as String).toUtf8Array());
-    }
-}
-
-class JsonRequest {
-    var method as String;
-    var params as Dictionary;
-    var handler as WebHandler;
-
-    function initialize(
-        _method as String,
-        _params as Dictionary, 
-        _handler as WebHandler)
-    {
-        method = _method;
-        params = _params;
-        handler = _handler;
-    }
-}
-
-class WebRequestHandle {
-    var webHandler as WebRequestHandler;
-    var handler as WebHandler;
-
-    function initialize(
-        _webHandler as WebRequestHandler,
-        _handler as WebHandler)
-    {
-        webHandler = _webHandler;
-        handler = _handler;
-    }
-
-    function handle(responseCode as Number, data as Dictionary or String or Iterator or Null) as Void
-    {
-        handler.handle(responseCode, data);
-        webHandler.startNext();
-    }
-}
-
-class WebRequestHandler
-{
-    // see https://forums.garmin.com/developer/connect-iq/f/discussion/209443/watchface-working-in-simulator-failing-webrequest-on-device-with-http-response--101
-    // only 3 web requests are allowed in parallel, so we need to buffer them up and make new requests when we get responses
-    var pending as Array<JsonRequest> = [];
-    var noOutstanding as Boolean = true;
-    var _urlPrefix as String;
-
-    function initialize() {
-        _urlPrefix = "http://127.0.0.1:8080";
-        // if (isSimulator())
-        // {
-        //     _urlPrefix = "http://192.168.1.101:81";
-        // }
-    }
-
-    function add(jsonReq as JsonRequest) {
-        pending.add(jsonReq);
-        // for now just start one at a time, simpler to track
-        if (noOutstanding)
+        if (!(data instanceof Dictionary))
         {
-            startNext();
-        }
-    }
-
-    function startNext()
-    {
-        // todo: may need to handle race where one completes and one is added at the same time?
-        // think its all single threaded, so should not matter
-        if (pending.size() == 0)
-        {
-            noOutstanding = true;
+            System.println("wrong data type, not dict");
+            return;
         }
 
-        noOutstanding = false;
-        var jsonReq = pending[0];
-        pending.remove(jsonReq); // might be better to slice?
-        Communications.makeWebRequest(
-            _urlPrefix + jsonReq.method,
-            jsonReq.params,
-            {
-                :method => Communications.HTTP_REQUEST_METHOD_GET,
-                :headers => {
-                    // docs say you can do this (or ommit it), but i found its not sent, or is sent as application/x-www-form-urlencoded when using HTTP_RESPONSE_CONTENT_TYPE_JSON
-                    // "Content-Type" => Communications.HTTP_RESPONSE_CONTENT_TYPE_JSON,
-                    // my local server does not like content type being supplied when its a get or post
-                    // the android server does not seem to get 
-                    // "Content-Type" => "application/json",
-
-                },
-                :responseType => Communications.HTTP_RESPONSE_CONTENT_TYPE_JSON,
-            }, // options
-            // see https://forums.garmin.com/developer/connect-iq/f/discussion/2289/documentation-clarification-object-method-and-lang-method
-            (new WebRequestHandle(me, jsonReq.handler)).method(:handle)
-        );
+        System.print("data: " + data);
+        var mapTile = data["data"];
+        if (!(mapTile instanceof String))
+        {
+            System.println("wrong data type, not string");
+            return;
+        }
+        _mapRenderer.setTileData(_x, _y, mapTile.toUtf8Array());
     }
 }
 
@@ -177,10 +93,17 @@ class MapRenderer {
 			:height => size,
 		};
 
-        return Graphics.createBufferedBitmap(options).get();
+        var bitmap = Graphics.createBufferedBitmap(options).get();
+        if (!(bitmap instanceof BufferedBitmap))
+        {
+            System.println("Could not allocate buffered bitmap");
+            throw new Exception();
+        }
+
+        return bitmap;
     }
 
-    function setTileData(tileX as Number, tileY as Number, arr as Array)
+    function setTileData(tileX as Number, tileY as Number, arr as Array<Number>) as Void
     {
         System.println("setting map tile " + tileX + " " + tileY);
         var tile = tileX * _tileCountXY + tileY;
@@ -212,7 +135,7 @@ class MapRenderer {
         {
             for (var j=0; j<DATA_TILE_SIZE; ++j)
             {
-                var byteColour = arr[it];
+                var byteColour = arr[it] as Number;
                 // System.println("processing colour" + byteColour);
                 // 2 bits per colour (todo set up colour pallete instead)
                 var red = ((byteColour & 0x030) >> 4) * 255 / 3;
@@ -274,13 +197,12 @@ class MapRenderer {
         centerPosition as RectangularPoint,
         rotationRad as Float) as Void
     {
-        var it = 0;
         var xyOffset = (_tileCountXY * TILE_SIZE) / 2.0f;
         
         var transform = new AffineTransform();
-        // transform.translate(xyOffset, xyOffset); // move to center
-        // transform.rotate(rotationRad); // rotate
-        // transform.translate(-xyOffset, -xyOffset); // move back to position
+        transform.translate(xyOffset, xyOffset); // move to center
+        transform.rotate(rotationRad); // rotate
+        transform.translate(-xyOffset, -xyOffset); // move back to position
 
         dc.drawBitmap2(
             0,

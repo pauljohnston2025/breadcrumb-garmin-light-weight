@@ -219,7 +219,6 @@ class BreadcrumbTrack {
 
   function onTimerResume() as Void
   {
-    _breadcrumbContext.mapRenderer().loadMapTilesForPosition(0f, 0f, _breadcrumbContext.trackRenderer()._currentScale);
     // check from startup
     seenStartupPoints = 0;
     possibleBadPointsAdded = 0;
@@ -313,7 +312,7 @@ class BreadcrumbTrack {
     }
 
     // todo only call this when a point is added (some points are skipped on smaller distances)
-    // _breadcrumbContext.mapRenderer().loadMapTilesForPosition(lat, lon, _breadcrumbContext.trackRenderer()._currentScale);
+    _breadcrumbContext.mapRenderer().loadMapTilesForPosition(lat, lon, _breadcrumbContext.trackRenderer()._currentScale);
     
     
     if (inRestartMode)
