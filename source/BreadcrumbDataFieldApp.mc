@@ -78,8 +78,22 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
           return;
         }
 
-        var tileDataStr = rawData[2] as String;
-        var tileData = tileDataStr.toUtf8Array();
+        var tileData = null;
+        if (TILE_PALLET_MODE == TILE_PALLET_MODE_OPTIMISED_STRING)
+        {
+          var tileDataStr = rawData[2] as String;
+          tileData = tileDataStr.toUtf8Array();
+        }
+        else if (TILE_PALLET_MODE == TILE_PALLET_MODE_LIST) 
+        {
+            tileData = rawData[2] as Array<Number>;
+        }
+        else
+        {
+            System.println("unrecognised tile mode: " + TILE_PALLET_MODE);
+            return;
+        }
+
         if (tileData.size() != DATA_TILE_SIZE*DATA_TILE_SIZE)
         {
           System.println("Failed to parse map tile, bad tile length: " + tileData.size());

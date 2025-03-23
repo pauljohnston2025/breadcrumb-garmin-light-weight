@@ -8,6 +8,10 @@ const PIXEL_SIZE = 1;
 const TILE_SIZE = DATA_TILE_SIZE * PIXEL_SIZE;
 const TILE_PADDING = 0;
 
+const TILE_PALLET_MODE_OPTIMISED_STRING = 1;
+const TILE_PALLET_MODE_LIST = 2;
+const TILE_PALLET_MODE = TILE_PALLET_MODE_LIST;
+
 class WebTileRequestHandler extends WebHandler {
     var _mapRenderer as MapRenderer;
     var _x as Number;
@@ -40,13 +44,26 @@ class WebTileRequestHandler extends WebHandler {
         }
 
         // System.print("data: " + data);
-        var mapTile = data["data"];
-        if (!(mapTile instanceof String))
+        if (TILE_PALLET_MODE == TILE_PALLET_MODE_OPTIMISED_STRING)
         {
-            System.println("wrong data type, not string");
+            var mapTile = data["data"];
+            if (!(mapTile instanceof String))
+            {
+                System.println("wrong data type, not string");
+                return;
+            }
+            _mapRenderer.setTileData(_x, _y, mapTile.toUtf8Array());
+        }
+        else if (TILE_PALLET_MODE == TILE_PALLET_MODE_LIST) 
+        {
+            var mapTile = data["data"];
+            _mapRenderer.setTileData(_x, _y, mapTile as Array<Number>);
+        }
+        else
+        {
+            System.println("unrecognised tile mode: " + TILE_PALLET_MODE);
             return;
         }
-        _mapRenderer.setTileData(_x, _y, mapTile.toUtf8Array());
     }
 }
 
@@ -134,13 +151,27 @@ class MapRenderer {
         {
             for (var j=0; j<DATA_TILE_SIZE; ++j)
             {
-                var byteColour = arr[it] as Number;
-                // System.println("processing colour" + byteColour);
-                // 2 bits per colour (todo set up colour pallete instead)
-                var red = ((byteColour & 0x030) >> 4) * 255 / 3;
-                var green = ((byteColour & 0x0C) >> 2) * 255 / 3;
-                var blue = (byteColour & 0x03) * 255 / 3;
-                var colour = (red << 16) | (green << 8) | blue;
+                var colour = null;
+                if (TILE_PALLET_MODE == TILE_PALLET_MODE_OPTIMISED_STRING)
+                {
+                    var byteColour = arr[it] as Number;
+                    // System.println("processing colour" + byteColour);
+                    // 2 bits per colour (todo set up colour pallete instead)
+                    var red = ((byteColour & 0x030) >> 4) * 255 / 3;
+                    var green = ((byteColour & 0x0C) >> 2) * 255 / 3;
+                    var blue = (byteColour & 0x03) * 255 / 3;
+                    colour = (red << 16) | (green << 8) | blue;
+                }
+                else if (TILE_PALLET_MODE == TILE_PALLET_MODE_LIST) 
+                {
+                    colour = arr[it] as Number;
+                }
+                else
+                {
+                    System.println("unrecognised tile mode: " + TILE_PALLET_MODE);
+                    return;
+                }
+                
                 it++;
                 localDc.setColor(colour, colour);
                 if (PIXEL_SIZE == 1)
