@@ -70,13 +70,15 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         return;
       }
       else if (type == PROTOCOL_MAP_TILE) {
+        // note: this route is depdrecated since its really to send through messages
+        // instead you should send through PROTOCOL_REQUEST_TILE_LOAD and serve the correct tiles 
+        // with the phone companion app
         if (rawData.size() < 3) {
           System.println("Failed to parse map tile, bad length: " + rawData.size());
           return;
         }
 
-        var tileDataStr = rawData[2] as String;
-        var tileData = tileDataStr.toUtf8Array();
+        var tileData = rawData[2] as Array<Number>;
         if (tileData.size() != DATA_TILE_SIZE*DATA_TILE_SIZE)
         {
           System.println("Failed to parse map tile, bad tile length: " + tileData.size());
@@ -85,11 +87,20 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
         var x = rawData[0] as Number;
         var y = rawData[1] as Number;
-        _breadcrumbContext.mapRenderer().setTileData(x, y, tileData as Array<Number>);
+        _breadcrumbContext.mapRenderer().setTileData(x, y, tileData);
         return;
       }
       else if (type == PROTOCOL_REQUEST_TILE_LOAD) {
-        _breadcrumbContext.mapRenderer().loadMapTilesForPosition(0f, 0f, _breadcrumbContext.trackRenderer()._currentScale);
+        if (rawData.size() < 2) {
+          System.println("Failed to parse request load tile, bad length: " + rawData.size());
+          return;
+        }
+
+        _breadcrumbContext.mapRenderer().loadMapTilesForPosition(
+            rawData[0] as Float,
+            rawData[1] as Float, 
+            _breadcrumbContext.trackRenderer()._currentScale
+        );
         return;
       }
 

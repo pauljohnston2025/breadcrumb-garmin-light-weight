@@ -38,14 +38,9 @@ class WebTileRequestHandler extends WebHandler {
             return;
         }
 
-        System.print("data: " + data);
+        // System.print("data: " + data);
         var mapTile = data["data"];
-        if (!(mapTile instanceof String))
-        {
-            System.println("wrong data type, not string");
-            return;
-        }
-        _mapRenderer.setTileData(_x, _y, mapTile.toUtf8Array());
+        _mapRenderer.setTileData(_x, _y, mapTile as Array<Number>);
     }
 }
 
@@ -105,7 +100,7 @@ class MapRenderer {
 
     function setTileData(tileX as Number, tileY as Number, arr as Array<Number>) as Void
     {
-        System.println("setting map tile " + tileX + " " + tileY);
+        // System.println("setting map tile " + tileX + " " + tileY);
         var tile = tileX * _tileCountXY + tileY;
         if (tile >= _tileCountXY * _tileCountXY)
         {
@@ -126,7 +121,7 @@ class MapRenderer {
             System.println("bad tile length: " + arr.size() + " best effort load");
         }
 
-        System.println("processing tile data, first colour is: " + arr[0]);
+        // System.println("processing tile data, first colour is: " + arr[0]);
 
         var localBitmap = newBitmap(TILE_SIZE);
         var localDc = localBitmap.getDc();
@@ -135,13 +130,7 @@ class MapRenderer {
         {
             for (var j=0; j<DATA_TILE_SIZE; ++j)
             {
-                var byteColour = arr[it] as Number;
-                // System.println("processing colour" + byteColour);
-                // 2 bits per colour (todo set up colour pallete instead)
-                var red = ((byteColour & 0x030) >> 4) * 255 / 3;
-                var green = ((byteColour & 0x0C) >> 2) * 255 / 3;
-                var blue = (byteColour & 0x03) * 255 / 3;
-                var colour = (red << 16) | (green << 8) | blue;
+                var colour = arr[it];
                 it++;
                 localDc.setColor(colour, colour);
                 if (PIXEL_SIZE == 1)
