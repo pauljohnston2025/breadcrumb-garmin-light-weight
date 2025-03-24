@@ -55,7 +55,7 @@ class WebRequestHandler
     // see https://forums.garmin.com/developer/connect-iq/f/discussion/209443/watchface-working-in-simulator-failing-webrequest-on-device-with-http-response--101
     // only 3 web requests are allowed in parallel, so we need to buffer them up and make new requests when we get responses
     var pending as Array<JsonRequest> = [];
-    var noOutstanding as Boolean = true;
+    var _outstandingCount as Number = 0;
     var _urlPrefix as String;
     var _ipsToTry as Array<String>;
     var _ipsToTryIndex as Number;
@@ -133,9 +133,12 @@ class WebRequestHandler
         // hard to know if there is one outstanding though, also need to startNext() on a timer if we have not seen any requests in a while
         pending.add(jsonReq);
         // for now just start one at a time, simpler to track
-        if (noOutstanding)
+        // At most 3 outstanding can occur, todo query this limit
+        // https://forums.garmin.com/developer/connect-iq/f/discussion/204298/ble-queue-full
+        // otherwise you will get BLE_QUEUE_FULL
+        if (_outstandingCount < 3)
         {
-            startNext();
+            start();
         }
     }
 
@@ -146,15 +149,21 @@ class WebRequestHandler
 
     function startNext() as Void 
     {
+        // every outstanding request calls into startnext when it is completed
+        --_outstandingCount; 
+        start();
+    }
+    
+    function start() as Void 
+    {
         // todo: may need to handle race where one completes and one is added at the same time?
         // think its all single threaded, so should not matter
         if (pending.size() == 0)
         {
-            noOutstanding = true;
             return;
         }
 
-        noOutstanding = false;
+        ++_outstandingCount;
         var jsonReq = pending[0];
         pending.remove(jsonReq); // might be better to slice?
         Communications.makeWebRequest(

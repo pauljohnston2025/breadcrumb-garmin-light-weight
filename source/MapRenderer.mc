@@ -3,7 +3,11 @@ import Toybox.Graphics;
 import Toybox.WatchUi;
 import Toybox.PersistedContent;
 
-const DATA_TILE_SIZE = 64; // should be a multiple of 256 (since thats how tiles are stored, though the companion app will render them scaled for you)
+// should be a multiple of 256 (since thats how tiles are stored, though the companion app will render them scaled for you)
+// we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes. 
+// so math.ceil should be used what figuring out how many meters a tile is.
+// eg. maybe we cannot do 128 but we can do 120 (this would limit the number of tiles, but the resolution would be slightly off)
+const DATA_TILE_SIZE = 65; 
 const PIXEL_SIZE = 1;
 const TILE_SIZE = DATA_TILE_SIZE * PIXEL_SIZE;
 const TILE_PADDING = 0;
@@ -95,6 +99,8 @@ class MapRenderer {
     var _tileCountXY as Number = Math.ceil(_screenSize/TILE_SIZE + 2 * TILE_PADDING).toNumber();
     var _webRequestHandler as WebRequestHandler = new WebRequestHandler(me);
     var _palette as Array<Number>;
+    var smallTilesPerBigTile = Math.ceil(256f/DATA_TILE_SIZE);
+
     function initialize() {
         // todo persist to storage and load from storage in init
         _bitmap = newBitmap(_tileCountXY * TILE_SIZE);
@@ -146,6 +152,8 @@ class MapRenderer {
             Graphics.createColor(255, 77, 128, 179),      // Steel Blue
             Graphics.createColor(255, 0, 0, 255),       // Pure Blue
             Graphics.createColor(255, 0, 191, 255),      // DeepSkyBlue
+            Graphics.createColor(255, 151, 210, 227), // ocean blue
+
 
             // Yellows - 6 colors
             Graphics.createColor(255, 230, 230, 0),        // Bright Yellow
@@ -173,7 +181,7 @@ class MapRenderer {
 
             // Neutral/Grayscale - 4 colors
             Graphics.createColor(255, 242, 242, 242),      // White
-            Graphics.createColor(255, 179, 179, 179),       // Light Gray
+            // Graphics.createColor(255, 179, 179, 179),       // Light Gray
             Graphics.createColor(255, 77, 77, 77),         // Dark Gray
             Graphics.createColor(255, 0, 0, 0),         // Black
 
@@ -194,7 +202,6 @@ class MapRenderer {
     function epsg3857ToTile(xIn as Float, yIn as Float, z as Number) as TileCoordinates {
         System.println("converting point to tile: " + xIn + " " + yIn + " " + z);
 
-        var smallTilesPerBigTile = 256f/DATA_TILE_SIZE;
         var originShift = 2 * Math.PI * 6378137 / 2.0; // Half circumference
 
         var x = (xIn + originShift) / (2 * originShift) * Math.pow(2, z);
@@ -315,10 +322,9 @@ class MapRenderer {
         // and we could move a bunch of them across ourselves, and only get the ones needed off the edge
         var z = 10;
         var originShift = 2 * Math.PI * 6378137 / 2.0; // Half circumference
-        var tileWidthM = (2 * originShift) / Math.pow(2, z);
+        var bigTileWidthM = (2 * originShift) / Math.pow(2, z);
         // smaller since we only have 64*64 tiles, so its /4
-        var smallTilesPerBigTile = 256f/DATA_TILE_SIZE;
-        var tileWidthMPartTile = tileWidthM/smallTilesPerBigTile;
+        var tileWidthMPartTile = bigTileWidthM/smallTilesPerBigTile;
         for (var x=0 ; x<_tileCountXY; ++x)
         {
             for (var y=0 ; y<_tileCountXY; ++y)
