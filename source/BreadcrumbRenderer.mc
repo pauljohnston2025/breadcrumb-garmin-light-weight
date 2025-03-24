@@ -20,7 +20,7 @@ class BreadcrumbRenderer {
   var _breadcrumbContext as BreadcrumbContext;
   var _scale as Float or Null = null;
   var _currentScale as Float = 0.0;
-  var _rotationRad as Float = 90.0;  // heading in radians
+  var _rotationRad as Float = 0.0;  // heading in radians
   var _zoomAtPace as Boolean = true;
   var _clearRouteProgress as Number = 0;
   var mode as Number = MODE_NORMAL;
@@ -78,9 +78,8 @@ class BreadcrumbRenderer {
     //     + "map");
     var currentHeading = activityInfo.currentHeading;
     if (currentHeading != null) {
-      // -ve since x values increase down the page
-      // extra 90 deg so it points to top of page
-      _rotationRad = -currentHeading - Math.toRadians(90);
+      // extra 180 deg so it points to top of page
+      _rotationRad = currentHeading + Math.toRadians(180);
       _rotateCos = Math.cos(_rotationRad);
       _rotateSin = Math.sin(_rotationRad);
     }

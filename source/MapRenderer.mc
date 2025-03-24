@@ -327,10 +327,9 @@ class MapRenderer {
                 // calculate a different tile for each x/y coordintate
                 // add a cache for the tiles loaded
                 // todo figure out actual meters per tile size based of scale
-                // this is intentionally backwards, our latLon2xy is currently flipped
                 var tile = epsg3857ToTile(
-                    point.y + x * tileWidthMPartTile, 
-                    point.x - y * tileWidthMPartTile, 
+                    point.x + x * tileWidthMPartTile, 
+                    point.y - y * tileWidthMPartTile, 
                     z
                 );
                 

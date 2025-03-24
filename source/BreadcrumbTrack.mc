@@ -369,7 +369,7 @@ class BreadcrumbTrack {
     var latRect = ((Math.ln(Math.tan((90 + lat) * _pi360)) / _pi180) * _lonConversion);
     var lonRect = lon * _lonConversion;
 
-    var point = new RectangularPoint(latRect.toFloat(), lonRect.toFloat(), altitude);
+    var point = new RectangularPoint(lonRect.toFloat(), latRect.toFloat(), altitude);
     if (!point.valid())
     {
       return null;
