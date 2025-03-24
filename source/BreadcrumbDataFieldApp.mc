@@ -102,7 +102,17 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
         var x = rawData[0] as Number;
         var y = rawData[1] as Number;
-        _breadcrumbContext.mapRenderer().setTileData(x, y, tileData);
+        var tile = new Tile(x,  y, 0);
+        var _tileCache = _breadcrumbContext.mapRenderer()._tileCache;
+        var bitmap = _tileCache.tileDataToBitmap(tileData);
+        if (bitmap == null)
+        {
+            System.println("failed to parse bitmap on set tile data");
+            return;
+        }
+
+        tile.setBitmap(bitmap);
+        _tileCache.addTile(tile);
         return;
       }
       else if (type == PROTOCOL_REQUEST_TILE_LOAD) {
@@ -112,15 +122,16 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         }
 
         System.println("parsing load tile req: " + rawData);
+        // todo set the lat/long to the map renderer so its fixed on that point
 
-        _breadcrumbContext.mapRenderer().loadMapTilesForPosition(
-          _breadcrumbContext.track().latLon2xy(
-            rawData[0] as Float, 
-            rawData[1] as Float,
-            0f // altitude
-          ),
-          _breadcrumbContext.trackRenderer()._currentScale
-        );
+        // _breadcrumbContext.mapRenderer().loadMapTilesForPosition(
+        //   _breadcrumbContext.track().latLon2xy(
+        //     rawData[0] as Float, 
+        //     rawData[1] as Float,
+        //     0f // altitude
+        //   ),
+        //   _breadcrumbContext.trackRenderer()._currentScale
+        // );
         return;
       }
 

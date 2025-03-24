@@ -20,11 +20,13 @@ const TRACK_COLOUR = Graphics.COLOR_GREEN;
 class BreadcrumbDataFieldView extends WatchUi.DataField {
   var _breadcrumbContext as BreadcrumbContext;
   var _speedMPS as Float = 0.0;  // start at no speed
+  var _scratchPadBitmap as BufferedBitmap;
   // var _renderCounter = 0;
 
   // Set the label of the data field here.
   function initialize(breadcrumbContext as BreadcrumbContext) {
     _breadcrumbContext = breadcrumbContext;
+    _scratchPadBitmap = newBitmap(_breadcrumbContext.trackRenderer()._screenSize.toNumber());
     DataField.initialize();
   }
 
@@ -36,6 +38,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       dc.getWidth() * 1.0f,
       textDim[0] * 1.0f
     );
+    _scratchPadBitmap = newBitmap(_breadcrumbContext.trackRenderer()._screenSize.toNumber());
   }
 
   function onWorkoutStarted() as Void {
@@ -108,7 +111,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       // edge case on startup when we have not got any readings yet (also when
       // viewing in settings) just render the route if we have one
       if (route != null) {
-        mapRenderer.renderMap(dc, route.boundingBoxCenter, renderer.rotationRadians());
+        mapRenderer.renderMap(dc, _scratchPadBitmap, route.boundingBoxCenter, renderer.rotationRadians());
         renderer.updateCurrentScale(route.boundingBox);
         renderer.renderTrack(dc, route, ROUTE_COLOUR, route.boundingBoxCenter);
         renderer.renderCurrentScale(dc);
@@ -173,7 +176,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         centerPoint = lastPoint;
       }
 
-      mapRenderer.renderMap(dc, centerPoint, renderer.rotationRadians());
+      mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians());
       renderer.updateCurrentScale(outerBoundingBox);
       renderer.renderTrack(dc, route, ROUTE_COLOUR, centerPoint);
       renderer.renderTrack(dc, track, TRACK_COLOUR, centerPoint);
@@ -209,7 +212,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       lastPoint.y + renderDistanceM,
     ];
 
-    mapRenderer.renderMap(dc, lastPoint, renderer.rotationRadians());
+    mapRenderer.renderMap(dc, _scratchPadBitmap, lastPoint, renderer.rotationRadians());
     renderer.updateCurrentScale(outerBoundingBox);
 
     if (route != null) {

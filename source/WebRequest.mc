@@ -59,10 +59,8 @@ class WebRequestHandler
     var _urlPrefix as String;
     var _ipsToTry as Array<String>;
     var _ipsToTryIndex as Number;
-    var _mapRenderer as MapRenderer;
 
-    function initialize(mapRenderer as MapRenderer) {
-        _mapRenderer = mapRenderer;
+    function initialize() {
         // todo: expose this through settings
         // we want to allow 
         // local connections through bluetooth bridge (slow but doess work): http://127.0.0.1:8080
@@ -131,13 +129,23 @@ class WebRequestHandler
     {
         // todo remove old requests if we get too many (slow network and requests too often mean the internal array grows and we OOM)
         // hard to know if there is one outstanding though, also need to startNext() on a timer if we have not seen any requests in a while
+        if (pending.size() > 100)
+        {
+            // we have too many, don't try and get the tile
+            // we should try and dedupe - as its making a request for the same tile twice (2 renders cause 2 requests)
+            return;
+        }
+
         pending.add(jsonReq);
         // for now just start one at a time, simpler to track
         // At most 3 outstanding can occur, todo query this limit
         // https://forums.garmin.com/developer/connect-iq/f/discussion/204298/ble-queue-full
-        // otherwise you will get BLE_QUEUE_FULL
+        // otherwise you will get BLE_QUEUE_FULL (-101)
         if (_outstandingCount < 3)
         {
+            // we could get real crazy and start some tile requests through makeWebRequest 
+            // and some others through pushing tiles from the companion app
+            // seems really hard to maintain though, and ble connection probably already saturated
             start();
         }
     }

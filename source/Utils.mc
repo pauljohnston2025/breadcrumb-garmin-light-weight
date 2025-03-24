@@ -1,5 +1,6 @@
 import Toybox.Lang;
 import Toybox.System;
+import Toybox.Graphics;
 
 const FLOAT_MIN = -340282346638528859811704183484516925440.0000000000000000;
 const FLOAT_MAX = 340282346638528859811704183484516925440.0000000000000000;
@@ -50,4 +51,21 @@ function abs(val as Float) as Float {
 // from https://forums.garmin.com/developer/connect-iq/f/discussion/338071/testing-for-nan/1777041#1777041
 function isnan(a as Float) as Boolean {
   return a != a;
+}
+
+function newBitmap(size as Number) as Graphics.BufferedBitmap
+{
+    var options = {
+      :width => size,
+      :height => size,
+    };
+
+    var bitmap = Graphics.createBufferedBitmap(options).get();
+    if (!(bitmap instanceof BufferedBitmap))
+    {
+        System.println("Could not allocate buffered bitmap");
+        throw new Exception();
+    }
+
+    return bitmap;
 }
