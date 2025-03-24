@@ -3,6 +3,8 @@ import Toybox.Lang;
 import Toybox.Activity;
 import Toybox.Math;
 import Toybox.Application;
+using Toybox.Time;
+using Toybox.Time.Gregorian;
 
 const MAX_POINTS = 1000;
 const MIN_DISTANCE_M = 5; // meters
@@ -43,9 +45,11 @@ class BreadcrumbTrack {
   var elevationMin as Float = FLOAT_MAX;
   var elevationMax as Float = FLOAT_MIN;
   var _breadcrumbContext as BreadcrumbContext;
+  var _neverStarted as Boolean;
 
   function initialize(breadcrumbContext as BreadcrumbContext) {
     _breadcrumbContext = breadcrumbContext;
+    _neverStarted = true;
   }
 
   function writeToDisk(key as String) as Void {
@@ -203,9 +207,11 @@ class BreadcrumbTrack {
         boundingBox[1] + (boundingBox[3] - boundingBox[1]) / 2.0, 0.0f);
   }
 
-  function onTimerStart() as Void
+  // call on first start
+  function onStart() as Void
   {
-    System.println("onTimerStart");
+    var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+    System.println("onStart" + today.sec);
     // check from startup, and also clear the current coordinates, 
     // anything we got before start is invalid
     coordinates.clear();
@@ -215,12 +221,19 @@ class BreadcrumbTrack {
     distanceTotal = 0f;
     elevationMin = FLOAT_MAX;
     elevationMax = FLOAT_MIN;
-    onTimerResume();
+    _neverStarted = false;
+    onStartResume();
   }
 
-  function onTimerResume() as Void
+  // when an activity has been stopped, and we have moved and restarted
+  function onStartResume() as Void
   {
-    System.println("onTimerResume");
+    if (_neverStarted)
+    {
+      onStart();
+    }
+    var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+    System.println("onStartResume" + today.sec);
     // check from startup
     seenStartupPoints = 0;
     possibleBadPointsAdded = 0;
@@ -314,7 +327,7 @@ class BreadcrumbTrack {
     }
 
     // todo only call this when a point is added (some points are skipped on smaller distances)
-    _breadcrumbContext.mapRenderer().loadMapTilesForPosition(newPoint, _breadcrumbContext.trackRenderer()._currentScale);
+    // _breadcrumbContext.mapRenderer().loadMapTilesForPosition(newPoint, _breadcrumbContext.trackRenderer()._currentScale);
     
     
     if (inRestartMode)
@@ -327,7 +340,7 @@ class BreadcrumbTrack {
     if (lastPoint == null)
     {
       // startup mode should have set at least one point, revert to startup mode, something has gone wrong
-      onTimerResume();
+      onStartResume();
       return;
     }
 
