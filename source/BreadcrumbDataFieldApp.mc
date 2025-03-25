@@ -11,9 +11,20 @@ enum Protocol {
   PROTOCOL_REQUEST_TILE_LOAD = 2,
 }
 
+class CommStatus extends Communications.ConnectionListener {
+    function onComplete() {
+        System.println("App start message sent");
+    }
+
+    function onError() {
+        System.println("App start message fail");
+    }
+}
+
 class BreadcrumbDataFieldApp extends Application.AppBase {
   var _view as BreadcrumbDataFieldView;
   var _breadcrumbContext as BreadcrumbContext;
+  var _commStatus as CommStatus = new CommStatus();
 
   function initialize() {
     AppBase.initialize();
@@ -27,6 +38,16 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         System.println("registering for phone messages");
         Communications.registerForPhoneAppMessages(method( : onPhone));
       }
+
+      // this would be nice to have (so the user is pormpted to open the app), but appears it does not work
+      // System.println("opening app");
+      // opens browser only if valid url
+      // Communications.openWebPage("http://open.breadcrumb.app.example.com", null, null);
+      //  does not work on real device if its not a valid url
+      // Communications.openWebPage("open the app please", null, null);
+      // https://forums.garmin.com/developer/connect-iq/f/discussion/4339/start-an-android-service-from-watch?pifragment-1298=2#pifragment-1298=2
+      // describes how to handle it on android
+      Communications.transmit("startserice", {}, _commStatus);
     }
 
     // onStop() is called when your application is exiting
