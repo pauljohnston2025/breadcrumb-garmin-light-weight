@@ -169,10 +169,11 @@ class WebTileRequestHandler extends WebHandler {
 
 class TileCache {
     var _internalCache as Dictionary;
-    var _webRequestHandler as WebRequestHandler = new WebRequestHandler();
+    var _webRequestHandler as WebRequestHandler;
     var _palette as Array<Number>;
 
-    function initialize() {
+    function initialize(webRequestHandler as WebRequestHandler) {
+        _webRequestHandler = webRequestHandler;
         _internalCache = {};
 
         // note: these need to match whats in the app

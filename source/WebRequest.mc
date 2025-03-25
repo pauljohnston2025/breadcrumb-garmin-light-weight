@@ -46,7 +46,17 @@ class WebRequestHandle {
         {
             webHandler.updateUrlPrefix();
         }
-        webHandler.startNext();
+
+        // got some stack overflows, as handle can be called inline if it knows it will fail (eg. BLE_CONNECTION_UNAVAILABLE)
+        // also saw alot of NETWORK_REQUEST_TIMED_OUT in the logs, but thnk it was when the BLE_CONNECTION_UNAVAILABLE happened 
+        // as that was the last log, and it makes sense that it can short circuit
+        // so launch the next task in a timer
+        // var timer = new Timer.Timer();
+        // timer.start(webHandler.method(:startNext), 1, false);
+        // or at least I would do this if the timer task was available to datafields :(
+        // so we might have to call 'startNext' every time the compute method runs :(
+        // new Timer.Timer(); Error: Permission Required ; Details: Module 'Toybox.Timer' not available to 'Data Field'
+        webHandler.decrementOutstanding();
     }
 }
 
@@ -141,13 +151,26 @@ class WebRequestHandler
         // At most 3 outstanding can occur, todo query this limit
         // https://forums.garmin.com/developer/connect-iq/f/discussion/204298/ble-queue-full
         // otherwise you will get BLE_QUEUE_FULL (-101)
+        startNextIfWeCan();
+    }
+
+    function startNextIfWeCan() as Boolean
+    {
+        if (pending.size() == 0)
+        {
+            return false;
+        }
+
         if (_outstandingCount < 3)
         {
             // we could get real crazy and start some tile requests through makeWebRequest 
             // and some others through pushing tiles from the companion app
             // seems really hard to maintain though, and ble connection probably already saturated
             start();
+            return true;
         }
+
+        return false;
     }
 
     // function startNext() as Void 
@@ -155,25 +178,24 @@ class WebRequestHandler
     //     Communications.checkWifiConnection(method(:connectionStatusCallback));
     // }
 
-    function startNext() as Void 
+    function decrementOutstanding() as Void 
     {
-        // every outstanding request calls into startnext when it is completed
         --_outstandingCount; 
-        start();
     }
     
     function start() as Void 
     {
-        // todo: may need to handle race where one completes and one is added at the same time?
-        // think its all single threaded, so should not matter
-        if (pending.size() == 0)
-        {
-            return;
-        }
-
         ++_outstandingCount;
         var jsonReq = pending[0];
         pending.remove(jsonReq); // might be better to slice?
+
+        // if(pending.size() > 20)
+        // {
+        //     System.println("killing with stack overflow");
+        //     (new WebRequestHandle(me, jsonReq.handler)).handle(1, {});
+        //     return;
+        // }
+
         Communications.makeWebRequest(
             _urlPrefix + jsonReq.method,
             jsonReq.params,

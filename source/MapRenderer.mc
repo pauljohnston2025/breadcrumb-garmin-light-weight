@@ -34,9 +34,9 @@ class MapRenderer {
     var _tileCache as TileCache;
     var smallTilesPerBigTile = Math.ceil(256f/DATA_TILE_SIZE);
 
-    function initialize() {
+    function initialize(tileCache as TileCache) {
         // todo persist to storage and load from storage in init
-        _tileCache = new TileCache();
+        _tileCache = tileCache;
     }
     
     function epsg3857ToTile(xIn as Float, yIn as Float, z as Number) as TileCoordinates {

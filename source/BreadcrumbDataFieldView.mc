@@ -62,6 +62,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     //   }
     // }
 
+  // this is here due to stack overflow bug when requests trigger the next request
+    while(_breadcrumbContext.webRequestHandler().startNextIfWeCan())
+    {
+
+    }
+    
     _breadcrumbContext.track().onActivityInfo(info);
     _breadcrumbContext.trackRenderer().onActivityInfo(info);
     var currentSpeed = info.currentSpeed;
