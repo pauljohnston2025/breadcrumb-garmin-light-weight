@@ -18,6 +18,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   var _breadcrumbContext as BreadcrumbContext;
   var _speedMPS as Float = 0.0;  // start at no speed
   var _scratchPadBitmap as BufferedBitmap;
+  var _locationOveride as RectangularPoint or Null = null;
   // var _renderCounter = 0;
 
   // Set the label of the data field here.
@@ -78,6 +79,21 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     _breadcrumbContext.trackRenderer().renderUi(dc);
   }
 
+  function setLocationOveride(point as RectangularPoint or Null) as Void 
+  {
+      _locationOveride = point;
+  }
+
+  function center(point as RectangularPoint) as RectangularPoint
+  {
+      if (_locationOveride != null)
+      {
+        return _locationOveride;
+      }
+
+      return point;
+  }
+
   function renderMain(dc as Dc) as Void {
 
     // _renderCounter++;
@@ -120,9 +136,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       // edge case on startup when we have not got any readings yet (also when
       // viewing in settings) just render the route if we have one
       if (route != null) {
-        mapRenderer.renderMap(dc, _scratchPadBitmap, route.boundingBoxCenter, renderer.rotationRadians());
+        var _center = center(route.boundingBoxCenter);
+        mapRenderer.renderMap(dc, _scratchPadBitmap, _center, renderer.rotationRadians());
         renderer.updateCurrentScale(route.boundingBox);
-        renderer.renderTrack(dc, route, _breadcrumbContext.settings().routeColour, route.boundingBoxCenter);
+        renderer.renderTrack(dc, route, _breadcrumbContext.settings().routeColour, _center);
         renderer.renderCurrentScale(dc);
       }
 
@@ -157,8 +174,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   function renderZoomedOut(
       dc as Dc, 
       mapRenderer as MapRenderer,
-      renderer as BreadcrumbRenderer, lastPoint as RectangularPoint,
-      route as BreadcrumbTrack or Null, track as BreadcrumbTrack) as Void {
+      renderer as BreadcrumbRenderer, 
+      lastPoint as RectangularPoint,
+      route as BreadcrumbTrack or Null, 
+      track as BreadcrumbTrack) as Void {
     // when the scale is locked, we need to be where the user is, otherwise we
     // could see a blank part of the map, when we are zoomed in and have no
     // context
@@ -185,6 +204,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         centerPoint = lastPoint;
       }
 
+      centerPoint = center(centerPoint);
+
       mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians());
       renderer.updateCurrentScale(outerBoundingBox);
       renderer.renderTrack(dc, route, _breadcrumbContext.settings().routeColour, centerPoint);
@@ -198,6 +219,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     if (useUserLocation) {
       centerPoint = lastPoint;
     }
+
+    centerPoint = center(centerPoint);
 
     renderer.updateCurrentScale(track.boundingBox);
     renderer.renderUser(dc, centerPoint, lastPoint);
@@ -221,14 +244,16 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       lastPoint.y + renderDistanceM,
     ];
 
-    mapRenderer.renderMap(dc, _scratchPadBitmap, lastPoint, renderer.rotationRadians());
+    var centerPoint = center(lastPoint);
+
+    mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians());
     renderer.updateCurrentScale(outerBoundingBox);
 
     if (route != null) {
-      renderer.renderTrack(dc, route, _breadcrumbContext.settings().routeColour, lastPoint);
+      renderer.renderTrack(dc, route, _breadcrumbContext.settings().routeColour, centerPoint);
     }
-    renderer.renderTrack(dc, track, _breadcrumbContext.settings().trackColour, lastPoint);
-    renderer.renderUser(dc, lastPoint, lastPoint);
+    renderer.renderTrack(dc, track, _breadcrumbContext.settings().trackColour, centerPoint);
+    renderer.renderUser(dc, centerPoint, lastPoint);
     renderer.renderCurrentScale(dc);
   }
 

@@ -8,7 +8,8 @@ import Toybox.Communications;
 enum Protocol {
   PROTOCOL_ROUTE_DATA = 0,
   PROTOCOL_MAP_TILE = 1,
-  PROTOCOL_REQUEST_TILE_LOAD = 2,
+  PROTOCOL_REQUEST_LOCATION_LOAD = 2,
+  PROTOCOL_CANCEL_LOCATION_REQUEST = 3,
 }
 
 class CommStatus extends Communications.ConnectionListener {
@@ -99,12 +100,12 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         // note: this route is depdrecated since its really to send through messages
         // instead you should send through PROTOCOL_REQUEST_TILE_LOAD and serve the correct tiles 
         // with the phone companion app
-        if (rawData.size() < 3) {
+        if (rawData.size() < 4) {
           System.println("Failed to parse map tile, bad length: " + rawData.size());
           return;
         }
 
-        var tileDataStr = rawData[2] as String;
+        var tileDataStr = rawData[3] as String;
         var tileData = tileDataStr.toUtf8Array();
         if (tileData.size() != _breadcrumbContext.settings().tileSize * _breadcrumbContext.settings().tileSize)
         {
@@ -114,7 +115,8 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
         var x = rawData[0] as Number;
         var y = rawData[1] as Number;
-        var tile = new Tile(x,  y, 0); // todo send z too
+        var z = rawData[2] as Number;
+        var tile = new Tile(x,  y, z);
         var _tileCache = _breadcrumbContext.mapRenderer()._tileCache;
         var bitmap = _tileCache.tileDataToBitmap(tileData);
         if (bitmap == null)
@@ -127,15 +129,21 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         _tileCache.addTile(tile);
         return;
       }
-      else if (type == PROTOCOL_REQUEST_TILE_LOAD) {
+      else if (type == PROTOCOL_REQUEST_LOCATION_LOAD) {
         if (rawData.size() < 2) {
           System.println("Failed to parse request load tile, bad length: " + rawData.size());
           return;
         }
 
-        System.println("parsing load tile req: " + rawData);
+        System.println("parsing req location: " + rawData);
         var lat = rawData[0] as Float;
         var long = rawData[1] as Float;
+        _view.setLocationOveride(_breadcrumbContext.track().latLon2xy(lat, long, 0f));
+        return;
+      }
+      else if (type == PROTOCOL_CANCEL_LOCATION_REQUEST) {
+        System.println("got cancel location req req: " + rawData);
+        _view.setLocationOveride(null);
         return;
       }
 

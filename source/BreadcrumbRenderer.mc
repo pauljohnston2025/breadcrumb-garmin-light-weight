@@ -156,8 +156,11 @@ class BreadcrumbRenderer {
                 Graphics.TEXT_JUSTIFY_CENTER);
   }
 
-  function renderUser(dc as Dc, centerPosition as RectangularPoint,
-                      usersLastLocation as RectangularPoint) as Void {
+  function renderUser(
+    dc as Dc, 
+    centerPosition as RectangularPoint,
+    usersLastLocation as RectangularPoint
+  ) as Void {
     var triangleSizeY = 10;
     var triangleSizeX = 4;
     var userPosUnrotatedX =

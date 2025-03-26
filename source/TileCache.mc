@@ -244,6 +244,7 @@ class TileCache {
         // System.println("starting load tile: " + x + " " + y + " " + z);
         _webRequestHandler.add(
             new JsonRequest(
+                "/loadtile/" + tileKey(x, y, z),
                 "/loadtile",
                 {
                     "x" => x,

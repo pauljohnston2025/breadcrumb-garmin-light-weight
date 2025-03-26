@@ -14,12 +14,16 @@ class JsonRequest {
     var method as String;
     var params as Dictionary<Object, Object>;
     var handler as WebHandler;
+    // unique id for this request, if two requests have the same hash the second one will be dropped if the first is pending
+    var hash as String;
 
     function initialize(
+        _hash as String,
         _method as String,
         _params as Dictionary<Object, Object>, 
         _handler as WebHandler)
     {
+        hash = _hash;
         method = _method;
         params = _params;
         handler = _handler;
@@ -70,13 +74,16 @@ class WebRequestHandler
 {
     // see https://forums.garmin.com/developer/connect-iq/f/discussion/209443/watchface-working-in-simulator-failing-webrequest-on-device-with-http-response--101
     // only 3 web requests are allowed in parallel, so we need to buffer them up and make new requests when we get responses
-    var pending as Array<JsonRequest> = [];
+    // not sure on order of the dict, hopefully FIFO
+    var pending as Dictionary<String, JsonRequest> = {};
     var _outstandingCount as Number = 0;
     var _urlPrefix as String;
     var _ipsToTry as Array<String>;
     var _ipsToTryIndex as Number;
+    var _settings as Settings;
 
-    function initialize() {
+    function initialize(settings as Settings) {
+        _settings = settings;
         // todo: expose this through settings
         // we want to allow 
         // local connections through bluetooth bridge (slow but doess work): http://127.0.0.1:8080
@@ -145,14 +152,23 @@ class WebRequestHandler
     {
         // todo remove old requests if we get too many (slow network and requests too often mean the internal array grows and we OOM)
         // hard to know if there is one outstanding though, also need to startNext() on a timer if we have not seen any requests in a while
-        if (pending.size() > 100)
+        if (pending.size() > _settings.maxPendingWebRequests)
         {
             // we have too many, don't try and get the tile
             // we should try and dedupe - as its making a request for the same tile twice (2 renders cause 2 requests)
+            logE("Too many pending requests dropping: " + jsonReq.hash);
             return;
         }
 
-        pending.add(jsonReq);
+        var hash = jsonReq.hash;
+        if (pending.hasKey(hash))
+        {
+            log("Dropping req for: " + hash);
+            startNextIfWeCan(); // start any other ones whilst we are in a different function
+            return;
+        }
+
+        pending.put(hash, jsonReq);
         // for now just start one at a time, simpler to track
         // At most 3 outstanding can occur, todo query this limit
         // https://forums.garmin.com/developer/connect-iq/f/discussion/204298/ble-queue-full
@@ -192,15 +208,9 @@ class WebRequestHandler
     function start() as Void 
     {
         ++_outstandingCount;
-        var jsonReq = pending[0];
-        pending.remove(jsonReq); // might be better to slice?
-
-        // if(pending.size() > 20)
-        // {
-        //     System.println("killing with stack overflow");
-        //     (new WebRequestHandle(me, jsonReq.handler)).handle(1, {});
-        //     return;
-        // }
+        var key = pending.keys()[0];
+        var jsonReq = pending[key];
+        pending.remove(key);
 
         Communications.makeWebRequest(
             _urlPrefix + jsonReq.method,

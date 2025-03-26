@@ -33,8 +33,10 @@ class Settings {
     // calculated whenever others change
     var smallTilesPerBigTile = Math.ceil(256f/tileSize);
     
-    // todo add support for
+    // todo add ui for
     var userColour as Number = Graphics.COLOR_ORANGE;
+    // this should probably be the same as tileCacheSize? since there is no point hadving 20 outstanding if we can only store 10 of them
+    var maxPendingWebRequests as Number = 100;
 
     function initialize() {
         loadSettings();

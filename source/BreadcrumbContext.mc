@@ -24,7 +24,7 @@ class BreadcrumbContext {
     }
 
     _settings = new Settings();
-    _webRequestHandler = new WebRequestHandler();
+    _webRequestHandler = new WebRequestHandler(_settings);
     _tileCache = new TileCache(_webRequestHandler, _settings);
     _mapRenderer = new MapRenderer(_tileCache, _settings);
   }
