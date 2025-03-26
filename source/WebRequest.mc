@@ -74,8 +74,10 @@ class WebRequestHandler
 {
     // see https://forums.garmin.com/developer/connect-iq/f/discussion/209443/watchface-working-in-simulator-failing-webrequest-on-device-with-http-response--101
     // only 3 web requests are allowed in parallel, so we need to buffer them up and make new requests when we get responses
-    // not sure on order of the dict, hopefully FIFO
-    var pending as Dictionary<String, JsonRequest> = {};
+    // using 2 arrays so we get FIFO
+    // also dictionary seemed to make the code 2X slower, think because we had to serch all the keys for a string several times
+    var pending as Array<JsonRequest> = [];
+    var pendingHashes as Array<String> = [];
     var _outstandingCount as Number = 0;
     var _urlPrefix as String;
     var _ipsToTry as Array<String>;
@@ -161,14 +163,15 @@ class WebRequestHandler
         }
 
         var hash = jsonReq.hash;
-        if (pending.hasKey(hash))
+        if (pendingHashes.indexOf(hash) > -1)
         {
-            log("Dropping req for: " + hash);
+            // log("Dropping req for: " + hash);
             startNextIfWeCan(); // start any other ones whilst we are in a different function
             return;
         }
 
-        pending.put(hash, jsonReq);
+        pending.add(jsonReq);
+        pendingHashes.add(hash);
         // for now just start one at a time, simpler to track
         // At most 3 outstanding can occur, todo query this limit
         // https://forums.garmin.com/developer/connect-iq/f/discussion/204298/ble-queue-full
@@ -208,9 +211,16 @@ class WebRequestHandler
     function start() as Void 
     {
         ++_outstandingCount;
-        var key = pending.keys()[0];
-        var jsonReq = pending[key];
-        pending.remove(key);
+        var jsonReq = pending[0];
+        pending.remove(jsonReq);
+        // trust that the keys are in the same order as the hash
+        pendingHashes.remove(jsonReq.hash);
+        if (pending.size() != pendingHashes.size())
+        {
+            logE("size mismatch: " + pending.size() + " " + pendingHashes.size());
+            pending = [];
+            pendingHashes = [];
+        }
 
         Communications.makeWebRequest(
             _urlPrefix + jsonReq.method,
