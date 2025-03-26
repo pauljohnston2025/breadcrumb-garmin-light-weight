@@ -10,38 +10,35 @@ using Toybox.Communications;
 using Toybox.Application.Storage;
 using Toybox.Time;
 
-function tileKey(x as Number, y as Number, z as Number) as String {
-    // do not return tuple, they cannot be used to compare equality
-    return Lang.format("$1$-$2$-$3$", [x, y, z]);
-}
-
-class Tile {
+// trying to improve perf of lookups
+// string might be slow to create and compare
+// though string compares are likely done natively
+class TileKey {
     var x as Number;
     var y as Number;
     var z as Number;
-    var lastUsed as Time.Moment = Time.now();
-    var bitmap as Graphics.BufferedBitmap or Null;
-    var storageIndex as Number or Null;
 
     function initialize(x as Number, y as Number, z as Number) {
         self.x = x;
         self.y = y;
         self.z = z;
-        self.bitmap = null;
-        self.storageIndex = null;
     }
 
-    function setBitmap(bitmap as Graphics.BufferedBitmap) as Void {
-        self.bitmap = bitmap;
+    function toString() as String {
+        return Lang.format("$1$-$2$-$3$", [x, y, z]);
     }
 
-    function markUsed() as Void
-    {
-        lastUsed = Time.now();
+    function hashCode() as Number {
+        return x + y + z;
     }
 
-    function setStorageIndex(storageIndex as Number) as Void {
-        self.storageIndex = storageIndex;
+    function equals(other as Object or Null) as Boolean {
+        if (!(other instanceof TileKey))
+        {
+            return false;
+        }
+
+        return x == other.x && y == other.y && z == other.z ;
     }
 
     // Serialize the Tile object to a Dictionary
@@ -54,13 +51,13 @@ class Tile {
     }
 
         // Deserialize a Tile object from a Dictionary
-    static function deserializeFromDictionary(data as Dictionary) as Tile or Null {
+    static function deserializeFromDictionary(data as Dictionary) as TileKey or Null {
         if (!data.hasKey("x") || !data.hasKey("y") || !data.hasKey("z"))
         {
             return null;    
         }
 
-        return new Tile(
+        return new TileKey(
             data["x"] as Number, 
             data["y"] as Number, 
             data["z"] as Number
@@ -68,23 +65,43 @@ class Tile {
     }
 }
 
+class Tile {
+    var lastUsed as Number;
+    var bitmap as Graphics.BufferedBitmap or Null;
+    var storageIndex as Number or Null;
+
+    function initialize() {
+        self.lastUsed = System.getTimer();
+        self.bitmap = null;
+        self.storageIndex = null;
+    }
+
+    function setBitmap(bitmap as Graphics.BufferedBitmap) as Void {
+        self.bitmap = bitmap;
+    }
+
+    function markUsed() as Void
+    {
+        lastUsed = System.getTimer();
+    }
+
+    function setStorageIndex(storageIndex as Number) as Void {
+        self.storageIndex = storageIndex;
+    }
+}
+
 class WebTileRequestHandler extends WebHandler {
     var _tileCache as TileCache;
-    var _x as Number;
-    var _y as Number;
-    var _z as Number;
-
+    var _tileKey as TileKey;
+    
     function initialize(
         tileCache as TileCache,
-        x as Number, 
-        y as Number,
-        z as Number)
+        tileKey as TileKey
+    )
     {
         WebHandler.initialize();
         _tileCache = tileCache;
-        _x = x;
-        _y = y;
-        _z = z;
+        _tileKey = tileKey;
     }
 
     function handle(responseCode as Number, data as Dictionary or String or Iterator or Null) as Void
@@ -109,7 +126,7 @@ class WebTileRequestHandler extends WebHandler {
             System.println("wrong data type, not string");
             return;
         }
-        var tile = new Tile(_x, _y, _z);
+        var tile = new Tile();
         var mapTileStr = mapTile as String;
         // System.println("got tile string of length: " + mapTileStr.length());
         var bitmap = _tileCache.tileDataToBitmap(mapTileStr.toUtf8Array());
@@ -120,12 +137,12 @@ class WebTileRequestHandler extends WebHandler {
         }
 
         tile.setBitmap(bitmap);
-        _tileCache.addTile(tile);
+        _tileCache.addTile(_tileKey, tile);
     }
 }
 
 class TileCache {
-    var _internalCache as Dictionary;
+    var _internalCache as Dictionary<TileKey, Tile>;
     var _webRequestHandler as WebRequestHandler;
     var _palette as Array<Number>;
     var _settings as Settings;
@@ -235,8 +252,8 @@ class TileCache {
     }
 
     // loads a tile into the cache
-    function seedTile(x as Number, y as Number, z as Number) as Void {
-        if (haveTile(x, y, z))
+    function seedTile(tileKey as TileKey) as Void {
+        if (haveTile(tileKey))
         {
             return;
         }
@@ -244,34 +261,32 @@ class TileCache {
         // System.println("starting load tile: " + x + " " + y + " " + z);
         _webRequestHandler.add(
             new JsonRequest(
-                "/loadtile/" + tileKey(x, y, z),
+                "/loadtile/" + tileKey,
                 "/loadtile",
                 {
-                    "x" => x,
-                    "y" => y,
-                    "z" => z,
+                    "x" => tileKey.x,
+                    "y" => tileKey.y,
+                    "z" => tileKey.z,
                     "tileSize" => getApp()._breadcrumbContext.settings().tileSize,
                 },
-                new WebTileRequestHandler(me, x, y, z)
+                new WebTileRequestHandler(me, tileKey)
             )
         );
     }
 
     // puts a tile into the cache
-    function addTile(tile as Tile) as Void {
+    function addTile(tileKey as TileKey, tile as Tile) as Void {
         if (_internalCache.size() == getApp()._breadcrumbContext.settings().tileCacheSize)
         {
             evictLeastRecentlyUsedTile();
         }
 
-        _internalCache[tileKey(tile.x, tile.y, tile.z)] = tile;
+        _internalCache[tileKey] = tile;
     }
     
     // gets a tile that was stored by seedTile
-    function getTile(x as Number, y as Number, z as Number) as Tile or Null {
-        var key = tileKey(x, y, z);
-
-        var tile = _internalCache[key] as Tile or Null;
+    function getTile(tileKey as TileKey) as Tile or Null {
+        var tile = _internalCache[tileKey] as Tile or Null;
         if (tile != null)
         {
             // System.println("cache hit: " + x  + " " + y + " " + z);
@@ -284,10 +299,8 @@ class TileCache {
         return null;
     }
     
-    function haveTile(x as Number, y as Number, z as Number) as Boolean {
-        var key = tileKey(x, y, z);
-
-        return _internalCache.hasKey(key);
+    function haveTile(tileKey as TileKey) as Boolean {
+        return _internalCache.hasKey(tileKey);
     }
 
     function evictLeastRecentlyUsedTile() as Void {
@@ -308,7 +321,7 @@ class TileCache {
 
         if (oldestKey != null) {
             _internalCache.remove(oldestKey);
-            System.println("Evicted tile " + oldestKey + " from internal cache");
+            // System.println("Evicted tile " + oldestKey + " from internal cache");
         }
     }
 

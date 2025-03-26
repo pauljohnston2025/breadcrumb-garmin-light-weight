@@ -102,8 +102,9 @@ class MapRenderer {
                     z
                 );
 
-                _tileCache.seedTile(tile.x, tile.y, tile.z); // seed it for the next render
-                var tileFromCache = _tileCache.getTile(tile.x, tile.y, tile.z);
+                var tileKey = new TileKey(tile.x, tile.y, tile.z);
+                _tileCache.seedTile(tileKey); // seed it for the next render
+                var tileFromCache = _tileCache.getTile(tileKey);
                 if (tileFromCache == null || tileFromCache.bitmap == null)
                 {
                     continue;
