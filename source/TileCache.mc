@@ -10,25 +10,6 @@ using Toybox.Communications;
 using Toybox.Application.Storage;
 using Toybox.Time;
 
-// should be a multiple of 256 (since thats how tiles are stored, though the companion app will render them scaled for you)
-// we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes. 
-// so math.ceil should be used what figuring out how many meters a tile is.
-// eg. maybe we cannot do 128 but we can do 120 (this would limit the number of tiles, but the resolution would be slightly off)
-const DATA_TILE_SIZE = 64; 
-
-// there is both a memory limit to the number of tiles we can store, as well as a storage limit
-// for now this is both, though we may be abel to store more than we can in memory 
-// so we could use the storage as a tile cache, and revert to loading from there, as it would be much faster than 
-// fetching over bluetooth
-// not sure if we can even store bitmaps into storage, it says only BitmapResource
-// id have to serialise it to an array and back out (might not be too hard)
-const MEMORY_CACHED_TILES = 64; // enough to render outside the screen a bit 64*64 tiles with 64 tiles gives us 512*512 worth of pixel data
-
-const TILE_PALLET_MODE_OPTIMISED_STRING = 1;
-const TILE_PALLET_MODE_LIST = 2;
-const TILE_PALLET_MODE_OPTIMISED_STRING_WITH_PALLET = 3;
-const TILE_PALLET_MODE = TILE_PALLET_MODE_OPTIMISED_STRING_WITH_PALLET;
-
 function tileKey(x as Number, y as Number, z as Number) as String {
     // do not return tuple, they cannot be used to compare equality
     return Lang.format("$1$-$2$-$3$", [x, y, z]);
@@ -122,48 +103,24 @@ class WebTileRequestHandler extends WebHandler {
         }
 
         // System.print("data: " + data);
-        if (TILE_PALLET_MODE == TILE_PALLET_MODE_OPTIMISED_STRING || TILE_PALLET_MODE == TILE_PALLET_MODE_OPTIMISED_STRING_WITH_PALLET)
+        var mapTile = data["data"];
+        if (!(mapTile instanceof String))
         {
-            var mapTile = data["data"];
-            if (!(mapTile instanceof String))
-            {
-                System.println("wrong data type, not string");
-                return;
-            }
-            var tile = new Tile(_x, _y, _z);
-            var mapTileStr = mapTile as String;
-            // System.println("got tile string of length: " + mapTileStr.length());
-            var bitmap = _tileCache.tileDataToBitmap(mapTileStr.toUtf8Array());
-            if (bitmap == null)
-            {
-                System.println("failed to parse bitmap");
-                return;
-            }
+            System.println("wrong data type, not string");
+            return;
+        }
+        var tile = new Tile(_x, _y, _z);
+        var mapTileStr = mapTile as String;
+        // System.println("got tile string of length: " + mapTileStr.length());
+        var bitmap = _tileCache.tileDataToBitmap(mapTileStr.toUtf8Array());
+        if (bitmap == null)
+        {
+            System.println("failed to parse bitmap");
+            return;
+        }
 
-            tile.setBitmap(bitmap);
-            _tileCache.addTile(tile);
-            return;
-        }
-        else if (TILE_PALLET_MODE == TILE_PALLET_MODE_LIST) 
-        {
-            var mapTile = data["data"];
-            var tile = new Tile(_x,  _y, _z);
-            var bitmap = _tileCache.tileDataToBitmap(mapTile as Array<Number>);
-            if (bitmap == null)
-            {
-                System.println("failed to parse bitmap LIST MODE");
-                return;
-            }
-
-            tile.setBitmap(bitmap);
-            _tileCache.addTile(tile);
-            return;
-        }
-        else
-        {
-            System.println("unrecognised tile mode: " + TILE_PALLET_MODE);
-            return;
-        }
+        tile.setBitmap(bitmap);
+        _tileCache.addTile(tile);
     }
 }
 
@@ -171,8 +128,14 @@ class TileCache {
     var _internalCache as Dictionary;
     var _webRequestHandler as WebRequestHandler;
     var _palette as Array<Number>;
+    var _settings as Settings;
 
-    function initialize(webRequestHandler as WebRequestHandler) {
+    function initialize(
+        webRequestHandler as WebRequestHandler,
+        settings as Settings
+    ) 
+    {
+        _settings = settings;
         _webRequestHandler = webRequestHandler;
         _internalCache = {};
 
@@ -286,7 +249,7 @@ class TileCache {
                     "x" => x,
                     "y" => y,
                     "z" => z,
-                    "tileSize" => DATA_TILE_SIZE,
+                    "tileSize" => getApp()._breadcrumbContext.settings().tileSize,
                 },
                 new WebTileRequestHandler(me, x, y, z)
             )
@@ -295,7 +258,7 @@ class TileCache {
 
     // puts a tile into the cache
     function addTile(tile as Tile) as Void {
-        if (_internalCache.size() == MEMORY_CACHED_TILES)
+        if (_internalCache.size() == getApp()._breadcrumbContext.settings().tileCacheSize)
         {
             evictLeastRecentlyUsedTile();
         }
@@ -352,13 +315,13 @@ class TileCache {
     {
         // System.println("tile data " + arr);
 
-        if (arr.size() < DATA_TILE_SIZE*DATA_TILE_SIZE)
+        if (arr.size() < _settings.tileSize*_settings.tileSize)
         {
             System.println("tile length too short: " + arr.size());
             return null;
         }
 
-        if (arr.size() != DATA_TILE_SIZE*DATA_TILE_SIZE)
+        if (arr.size() != _settings.tileSize*_settings.tileSize)
         {
             // we could load tile partially, but that would require checking each itteration of the for loop, 
             // want to avoid any extra work for perf
@@ -367,48 +330,20 @@ class TileCache {
 
         // System.println("processing tile data, first colour is: " + arr[0]);
 
-        var localBitmap = newBitmap(TILE_SIZE);
+        // todo check if setting the pallet actually reduces memory
+        var tileSize = _settings.tileSize;
+        var localBitmap = newBitmap(tileSize, _palette);
         var localDc = localBitmap.getDc();
         var it = 0;
-        for (var i=0; i<DATA_TILE_SIZE; ++i)
+        for (var i=0; i<tileSize; ++i)
         {
-            for (var j=0; j<DATA_TILE_SIZE; ++j)
+            for (var j=0; j<tileSize; ++j)
             {
-                var colour = null;
-                if (TILE_PALLET_MODE == TILE_PALLET_MODE_OPTIMISED_STRING)
-                {
-                    var byteColour = arr[it] as Number;
-                    // System.println("processing colour" + byteColour);
-                    // 2 bits per colour (todo set up colour pallete instead)
-                    var red = ((byteColour & 0x030) >> 4) * 255 / 3;
-                    var green = ((byteColour & 0x0C) >> 2) * 255 / 3;
-                    var blue = (byteColour & 0x03) * 255 / 3;
-                    colour = (red << 16) | (green << 8) | blue;
-                }
-                else if (TILE_PALLET_MODE == TILE_PALLET_MODE_OPTIMISED_STRING_WITH_PALLET)
-                {
-                    var byteColour = arr[it] as Number;
-                    colour = _palette[byteColour & 0x3F];
-                }
-                else if (TILE_PALLET_MODE == TILE_PALLET_MODE_LIST) 
-                {
-                    colour = arr[it] as Number;
-                }
-                else
-                {
-                    System.println("unrecognised tile mode: " + TILE_PALLET_MODE);
-                    return null;
-                }
-                
+                var byteColour = arr[it] as Number;
+                var colour = _palette[byteColour & 0x3F];
                 it++;
                 localDc.setColor(colour, colour);
-                if (PIXEL_SIZE == 1)
-                {
-                    localDc.drawPoint(i, j);
-                }
-                else {
-                    localDc.fillRectangle(i * PIXEL_SIZE, j * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
-                }
+                localDc.drawPoint(i, j);
             }
         }
 

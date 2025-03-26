@@ -47,6 +47,12 @@ class WebRequestHandle {
             webHandler.updateUrlPrefix();
         }
 
+        if (responseCode != 200)
+        {
+            // todo only send this on certain errors, and only probbaly only after some limit?
+            Communications.transmit("startserice", {}, getApp()._commStatus);
+        }
+
         // got some stack overflows, as handle can be called inline if it knows it will fail (eg. BLE_CONNECTION_UNAVAILABLE)
         // also saw alot of NETWORK_REQUEST_TIMED_OUT in the logs, but thnk it was when the BLE_CONNECTION_UNAVAILABLE happened 
         // as that was the last log, and it makes sense that it can short circuit

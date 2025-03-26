@@ -10,12 +10,6 @@ const DESIRED_SCALE_PIXEL_WIDTH as Float = 100.0f;
 const DESIRED_ELEV_SCALE_PIXEL_WIDTH as Float = 50.0f;
 const MIN_SCALE as Float = DESIRED_SCALE_PIXEL_WIDTH / 100000.0f;
 
-enum /*Mode*/ {
-  MODE_NORMAL,
-  MODE_ELEVATION,
-  MODE_MAX,
-}
-
 class BreadcrumbRenderer {
   var _breadcrumbContext as BreadcrumbContext;
   var _scale as Float or Null = null;
@@ -23,7 +17,6 @@ class BreadcrumbRenderer {
   var _rotationRad as Float = 0.0;  // heading in radians
   var _zoomAtPace as Boolean = true;
   var _clearRouteProgress as Number = 0;
-  var mode as Number = MODE_NORMAL;
 
   // units in meters (float/int) to label
   var SCALE_NAMES as Dictionary = {
@@ -186,7 +179,7 @@ class BreadcrumbRenderer {
     var triangleRightX = triangleTopX + triangleSizeX;
     var triangleRightY = triangleLeftY;
 
-    dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_BLACK);
+    dc.setColor(_breadcrumbContext.settings().userColour, Graphics.COLOR_BLACK);
     dc.setPenWidth(6);
     dc.drawLine(triangleTopX, triangleTopY, triangleRightX, triangleRightY);
     dc.drawLine(triangleRightX, triangleRightY, triangleLeftX, triangleLeftY);
@@ -239,11 +232,7 @@ class BreadcrumbRenderer {
     //             Graphics.TEXT_JUSTIFY_LEFT);
   }
 
-  // maybe put this into another class that handle ui touch events etc.
-  function renderUi(dc as Dc) as Boolean {
-    dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_BLACK);
-    dc.setPenWidth(1);
-
+  function renderClearTrackUi(dc as Dc) as Boolean {
     var padding = _xHalf / 2.0f;
     var topText = _yHalf / 2.0f;
     switch(_clearRouteProgress) {
@@ -286,6 +275,13 @@ class BreadcrumbRenderer {
       }
     }
 
+    return false;
+  }
+
+  function renderUi(dc as Dc) as Void {
+    dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+    dc.setPenWidth(1);
+
     // single line across the screen
     // dc.drawLine(0, yHalf, dc.getWidth(), yHalf);
     // var text = "LU Scale: " + _currentScale;
@@ -304,7 +300,7 @@ class BreadcrumbRenderer {
 
     // current mode displayed
     var modeLetter = "T";
-    switch(mode)
+    switch(_breadcrumbContext.settings().mode)
     {
       case MODE_NORMAL:
         modeLetter = "T";
@@ -316,9 +312,9 @@ class BreadcrumbRenderer {
 
     dc.drawText(modeSelectX, modeSelectY, Graphics.FONT_XTINY, modeLetter, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
-    if (mode == MODE_ELEVATION)
+    if (_breadcrumbContext.settings().mode == MODE_ELEVATION)
     {
-      return false;
+      return;
     }
 
     // make this a const
@@ -359,7 +355,6 @@ class BreadcrumbRenderer {
     // north facing N with litle cross
     // var nPosX = 295;
     // var nPosY = 85;
-    return false;
   }
 
   function getDecIncAmount(direction as Number) as Float {
@@ -396,7 +391,7 @@ class BreadcrumbRenderer {
   }
 
   function incScale() as Void {
-    if (mode == MODE_ELEVATION)
+    if (_breadcrumbContext.settings().mode == MODE_ELEVATION)
     {
       return;
     }
@@ -408,7 +403,7 @@ class BreadcrumbRenderer {
   }
 
   function decScale() as Void {
-    if (mode == MODE_ELEVATION)
+    if (_breadcrumbContext.settings().mode == MODE_ELEVATION)
     {
       return;
     }
@@ -472,7 +467,7 @@ class BreadcrumbRenderer {
   }
 
   function resetScale() as Void { 
-    if (mode == MODE_ELEVATION)
+    if (_breadcrumbContext.settings().mode == MODE_ELEVATION)
     {
       return;
     }
@@ -480,24 +475,14 @@ class BreadcrumbRenderer {
   }
 
   function toggleZoomAtPace() as Void { 
-    if (mode == MODE_ELEVATION)
+    if (_breadcrumbContext.settings().mode == MODE_ELEVATION)
     {
       return;
     }
 
     _zoomAtPace = !_zoomAtPace; 
   }
-  function cycleMode() as Void
-  {
-    // System.println("mode cycled");
-    // could just add one and check if over MODE_MAX?
-    mode++;
-    if (mode >= MODE_MAX)
-    {
-      mode = MODE_NORMAL;
-    }
-  }
-
+  
   // things set to -1 are set by setScreenSize()
   var _xElevationStart as Float = -1f; // think this needs to depend on dpi?
   var _xElevationEnd as Float = -1f;
@@ -588,7 +573,7 @@ class BreadcrumbRenderer {
       dc.drawText(_xElevationStart, _yHalf + _halfYElevationHeight, Graphics.FONT_XTINY, bottomScaleM.format("%.0f") + "m", Graphics.TEXT_JUSTIFY_LEFT);
     }
     
-    dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
+    dc.setColor(_breadcrumbContext.settings().elevationColour, Graphics.COLOR_TRANSPARENT);
     dc.setPenWidth(3);
 
     if (hPixelWidth != 0) // if statement makes sure that we can get a SCALE_NAMES[hDistanceM]

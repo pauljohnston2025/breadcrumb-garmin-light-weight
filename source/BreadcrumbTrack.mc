@@ -210,8 +210,7 @@ class BreadcrumbTrack {
   // call on first start
   function onStart() as Void
   {
-    var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-    System.println("onStart" + today.sec);
+    log("onStart");
     // check from startup, and also clear the current coordinates, 
     // anything we got before start is invalid
     coordinates.clear();
@@ -232,8 +231,7 @@ class BreadcrumbTrack {
     {
       onStart();
     }
-    var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-    System.println("onStartResume" + today.sec);
+    log("onStartResume");
     // check from startup
     seenStartupPoints = 0;
     possibleBadPointsAdded = 0;

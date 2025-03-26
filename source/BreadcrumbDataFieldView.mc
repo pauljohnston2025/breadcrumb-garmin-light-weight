@@ -5,9 +5,6 @@ import Toybox.WatchUi;
 import Toybox.Communications;
 import Toybox.Graphics;
 
-const ROUTE_COLOUR = Graphics.COLOR_BLUE;
-const TRACK_COLOUR = Graphics.COLOR_GREEN;
-
 // note to get this to work on the simulator need to modify simulator.json and
 // add isTouchable this is already on edgo devices with touch, but not the
 // venu2s, even though I tested and it worked on the actual device
@@ -26,7 +23,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   // Set the label of the data field here.
   function initialize(breadcrumbContext as BreadcrumbContext) {
     _breadcrumbContext = breadcrumbContext;
-    _scratchPadBitmap = newBitmap(_breadcrumbContext.trackRenderer()._screenSize.toNumber());
+    _scratchPadBitmap = newBitmap(_breadcrumbContext.trackRenderer()._screenSize.toNumber(), null);
     DataField.initialize();
   }
 
@@ -38,7 +35,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       dc.getWidth() * 1.0f,
       textDim[0] * 1.0f
     );
-    _scratchPadBitmap = newBitmap(_breadcrumbContext.trackRenderer()._screenSize.toNumber());
+    _scratchPadBitmap = newBitmap(_breadcrumbContext.trackRenderer()._screenSize.toNumber(), null);
   }
 
   function onWorkoutStarted() as Void {
@@ -67,7 +64,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     {
 
     }
-    
+
     _breadcrumbContext.track().onActivityInfo(info);
     _breadcrumbContext.trackRenderer().onActivityInfo(info);
     var currentSpeed = info.currentSpeed;
@@ -77,6 +74,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   }
 
   function onUpdate(dc as Dc) as Void {
+    renderMain(dc);
+    _breadcrumbContext.trackRenderer().renderUi(dc);
+  }
+
+  function renderMain(dc as Dc) as Void {
+
     // _renderCounter++;
     // // slow down the calls to onUpdate as its a heavy operation, we will only render every second time (effectively 2 seconds)
     // // this should save some battery, and hopefully the screen stays as the old renderred value
@@ -96,14 +99,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     var renderer = _breadcrumbContext.trackRenderer();
     var mapRenderer = _breadcrumbContext.mapRenderer();
-    if (renderer.renderUi(dc))
+    if (renderer.renderClearTrackUi(dc))
     {
       return;
     }
 
     // mode should be wtored here, but is needed for renderring the ui
     // should structure this way better, but oh well (renderer per mode etc.)
-    if (renderer.mode == MODE_ELEVATION)
+    if (_breadcrumbContext.settings().mode == MODE_ELEVATION)
     {
        rederElevation(dc);
        return;
@@ -119,7 +122,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       if (route != null) {
         mapRenderer.renderMap(dc, _scratchPadBitmap, route.boundingBoxCenter, renderer.rotationRadians());
         renderer.updateCurrentScale(route.boundingBox);
-        renderer.renderTrack(dc, route, ROUTE_COLOUR, route.boundingBoxCenter);
+        renderer.renderTrack(dc, route, _breadcrumbContext.settings().routeColour, route.boundingBoxCenter);
         renderer.renderCurrentScale(dc);
       }
 
@@ -184,8 +187,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
       mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians());
       renderer.updateCurrentScale(outerBoundingBox);
-      renderer.renderTrack(dc, route, ROUTE_COLOUR, centerPoint);
-      renderer.renderTrack(dc, track, TRACK_COLOUR, centerPoint);
+      renderer.renderTrack(dc, route, _breadcrumbContext.settings().routeColour, centerPoint);
+      renderer.renderTrack(dc, track, _breadcrumbContext.settings().trackColour, centerPoint);
       renderer.renderUser(dc, centerPoint, lastPoint);
       renderer.renderCurrentScale(dc);
       return;
@@ -197,8 +200,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
 
     renderer.updateCurrentScale(track.boundingBox);
-    renderer.renderTrack(dc, track, TRACK_COLOUR, centerPoint);
     renderer.renderUser(dc, centerPoint, lastPoint);
+    renderer.renderTrack(dc, track, _breadcrumbContext.settings().trackColour, centerPoint);
     renderer.renderCurrentScale(dc);
   }
 
@@ -222,9 +225,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     renderer.updateCurrentScale(outerBoundingBox);
 
     if (route != null) {
-      renderer.renderTrack(dc, route, ROUTE_COLOUR, lastPoint);
+      renderer.renderTrack(dc, route, _breadcrumbContext.settings().routeColour, lastPoint);
     }
-    renderer.renderTrack(dc, track, TRACK_COLOUR, lastPoint);
+    renderer.renderTrack(dc, track, _breadcrumbContext.settings().trackColour, lastPoint);
     renderer.renderUser(dc, lastPoint, lastPoint);
     renderer.renderCurrentScale(dc);
   }
@@ -241,8 +244,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     renderer.renderElevationChart(dc, hScale, vScale, startAt);
     if (route != null) {
-      renderer.renderTrackElevtion(dc, route, ROUTE_COLOUR, hScale, vScale, startAt);
+      renderer.renderTrackElevtion(dc, route, _breadcrumbContext.settings().routeColour, hScale, vScale, startAt);
     }
-    renderer.renderTrackElevtion(dc, track, TRACK_COLOUR, hScale, vScale, startAt);
+    renderer.renderTrackElevtion(dc, track, _breadcrumbContext.settings().trackColour, hScale, vScale, startAt);
   }
 }

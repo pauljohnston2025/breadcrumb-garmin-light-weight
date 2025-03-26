@@ -3,10 +3,6 @@ import Toybox.Graphics;
 import Toybox.WatchUi;
 import Toybox.PersistedContent;
 
-const PIXEL_SIZE = 1;
-const TILE_SIZE = DATA_TILE_SIZE * PIXEL_SIZE;
-const TILE_PADDING = 0;
-
 class TileCoordinates
 {
     var x as Number;
@@ -30,13 +26,15 @@ class MapRenderer {
     // Could do multidim array to make calling code slightly easier
     // todo: get screen size and factor in some amount of padding
     var _screenSize as Float = 360f;
-    var _tileCountXY as Number = Math.ceil(_screenSize/TILE_SIZE + 2 * TILE_PADDING).toNumber();
     var _tileCache as TileCache;
-    var smallTilesPerBigTile = Math.ceil(256f/DATA_TILE_SIZE);
+    var _settings as Settings;
 
-    function initialize(tileCache as TileCache) {
+    function initialize(
+        tileCache as TileCache,
+        settings as Settings) {
         // todo persist to storage and load from storage in init
         _tileCache = tileCache;
+        _settings = settings;
     }
     
     function epsg3857ToTile(xIn as Float, yIn as Float, z as Number) as TileCoordinates {
@@ -47,46 +45,15 @@ class MapRenderer {
         var x = (xIn + originShift) / (2 * originShift) * Math.pow(2, z);
         var y = (originShift - yIn) / (2 * originShift) * Math.pow(2, z);
 
-        var tileX = Math.floor(x * smallTilesPerBigTile).toNumber();
-        var tileY = Math.floor(y * smallTilesPerBigTile).toNumber();
+        var tileX = Math.floor(x * _settings.smallTilesPerBigTile).toNumber();
+        var tileY = Math.floor(y * _settings.smallTilesPerBigTile).toNumber();
 
-        var tileXStandard = Math.floor(x).toNumber();
-        var tileYStandard = Math.floor(y).toNumber();
+        // var tileXStandard = Math.floor(x).toNumber();
+        // var tileYStandard = Math.floor(y).toNumber();
         // System.println("tile url should be: https://a.tile.opentopomap.org/" + z + "/" + tileXStandard + "/" + tileYStandard + ".png");
 
         return new TileCoordinates(tileX, tileY, z);
     }
-
-    // function loadMapTilesForPosition(
-    //     point as RectangularPoint,
-    //     scale as Float) as Void
-    // {
-    //     // todo only call this when we have moved far enough, should cache a large distance around us
-    //     // only when we move off the edge of the map do we need to get the next tiles
-    //     // and we could move a bunch of them across ourselves, and only get the ones needed off the edge
-    //     var z = 10;
-    //     var originShift = 2 * Math.PI * 6378137 / 2.0; // Half circumference
-    //     var bigTileWidthM = (2 * originShift) / Math.pow(2, z);
-    //     // smaller since we only have 64*64 tiles, so its /4
-    //     var tileWidthMPartTile = bigTileWidthM/smallTilesPerBigTile;
-    //     for (var x=0 ; x<_tileCountXY; ++x)
-    //     {
-    //         for (var y=0 ; y<_tileCountXY; ++y)
-    //         {
-    //             // todo calculate zoom base off scale
-    //             // calculate a different tile for each x/y coordintate
-    //             // add a cache for the tiles loaded
-    //             // todo figure out actual meters per tile size based of scale
-    //             var tile = epsg3857ToTile(
-    //                 point.x + x * tileWidthMPartTile, 
-    //                 point.y - y * tileWidthMPartTile, 
-    //                 z
-    //             );
-
-    //             _tileCache.seedTile(tile.x, tile.y, tile.z);
-    //         }
-    //     }
-    // }
 
     function renderMap(
         dc as Dc,
@@ -94,6 +61,11 @@ class MapRenderer {
         centerPosition as RectangularPoint,
         rotationRad as Float) as Void
     {
+        if (!_settings.mapEnabled)
+        {
+            return;
+        }
+
         var scratchPadDc = scratchPad.getDc();
         // for debug its purple so we can see any issues, otherwise it should be black
         scratchPadDc.setColor(Graphics.COLOR_PURPLE, Graphics.COLOR_PURPLE);
@@ -107,14 +79,15 @@ class MapRenderer {
         // one large one then rotate looks much better, andis possibly faster
 
         // tilecount will change at zoom levels (we have to scale the tiles up or down)
-        var tileCount = _screenSize / TILE_SIZE;
+        var tileSize = _settings.tileSize;
+        var tileCount = _screenSize / tileSize;
 
         // 2 to 15 see https://opentopomap.org/#map=2/-43.2/305.9
         var z = 15;
         var originShift = 2 * Math.PI * 6378137 / 2.0; // Half circumference
         var bigTileWidthM = (2 * originShift) / Math.pow(2, z);
         // smaller since we only have 64*64 tiles, so its /4
-        var tileWidthMPartTile = bigTileWidthM/smallTilesPerBigTile;
+        var tileWidthMPartTile = bigTileWidthM/_settings.smallTilesPerBigTile;
         for (var x=0 ; x<tileCount; ++x)
         {
             for (var y=0 ; y<tileCount; ++y)
@@ -136,7 +109,7 @@ class MapRenderer {
                     continue;
                 }
 
-                scratchPadDc.drawBitmap(x * DATA_TILE_SIZE, y * DATA_TILE_SIZE, tileFromCache.bitmap);
+                scratchPadDc.drawBitmap(x * tileSize, y * tileSize, tileFromCache.bitmap);
             }
         }
 

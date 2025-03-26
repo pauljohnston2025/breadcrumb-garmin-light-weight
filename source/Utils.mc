@@ -53,11 +53,12 @@ function isnan(a as Float) as Boolean {
   return a != a;
 }
 
-function newBitmap(size as Number) as Graphics.BufferedBitmap
+function newBitmap(size as Number, palette as Array or Null) as Graphics.BufferedBitmap
 {
     var options = {
       :width => size,
       :height => size,
+      :palette => palette,
     };
 
     var bitmap = Graphics.createBufferedBitmap(options).get();
@@ -68,4 +69,21 @@ function newBitmap(size as Number) as Graphics.BufferedBitmap
     }
 
     return bitmap;
+}
+
+// todo inline with prettier and only log in debug builds
+// todo log levels (problably seperate functions)
+function log(message as String) as Void
+{
+  logLevel("D", message);
+}
+
+function logLevel(lvl as String, message as String) as Void
+{
+  System.println("" + System.getTimer() + " " + lvl + " " + message);
+}
+
+function logE(message as String)
+{
+  logLevel("E", message);
 }

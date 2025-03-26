@@ -41,7 +41,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
        && y < renderer.modeSelectY + halfHitboxSize  
        && x > renderer.modeSelectX - halfHitboxSize
        && x < renderer.modeSelectX + halfHitboxSize) {
-      renderer.cycleMode();
+      _breadcrumbContext.settings().nextMode();
       return true;
     }
     else if (y < hitboxSize) {

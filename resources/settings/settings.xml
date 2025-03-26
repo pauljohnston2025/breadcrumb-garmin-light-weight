@@ -1,0 +1,34 @@
+<settings>
+    <!-- https://developer.garmin.com/connect-iq/core-topics/properties-and-app-settings/ -->
+    <!-- todo add prompt to some of these -->
+    <setting propertyKey="tileSize" title="@Strings.tile_size_title">
+        <settingConfig type="numeric" min="2" max="256"/>
+    </setting>
+
+    <setting propertyKey="tileCacheSize" title="@Strings.tile_cache_size_title">
+        <settingConfig type="alphaNumeric"/>
+    </setting>
+
+    <setting propertyKey="mode" title="@Strings.mode_title">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.track_route_mode</listEntry>
+            <listEntry value="1">@Strings.elevation_mode</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="mapEnabled" title="@Strings.map_enabled_title">
+        <settingConfig type="boolean"/>
+    </setting>
+
+    <setting propertyKey="trackColour" title="@Strings.track_colour_title">
+        <settingConfig type="alphaNumeric"/>
+    </setting>
+
+    <setting propertyKey="routeColour" title="@Strings.route_colour_title">
+        <settingConfig type="alphaNumeric"/>
+    </setting>
+
+    <setting propertyKey="elevationColour" title="@Strings.elevation_colour_title">
+        <settingConfig type="alphaNumeric"/>
+    </setting>
+</settings>

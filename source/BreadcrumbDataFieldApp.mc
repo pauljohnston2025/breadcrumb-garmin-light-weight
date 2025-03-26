@@ -32,6 +32,11 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     _view = new BreadcrumbDataFieldView(_breadcrumbContext);
   }
 
+  function onSettingsChanged() as Void
+  {
+    _breadcrumbContext.settings().onSettingsChanged();
+  }
+
   // onStart() is called on application start up
     function onStart(state as Dictionary?) as Void {
       if (Communications has : registerForPhoneAppMessages) {
@@ -99,23 +104,9 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
           return;
         }
 
-        var tileData = null;
-        if (TILE_PALLET_MODE == TILE_PALLET_MODE_OPTIMISED_STRING || TILE_PALLET_MODE == TILE_PALLET_MODE_OPTIMISED_STRING_WITH_PALLET)
-        {
-          var tileDataStr = rawData[2] as String;
-          tileData = tileDataStr.toUtf8Array();
-        }
-        else if (TILE_PALLET_MODE == TILE_PALLET_MODE_LIST) 
-        {
-            tileData = rawData[2] as Array<Number>;
-        }
-        else
-        {
-            System.println("unrecognised tile mode: " + TILE_PALLET_MODE);
-            return;
-        }
-
-        if (tileData.size() != DATA_TILE_SIZE*DATA_TILE_SIZE)
+        var tileDataStr = rawData[2] as String;
+        var tileData = tileDataStr.toUtf8Array();
+        if (tileData.size() != _breadcrumbContext.settings().tileSize * _breadcrumbContext.settings().tileSize)
         {
           System.println("Failed to parse map tile, bad tile length: " + tileData.size());
           return;
@@ -123,7 +114,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
         var x = rawData[0] as Number;
         var y = rawData[1] as Number;
-        var tile = new Tile(x,  y, 0);
+        var tile = new Tile(x,  y, 0); // todo send z too
         var _tileCache = _breadcrumbContext.mapRenderer()._tileCache;
         var bitmap = _tileCache.tileDataToBitmap(tileData);
         if (bitmap == null)
@@ -143,16 +134,8 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         }
 
         System.println("parsing load tile req: " + rawData);
-        // todo set the lat/long to the map renderer so its fixed on that point
-
-        // _breadcrumbContext.mapRenderer().loadMapTilesForPosition(
-        //   _breadcrumbContext.track().latLon2xy(
-        //     rawData[0] as Float, 
-        //     rawData[1] as Float,
-        //     0f // altitude
-        //   ),
-        //   _breadcrumbContext.trackRenderer()._currentScale
-        // );
+        var lat = rawData[0] as Float;
+        var long = rawData[1] as Float;
         return;
       }
 

@@ -1,0 +1,10 @@
+<properties>
+    <!-- https://developer.garmin.com/connect-iq/core-topics/properties-and-app-settings/ -->
+	<property id="tileSize" type="number">64</property>
+	<property id="tileCacheSize" type="string">64</property>
+	<property id="mode" type="number">0</property>
+	<property id="mapEnabled" type="boolean">true</property>
+	<property id="trackColour" type="string">00FF00</property>
+	<property id="routeColour" type="string">0000FF</property>
+	<property id="elevationColour" type="string">FF5500</property>
+</properties>
