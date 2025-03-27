@@ -235,6 +235,7 @@ class BreadcrumbRenderer {
   }
 
   function renderClearTrackUi(dc as Dc) as Boolean {
+    // should be using Toybox.WatchUi.Confirmation and Toybox.WatchUi.ConfirmationDelegate for questions
     var padding = _xHalf / 2.0f;
     var topText = _yHalf / 2.0f;
     switch(_clearRouteProgress) {
