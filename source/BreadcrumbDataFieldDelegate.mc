@@ -25,6 +25,18 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
     var x = coords[0];
     var y = coords[1];
     var renderer = _breadcrumbContext.trackRenderer();
+    var settings = _breadcrumbContext.settings();
+
+    if (settings.uiMode == UI_MODE_NONE)
+    {
+      return false;
+    }
+
+    if (settings.uiMode == UI_MODE_SETTINGS_ONLY)
+    {
+      // todo open settings view
+      return true;
+    }
 
     if (renderer.handleClearRoute(x, y))
     {
@@ -41,7 +53,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
        && y < renderer.modeSelectY + halfHitboxSize  
        && x > renderer.modeSelectX - halfHitboxSize
        && x < renderer.modeSelectX + halfHitboxSize) {
-      _breadcrumbContext.settings().nextMode();
+      settings.nextMode();
       return true;
     }
     else if (y < hitboxSize) {
@@ -56,7 +68,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
       return true;
     }
     else if(x < hitboxSize) {
-      renderer.toggleZoomAtPace();
+      settings.toggleZoomAtPace();
       return true;
     }
     

@@ -9,6 +9,20 @@ enum /*Mode*/ {
   MODE_MAX,
 }
 
+enum /*ZoomMode*/ {
+  ZOOM_AT_PACE_MODE_PACE,
+  ZOOM_AT_PACE_MODE_STOPPED,
+  ZOOM_AT_PACE_MODE_MAX,
+}
+
+enum /*UiMode*/ {
+  UI_MODE_SHOW_ALL, // show a heap of ui elements on screen always
+  UI_MODE_HIDDEN, // ui still active, but is hidden
+  UI_MODE_SETTINGS_ONLY, // touching the screen will open settings
+  UI_MODE_NONE, // no accessible ui (touch events disabled)
+  UI_MODE_MAX
+}
+
 class Settings {
     // should be a multiple of 256 (since thats how tiles are stored, though the companion app will render them scaled for you)
     // we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes. 
@@ -29,22 +43,75 @@ class Settings {
     var trackColour as Number = Graphics.COLOR_GREEN;
     var routeColour as Number = Graphics.COLOR_BLUE;
     var elevationColour as Number = Graphics.COLOR_ORANGE;
-
-    // calculated whenever others change
-    var smallTilesPerBigTile = Math.ceil(256f/tileSize);
-    
-    // todo add ui for
     var userColour as Number = Graphics.COLOR_ORANGE;
     // this should probably be the same as tileCacheSize? since there is no point hadving 20 outstanding if we can only store 10 of them
     var maxPendingWebRequests as Number = 100;
+    var scale as Float or Null = null;
+    // note: this renders around the users position, but may result in a
+    // different zoom level `scale` is set
+    var metersAroundUser as Number = 100;
+    var zoomAtPaceMode as Number = ZOOM_AT_PACE_MODE_PACE;
+    var zoomAtPaceSpeedMPS as Float = 1.0; // meters per second
+    var uiMode as Number = UI_MODE_SHOW_ALL;
+    var fixedLatitude as Float or Null = null;
+    var fixedLongitude as Float or Null = null;
 
-    function initialize() {
-        loadSettings();
-    }
-
+    // calculated whenever others change
+    var smallTilesPerBigTile = Math.ceil(256f/tileSize);
+    var fixedPosition as RectangularPoint or Null = null;
+    
     function setMode(_mode as Number) as Void {
         mode = _mode;
         Application.Properties.setValue("mode", mode);
+    }
+    
+    function setFixedPosition(lat as Float or Null, long as Float or Null) as Void {
+        fixedLatitude = lat;
+        fixedLongitude = long;
+        // be very careful about putting null into properties, it breaks everything
+        if (lat == null)
+        {
+            lat = 0;
+        }
+        if (long == null)
+        {
+            long = 0;
+        }
+        Application.Properties.setValue("fixedLatitude", lat);
+        Application.Properties.setValue("fixedLongitude", long);
+
+        if (fixedLatitude != null && fixedLatitude == 0)
+        {
+            fixedLatitude = null;
+        }
+        if (fixedLongitude != null && fixedLongitude == 0)
+        {
+            fixedLongitude = null;
+        }
+
+        if (fixedLatitude == null || fixedLongitude == null)
+        {
+            fixedPosition = null;
+            return;
+        }
+
+        fixedPosition = getApp()._breadcrumbContext.track().latLon2xy(lat, long, 0f);
+    }
+    
+    function setZoomAtPaceMode(_zoomAtPaceMode as Number) as Void {
+        zoomAtPaceMode = _zoomAtPaceMode;
+        Application.Properties.setValue("zoomAtPaceMode", zoomAtPaceMode);
+    }
+    
+    function setScale(_scale as Float or Null) as Void {
+        scale = _scale;
+        // be very careful about putting null into properties, it breaks everything
+        if (scale == null)
+        {
+            Application.Properties.setValue("scale", 0);        
+            return;
+        }
+        Application.Properties.setValue("scale", scale);
     }
 
     function nextMode() as Void
@@ -60,50 +127,226 @@ class Settings {
         setMode(mode);
     }
 
-    function parseTileCacheSizeString(sizeString as String, _tileSize as Number) as Number {
+    function toggleZoomAtPace() as Void { 
+        if (mode != MODE_NORMAL)
+        {
+            return;
+        }
+
+        zoomAtPaceMode++;
+        if (zoomAtPaceMode >= ZOOM_AT_PACE_MODE_MAX)
+        {
+            zoomAtPaceMode = ZOOM_AT_PACE_MODE_PACE;
+        }
+
+        setZoomAtPaceMode(zoomAtPaceMode);
+    }
+
+    function parseTileCacheSizeString(key as String, _tileSize as Number) as Number {
+        var sizeString = null;
         try {
+            sizeString = Application.Properties.getValue(key);
+            if (sizeString == null)
+            {
+                return _tileSize;
+            }
+
+            if (!(sizeString instanceof String))
+            {
+                return _tileSize;
+            }
+
             var unit = sizeString.substring(sizeString.length() - 2, sizeString.length()); // Extract unit ("KB")
             if (unit.equals("KB")) {
                 var value = sizeString.substring(0, sizeString.length() - 2).toNumber();
+                // empty or invalid strings convert to null
+                if (value == null)
+                {
+                    return _tileSize;
+                }
                 // todo figure out a sane value for _memoryKbPerPixel
                 // probably better to just specify a number
                 var memoryKbPerPixel = 1;
                 return value / (memoryKbPerPixel * _tileSize * _tileSize);
             }
 
-            return sizeString.toNumber();
+            return parseNumber(key, _tileSize);
         } 
         catch (e) {
-            logE("Error parsing tile size: " + sizeString);
+            logE("Error parsing tile size: " + key + " " + sizeString);
         }
 
-        return 64;
+        return _tileSize;
     }
 
-    // Helper function to parse colour
-    function parseColor(colorString as String, defaultValue as Number) as Number {
+    // some times these parserswere throwing when it was an empty strings seem to result in, or wrong type
+    // 
+    // Error: Unhandled Exception
+    // Exception: UnexpectedTypeException: Expected Number/Float/Long/Double/Char, given null/Number
+
+    function parseColor(key as String, defaultValue as Number) as Number {
+        var colorString = null;
         try {
-            return (colorString).toNumberWithBase(16);
+            colorString = Application.Properties.getValue(key);
+            if (colorString == null)
+            {
+                return defaultValue;
+            }
+
+            if (colorString instanceof String)
+            {
+                // empty or invalid strings convert to null
+                var ret = colorString.toNumberWithBase(16);
+                if (ret == null)
+                {
+                    return defaultValue;
+                }
+
+                return ret;
+            }
+
+            return parseNumber(key, defaultValue);
+                
         } catch (e) {
-            System.println("Error parsing color: " + colorString);
+            System.println("Error parsing color: " + key + " " + colorString);
+        }
+        return defaultValue;
+    }
+    
+    function parseNumber(key as String, defaultValue as Number) as Number {
+        var value = null;
+        try {
+            value = Application.Properties.getValue(key);
+            if (value == null)
+            {
+                return defaultValue;
+            }
+
+            if (value instanceof String || value instanceof Float || value instanceof Number || value instanceof Double)
+            {
+                // empty or invalid strings convert to null
+                var ret = value.toNumber();
+                if (ret == null)
+                {
+                    return defaultValue;
+                }
+
+                return ret;
+            }
+
+            return defaultValue;
+        } catch (e) {
+            System.println("Error parsing number: " + key + " " + value);
+        }
+        return defaultValue;
+    }
+    
+    function parseFloat(key as String, defaultValue as Float) as Float {
+        var value = null;
+        try {
+            value = Application.Properties.getValue(key);
+            if (value == null)
+            {
+                return defaultValue;
+            }
+
+            if (value instanceof String || value instanceof Float || value instanceof Number || value instanceof Double)
+            {
+                // empty or invalid strings convert to null
+                var ret = value.toFloat();
+                if (ret == null)
+                {
+                    return defaultValue;
+                }
+
+                return ret;
+            }
+
+            return defaultValue;
+        } catch (e) {
+            System.println("Error parsing float: " + key + " " + value);
+        }
+        return defaultValue;
+    }
+
+    function parseOptionalFloat(key as String, defaultValue as Float or Null) as Float or Null {
+        var value = null;
+        try {
+            value = Application.Properties.getValue(key);
+            if (value == null)
+            {
+                return null;
+            }
+
+            return parseFloat(key, defaultValue);
+        } catch (e) {
+            System.println("Error parsing optional float: " + key + " " + value);
         }
         return defaultValue;
     }
 
     // Load the values initially from storage
     function loadSettings() as Void {
+        var resetDefaults = Application.Properties.getValue("resetDefaults") as Boolean;
+        if (resetDefaults)
+        {
+            System.println("Resetting settings to default values");
+            var settings = new Settings();
+            Application.Properties.setValue("tileSize", settings.tileSize);
+            Application.Properties.setValue("tileCacheSize", settings.tileCacheSize);
+            Application.Properties.setValue("mode", settings.mode);
+            Application.Properties.setValue("mapEnabled", settings.mapEnabled);
+            Application.Properties.setValue("trackColour", settings.trackColour.format("%X"));
+            Application.Properties.setValue("routeColour", settings.routeColour.format("%X"));
+            Application.Properties.setValue("elevationColour", settings.elevationColour.format("%X"));
+            Application.Properties.setValue("userColour", settings.userColour.format("%X"));
+            Application.Properties.setValue("maxPendingWebRequests", settings.maxPendingWebRequests);
+            Application.Properties.setValue("scale", 0);
+            Application.Properties.setValue("metersAroundUser", settings.metersAroundUser);
+            Application.Properties.setValue("zoomAtPaceMode", settings.zoomAtPaceMode);
+            Application.Properties.setValue("zoomAtPaceSpeedMPS", settings.zoomAtPaceSpeedMPS);
+            Application.Properties.setValue("uiMode", settings.uiMode);
+            Application.Properties.setValue("fixedLatitude", 0);
+            Application.Properties.setValue("fixedLongitude", 0);
+            Application.Properties.setValue("resetDefaults", false);
+            return;
+        }
+
         System.println("loadSettings: Loading all settings");
-        tileSize = Application.Properties.getValue("tileSize") as Number;
-        smallTilesPerBigTile = Math.ceil(256f/tileSize);
+        tileSize = parseNumber("tileSize", tileSize);
+        System.println("tileSize: " + tileSize);
+        if (tileSize < 2)
+        {
+            tileSize = 2;
+        }
+        else if (tileSize > 256)
+        {
+            tileSize = 256;
+        }
+        smallTilesPerBigTile = Math.ceil(256f/tileSize).toNumber();
 
-        var tileCacheSizeString = Application.Properties.getValue("tileCacheSize") as String;
-        tileCacheSize = parseTileCacheSizeString(tileCacheSizeString, tileSize);
-        mode = Application.Properties.getValue("mode") as Number;
+        tileCacheSize = parseTileCacheSizeString("tileCacheSize", tileSize);
+        mode = parseNumber("mode", mode);
         mapEnabled = Application.Properties.getValue("mapEnabled") as Boolean;
-        trackColour = parseColor(Application.Properties.getValue("trackColour") as String, Graphics.COLOR_GREEN);
-        routeColour = parseColor(Application.Properties.getValue("routeColour") as String, Graphics.COLOR_BLUE);
-        elevationColour = parseColor(Application.Properties.getValue("elevationColour") as String, Graphics.COLOR_ORANGE);
+        trackColour = parseColor("trackColour", trackColour);
+        routeColour = parseColor("routeColour", routeColour);
+        elevationColour = parseColor("elevationColour", elevationColour);
+        userColour = parseColor("userColour", userColour);
+        maxPendingWebRequests = parseNumber("maxPendingWebRequests", maxPendingWebRequests);
+        scale = parseOptionalFloat("scale", scale);
+        if (scale == 0)
+        {
+            scale = null;
+        }
+        metersAroundUser = parseNumber("metersAroundUser", metersAroundUser);
+        zoomAtPaceMode = parseNumber("zoomAtPaceMode", zoomAtPaceMode);
+        zoomAtPaceSpeedMPS = parseFloat("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
+        uiMode = parseNumber("uiMode", uiMode);
 
+        fixedPosition = null;
+        fixedLatitude = parseOptionalFloat("fixedLatitude", fixedLatitude);
+        fixedLongitude = parseOptionalFloat("fixedLongitude", fixedLongitude);
+        setFixedPosition(fixedLatitude, fixedLongitude);
     }
 
     //Called on settings change

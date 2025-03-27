@@ -83,7 +83,7 @@ function logLevel(lvl as String, message as String) as Void
   System.println("" + System.getTimer() + " " + lvl + " " + message);
 }
 
-function logE(message as String)
+function logE(message as String) as Void
 {
   logLevel("E", message);
 }

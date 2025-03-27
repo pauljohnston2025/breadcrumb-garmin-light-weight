@@ -139,12 +139,12 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         System.println("parsing req location: " + rawData);
         var lat = rawData[0] as Float;
         var long = rawData[1] as Float;
-        _view.setLocationOveride(_breadcrumbContext.track().latLon2xy(lat, long, 0f));
+        _breadcrumbContext.settings().setFixedPosition(lat, long);
         return;
       }
       else if (type == PROTOCOL_CANCEL_LOCATION_REQUEST) {
         System.println("got cancel location req req: " + rawData);
-        _view.setLocationOveride(null);
+        _breadcrumbContext.settings().setFixedPosition(null, null);
         return;
       }
 

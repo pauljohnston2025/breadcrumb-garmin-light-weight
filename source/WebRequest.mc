@@ -158,7 +158,7 @@ class WebRequestHandler
         {
             // we have too many, don't try and get the tile
             // we should try and dedupe - as its making a request for the same tile twice (2 renders cause 2 requests)
-            logE("Too many pending requests dropping: " + jsonReq.hash);
+            // logE("Too many pending requests dropping: " + jsonReq.hash);
             return;
         }
 

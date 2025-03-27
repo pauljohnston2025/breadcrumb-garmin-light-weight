@@ -12,10 +12,8 @@ const MIN_SCALE as Float = DESIRED_SCALE_PIXEL_WIDTH / 100000.0f;
 
 class BreadcrumbRenderer {
   var _breadcrumbContext as BreadcrumbContext;
-  var _scale as Float or Null = null;
   var _currentScale as Float = 0.0;
   var _rotationRad as Float = 0.0;  // heading in radians
-  var _zoomAtPace as Boolean = true;
   var _clearRouteProgress as Number = 0;
 
   // units in meters (float/int) to label
@@ -85,8 +83,9 @@ class BreadcrumbRenderer {
 
   function calculateScale(
       outerBoundingBox as[Float, Float, Float, Float]) as Float {
-    if (_scale != null) {
-      return _scale;
+    var scale = _breadcrumbContext.settings().scale;
+    if (scale != null) {
+      return scale;
     }
 
     var xDistanceM = outerBoundingBox[2] - outerBoundingBox[0];
@@ -282,6 +281,7 @@ class BreadcrumbRenderer {
   }
 
   function renderUi(dc as Dc) as Void {
+    var settings = _breadcrumbContext.settings();
     dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
     dc.setPenWidth(1);
 
@@ -293,7 +293,7 @@ class BreadcrumbRenderer {
     // dc.drawText(0, _yHalf - textHeight - 0.1, font, text,
     //             Graphics.TEXT_JUSTIFY_LEFT);
 
-    // var text2 = "Scale: " + _scale;
+    // var text2 = "Scale: " + settings.scale;
     // var textHeight2 = dc.getTextDimensions(text2, font)[1];
     // dc.drawText(0, _yHalf + textHeight2 + 0.1, font, text2,
     //             Graphics.TEXT_JUSTIFY_LEFT);
@@ -335,9 +335,9 @@ class BreadcrumbRenderer {
                 _xHalf + halfLineLength, dc.getHeight() - lineFromEdge);
 
     // auto
-    if (_scale != null) {
+    if (settings.scale != null) {
       dc.drawText(dc.getWidth() - lineFromEdge, _yHalf, Graphics.FONT_XTINY,
-                  "S: " + _scale.format("%.2f"), Graphics.TEXT_JUSTIFY_RIGHT);
+                  "S: " + settings.scale.format("%.2f"), Graphics.TEXT_JUSTIFY_RIGHT);
     } else {
       dc.drawText(dc.getWidth() - lineFromEdge, _yHalf, Graphics.FONT_XTINY,
                   "A", Graphics.TEXT_JUSTIFY_RIGHT);
@@ -348,7 +348,8 @@ class BreadcrumbRenderer {
     var fvText = "M";
     // dirty hack, should pass the bool in another way
     // ui should be its own class, as should states
-    if (!_zoomAtPace) {
+    if (settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_STOPPED)
+    {
       // zoom view
       fvText = "S";
     }
@@ -385,7 +386,7 @@ class BreadcrumbRenderer {
           var nextDistanceM = keys[nextScaleIndex] as Float;
           // -2 since we need some fudge factor to make sure we are very close to desired length, but not past it
           var desiredScale = (DESIRED_SCALE_PIXEL_WIDTH - 2) / nextDistanceM;
-          var toInc = (desiredScale - _scale );
+          var toInc = (desiredScale - _breadcrumbContext.settings().scale );
           return toInc;
       }
     }
@@ -394,32 +395,34 @@ class BreadcrumbRenderer {
   }
 
   function incScale() as Void {
-    if (_breadcrumbContext.settings().mode == MODE_ELEVATION)
+    var settings = _breadcrumbContext.settings();
+    if (settings.mode != MODE_NORMAL)
     {
       return;
     }
 
-    if (_scale == null) {
-      _scale = _currentScale;
+    if (settings.scale == null) {
+      settings.setScale(_currentScale);
     }
-    _scale += getDecIncAmount(1);
+    settings.setScale(settings.scale + getDecIncAmount(1));
   }
 
   function decScale() as Void {
-    if (_breadcrumbContext.settings().mode == MODE_ELEVATION)
+    var settings = _breadcrumbContext.settings();
+    if (settings.mode != MODE_NORMAL)
     {
       return;
     }
 
-    if (_scale == null) {
-      _scale = _currentScale;
+    if (settings.scale == null) {
+      settings.setScale(_currentScale);
     }
-    _scale += getDecIncAmount(-1);
+    settings.setScale(settings.scale + getDecIncAmount(-1));
 
     // prevent negative values
     // may need to go to lower scales to display larger maps (maybe like 0.05?)
-    if (_scale < MIN_SCALE) {
-      _scale = MIN_SCALE;
+    if (settings.scale < MIN_SCALE) {
+      settings.scale = MIN_SCALE;
     }
   }
 
@@ -470,20 +473,12 @@ class BreadcrumbRenderer {
   }
 
   function resetScale() as Void { 
-    if (_breadcrumbContext.settings().mode == MODE_ELEVATION)
+    var settings = _breadcrumbContext.settings();
+    if (settings.mode == MODE_ELEVATION)
     {
       return;
     }
-    _scale = null; 
-  }
-
-  function toggleZoomAtPace() as Void { 
-    if (_breadcrumbContext.settings().mode == MODE_ELEVATION)
-    {
-      return;
-    }
-
-    _zoomAtPace = !_zoomAtPace; 
+    settings.setScale(null);
   }
   
   // things set to -1 are set by setScreenSize()

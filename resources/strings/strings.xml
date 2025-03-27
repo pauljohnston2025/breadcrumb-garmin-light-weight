@@ -1,9 +1,8 @@
 <strings>
     <string id="AppName">BreadcrumbDataField</string>
 
-    <string id="label">My Value</string>
-    <string id="tile_size_title">Tile Size</string>
-    <string id="tile_cache_size_title">Tile Cache Size</string>
+    <string id="tile_size_title">Tile size (pixels)</string>
+    <string id="tile_cache_size_title">Tile cache size (tiles)</string>
     <string id="mode_title">Display Mode</string>
     <string id="elevation_mode">Elevation</string>
     <string id="track_route_mode">Track/Route</string>
@@ -11,4 +10,38 @@
     <string id="track_colour_title">Track Colour</string>
     <string id="route_colour_title">Route Colour</string>
     <string id="elevation_colour_title">Elevation Colour</string>
+    <string id="resetDefaults">Restore defaults</string>
+    <string id="userColour">User Colour</string>
+    <string id="maxPendingWebRequests">Max pending web requests</string>
+    <string id="maxPendingWebRequestsPrompt"></string>
+    <string id="scale">Scale (0 for auto)</string>
+    <!-- todo add promp based on scale and give relative numbers -->
+    <string id="scalePrompt">0 - auto, eg. 0.98 - 100m, 0.1 - 1km</string>
+    <string id="metersAroundUser">Meters around user</string>
+    <string id="metersAroundUserPrompt">100</string>
+    <string id="zoomAtPaceTitle">Zoom at pace</string>
+    <string id="zoomAtPaceDescription">Map will automatically zoom when moving or stopped, can be disabled by manually settings scale</string>
+    <string id="zoomAtPaceModeTitle">Mode</string>
+    <string id="zoomAtPaceModePace">Zoom when moving</string>
+    <string id="zoomAtPaceModeStopped">Zoom when stopped</string>
+    <string id="zoomAtPaceSpeedMPS">Speed (m/s)</string>
+    <string id="zoomAtPaceSpeedMPSPrompt">1.0</string>
+    <string id="uiModeTitle">UI Mode</string>
+    <string id="uiModeShowAll">Show on top</string>
+    <string id="uiModeHidden">Hidden</string>
+    <string id="uiModeSettings">Any touch opens settings</string>
+    <string id="uiModeNone">Disabled</string>
+    <string id="fixedLatitude">Fixed Longitude</string>
+    <string id="fixedLatitudePrompt">0 - disabled, -90 to 90</string>
+    <string id="fixedLongitude">Fixed Latitude</string>
+    <string id="fixedLongitudePrompt">0 - disabled, -180 to 180</string>
+
+    <string id="coloursTitle">Colours</string>
+    <string id="coloursDescription"></string>
+    <string id="mapSettingsTitle">Map settings</string>
+
+    <string id="mapSettingsDescription">Tile size should be a multiple of 256 for best results. Choose these values wisely. too big = crash, too small = crash or slow performance</string>
+    <string id="tileSizePrompt">Pixels per tile x and y</string>
+    <string id="tileCacheSizePrompt">Number of tiles to cache</string>
+    <string id="colourPrompt">Colour in AARRGGBB format</string>
 </strings>

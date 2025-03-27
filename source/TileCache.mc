@@ -313,7 +313,7 @@ class TileCache {
         for (var i = 0; i < keys.size(); i++) {
             var key = keys[i];
             var tile = self._internalCache[key];
-            if (oldestTime == null || oldestTime.greaterThan(tile.lastUsed)) {
+            if (oldestTime == null || oldestTime > tile.lastUsed) {
                 oldestTime = tile.lastUsed;
                 oldestKey = key;
             }

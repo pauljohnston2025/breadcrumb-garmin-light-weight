@@ -1,34 +1,88 @@
 <settings>
     <!-- https://developer.garmin.com/connect-iq/core-topics/properties-and-app-settings/ -->
     <!-- todo add prompt to some of these -->
-    <setting propertyKey="tileSize" title="@Strings.tile_size_title">
-        <settingConfig type="numeric" min="2" max="256"/>
-    </setting>
 
-    <setting propertyKey="tileCacheSize" title="@Strings.tile_cache_size_title">
-        <settingConfig type="alphaNumeric"/>
-    </setting>
-
-    <setting propertyKey="mode" title="@Strings.mode_title">
+    <setting propertyKey="@Properties.mode" title="@Strings.mode_title">
         <settingConfig type="list">
             <listEntry value="0">@Strings.track_route_mode</listEntry>
             <listEntry value="1">@Strings.elevation_mode</listEntry>
         </settingConfig>
     </setting>
 
-    <setting propertyKey="mapEnabled" title="@Strings.map_enabled_title">
+    <setting propertyKey="@Properties.uiMode" title="@Strings.uiModeTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.uiModeShowAll</listEntry>
+            <listEntry value="1">@Strings.uiModeHidden</listEntry>
+            <listEntry value="2">@Strings.uiModeSettings</listEntry>
+            <listEntry value="3">@Strings.uiModeNone</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.scale" title="@Strings.scale" prompt="@Strings.scalePrompt">
+        <settingConfig type="numeric" min="0" max="10"/>
+    </setting>
+    
+    <group id="zoomAtPace" title="@Strings.zoomAtPaceTitle" description="@Strings.zoomAtPaceDescription">
+        <setting propertyKey="@Properties.zoomAtPaceMode" title="@Strings.zoomAtPaceModeTitle">
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.zoomAtPaceModePace</listEntry>
+                <listEntry value="1">@Strings.zoomAtPaceModeStopped</listEntry>
+            </settingConfig>
+        </setting>
+
+        <setting propertyKey="@Properties.metersAroundUser" title="@Strings.metersAroundUser" prompt="@Strings.metersAroundUserPrompt">
+            <settingConfig type="numeric" min="0" max="100000"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.zoomAtPaceSpeedMPS" title="@Strings.zoomAtPaceSpeedMPS" prompt="@Strings.zoomAtPaceSpeedMPSPrompt">
+            <settingConfig type="numeric" min="0" max="50"/>
+        </setting>
+    </group>
+
+    <setting propertyKey="@Properties.mapEnabled" title="@Strings.map_enabled_title">
         <settingConfig type="boolean"/>
     </setting>
+    <group id="mapSettings" title="@Strings.mapSettingsTitle" description="@Strings.mapSettingsDescription" enableIfTrue="@Properties.mapEnabled">
+        <setting propertyKey="@Properties.tileSize" title="@Strings.tile_size_title" prompt="@Strings.tileSizePrompt">
+            <settingConfig type="numeric" min="2" max="256"/>
+        </setting>
 
-    <setting propertyKey="trackColour" title="@Strings.track_colour_title">
-        <settingConfig type="alphaNumeric"/>
-    </setting>
+        <setting propertyKey="@Properties.tileCacheSize" title="@Strings.tile_cache_size_title" prompt="@Strings.tileCacheSizePrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.maxPendingWebRequests" title="@Strings.maxPendingWebRequests" prompt="@Strings.maxPendingWebRequestsPrompt">
+            <settingConfig type="numeric" min="10" max="100"/>
+        </setting>
 
-    <setting propertyKey="routeColour" title="@Strings.route_colour_title">
-        <settingConfig type="alphaNumeric"/>
-    </setting>
+        <setting propertyKey="@Properties.fixedLatitude" title="@Strings.fixedLatitude" prompt="@Strings.fixedLatitudePrompt">
+            <settingConfig type="numeric" min="-90" max="90"/>
+        </setting>
 
-    <setting propertyKey="elevationColour" title="@Strings.elevation_colour_title">
-        <settingConfig type="alphaNumeric"/>
+        <setting propertyKey="@Properties.fixedLongitude" title="@Strings.fixedLongitude" prompt="@Strings.fixedLongitudePrompt">
+            <settingConfig type="numeric" min="-180" max="180"/>
+        </setting>
+    </group>
+
+    <group id="colours" title="@Strings.coloursTitle" description="@Strings.coloursDescription">
+        <setting propertyKey="@Properties.trackColour" title="@Strings.track_colour_title" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+
+        <setting propertyKey="@Properties.routeColour" title="@Strings.route_colour_title" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+
+        <setting propertyKey="@Properties.elevationColour" title="@Strings.elevation_colour_title" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.userColour" title="@Strings.userColour" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+    </group>
+
+    <setting propertyKey="@Properties.resetDefaults" title="@Strings.resetDefaults">
+        <settingConfig type="boolean"/>
     </setting>
 </settings>

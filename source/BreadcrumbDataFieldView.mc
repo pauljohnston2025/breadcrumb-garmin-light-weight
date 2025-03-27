@@ -18,7 +18,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   var _breadcrumbContext as BreadcrumbContext;
   var _speedMPS as Float = 0.0;  // start at no speed
   var _scratchPadBitmap as BufferedBitmap;
-  var _locationOveride as RectangularPoint or Null = null;
   // var _renderCounter = 0;
 
   // Set the label of the data field here.
@@ -76,19 +75,19 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
   function onUpdate(dc as Dc) as Void {
     renderMain(dc);
-    _breadcrumbContext.trackRenderer().renderUi(dc);
-  }
 
-  function setLocationOveride(point as RectangularPoint or Null) as Void 
-  {
-      _locationOveride = point;
+    if (_breadcrumbContext.settings().uiMode == UI_MODE_SHOW_ALL)
+    {
+      _breadcrumbContext.trackRenderer().renderUi(dc);
+    }
   }
 
   function center(point as RectangularPoint) as RectangularPoint
   {
-      if (_locationOveride != null)
+      var settings = _breadcrumbContext.settings();
+      if (settings.fixedPosition != null)
       {
-        return _locationOveride;
+        return settings.fixedPosition;
       }
 
       return point;
@@ -115,6 +114,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     var renderer = _breadcrumbContext.trackRenderer();
     var mapRenderer = _breadcrumbContext.mapRenderer();
+    var settings = _breadcrumbContext.settings();
     if (renderer.renderClearTrackUi(dc))
     {
       return;
@@ -122,7 +122,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     // mode should be wtored here, but is needed for renderring the ui
     // should structure this way better, but oh well (renderer per mode etc.)
-    if (_breadcrumbContext.settings().mode == MODE_ELEVATION)
+    if (settings.mode == MODE_ELEVATION)
     {
        rederElevation(dc);
        return;
@@ -139,7 +139,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var _center = center(route.boundingBoxCenter);
         mapRenderer.renderMap(dc, _scratchPadBitmap, _center, renderer.rotationRadians());
         renderer.updateCurrentScale(route.boundingBox);
-        renderer.renderTrack(dc, route, _breadcrumbContext.settings().routeColour, _center);
+        renderer.renderTrack(dc, route, settings.routeColour, _center);
         renderer.renderCurrentScale(dc);
       }
 
@@ -148,8 +148,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     // if we are moving at some pace check the mode we are in to determine if we
     // zoom in or out
-    if (_speedMPS > 1.0) {
-      if (renderer._zoomAtPace) {
+    if (_speedMPS > settings.zoomAtPaceSpeedMPS) {
+      if (settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_PACE) {
         renderCloseAroundCurrentPosition(dc, mapRenderer, renderer, lastPoint, route, track);
         return;
       }
@@ -163,7 +163,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // whilst stopped but also allows quick zoom in before setting manual zoom
     // (rather than having to manually zoom in from the outer level) once zoomed
     // in we lock onto the user position anyway
-    if (renderer._zoomAtPace) {
+    if (settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_PACE) {
       renderZoomedOut(dc, mapRenderer, renderer, lastPoint, route, track);
       return;
     }
@@ -181,7 +181,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // when the scale is locked, we need to be where the user is, otherwise we
     // could see a blank part of the map, when we are zoomed in and have no
     // context
-    var useUserLocation = renderer._scale != null;
+    var useUserLocation = _breadcrumbContext.settings().scale != null;
 
     // we are in 'full render mode', so do the entire extent
     if (route != null) {
@@ -233,10 +233,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       mapRenderer as MapRenderer,
       renderer as BreadcrumbRenderer, lastPoint as RectangularPoint,
       route as BreadcrumbTrack or Null, track as BreadcrumbTrack) as Void {
-    // note: this renders around the users position, but may result in a
-    // different zoom level if the scale is set in the renderer render around
-    // the current position
-    var renderDistanceM = 100;
+    var renderDistanceM = _breadcrumbContext.settings().metersAroundUser;
     var outerBoundingBox = [
       lastPoint.x - renderDistanceM,
       lastPoint.y - renderDistanceM,
