@@ -1,0 +1,9 @@
+<menu id="SettingsMap" title="@Strings.mapSettingsTitle" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <menu-item id="settingsMapEnabled" label="@Strings.map_enabled_title"/>
+    <menu-item id="settingsMapTileSize" label="@Strings.tile_size_title"/>
+    <menu-item id="settingsMapTileCacheSize" label="@Strings.tile_cache_size_title"/>
+    <menu-item id="settingsMapMaxPendingWebRequests" label="@Strings.maxPendingWebRequests"/>
+    <menu-item id="settingsMapFixedLatitude" label="@Strings.fixedLatitude"/>
+    <menu-item id="settingsMapFixedLongitude" label="@Strings.fixedLongitude"/>
+    <menu-item id="settingsBack" label="@Strings.back"/>
+</menu>

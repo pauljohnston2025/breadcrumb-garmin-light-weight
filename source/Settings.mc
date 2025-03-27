@@ -65,6 +65,11 @@ class Settings {
         Application.Properties.setValue("mode", mode);
     }
     
+    function setUiMode(_uiMode as Number) as Void {
+        uiMode = _uiMode;
+        Application.Properties.setValue("uiMode", uiMode);
+    }
+    
     function setFixedPosition(lat as Float or Null, long as Float or Null) as Void {
         fixedLatitude = lat;
         fixedLongitude = long;
@@ -101,6 +106,22 @@ class Settings {
     function setZoomAtPaceMode(_zoomAtPaceMode as Number) as Void {
         zoomAtPaceMode = _zoomAtPaceMode;
         Application.Properties.setValue("zoomAtPaceMode", zoomAtPaceMode);
+    }
+    
+    function setMapEnabled(_mapEnabled as Boolean) as Void {
+        mapEnabled = _mapEnabled;
+        Application.Properties.setValue("mapEnabled", mapEnabled);
+    }
+
+    function toggleMapEnabled() as Void 
+    {
+        if (mapEnabled)
+        {
+            setMapEnabled(false);
+            return;
+        }
+
+        setMapEnabled(true);
     }
     
     function setScale(_scale as Float or Null) as Void {
@@ -285,30 +306,35 @@ class Settings {
         return defaultValue;
     }
 
+    function resetDefaults() as Void
+    {
+        System.println("Resetting settings to default values");
+        var settings = new Settings();
+        Application.Properties.setValue("tileSize", settings.tileSize);
+        Application.Properties.setValue("tileCacheSize", settings.tileCacheSize);
+        Application.Properties.setValue("mode", settings.mode);
+        Application.Properties.setValue("mapEnabled", settings.mapEnabled);
+        Application.Properties.setValue("trackColour", settings.trackColour.format("%X"));
+        Application.Properties.setValue("routeColour", settings.routeColour.format("%X"));
+        Application.Properties.setValue("elevationColour", settings.elevationColour.format("%X"));
+        Application.Properties.setValue("userColour", settings.userColour.format("%X"));
+        Application.Properties.setValue("maxPendingWebRequests", settings.maxPendingWebRequests);
+        Application.Properties.setValue("scale", 0);
+        Application.Properties.setValue("metersAroundUser", settings.metersAroundUser);
+        Application.Properties.setValue("zoomAtPaceMode", settings.zoomAtPaceMode);
+        Application.Properties.setValue("zoomAtPaceSpeedMPS", settings.zoomAtPaceSpeedMPS);
+        Application.Properties.setValue("uiMode", settings.uiMode);
+        Application.Properties.setValue("fixedLatitude", 0);
+        Application.Properties.setValue("fixedLongitude", 0);
+        Application.Properties.setValue("resetDefaults", false);
+    }
+
     // Load the values initially from storage
     function loadSettings() as Void {
         var resetDefaults = Application.Properties.getValue("resetDefaults") as Boolean;
         if (resetDefaults)
         {
-            System.println("Resetting settings to default values");
-            var settings = new Settings();
-            Application.Properties.setValue("tileSize", settings.tileSize);
-            Application.Properties.setValue("tileCacheSize", settings.tileCacheSize);
-            Application.Properties.setValue("mode", settings.mode);
-            Application.Properties.setValue("mapEnabled", settings.mapEnabled);
-            Application.Properties.setValue("trackColour", settings.trackColour.format("%X"));
-            Application.Properties.setValue("routeColour", settings.routeColour.format("%X"));
-            Application.Properties.setValue("elevationColour", settings.elevationColour.format("%X"));
-            Application.Properties.setValue("userColour", settings.userColour.format("%X"));
-            Application.Properties.setValue("maxPendingWebRequests", settings.maxPendingWebRequests);
-            Application.Properties.setValue("scale", 0);
-            Application.Properties.setValue("metersAroundUser", settings.metersAroundUser);
-            Application.Properties.setValue("zoomAtPaceMode", settings.zoomAtPaceMode);
-            Application.Properties.setValue("zoomAtPaceSpeedMPS", settings.zoomAtPaceSpeedMPS);
-            Application.Properties.setValue("uiMode", settings.uiMode);
-            Application.Properties.setValue("fixedLatitude", 0);
-            Application.Properties.setValue("fixedLongitude", 0);
-            Application.Properties.setValue("resetDefaults", false);
+            resetDefaults();
             return;
         }
 

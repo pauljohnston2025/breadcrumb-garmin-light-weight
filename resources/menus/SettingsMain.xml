@@ -1,0 +1,10 @@
+<menu id="SettingsMain" title="@Strings.SettingsTitle" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <menu-item id="settingsMainMode" label="@Strings.mode_title"/>
+    <menu-item id="settingsMainModeUiMode" label="@Strings.uiModeTitle"/>
+    <menu-item id="settingsMainScale" label="@Strings.scale"/>
+    <menu-item id="settingsMainZoomAtPace" label="@Strings.zoomAtPaceTitle"/>
+    <menu-item id="settingsMainMap" label="@Strings.mapSettingsTitle"/>
+    <menu-item id="settingsMainColours" label="@Strings.coloursTitle"/>
+    <menu-item id="settingsMainResetDefaults" label="@Strings.resetDefaults"/>
+    <menu-item id="settingsMainExit" label="@Strings.exit"/>
+</menu>

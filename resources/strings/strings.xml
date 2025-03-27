@@ -1,5 +1,9 @@
 <strings>
     <string id="AppName">BreadcrumbDataField</string>
+    <string id="SettingsTitle">Breadcrumb Data Field Settings</string>
+    <string id="cancel">Cancel</string>
+    <string id="exit">Exit</string>
+    <string id="back">Back</string>
 
     <string id="tile_size_title">Tile size (pixels)</string>
     <string id="tile_cache_size_title">Tile cache size (tiles)</string>

@@ -301,6 +301,13 @@ class BreadcrumbRenderer {
 
     // clear route
     dc.drawText(clearRouteX, clearRouteY, Graphics.FONT_XTINY, "C", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    var mapletter = "Y";
+    if (!settings.mapEnabled)
+    {
+      mapletter = "N";
+    }
+    dc.drawText(mapEnabledX, mapEnabledY, Graphics.FONT_XTINY, mapletter, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    // dc.drawText(settingsX, settingsY, Graphics.FONT_XTINY, "S", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
     // current mode displayed
     var modeLetter = "T";
@@ -493,6 +500,10 @@ class BreadcrumbRenderer {
   var clearRouteY as Float = -1f; 
   var modeSelectX as Float = -1f; 
   var modeSelectY as Float = -1f; 
+  var settingsX as Float = -1f; 
+  var settingsY as Float = -1f; 
+  var mapEnabledX as Float = -1f; 
+  var mapEnabledY as Float = -1f; 
   var hitboxSize as Float = 50f;
   var halfHitboxSize as Float = hitboxSize / 2.0f;
 
@@ -516,6 +527,14 @@ class BreadcrumbRenderer {
     // top right
     modeSelectX = _xHalf + offsetSize;
     modeSelectY = _yHalf - offsetSize;
+    
+    // bottom left
+    settingsX = _xHalf - offsetSize;
+    settingsY = _yHalf + offsetSize;
+    
+    // bottom right
+    mapEnabledX = _xHalf + offsetSize;
+    mapEnabledY = _yHalf + offsetSize;
   }
 
   function renderElevationChart(

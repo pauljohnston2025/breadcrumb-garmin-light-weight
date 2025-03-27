@@ -22,35 +22,11 @@ class SettingsView extends WatchUi.View {
       textDim[0] * 1.0f
     );
 
-    setLayout($.Rez.Layouts.SettingsLayout(dc));
+    WatchUi.pushView(new $.Rez.Menus.SettingsMain(), new $.SettingsMainDelegate(), WatchUi.SLIDE_IMMEDIATE);
   }
 
-  // onupdate is not called continuously, so each click event we need to rerender
-  // would not be an issue with WatchUi.Picker
   function onUpdate(dc as Dc) as Void {
-    // todo: have a much better settings ui based on WatchUi.Picker 
-    // see examples in AppData\Roaming\Garmin\ConnectIQ\Sdks\<version>\samples\Picker
-    // i was expecting pickers to be a simple 'getNumber', 'getString' and it would do a native ui
-    // but it seems  Toybox.WatchUi.NumberPicker and Toybox.WatchUi.NumberPickerDelegate has been deprecated
-    // should also be using Toybox.WatchUi.Confirmation and Toybox.WatchUi.ConfirmationDelegate for questions
-    // Toybox.WatchUi.Menu
-    // Toybox.WatchUi.Menu2 -- might not be supported
-    // Toybox.WatchUi.CheckboxMenu
-    var renderer = _breadcrumbContext.trackRenderer();
-    if (renderer.renderClearTrackUi(dc))
-    {
-      return;
-    }
-    renderer.renderUi(dc);
-    // we need to keep calling update ourselves (its not called continously when its just a view)
-    // not even this seems to let the settings ui re-render, think it has to be a WatchUi.Picker
-    // the touch events work, it just does not re-render
-    // requestUpdate();
-
-    System.println("rendered");
-
-    // The menu example code tells us to do it like this
     // Call the parent onUpdate function to redraw the layout
-    View.onUpdate(dc); // but that just causes a black screen :(
+    View.onUpdate(dc);
   }
 }
