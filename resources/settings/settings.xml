@@ -82,6 +82,24 @@
         </setting>
     </group>
 
+    <group id="routesdesc" title="@Strings.routesTitle" description="@Strings.routesDescription">
+        <setting propertyKey="@Properties.routeOverride" title="@Strings.routeOverride">
+            <settingConfig type="boolean" readonly="true"/>
+        </setting>
+    </group>
+    <!-- array settings are a complex beast see 
+    https://forums.garmin.com/developer/connect-iq/i/bug-reports/confusion-and-bugs-in-array-settings
+    and  https://forums.garmin.com/developer/connect-iq/f/discussion/296786/working-example-of-array-settings-kind-of -->
+    <!-- https://forums.garmin.com/developer/connect-iq/i/bug-reports/bug-we-were-unable-to-update-your-settings-at-this-time-please-try-again-later-in-connectiq -->
+    <setting propertyKey="@Properties.routes" title="@Strings.routesTitle" maxLength="5">
+        <setting title="@Strings.routeName" type="string">
+            <settingConfig id="name" type="alphaNumeric"/>
+        </setting>
+        <setting title="@Strings.routeEnabled" type="boolean">
+            <settingConfig id="enabled" type="boolean"/>
+        </setting>
+    </setting>
+
     <setting propertyKey="@Properties.resetDefaults" title="@Strings.resetDefaults">
         <settingConfig type="boolean"/>
     </setting>

@@ -23,4 +23,8 @@
 
 	<property id="resetDefaults" type="boolean">false</property>
 
+	<property id="selectedRoute" type="number">0</property>
+	<property id="routeOverride" type="boolean">1</property>
+	<property id="routes" type="array"></property>
+
 </properties>

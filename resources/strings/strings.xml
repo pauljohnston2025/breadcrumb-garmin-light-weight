@@ -48,4 +48,12 @@
     <string id="tileSizePrompt">Pixels per tile x and y</string>
     <string id="tileCacheSizePrompt">Number of tiles to cache</string>
     <string id="colourPrompt">Colour in AARRGGBB format</string>
+
+    <string id="selectedRoute">Selected route</string>
+    <string id="routesTitle">Routes</string>
+    <string id="routeName">Name</string>
+    <string id="routeEnabled">Enabled</string>
+    <string id="routeOverride">Disable all routes</string>
+    <string id="routesDescription">Adding routes will do nothing (use the companion app), but they may be removed or enabled/disabled</string>
+
 </strings>

@@ -100,7 +100,8 @@ class Settings {
             return;
         }
 
-        fixedPosition = getApp()._breadcrumbContext.track().latLon2xy(lat, long, 0f);
+        // breadcrumb context might not be set yet
+        fixedPosition = RectangularPoint.latLon2xy(lat, long, 0f);
         clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
     }
     
@@ -428,6 +429,16 @@ class Settings {
 
     // Load the values initially from storage
     function loadSettings() as Void {
+        Application.Properties.setValue("routes", [
+            {
+                "name" => "route1",
+                "enabled" => false,
+            },
+            {
+                "name" => "route2",
+                "enabled" => true,
+            }
+        ]);
         var resetDefaults = Application.Properties.getValue("resetDefaults") as Boolean;
         if (resetDefaults)
         {

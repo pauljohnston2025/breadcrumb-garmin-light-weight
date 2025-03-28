@@ -6,6 +6,12 @@ import Toybox.Application;
 
 const ARRAY_POINT_SIZE = 3;
 
+// cached values
+// we should probbaly do this per latitude to get an estimate and just use a lookup table
+const _lonConversion as Float = 20037508.34f / 180.0f;
+const _pi360 as Float = Math.PI / 360.0f;
+const _pi180 as Float = Math.PI / 180.0f;
+
 class RectangularPoint {
   var x as Float;
   var y as Float;
@@ -27,6 +33,22 @@ class RectangularPoint {
   function valid() as Boolean
   {
     return !isnan(x) && !isnan(y) && !isnan(altitude);
+  }
+
+  static function latLon2xy(lat as Float, lon as Float,
+                     altitude as Float) as RectangularPoint or Null {
+
+    // todo cache all these as constants
+    var latRect = ((Math.ln(Math.tan((90 + lat) * _pi360)) / _pi180) * _lonConversion);
+    var lonRect = lon * _lonConversion;
+
+    var point = new RectangularPoint(lonRect.toFloat(), latRect.toFloat(), altitude);
+    if (!point.valid())
+    {
+      return null;
+    }
+
+    return point;
   }
 }
 

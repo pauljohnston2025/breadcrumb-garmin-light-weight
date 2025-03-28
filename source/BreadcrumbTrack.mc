@@ -22,12 +22,6 @@ function BOUNDING_BOX_DEFAULT() as [Float, Float, Float, Float] {return [FLOAT_M
 function BOUNDING_BOX_CENTER_DEFAULT() as RectangularPoint {return new RectangularPoint(0.0f, 0.0f, 0.0f);}
 
 class BreadcrumbTrack {
-  // cached values
-  // we should probbaly do this per latitude to get an estimate and just use a lookup table
-  var _lonConversion as Float = 20037508.34f / 180.0f;
-  var _pi360 as Float = Math.PI / 360.0f;
-  var _pi180 as Float = Math.PI / 180.0f;
-
   // unscaled cordinates in
   // not sure if its more performant to have these as one array or 2
   // suspect 1 would result in faster itteration when drawing
@@ -131,7 +125,7 @@ class BreadcrumbTrack {
   }
 
   function addLatLongRaw(lat as Float, lon as Float, altitude as Float) as Void {
-    var newPoint = latLon2xy(lat, lon, altitude);
+    var newPoint = RectangularPoint.latLon2xy(lat, lon, altitude);
     if (newPoint == null)
     {
       return;
@@ -318,7 +312,7 @@ class BreadcrumbTrack {
     var lat = asDeg[0].toFloat();
     var lon = asDeg[1].toFloat();
 
-    var newPoint = latLon2xy(lat, lon, altitude);
+    var newPoint = RectangularPoint.latLon2xy(lat, lon, altitude);
     if (newPoint == null)
     {
       return;
@@ -356,23 +350,5 @@ class BreadcrumbTrack {
     }
 
     addPointRaw(newPoint, distance);
-  }
-
-  // inverse of https://gis.stackexchange.com/a/387677
-  // Converting lat, lon (epsg:4326) into EPSG:3857
-  function latLon2xy(lat as Float, lon as Float,
-                     altitude as Float) as RectangularPoint or Null {
-
-    // todo cache all these as constants
-    var latRect = ((Math.ln(Math.tan((90 + lat) * _pi360)) / _pi180) * _lonConversion);
-    var lonRect = lon * _lonConversion;
-
-    var point = new RectangularPoint(lonRect.toFloat(), latRect.toFloat(), altitude);
-    if (!point.valid())
-    {
-      return null;
-    }
-
-    return point;
   }
 }
