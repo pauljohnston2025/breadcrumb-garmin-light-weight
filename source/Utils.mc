@@ -53,6 +53,9 @@ function isnan(a as Float) as Boolean {
   return a != a;
 }
 
+// https://developer.garmin.com/connect-iq/core-topics/graphics/#graphics
+// we must call get and keep the reference otherwise it can get cleanup up from under us
+// not too bad for temporaries, but terrible for tiles (they can not be garbage collected)
 function newBitmap(size as Number, palette as Array or Null) as Graphics.BufferedBitmap
 {
     var options = {

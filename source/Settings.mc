@@ -108,9 +108,69 @@ class Settings {
         Application.Properties.setValue("zoomAtPaceMode", zoomAtPaceMode);
     }
     
+    function setZoomAtPaceSpeedMPS(mps as Float) as Void {
+        zoomAtPaceSpeedMPS = mps;
+        Application.Properties.setValue("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
+    }
+    
+    function setMetersAroundUser(value as Number) as Void {
+        metersAroundUser = value;
+        Application.Properties.setValue("metersAroundUser", metersAroundUser);
+    }
+
+    function setFixedLatitude(value as Float) as Void {
+        fixedLatitude = value;
+        Application.Properties.setValue("fixedLatitude", fixedLatitude);
+    }
+    
+    function setFixedLongitude(value as Float) as Void {
+        fixedLongitude = value;
+        Application.Properties.setValue("fixedLongitude", fixedLongitude);
+    }
+
+    function setMaxPendingWebRequests(value as Number) as Void {
+        maxPendingWebRequests = value;
+        Application.Properties.setValue("maxPendingWebRequests", maxPendingWebRequests);
+    }
+    
+    function setTileSize(value as Number) as Void {
+        tileSize = value;
+        Application.Properties.setValue("tileSize", tileSize);
+    }
+    
+    function setTileCacheSize(value as Number) as Void {
+        tileCacheSize = value;
+        Application.Properties.setValue("tileCacheSize", tileCacheSize);
+    }
+    
     function setMapEnabled(_mapEnabled as Boolean) as Void {
         mapEnabled = _mapEnabled;
         Application.Properties.setValue("mapEnabled", mapEnabled);
+
+        if (!mapEnabled)
+        {
+            getApp()._breadcrumbContext.tileCache().clearValues();
+        }
+    }
+
+    function setRouteColour(value as Number) as Void {
+        routeColour = value;
+        Application.Properties.setValue("routeColour", routeColour.format("%X"));
+    }
+    
+    function setTrackColour(value as Number) as Void {
+        trackColour = value;
+        Application.Properties.setValue("trackColour", trackColour.format("%X"));
+    }
+    
+    function setUserColour(value as Number) as Void {
+        userColour = value;
+        Application.Properties.setValue("userColour", userColour.format("%X"));
+    }
+    
+    function setElevationColour(value as Number) as Void {
+        elevationColour = value;
+        Application.Properties.setValue("elevationColour", elevationColour.format("%X"));
     }
 
     function toggleMapEnabled() as Void 
@@ -309,24 +369,33 @@ class Settings {
     function resetDefaults() as Void
     {
         System.println("Resetting settings to default values");
-        var settings = new Settings();
-        Application.Properties.setValue("tileSize", settings.tileSize);
-        Application.Properties.setValue("tileCacheSize", settings.tileCacheSize);
-        Application.Properties.setValue("mode", settings.mode);
-        Application.Properties.setValue("mapEnabled", settings.mapEnabled);
-        Application.Properties.setValue("trackColour", settings.trackColour.format("%X"));
-        Application.Properties.setValue("routeColour", settings.routeColour.format("%X"));
-        Application.Properties.setValue("elevationColour", settings.elevationColour.format("%X"));
-        Application.Properties.setValue("userColour", settings.userColour.format("%X"));
-        Application.Properties.setValue("maxPendingWebRequests", settings.maxPendingWebRequests);
-        Application.Properties.setValue("scale", 0);
-        Application.Properties.setValue("metersAroundUser", settings.metersAroundUser);
-        Application.Properties.setValue("zoomAtPaceMode", settings.zoomAtPaceMode);
-        Application.Properties.setValue("zoomAtPaceSpeedMPS", settings.zoomAtPaceSpeedMPS);
-        Application.Properties.setValue("uiMode", settings.uiMode);
-        Application.Properties.setValue("fixedLatitude", 0);
-        Application.Properties.setValue("fixedLongitude", 0);
+        // clear the flag first thing in case of crash we do not want to try clearing over and over
         Application.Properties.setValue("resetDefaults", false);
+
+        var settings = new Settings();
+        setTileSize(settings.tileSize);
+        setTileCacheSize(settings.tileCacheSize);
+        setMode(settings.mode);
+        setMapEnabled(settings.mapEnabled);
+        setTrackColour(settings.trackColour);
+        setRouteColour(settings.routeColour);
+        setElevationColour(settings.elevationColour);
+        setUserColour(settings.userColour);
+        setMaxPendingWebRequests(settings.maxPendingWebRequests);
+        setScale(0f);
+        setMetersAroundUser(settings.metersAroundUser);
+        setZoomAtPaceMode(settings.zoomAtPaceMode);
+        setZoomAtPaceSpeedMPS(settings.zoomAtPaceSpeedMPS);
+        setUiMode(settings.uiMode);
+        setFixedLatitude(0f);
+        setFixedLongitude(0f);
+
+        // purge storage too on reset
+        Application.Storage.clearValues();
+        getApp()._breadcrumbContext.tileCache().clearValues();
+
+        // load all the settings we just wrote
+        loadSettings();
     }
 
     // Load the values initially from storage
@@ -354,6 +423,7 @@ class Settings {
         tileCacheSize = parseTileCacheSizeString("tileCacheSize", tileSize);
         mode = parseNumber("mode", mode);
         mapEnabled = Application.Properties.getValue("mapEnabled") as Boolean;
+        setMapEnabled(mapEnabled);
         trackColour = parseColor("trackColour", trackColour);
         routeColour = parseColor("routeColour", routeColour);
         elevationColour = parseColor("elevationColour", elevationColour);

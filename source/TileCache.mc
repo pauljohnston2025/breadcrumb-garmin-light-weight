@@ -251,6 +251,12 @@ class TileCache {
         // loadPersistedTiles();
     }
 
+    public function clearValues() as Void
+    {
+        _internalCache = {};
+        _webRequestHandler.clearValues();
+    }
+
     // loads a tile into the cache
     function seedTile(tileKey as TileKey) as Void {
         if (haveTile(tileKey))

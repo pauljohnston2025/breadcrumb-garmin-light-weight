@@ -150,6 +150,12 @@ class WebRequestHandler
         // System.println("url changed to " + _urlPrefix);
     }
 
+    function clearValues() as Void
+    {
+        pending = [];
+        pendingHashes = [];
+    }
+
     function add(jsonReq as JsonRequest) as Void 
     {
         // todo remove old requests if we get too many (slow network and requests too often mean the internal array grows and we OOM)

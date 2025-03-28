@@ -13,6 +13,9 @@ enum Protocol {
 }
 
 class CommStatus extends Communications.ConnectionListener {
+    function initialize() {
+      Communications.ConnectionListener.initialize();
+    }
     function onComplete() {
         System.println("App start message sent");
     }
