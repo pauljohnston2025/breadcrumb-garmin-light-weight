@@ -10,6 +10,7 @@ class NumberPicker {
     private var _charset as String;
     private var letterPositions as Array<Array<Number>>;
     private var halfWidth as Number or Null;
+    private var myText as WatchUi.Text;
     const halfHitboxSize as Number = 25;
 
     function initialize(charset as String) {
@@ -17,6 +18,14 @@ class NumberPicker {
         currentVal = "";
         letterPositions = [];
         halfWidth = null;
+
+        myText = new WatchUi.Text({
+            :text=>"",
+            :color=>Graphics.COLOR_WHITE,
+            :font=>Graphics.FONT_SMALL,
+            :locX=>WatchUi.LAYOUT_HALIGN_CENTER,
+            :locY=>WatchUi.LAYOUT_VALIGN_CENTER
+        });
     }  
 
     function onLayout(dc as Dc) as Void {
@@ -58,7 +67,8 @@ class NumberPicker {
 
         if (halfWidth != null)
         {
-            dc.drawText(halfWidth, halfWidth, Graphics.FONT_SMALL, currentVal, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            myText.draw(dc);
+            // dc.drawText(halfWidth, halfWidth, Graphics.FONT_SMALL, currentVal, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
     }
 
@@ -76,7 +86,8 @@ class NumberPicker {
         }
 
         currentVal = currentVal.substring(null, -1);
-        
+        myText.setText(currentVal);
+        forceRefresh();
     }
 
     function onTap(x as Number, y as Number) as Boolean
@@ -88,6 +99,7 @@ class NumberPicker {
         }
 
         currentVal += letter;
+        myText.setText(currentVal);
         return true;
     }
 
@@ -232,7 +244,10 @@ class NumberPickerDelegate extends WatchUi.BehaviorDelegate {
         var y = coords[1];
 
         var handled = picker.onTap(x, y);
-        forceRefresh();
+        if (handled)
+        {
+            forceRefresh();
+        }
         return handled;
     }
 
@@ -252,7 +267,6 @@ class NumberPickerDelegate extends WatchUi.BehaviorDelegate {
     function onBack() {
         // System.println("got back");
         picker.removeLast();
-        forceRefresh();
         return true;
     }
 }
