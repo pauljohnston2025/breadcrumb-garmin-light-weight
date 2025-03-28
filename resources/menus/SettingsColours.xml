@@ -3,5 +3,4 @@
     <menu-item id="settingsColoursRouteColour" label="@Strings.route_colour_title"/>
     <menu-item id="settingsColoursElevationColour" label="@Strings.elevation_colour_title"/>
     <menu-item id="settingsColoursUserColour" label="@Strings.userColour"/>
-    <menu-item id="settingsBack" label="@Strings.back"/>
 </menu>

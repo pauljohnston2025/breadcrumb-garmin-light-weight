@@ -18,7 +18,6 @@ enum /*ZoomMode*/ {
 enum /*UiMode*/ {
   UI_MODE_SHOW_ALL, // show a heap of ui elements on screen always
   UI_MODE_HIDDEN, // ui still active, but is hidden
-  UI_MODE_SETTINGS_ONLY, // touching the screen will open settings
   UI_MODE_NONE, // no accessible ui (touch events disabled)
   UI_MODE_MAX
 }
@@ -71,17 +70,17 @@ class Settings {
     }
     
     function setFixedPosition(lat as Float or Null, long as Float or Null) as Void {
+        // be very careful about putting null into properties, it breaks everything
+        if (lat == null || !(lat instanceof Float))
+        {
+            lat = 0f;
+        }
+        if (long == null || !(long instanceof Float))
+        {
+            long = 0f;
+        }
         fixedLatitude = lat;
         fixedLongitude = long;
-        // be very careful about putting null into properties, it breaks everything
-        if (lat == null)
-        {
-            lat = 0;
-        }
-        if (long == null)
-        {
-            long = 0;
-        }
         Application.Properties.setValue("fixedLatitude", lat);
         Application.Properties.setValue("fixedLongitude", long);
 
@@ -97,10 +96,12 @@ class Settings {
         if (fixedLatitude == null || fixedLongitude == null)
         {
             fixedPosition = null;
+            clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
             return;
         }
 
         fixedPosition = getApp()._breadcrumbContext.track().latLon2xy(lat, long, 0f);
+        clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
     }
     
     function setZoomAtPaceMode(_zoomAtPaceMode as Number) as Void {
@@ -119,13 +120,11 @@ class Settings {
     }
 
     function setFixedLatitude(value as Float) as Void {
-        fixedLatitude = value;
-        Application.Properties.setValue("fixedLatitude", fixedLatitude);
+        setFixedPosition(value, fixedLongitude);
     }
     
     function setFixedLongitude(value as Float) as Void {
-        fixedLongitude = value;
-        Application.Properties.setValue("fixedLongitude", fixedLongitude);
+        setFixedPosition(fixedLatitude, value);
     }
 
     function setMaxPendingWebRequests(value as Number) as Void {
@@ -145,11 +144,16 @@ class Settings {
     
     function setMapEnabled(_mapEnabled as Boolean) as Void {
         mapEnabled = _mapEnabled;
+        if (mapEnabled == null || !(mapEnabled instanceof Boolean))
+        {
+            mapEnabled = true;
+        }
         Application.Properties.setValue("mapEnabled", mapEnabled);
 
         if (!mapEnabled)
         {
-            getApp()._breadcrumbContext.tileCache().clearValues();
+           clearTileCache();
+           clearPendingWebRequests();
         }
     }
 
@@ -258,6 +262,30 @@ class Settings {
         }
 
         return _tileSize;
+    }
+
+    function clearTileCache() as Void {
+        // symbol not found if the loadSettings method is called before we set tile cache
+        // should n ot happen unless onsettingschange is called before initalise finishes
+        // it alwasys has the symbol, but it might not be initalised yet
+        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
+        var context = getApp()._breadcrumbContext;
+        if (context != null and context instanceof BreadcrumbContext && context has :_tileCache && context._tileCache != null && context._tileCache instanceof TileCache)
+        {
+            context._tileCache.clearValues();
+        }
+    }
+    
+    function clearPendingWebRequests() as Void {
+        // symbol not found if the loadSettings method is called before we set tile cache
+        // should n ot happen unless onsettingschange is called before initalise finishes
+        // it alwasys has the symbol, but it might not be initalised yet
+        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
+        var context = getApp()._breadcrumbContext;
+        if (context != null and context instanceof BreadcrumbContext && context has :_webRequestHandler && context._webRequestHandler != null && context._webRequestHandler instanceof WebRequestHandler)
+        {
+            context._webRequestHandler.clearValues();
+        }
     }
 
     // some times these parserswere throwing when it was an empty strings seem to result in, or wrong type
@@ -392,8 +420,8 @@ class Settings {
 
         // purge storage too on reset
         Application.Storage.clearValues();
-        getApp()._breadcrumbContext.tileCache().clearValues();
-
+        clearTileCache();
+        clearPendingWebRequests();
         // load all the settings we just wrote
         loadSettings();
     }

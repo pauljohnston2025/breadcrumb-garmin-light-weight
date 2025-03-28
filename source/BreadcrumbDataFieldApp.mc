@@ -67,11 +67,11 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     function getInitialView() as [Views] or [Views, InputDelegates] {
         return [ _view, new BreadcrumbDataFieldDelegate(_breadcrumbContext, false) ];
         // uncomment to test settings in simulator, also need to change manifest to be 'watch app'
-        // return [ new SettingsView(_breadcrumbContext)];
+        // return [new $.Rez.Menus.SettingsMain(), new $.SettingsMainDelegate()];
     }
 
     function getSettingsView() as [Views] or [Views, InputDelegates] or Null {
-        return [ new SettingsView(_breadcrumbContext)];
+        return [new $.Rez.Menus.SettingsMain(), new $.SettingsMainDelegate()];
     }
 
     function onPhone(msg as Communications.PhoneAppMessage) as Void {

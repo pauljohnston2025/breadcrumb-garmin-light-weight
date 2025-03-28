@@ -35,17 +35,6 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
       {
         return false;
       }
-
-      if (settings.uiMode == UI_MODE_SETTINGS_ONLY)
-      {
-        // todo show settings menu not possible because
-       // 
-       // Error: Unhandled Exception
-       // Exception: Page control not allowed in current app type (or mode) - Data Field
-       // WatchUi.pushView(new $.Rez.Menus.SettingsMain(), new $.SettingsMainDelegate(), WatchUi.SLIDE_IMMEDIATE);
-       // WatchUi.pushView(new $.Rez.Menus.SettingsMain(), new $.SettingsMainDelegate(), WatchUi.SLIDE_IMMEDIATE);
-        return true;
-      }
     }
 
     if (renderer.handleClearRoute(x, y))
@@ -65,15 +54,11 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
        && x < renderer.modeSelectX + halfHitboxSize) {
       settings.nextMode();
       return true;
-    } else if (  y > renderer.settingsY - halfHitboxSize 
-       && y < renderer.settingsY + halfHitboxSize  
-       && x > renderer.settingsX - halfHitboxSize
-       && x < renderer.settingsX + halfHitboxSize) {
-       // todo show settings menu not possible because
-       // 
-       // Error: Unhandled Exception
-       // Exception: Page control not allowed in current app type (or mode) - Data Field
-       // WatchUi.pushView(new $.Rez.Menus.SettingsMain(), new $.SettingsMainDelegate(), WatchUi.SLIDE_IMMEDIATE);
+    } else if (  y > renderer.returnToUserY - halfHitboxSize 
+       && y < renderer.returnToUserY + halfHitboxSize  
+       && x > renderer.returnToUserX - halfHitboxSize
+       && x < renderer.returnToUserX + halfHitboxSize) {
+      settings.setFixedPosition(0f, 0f);
       return true;
     } else if (  y > renderer.mapEnabledY - halfHitboxSize 
        && y < renderer.mapEnabledY + halfHitboxSize  

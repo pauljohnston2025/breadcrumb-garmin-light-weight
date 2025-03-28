@@ -254,7 +254,6 @@ class TileCache {
     public function clearValues() as Void
     {
         _internalCache = {};
-        _webRequestHandler.clearValues();
     }
 
     // loads a tile into the cache

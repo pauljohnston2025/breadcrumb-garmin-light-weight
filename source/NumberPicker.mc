@@ -167,6 +167,29 @@ class ColourPicker extends NumberPicker {
     }
 }
 
+class RerenderIgnoredView extends WatchUi.View {
+  function initialize() {
+    View.initialize();
+
+    // for seom reason WatchUi.requestUpdate(); was not working so im pushing this view just to remove it, which should force a re-render
+    // timer = new Timer.Timer();
+    // need a timer running of this, since button presses from within the delegate were not trigering a reload
+    // timer.start(method(:onTimer), 1000, true);
+    // but timers are not available in the settings view (or at all in datafield)
+    // "Module 'Toybox.Timer' not available to 'Data Field'"
+  }
+
+  function onLayout(dc as Dc) as Void {
+    WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+  }
+}
+
+function forceRefresh() as Void
+{
+    WatchUi.requestUpdate(); // sometimes does not work, but lets call it anyway
+    WatchUi.pushView(new RerenderIgnoredView(), null, WatchUi.SLIDE_IMMEDIATE);
+}
+
 
 class NumberPickerView extends WatchUi.View {
   private var picker as NumberPicker;
@@ -174,6 +197,12 @@ class NumberPickerView extends WatchUi.View {
   function initialize(picker as NumberPicker) {
     self.picker = picker;
     View.initialize();
+
+    // timer = new Timer.Timer();
+    // need a timer running of this, since button presses from within the delegate were not trigering a reload
+    // timer.start(method(:onTimer), 1000, true);
+    // but timers are not available in the settings view (or at all in datafield)
+    // "Module 'Toybox.Timer' not available to 'Data Field'"
   }
 
   function onLayout(dc as Dc) as Void {
@@ -182,6 +211,7 @@ class NumberPickerView extends WatchUi.View {
 
   function onUpdate(dc as Dc) as Void {
     picker.onUpdate(dc);
+    System.println("onUpdate");
   }
 }
 
@@ -194,15 +224,15 @@ class NumberPickerDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onTap(evt as WatchUi.ClickEvent) as Boolean {
-        // System.println("got number picker tap (x,y): (" + evt.getCoordinates()[0] + "," +
-        //                evt.getCoordinates()[1] + ")");
+        System.println("got number picker tap (x,y): (" + evt.getCoordinates()[0] + "," +
+                       evt.getCoordinates()[1] + ")");
 
         var coords = evt.getCoordinates();
         var x = coords[0];
         var y = coords[1];
 
         var handled = picker.onTap(x, y);
-        WatchUi.requestUpdate();
+        forceRefresh();
         return handled;
     }
 
@@ -222,7 +252,7 @@ class NumberPickerDelegate extends WatchUi.BehaviorDelegate {
     function onBack() {
         // System.println("got back");
         picker.removeLast();
-        WatchUi.requestUpdate();
+        forceRefresh();
         return true;
     }
 }

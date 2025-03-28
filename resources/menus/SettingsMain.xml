@@ -6,5 +6,4 @@
     <menu-item id="settingsMainMap" label="@Strings.mapSettingsTitle"/>
     <menu-item id="settingsMainColours" label="@Strings.coloursTitle"/>
     <menu-item id="settingsMainResetDefaults" label="@Strings.resetDefaults"/>
-    <menu-item id="settingsMainExit" label="@Strings.exit"/>
 </menu>

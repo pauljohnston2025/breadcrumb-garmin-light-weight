@@ -307,7 +307,15 @@ class BreadcrumbRenderer {
       mapletter = "N";
     }
     dc.drawText(mapEnabledX, mapEnabledY, Graphics.FONT_XTINY, mapletter, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-    // dc.drawText(settingsX, settingsY, Graphics.FONT_XTINY, "S", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    if (settings.fixedPosition == null)
+    {
+      dc.drawText(returnToUserX, returnToUserY, Graphics.FONT_XTINY, "U", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+    else if (settings.fixedLatitude != null && settings.fixedLongitude != null) {
+      var txt = settings.fixedLatitude.format("%.1f") + ", " + settings.fixedLongitude.format("%.1f");
+      dc.drawText(returnToUserX, returnToUserY, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+    
 
     // current mode displayed
     var modeLetter = "T";
@@ -500,8 +508,8 @@ class BreadcrumbRenderer {
   var clearRouteY as Float = -1f; 
   var modeSelectX as Float = -1f; 
   var modeSelectY as Float = -1f; 
-  var settingsX as Float = -1f; 
-  var settingsY as Float = -1f; 
+  var returnToUserX as Float = -1f; 
+  var returnToUserY as Float = -1f; 
   var mapEnabledX as Float = -1f; 
   var mapEnabledY as Float = -1f; 
   var hitboxSize as Float = 50f;
@@ -529,8 +537,8 @@ class BreadcrumbRenderer {
     modeSelectY = _yHalf - offsetSize;
     
     // bottom left
-    settingsX = _xHalf - offsetSize;
-    settingsY = _yHalf + offsetSize;
+    returnToUserX = _xHalf - offsetSize;
+    returnToUserY = _yHalf + offsetSize;
     
     // bottom right
     mapEnabledX = _xHalf + offsetSize;

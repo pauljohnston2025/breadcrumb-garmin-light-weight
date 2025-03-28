@@ -92,8 +92,6 @@ class SettingsMainDelegate extends WatchUi.MenuInputDelegate {
                 new ResetSettingsDelegate(),
                 WatchUi.SLIDE_IMMEDIATE
             );
-        } else if (item == :settingsMainExit) {
-            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         }
     }
 }
@@ -135,8 +133,6 @@ class SettingsUiModeDelegate extends WatchUi.MenuInputDelegate {
             settings.setUiMode(UI_MODE_SHOW_ALL);
         } else if (item == :settingsUiModeHidden) {
             settings.setUiMode(UI_MODE_HIDDEN);
-        } else if (item == :settingsUiModeSettings) {
-            settings.setUiMode(UI_MODE_SETTINGS_ONLY);
         } else if (item == :settingsUiModeNone) {
             settings.setUiMode(UI_MODE_NONE);
         }
