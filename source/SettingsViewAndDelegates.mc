@@ -202,8 +202,9 @@ function safeSetIcon(menu as WatchUi.Menu2, id as Object, value as WatchUi.Drawa
         return;
     }
 
-
-    if (item instanceof WatchUi.IconMenuItem)
+    // support was added for icons on menuitems in API Level 3.4.0 but IconMenuItem had it from API 3.0.0
+    // MenuItem and IconMenuItem, they both support icons
+    if (item has :setIcon) 
     {
         item.setIcon(value);
     }
@@ -400,12 +401,16 @@ class SettingsRoutes extends WatchUi.Menu2 {
         for (var i = 0; i < ROUTE_MAX; ++i) {
             var routeName = settings.routeName(i);
             addItem(
+                // do not be tempted to switch this to a menuitem (IconMenuItem is supported since API 3.0.0, MenuItem only supports icons from API 3.4.0)
                 new IconMenuItem(
                     routeName.equals("") ? "<unlabeled>" : routeName,
                     settings.routeEnabled(i) ? "Enabled" : "Disabled",
                     i,
                     new ColourIcon(settings.routeColour(i)),
-                    {}
+                    {
+                        // only get left or right, no center :(
+                        :alignment => MenuItem.MENU_ITEM_LABEL_ALIGN_LEFT,
+                    }
                 )
             );
         }
