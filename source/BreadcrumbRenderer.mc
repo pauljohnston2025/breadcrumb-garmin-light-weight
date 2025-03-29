@@ -264,7 +264,7 @@ class BreadcrumbRenderer {
                   "N", Graphics.TEXT_JUSTIFY_CENTER);
         dc.drawText(_xHalf + padding, _yHalf, Graphics.FONT_XTINY,
                   "Y", Graphics.TEXT_JUSTIFY_CENTER);
-        var text = _clearRouteProgress == 1 ? "Clearing route, are you sure?" : "Last chance!!!";
+        var text = _clearRouteProgress == 1 ? "Clearing all routes, are you sure?" : "Clearing all routes, LAST CHANCE!!!";
         dc.drawText(_xHalf, topText, Graphics.FONT_XTINY,
                   text, Graphics.TEXT_JUSTIFY_CENTER);
         return true;

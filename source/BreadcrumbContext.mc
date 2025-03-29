@@ -128,5 +128,7 @@ class BreadcrumbContext {
       var route = new BreadcrumbTrack(me, i, "");
       route.writeToDisk(ROUTE_KEY);
     }
+    _routes = [];
+    _settings.clearRoutes();
   }
 }

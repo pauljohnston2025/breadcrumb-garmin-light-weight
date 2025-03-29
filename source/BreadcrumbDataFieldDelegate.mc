@@ -5,12 +5,10 @@ import Toybox.Lang;
 // see BreadcrumbDataFieldView if touch stops working
 class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
   var _breadcrumbContext as BreadcrumbContext;
-  var _inSettingsUi as Boolean;
 
-  function initialize(breadcrumbContext as BreadcrumbContext, inSettingsUi as Boolean) {
+  function initialize(breadcrumbContext as BreadcrumbContext) {
     InputDelegate.initialize();
     _breadcrumbContext = breadcrumbContext;
-    _inSettingsUi  = inSettingsUi ;
   }
 
   function onKey(keyEvent as WatchUi.KeyEvent) {
@@ -29,12 +27,9 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
     var renderer = _breadcrumbContext.trackRenderer();
     var settings = _breadcrumbContext.settings();
 
-    if (!_inSettingsUi)
+    if (settings.uiMode == UI_MODE_NONE)
     {
-      if (settings.uiMode == UI_MODE_NONE)
-      {
-        return false;
-      }
+      return false;
     }
 
     if (renderer.handleClearRoute(x, y))

@@ -300,6 +300,11 @@ class Settings {
 
         return null;
     }
+
+    function clearRoutes() as Void {
+        routes = [];
+        saveRoutes();
+    }
     
     function saveRoutes()
     {
@@ -532,6 +537,18 @@ class Settings {
         if (context != null and context instanceof BreadcrumbContext && context has :_webRequestHandler && context._webRequestHandler != null && context._webRequestHandler instanceof WebRequestHandler)
         {
             context._webRequestHandler.clearValues();
+        }
+    }
+    
+    function clearContextRoutes() as Void {
+        // symbol not found if the loadSettings method is called before we set tile cache
+        // should n ot happen unless onsettingschange is called before initalise finishes
+        // it alwasys has the symbol, but it might not be initalised yet
+        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
+        var context = getApp()._breadcrumbContext;
+        if (context != null and context instanceof BreadcrumbContext)
+        {
+            context.clearRoutes();
         }
     }
 
@@ -769,6 +786,7 @@ class Settings {
         Application.Storage.clearValues();
         clearTileCache();
         clearPendingWebRequests();
+        clearContextRoutes();
         // load all the settings we just wrote
         loadSettings();
     }
