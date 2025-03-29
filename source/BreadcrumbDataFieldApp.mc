@@ -61,9 +61,9 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
           Communications.transmit("startserice", {}, _commStatus);
         }
 
-        return [ _view, new BreadcrumbDataFieldDelegate(_breadcrumbContext) ];
         // uncomment to test settings in simulator, also need to change manifest to be 'watch app'
         // return getSettingsView();
+        return [ _view, new BreadcrumbDataFieldDelegate(_breadcrumbContext) ];
     }
 
     function getSettingsView() as [Views] or [Views, InputDelegates] or Null {

@@ -359,6 +359,11 @@ class SettingsRoute extends Rez.Menus.SettingsRoute {
     {
         settings.setRouteEnabled(routeId, value);
     }
+    
+    function routeEnabled() as Boolean
+    {
+        return settings.routeEnabled(routeId);
+    }
 
     function setColour(value as Number) as Void
     {
@@ -646,8 +651,15 @@ class SettingsRouteDelegate extends WatchUi.Menu2InputDelegate {
         if (itemId == :settingsRouteName) {
             var picker = new SettingsStringPicker(view.method(:setName), view);
             WatchUi.pushView(new WatchUi.TextPicker(settings.routeName(view.routeId)), picker, WatchUi.SLIDE_IMMEDIATE);
-        } else if (itemId == :settingsRoutesEnabled) {
-            settings.toggleRoutesEnabled();
+        } else if (itemId == :settingsRouteEnabled) {
+            if (view.routeEnabled())
+            {
+                view.setEnabled(false);
+            }
+            else 
+            {
+                view.setEnabled(true);
+            }
             view.rerender();
         } else if (itemId == :settingsRouteColour) {
             startPicker(new SettingsColourPicker(view.method(:setColour)), view);
