@@ -83,14 +83,21 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
       if (type == PROTOCOL_ROUTE_DATA) {
         // protocol:
-        //  RawData... [x, y, z]...  // latitude <float> and longitude <float>
-        //  in degrees, altitude <float> too
+        //  name
+        //  [x, y, z]...  // latitude <float> and longitude <float> in degrees, altitude <float> too
+        if (rawData.size() < 1) {
+          System.println("Failed to parse route data, bad length: " +
+                       rawData.size() + " remainder: " + rawData.size() % 3);
+          return;
+        }
 
-        if (rawData.size() % 3 == 0) {
-          var route = _breadcrumbContext.newRoute();
-          for (var i = 0; i < rawData.size(); i += 3) {
-            route.addLatLongRaw(rawData[i].toFloat(), rawData[i + 1].toFloat(),
-                              rawData[i + 2].toFloat());
+        var name = rawData[0] as String;
+        var routeData = rawData.slice(1, null);
+        if (routeData.size() % 3 == 0) {
+          var route = _breadcrumbContext.newRoute(name);
+          for (var i = 0; i < routeData.size(); i += 3) {
+            route.addLatLongRaw(routeData[i].toFloat(), routeData[i + 1].toFloat(),
+                              routeData[i + 2].toFloat());
           }
 
           route.writeToDisk(ROUTE_KEY);

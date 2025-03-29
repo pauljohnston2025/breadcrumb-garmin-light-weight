@@ -1,6 +1,5 @@
 <menu2 id="SettingsColours" title="@Strings.coloursTitle" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
     <icon-menu-item id="settingsColoursTrackColour" label="@Strings.track_colour_title" icon="@Drawables.LauncherIcon"/>
-    <icon-menu-item id="settingsColoursRouteColour" label="@Strings.route_colour_title" icon="@Drawables.LauncherIcon"/>
     <icon-menu-item id="settingsColoursElevationColour" label="@Strings.elevation_colour_title" icon="@Drawables.LauncherIcon"/>
     <icon-menu-item id="settingsColoursUserColour" label="@Strings.userColour" icon="@Drawables.LauncherIcon"/>
 </menu2>

@@ -142,7 +142,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         mapRenderer.renderMap(dc, _scratchPadBitmap, _center, renderer.rotationRadians());
         renderer.updateCurrentScale(outerBoundingBox);
         for (var i = 0; i < routes.size(); ++i) {
-          renderer.renderTrack(dc, routes[i], settings.getRouteColour(i), _center);
+          if (!settings.routeEnabled(i))
+          {
+              continue;
+          }
+          var route = routes[i];
+          renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex), _center);
         }
         renderer.renderCurrentScale(dc);
       }
@@ -188,6 +193,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
 
     for (var i = 0; i < routes.size(); ++i) {
+      if (!settings.routeEnabled(i))
+      {
+          continue;
+      }
       var route = routes[i];
       outerBoundingBox[0] = minF(route.boundingBox[0], outerBoundingBox[0]);
       outerBoundingBox[1] = minF(route.boundingBox[1], outerBoundingBox[1]);
@@ -234,7 +243,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians());
       renderer.updateCurrentScale(outerBoundingBox);
       for (var i = 0; i < routes.size(); ++i) {
-        renderer.renderTrack(dc, routes[i], settings.getRouteColour(i), centerPoint);
+        if (!settings.routeEnabled(i))
+        {
+            continue;
+        }
+        var route = routes[i];
+        renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex), centerPoint);
       }
       renderer.renderTrack(dc, track, _breadcrumbContext.settings().trackColour, centerPoint);
       renderer.renderUser(dc, centerPoint, lastPoint);
@@ -275,7 +289,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     if (routes.size() != 0) {
       for (var i = 0; i < routes.size(); ++i) {
-        renderer.renderTrack(dc, routes[i], settings.getRouteColour(i), centerPoint);
+        if (!settings.routeEnabled(i))
+        {
+            continue;
+        }
+        var route = routes[i];
+        renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex), centerPoint);
       }
     }
     renderer.renderTrack(dc, track, settings.trackColour, centerPoint);
@@ -296,7 +315,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     renderer.renderElevationChart(dc, hScale, vScale, startAt, track.distanceTotal);
     if (routes.size() != 0) {
       for (var i = 0; i < routes.size(); ++i) {
-        renderer.renderTrackElevtion(dc, routes[i], settings.getRouteColour(i), hScale, vScale, startAt);
+        if (!settings.routeEnabled(i))
+        {
+            continue;
+        }
+        var route = routes[i];
+        renderer.renderTrackElevtion(dc, route, settings.routeColour(route.storageIndex), hScale, vScale, startAt);
       }
     }
     renderer.renderTrackElevtion(dc, track, settings.trackColour, hScale, vScale, startAt);

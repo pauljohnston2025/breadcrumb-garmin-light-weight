@@ -28,7 +28,9 @@ class BreadcrumbTrack {
   // shall store them as poit classes for now, and can convert to using just
   // arrays
   var epoch as Number = 0;
+  // storageIndex is the id of the route
   var storageIndex as Number = 0;
+  var name as String;
   var coordinates as PointArray = new PointArray();
   var seenStartupPoints as Number = 0;
   var possibleBadPointsAdded as Number = 0;
@@ -43,11 +45,16 @@ class BreadcrumbTrack {
   var _breadcrumbContext as BreadcrumbContext;
   var _neverStarted as Boolean;
 
-  function initialize(breadcrumbContext as BreadcrumbContext, routeIndex as Number) {
+  function initialize(
+      breadcrumbContext as BreadcrumbContext, 
+      routeIndex as Number,
+      name as String) 
+  {
     _breadcrumbContext = breadcrumbContext;
     _neverStarted = true;
     epoch = Time.now().value();
     storageIndex = routeIndex;
+    self.name = name;
   }
 
   function writeToDisk(key as String) as Void {
@@ -62,6 +69,7 @@ class BreadcrumbTrack {
     Storage.setValue(key + "elevationMin", elevationMin);
     Storage.setValue(key + "elevationMax", elevationMax);
     Storage.setValue(key + "epoch", epoch);
+    Storage.setValue(key + "name", name);
   }
 
   static function readFromDisk(key as String, storageIndex as Number, breadcrumbContext as BreadcrumbContext) as BreadcrumbTrack or Null {
@@ -104,8 +112,13 @@ class BreadcrumbTrack {
       if (epoch == null) {
         return null;
       }
+      
+      var name = Storage.getValue(key + "name");
+      if (name == null) {
+        return null;
+      }
 
-      var track = new BreadcrumbTrack(breadcrumbContext, storageIndex);
+      var track = new BreadcrumbTrack(breadcrumbContext, storageIndex, name);
       track.boundingBox = bb as[Float, Float, Float, Float];
       if (track.boundingBox.size() != 4) {
         return null;

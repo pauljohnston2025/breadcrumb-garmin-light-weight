@@ -42,7 +42,6 @@ class Settings {
     // todo clear tile cache when this changes
     var mapEnabled as Boolean = true;
     var trackColour as Number = Graphics.COLOR_GREEN;
-    var routeColour as Number = Graphics.COLOR_BLUE;
     var elevationColour as Number = Graphics.COLOR_ORANGE;
     var userColour as Number = Graphics.COLOR_ORANGE;
     // this should probably be the same as tileCacheSize? since there is no point hadving 20 outstanding if we can only store 10 of them
@@ -62,6 +61,9 @@ class Settings {
     // to make this work on the emulator you ned to run 
     // adb forward tcp:8080 tcp:8080
     var tileUrl as String = COMPANION_APP_TILE_URL;
+    // see keys below in routes = getArraySchema(...)
+    var routes as Array<Dictionary> = [];
+    var allRoutesDisabled as Boolean = false;
 
     // calculated whenever others change
     var smallTilesPerBigTile = Math.ceil(256f/tileSize);
@@ -174,15 +176,125 @@ class Settings {
            clearPendingWebRequests();
         }
     }
-
-    function getRouteColour(index as Number)
-    {
-        return routeColour;
+    
+    function setAllRoutesDisabled(_allRoutesDisabled as Boolean) as Void {
+        allRoutesDisabled = _allRoutesDisabled;
+        if (allRoutesDisabled == null || !(allRoutesDisabled instanceof Boolean))
+        {
+            allRoutesDisabled = true;
+        }
+        Application.Properties.setValue("allRoutesDisabled", allRoutesDisabled);
     }
 
-    function setRouteColour(value as Number) as Void {
-        routeColour = value;
-        Application.Properties.setValue("routeColour", routeColour.format("%X"));
+    function routeColour(index as Number) as Number
+    {
+        // todo find by id instead of index
+        if (index < 0 || routes.size() <= index)
+        {
+            return Graphics.COLOR_BLUE;
+        }
+        return routes[index]["colour"];
+    }
+
+    function routeName(index as Number) as String
+    {
+        // todo find by id instead of index
+        if (index < 0 || routes.size() <= index)
+        {
+            return "";
+        }
+        return routes[index]["name"];
+    }
+
+    function routeEnabled(index as Number) as Boolean
+    {
+        // todo find by id instead of index
+        if (allRoutesDisabled)
+        {
+            return false;
+        }
+
+        if (index < 0 || routes.size() <= index)
+        {
+            return false;
+        }
+        return routes[index]["enabled"];
+    }
+
+    function setRouteColour(index as Number, value as Number) as Void {
+        // todo find by id instead of index
+        if (index < 0 || routes.size() <= index)
+        {
+            return;
+        }
+
+        routes[index]["colour"] = value;
+        saveRoutes();
+    }
+    
+    function setRouteName(index as Number, value as String) as Void {
+        // todo find by id instead of index
+        if (index < 0 || routes.size() <= index)
+        {
+            return;
+        }
+
+        routes[index]["name"] = value;
+        saveRoutes();
+    }
+
+    function setRouteEnabled(index as Number, value as Boolean) as Void {
+        // todo find by id instead of index
+        if (index < 0 || routes.size() <= index)
+        {
+            return;
+        }
+
+        routes[index]["enabled"] = value;
+        saveRoutes();
+    }
+
+    function ensureRouteId(index as Number) as Void
+    {
+        // todo find by id instead of index
+        if (index < 0 || routes.size() > index)
+        {
+            return;
+        }
+
+        if (index >= ROUTE_MAX)
+        {
+            return;
+        }
+
+        for (var i = routes.size(); i < index + 1; ++i) {
+            routes.add(
+                {
+                    "id" => i,
+                    "name" => routeName(i),
+                    "enabled" => true,
+                    "colour" => routeColour(i) 
+                }
+            );
+        }
+        saveRoutes();
+    }
+
+    function saveRoutes()
+    {
+        var toSave = [];
+        for (var i = 0; i < routes.size(); ++i) {
+            var entry = routes[i];
+            toSave.add(
+                {
+                    "id" => entry["id"],
+                    "name" => entry["name"],
+                    "enabled" => entry["enabled"],
+                    "colour" => entry["colour"].format("%X") // this is why we have to copy it :(
+                }
+            );
+        }
+        Application.Properties.setValue("routes", toSave);
     }
     
     function setTrackColour(value as Number) as Void {
@@ -209,6 +321,17 @@ class Settings {
         }
 
         setMapEnabled(true);
+    }
+    
+    function toggleAllRoutesDisabled() as Void 
+    {
+        if (allRoutesDisabled)
+        {
+            setAllRoutesDisabled(false);
+            return;
+        }
+
+        setAllRoutesDisabled(true);
     }
     
     function setScale(_scale as Float or Null) as Void {
@@ -316,10 +439,17 @@ class Settings {
     // Error: Unhandled Exception
     // Exception: UnexpectedTypeException: Expected Number/Float/Long/Double/Char, given null/Number
 
-    function parseColor(key as String, defaultValue as Number) as Number {
-        var colorString = null;
+    function parseColour(key as String, defaultValue as Number) as Number {
         try {
-            colorString = Application.Properties.getValue(key);
+            return parseColourRaw(key, Application.Properties.getValue(key), defaultValue);
+        } catch (e) {
+            System.println("Error parsing float: " + key);
+        }
+        return defaultValue;
+    }
+    
+    function parseColourRaw(key as String, colorString as String or Null, defaultValue as Number) as Number {
+        try {
             if (colorString == null)
             {
                 return defaultValue;
@@ -337,18 +467,25 @@ class Settings {
                 return ret;
             }
 
-            return parseNumber(key, defaultValue);
+            return parseNumberRaw(key, colorString, defaultValue);
                 
         } catch (e) {
-            System.println("Error parsing color: " + key + " " + colorString);
+            System.println("Error parsing colour: " + key + " " + colorString);
+        }
+        return defaultValue;
+    }
+
+    function parseNumber(key as String, defaultValue as Number) as Number {
+        try {
+            return parseNumberRaw(key, Application.Properties.getValue(key), defaultValue);
+        } catch (e) {
+            System.println("Error parsing float: " + key);
         }
         return defaultValue;
     }
     
-    function parseNumber(key as String, defaultValue as Number) as Number {
-        var value = null;
+    function parseNumberRaw(key as String, value as String or Null or Float or Number or Double, defaultValue as Number) as Number {
         try {
-            value = Application.Properties.getValue(key);
             if (value == null)
             {
                 return defaultValue;
@@ -372,11 +509,18 @@ class Settings {
         }
         return defaultValue;
     }
-    
+
     function parseFloat(key as String, defaultValue as Float) as Float {
-        var value = null;
         try {
-            value = Application.Properties.getValue(key);
+            return parseFloatRaw(key, Application.Properties.getValue(key), defaultValue);
+        } catch (e) {
+            System.println("Error parsing float: " + key);
+        }
+        return defaultValue;
+    }
+    
+    function parseFloatRaw(key as String, value as String or Null or Float or Number or Double , defaultValue as Float) as Float {
+        try {
             if (value == null)
             {
                 return defaultValue;
@@ -402,9 +546,16 @@ class Settings {
     }
     
     function parseString(key as String, defaultValue as String) as String {
-        var value = null;
         try {
-            value = Application.Properties.getValue(key);
+            return parseStringRaw(key, Application.Properties.getValue(key), defaultValue);
+        } catch (e) {
+            System.println("Error parsing string: " + key);
+        }
+        return defaultValue;
+    }
+
+    function parseStringRaw(key as String, value as String or Null, defaultValue as String) as String {
+        try {
             if (value == null)
             {
                 return defaultValue;
@@ -424,17 +575,64 @@ class Settings {
     }
 
     function parseOptionalFloat(key as String, defaultValue as Float or Null) as Float or Null {
-        var value = null;
         try {
-            value = Application.Properties.getValue(key);
+            return parseOptionalFloatRaw(key, Application.Properties.getValue(key), defaultValue);
+        } catch (e) {
+            System.println("Error parsing optional float: " + key);
+        }
+        return defaultValue;
+    }
+
+    function parseOptionalFloatRaw(key as String, value as String or Float or Null, defaultValue as Float or Null) as Float or Null {
+        try {
             if (value == null)
             {
                 return null;
             }
 
-            return parseFloat(key, defaultValue);
+            return parseFloatRaw(key, value, defaultValue);
         } catch (e) {
-            System.println("Error parsing optional float: " + key + " " + value);
+            System.println("Error parsing optional float: " + key);
+        }
+        return defaultValue;
+    }
+    
+    function getArraySchema(key as String, expectedKeys as Array<String>, parsers as Array<Method>, defaultValue as Array) as Array {
+        var value = null;
+        try {
+            value = Application.Properties.getValue(key);
+            if (value == null)
+            {
+                return defaultValue;
+            }
+
+            if (!(value instanceof Array))
+            {
+                return defaultValue;
+            }
+
+            for (var i = 0; i < value.size(); ++i) {
+                var entry = value[i];
+                if (!(entry instanceof Dictionary))
+                {
+                    return defaultValue;
+                }
+
+                for (var j = 0; j < expectedKeys.size(); ++j) {
+                    var thisKey = expectedKeys[j];
+                    var thisParser = parsers[j];
+                    if (!entry.hasKey(thisKey))
+                    {
+                        return defaultValue;
+                    }
+
+                    entry[thisKey] = thisParser.invoke(key + "." + i + "." + thisKey, entry[thisKey]);
+                }
+            }
+
+            return value;
+        } catch (e) {
+            System.println("Error parsing array: " + key + " " + value);
         }
         return defaultValue;
     }
@@ -451,7 +649,6 @@ class Settings {
         setMode(settings.mode);
         setMapEnabled(settings.mapEnabled);
         setTrackColour(settings.trackColour);
-        setRouteColour(settings.routeColour);
         setElevationColour(settings.elevationColour);
         setUserColour(settings.userColour);
         setMaxPendingWebRequests(settings.maxPendingWebRequests);
@@ -463,6 +660,9 @@ class Settings {
         setFixedLatitude(0f);
         setFixedLongitude(0f);
         setTileUrl(tileUrl);
+        routes = settings.routes;
+        saveRoutes();
+        setAllRoutesDisabled(settings.allRoutesDisabled);
 
         // purge storage too on reset
         Application.Storage.clearValues();
@@ -474,16 +674,6 @@ class Settings {
 
     // Load the values initially from storage
     function loadSettings() as Void {
-        // Application.Properties.setValue("routes", [
-        //     {
-        //         "name" => "route1",
-        //         "enabled" => false,
-        //     },
-        //     {
-        //         "name" => "route2",
-        //         "enabled" => true,
-        //     }
-        // ]);
         var resetDefaults = Application.Properties.getValue("resetDefaults") as Boolean;
         if (resetDefaults)
         {
@@ -508,10 +698,11 @@ class Settings {
         mode = parseNumber("mode", mode);
         mapEnabled = Application.Properties.getValue("mapEnabled") as Boolean;
         setMapEnabled(mapEnabled);
-        trackColour = parseColor("trackColour", trackColour);
-        routeColour = parseColor("routeColour", routeColour);
-        elevationColour = parseColor("elevationColour", elevationColour);
-        userColour = parseColor("userColour", userColour);
+        allRoutesDisabled = Application.Properties.getValue("allRoutesDisabled") as Boolean;
+        setAllRoutesDisabled(allRoutesDisabled);
+        trackColour = parseColour("trackColour", trackColour);
+        elevationColour = parseColour("elevationColour", elevationColour);
+        userColour = parseColour("userColour", userColour);
         maxPendingWebRequests = parseNumber("maxPendingWebRequests", maxPendingWebRequests);
         scale = parseOptionalFloat("scale", scale);
         if (scale == 0)
@@ -528,11 +719,53 @@ class Settings {
         fixedLongitude = parseOptionalFloat("fixedLongitude", fixedLongitude);
         setFixedPosition(fixedLatitude, fixedLongitude);
         tileUrl = parseString("tileUrl", tileUrl);
+        routes = getArraySchema(
+            "routes", 
+            ["id", "name", "enabled", "colour"], 
+            [method(:defaultNumberParser), method(:emptyString), method(:defaultFalse), method(:defaultColourParser)],
+            routes
+        );
+        System.println("parsed routes: " + routes);
     }
 
-    //Called on settings change
+    function emptyString(key as String, value) as String
+    {
+        return parseStringRaw(key, value, "");
+    }
+    
+    function defaultNumberParser(key as String, value) as Number
+    {
+        return parseNumberRaw(key, value, 0);
+    }
+
+    function defaultFalse(key as String, value) as Boolean
+    {
+        if (value instanceof Boolean)
+        {
+            return value;
+        }
+
+        return false;
+    }
+
+    function defaultColourParser(key as String, value) as Number
+    {
+        return parseColourRaw(key, value, Graphics.COLOR_RED);
+    }
+
    function onSettingsChanged() as Void {
         System.println("onSettingsChanged: Setting Changed, loading");
+        var oldRoutes = routes;
         loadSettings();
+        if ( routes.size() < oldRoutes.size())
+        {
+            for (var i=routes.size(); i<oldRoutes.size(); ++i)
+            {
+                var routeEntry = oldRoutes[i];
+                // clear the route
+                var route = new BreadcrumbTrack(getApp()._breadcrumbContext, routeEntry["id"], "");
+                route.writeToDisk(ROUTE_KEY);
+            }
+        }
     }
 }

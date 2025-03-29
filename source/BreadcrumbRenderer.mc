@@ -638,6 +638,7 @@ class BreadcrumbRenderer {
   }
 
   function getElevationScale(track as BreadcrumbTrack, routes as Array<BreadcrumbTrack>) as [Float, Float, Float] {
+    var settings = _breadcrumbContext.settings();
     var maxDistance = 0f;
     var minElevation = FLOAT_MAX;
     var maxElevation = FLOAT_MIN;
@@ -650,6 +651,10 @@ class BreadcrumbRenderer {
 
     for (var i = 0; i < routes.size(); ++i) {
         var route = routes[i];
+        if (!settings.routeEnabled(i))
+        {
+            continue;
+        }
         if (route.coordinates.pointSize() > 2)
         {
             maxDistance = maxF(maxDistance, route.distanceTotal);

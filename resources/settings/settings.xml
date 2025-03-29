@@ -73,10 +73,6 @@
             <settingConfig type="alphaNumeric"/>
         </setting>
 
-        <setting propertyKey="@Properties.routeColour" title="@Strings.route_colour_title" prompt="@Strings.colourPrompt">
-            <settingConfig type="alphaNumeric"/>
-        </setting>
-
         <setting propertyKey="@Properties.elevationColour" title="@Strings.elevation_colour_title" prompt="@Strings.colourPrompt">
             <settingConfig type="alphaNumeric"/>
         </setting>
@@ -87,7 +83,7 @@
     </group>
 
     <group id="routesdesc" title="@Strings.routesTitle" description="@Strings.routesDescription">
-        <setting propertyKey="@Properties.routeOverride" title="@Strings.routeOverride">
+        <setting propertyKey="@Properties.allRoutesDisabled" title="@Strings.allRoutesDisabled">
             <settingConfig type="boolean" readonly="true"/>
         </setting>
     </group>
@@ -96,11 +92,17 @@
     and  https://forums.garmin.com/developer/connect-iq/f/discussion/296786/working-example-of-array-settings-kind-of -->
     <!-- https://forums.garmin.com/developer/connect-iq/i/bug-reports/bug-we-were-unable-to-update-your-settings-at-this-time-please-try-again-later-in-connectiq -->
     <setting propertyKey="@Properties.routes" title="@Strings.routesTitle" maxLength="5">
+        <setting title="@Strings.routeId" type="number">
+            <settingConfig id="id" type="numeric" readonly="true"/>
+        </setting>
         <setting title="@Strings.routeName" type="string">
             <settingConfig id="name" type="alphaNumeric"/>
         </setting>
         <setting title="@Strings.routeEnabled" type="boolean">
             <settingConfig id="enabled" type="boolean"/>
+        </setting>
+        <setting title="@Strings.routeColourTitle" type="string" prompt="@Strings.colourPrompt">
+            <settingConfig id="colour" type="alphaNumeric"/>
         </setting>
     </setting>
 

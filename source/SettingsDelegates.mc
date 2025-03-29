@@ -300,7 +300,6 @@ class SettingsColours extends Rez.Menus.SettingsColours {
     {
         var settings = getApp()._breadcrumbContext.settings();
         safeSetIcon(me, :settingsColoursTrackColour, new ColourIcon(settings.trackColour));
-        safeSetIcon(me, :settingsColoursRouteColour, new ColourIcon(settings.routeColour));
         safeSetIcon(me, :settingsColoursUserColour, new ColourIcon(settings.userColour));
         safeSetIcon(me, :settingsColoursElevationColour, new ColourIcon(settings.elevationColour));
     }
@@ -583,8 +582,6 @@ class SettingsColoursDelegate extends WatchUi.Menu2InputDelegate {
         var itemId = item.getId();
         if (itemId == :settingsColoursTrackColour) {
             startPicker(new SettingsColourPicker(settings.method(:setTrackColour)), view);
-        } else if (itemId == :settingsColoursRouteColour) {
-            startPicker(new SettingsColourPicker(settings.method(:setRouteColour)), view);
         } else if (itemId == :settingsColoursElevationColour) {
             startPicker(new SettingsColourPicker(settings.method(:setElevationColour)), view);
         } else if (itemId == :settingsColoursUserColour) {

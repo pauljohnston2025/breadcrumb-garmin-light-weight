@@ -15,7 +15,7 @@
     <string id="track_route_mode">Track/Route</string>
     <string id="map_enabled_title">Map Enabled</string>
     <string id="track_colour_title">Track Colour</string>
-    <string id="route_colour_title">Route Colour</string>
+    <string id="routeColourTitle">Route Colour</string>
     <string id="elevation_colour_title">Elevation Colour</string>
     <string id="resetDefaults">Restore defaults</string>
     <string id="userColour">User Colour</string>
@@ -54,9 +54,10 @@
 
     <string id="selectedRoute">Selected route</string>
     <string id="routesTitle">Routes</string>
+    <string id="routeId">Id</string>
     <string id="routeName">Name</string>
     <string id="routeEnabled">Enabled</string>
-    <string id="routeOverride">Disable all routes</string>
+    <string id="allRoutesDisabled">Disable all routes</string>
     <string id="routesDescription">Adding routes will do nothing (use the companion app), but they may be removed or enabled/disabled</string>
 
 </strings>
