@@ -22,6 +22,8 @@ enum /*UiMode*/ {
   UI_MODE_MAX
 }
 
+const COMPANION_APP_TILE_URL = "http://127.0.0.1:8080";
+
 class Settings {
     // should be a multiple of 256 (since thats how tiles are stored, though the companion app will render them scaled for you)
     // we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes. 
@@ -54,6 +56,12 @@ class Settings {
     var uiMode as Number = UI_MODE_SHOW_ALL;
     var fixedLatitude as Float or Null = null;
     var fixedLongitude as Float or Null = null;
+    // supports place holders such as 
+    // use http://127.0.0.1:8080 for companion app
+    // but you can also use something like https://a.tile.opentopomap.org/{z}/{x}/{y}.png
+    // to make this work on the emulator you ned to run 
+    // adb forward tcp:8080 tcp:8080
+    var tileUrl as String = COMPANION_APP_TILE_URL;
 
     // calculated whenever others change
     var smallTilesPerBigTile = Math.ceil(256f/tileSize);
@@ -110,6 +118,13 @@ class Settings {
         Application.Properties.setValue("zoomAtPaceMode", zoomAtPaceMode);
     }
     
+    function setTileUrl(_tileUrl as String) as Void {
+        tileUrl = _tileUrl;
+        Application.Properties.setValue("tileUrl", tileUrl);
+        clearPendingWebRequests();
+        clearTileCache();
+    }
+    
     function setZoomAtPaceSpeedMPS(mps as Float) as Void {
         zoomAtPaceSpeedMPS = mps;
         Application.Properties.setValue("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
@@ -136,6 +151,8 @@ class Settings {
     function setTileSize(value as Number) as Void {
         tileSize = value;
         Application.Properties.setValue("tileSize", tileSize);
+        clearPendingWebRequests();
+        clearTileCache();
     }
     
     function setTileCacheSize(value as Number) as Void {
@@ -378,6 +395,28 @@ class Settings {
         }
         return defaultValue;
     }
+    
+    function parseString(key as String, defaultValue as String) as String {
+        var value = null;
+        try {
+            value = Application.Properties.getValue(key);
+            if (value == null)
+            {
+                return defaultValue;
+            }
+
+            if (value instanceof String)
+            {
+
+                return value;
+            }
+
+            return defaultValue;
+        } catch (e) {
+            System.println("Error parsing string: " + key + " " + value);
+        }
+        return defaultValue;
+    }
 
     function parseOptionalFloat(key as String, defaultValue as Float or Null) as Float or Null {
         var value = null;
@@ -418,6 +457,7 @@ class Settings {
         setUiMode(settings.uiMode);
         setFixedLatitude(0f);
         setFixedLongitude(0f);
+        setTileUrl(tileUrl);
 
         // purge storage too on reset
         Application.Storage.clearValues();
@@ -448,7 +488,7 @@ class Settings {
 
         System.println("loadSettings: Loading all settings");
         tileSize = parseNumber("tileSize", tileSize);
-        System.println("tileSize: " + tileSize);
+        // System.println("tileSize: " + tileSize);
         if (tileSize < 2)
         {
             tileSize = 2;
@@ -482,6 +522,7 @@ class Settings {
         fixedLatitude = parseOptionalFloat("fixedLatitude", fixedLatitude);
         fixedLongitude = parseOptionalFloat("fixedLongitude", fixedLongitude);
         setFixedPosition(fixedLatitude, fixedLongitude);
+        tileUrl = parseString("tileUrl", tileUrl);
     }
 
     //Called on settings change

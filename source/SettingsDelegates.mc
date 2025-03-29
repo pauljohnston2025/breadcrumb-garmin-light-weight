@@ -52,6 +52,33 @@ class SettingsNumberPicker extends IntPicker {
     }
 }
 
+class SettingsStringPicker extends WatchUi.TextPickerDelegate {
+    private var callback as Method;
+    public var parent = null;
+    function initialize(callback as Method, parent) {
+        TextPickerDelegate.initialize();
+        self.callback = callback;
+        self.parent = parent;
+    }
+
+    function onTextEntered(text as Lang.String, changed as Lang.Boolean) as Lang.Boolean {
+        System.println("onTextEntered: " + text + " " + changed);
+
+        callback.invoke(text);
+        if (parent != null && parent has :rerender)
+        {
+            parent.rerender();
+        }
+
+        return true;
+    }
+
+    function onCancel() as Boolean {
+        System.println("canceled");
+        return true;
+    }
+}
+
 class SettingsColourPicker extends ColourPicker {
     private var callback as Method;
     public var parent = null;
@@ -240,6 +267,7 @@ class SettingsMap extends Rez.Menus.SettingsMap {
     {
         var settings = getApp()._breadcrumbContext.settings();
         safeSetToggle(me, :settingsMapEnabled, true);
+        safeSetSubLabel(me, :settingsTileUrl, settings.tileUrl);
         safeSetSubLabel(me, :settingsMapTileSize, settings.tileSize.toString());
         safeSetSubLabel(me, :settingsMapTileCacheSize, settings.tileCacheSize.toString());
         safeSetSubLabel(me, :settingsMapMaxPendingWebRequests, settings.maxPendingWebRequests.toString());
@@ -494,6 +522,9 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
             var view = new SettingsMapDisabled();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
             WatchUi.pushView(view, new $.SettingsMapDisabledDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsTileUrl) {
+            var picker = new SettingsStringPicker(settings.method(:setTileUrl), view);
+            WatchUi.pushView(new WatchUi.TextPicker(settings.tileUrl), picker, WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMapTileSize) {
             startPicker(new SettingsNumberPicker(settings.method(:setTileSize)), view);
         } else if (itemId == :settingsMapTileCacheSize) {

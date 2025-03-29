@@ -8,6 +8,9 @@
     <string id="tile_size_title">Tile size (pixels)</string>
     <string id="tile_cache_size_title">Tile cache size (tiles)</string>
     <string id="mode_title">Display Mode</string>
+    <string id="mapSettingsDescription">Tile size should be a multiple of 256 for best results. Choose these values wisely. too big = crash, too small = crash or slow performance. tileUrl=http://127.0.0.1:8080 for companion app or template eg. https://a.tile.opentopomap.org/{z}/{x}/{y}.png tilesize should generally be 256 if using a template</string>
+    <string id="tileUrlTitle">Tile url</string>
+    <string id="tileUrlPrompt">http://127.0.0.1:8080 or template eg. https://a.tile.opentopomap.org/{z}/{x}/{y}.png</string>
     <string id="elevation_mode">Elevation</string>
     <string id="track_route_mode">Track/Route</string>
     <string id="map_enabled_title">Map Enabled</string>
@@ -45,7 +48,6 @@
     <string id="coloursDescription"></string>
     <string id="mapSettingsTitle">Map settings</string>
 
-    <string id="mapSettingsDescription">Tile size should be a multiple of 256 for best results. Choose these values wisely. too big = crash, too small = crash or slow performance</string>
     <string id="tileSizePrompt">Pixels per tile x and y</string>
     <string id="tileCacheSizePrompt">Number of tiles to cache</string>
     <string id="colourPrompt">Colour in AARRGGBB format</string>

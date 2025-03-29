@@ -56,7 +56,10 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     // Return the initial view of your application here
     function getInitialView() as [Views] or [Views, InputDelegates] {
         // prompts user to open the app
-        Communications.transmit("startserice", {}, _commStatus);
+        if (_breadcrumbContext.settings().tileUrl == COMPANION_APP_TILE_URL)
+        {
+          Communications.transmit("startserice", {}, _commStatus);
+        }
 
         return [ _view, new BreadcrumbDataFieldDelegate(_breadcrumbContext, false) ];
         // uncomment to test settings in simulator, also need to change manifest to be 'watch app'

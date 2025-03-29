@@ -90,3 +90,17 @@ function logE(message as String) as Void
 {
   logLevel("E", message);
 }
+
+function stringReplaceFirst(originalString as String, target as String, replacement as String) as String {
+    var index = originalString.find(target);
+
+    if (index == null) {
+        return originalString; // Target not found, return original string
+    }
+
+    var newString = originalString.substring(0, index) +
+                    replacement +
+                    originalString.substring(index + target.length(), originalString.length());
+
+    return newString;
+}

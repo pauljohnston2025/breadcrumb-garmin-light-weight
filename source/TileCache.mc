@@ -67,7 +67,7 @@ class TileKey {
 
 class Tile {
     var lastUsed as Number;
-    var bitmap as Graphics.BufferedBitmap or Null;
+    var bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource or Graphics.BitmapReference or Null;
     var storageIndex as Number or Null;
 
     function initialize() {
@@ -76,7 +76,7 @@ class Tile {
         self.storageIndex = null;
     }
 
-    function setBitmap(bitmap as Graphics.BufferedBitmap) as Void {
+    function setBitmap(bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource or Graphics.BitmapReference) as Void {
         self.bitmap = bitmap;
     }
 
@@ -104,12 +104,21 @@ class WebTileRequestHandler extends WebHandler {
         _tileKey = tileKey;
     }
 
-    function handle(responseCode as Number, data as Dictionary or String or Iterator or Null) as Void
+    function handle(responseCode as Number, data as Dictionary or String or Iterator or WatchUi.BitmapResource or Graphics.BitmapReference or Null) as Void
     {
         if (responseCode != 200)
         {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
             System.println("failed with: " + responseCode);
+            return;
+        }
+
+        if (data instanceof WatchUi.BitmapResource || data instanceof Graphics.BitmapReference)
+        {
+            // todo slice the tile to the correct tile size
+            var tile = new Tile();
+            tile.setBitmap(data);
+            _tileCache.addTile(_tileKey, tile);
             return;
         }
 
@@ -264,10 +273,33 @@ class TileCache {
         }
 
         // System.println("starting load tile: " + x + " " + y + " " + z);
+
+        if (_settings.tileUrl != COMPANION_APP_TILE_URL)
+        {
+            // todo get correct larger tile from the small tile request
+            _webRequestHandler.add(
+            new ImageRequest(
+                "tileimage" + tileKey,
+                stringReplaceFirst(
+                    stringReplaceFirst(
+                        stringReplaceFirst(_settings.tileUrl, "{x}", tileKey.x.toString()), 
+                        "{y}", 
+                        tileKey.y.toString()
+                    ),
+                    "{z}", 
+                    tileKey.z.toString()
+                ),
+                {},
+                new WebTileRequestHandler(me, tileKey)
+            )
+        );
+            return;
+        }
+
         _webRequestHandler.add(
             new JsonRequest(
                 "/loadtile/" + tileKey,
-                "/loadtile",
+                _settings.tileUrl + "/loadtile/",
                 {
                     "x" => tileKey.x,
                     "y" => tileKey.y,

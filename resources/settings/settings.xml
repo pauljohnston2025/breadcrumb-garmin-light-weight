@@ -43,6 +43,10 @@
         <settingConfig type="boolean"/>
     </setting>
     <group id="mapSettings" title="@Strings.mapSettingsTitle" description="@Strings.mapSettingsDescription" enableIfTrue="@Properties.mapEnabled">
+        <setting propertyKey="@Properties.tileUrl" title="@Strings.tileUrlTitle" prompt="@Strings.tileUrlPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+        
         <setting propertyKey="@Properties.tileSize" title="@Strings.tile_size_title" prompt="@Strings.tileSizePrompt">
             <settingConfig type="numeric" min="2" max="256"/>
         </setting>

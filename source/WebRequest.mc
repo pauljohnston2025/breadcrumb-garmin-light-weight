@@ -7,11 +7,11 @@ import Toybox.Communications;
 
 class WebHandler {
     // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
-    function handle(responseCode as Number, data as Dictionary or String or Iterator or Null) as Void;
+    function handle(responseCode as Number, data as Dictionary or String or Iterator or WatchUi.BitmapResource or Graphics.BitmapReference or Null) as Void;
 }
 
-class JsonRequest {
-    var method as String;
+class WebRequest {
+    var url as String;
     var params as Dictionary<Object, Object>;
     var handler as WebHandler;
     // unique id for this request, if two requests have the same hash the second one will be dropped if the first is pending
@@ -19,14 +19,36 @@ class JsonRequest {
 
     function initialize(
         _hash as String,
-        _method as String,
+        _url as String,
         _params as Dictionary<Object, Object>, 
         _handler as WebHandler)
     {
         hash = _hash;
-        method = _method;
+        url = _url;
         params = _params;
         handler = _handler;
+    }
+}
+
+class JsonRequest extends WebRequest {
+    function initialize(
+        _hash as String,
+        _url as String,
+        _params as Dictionary<Object, Object>, 
+        _handler as WebHandler)
+    {
+        WebRequest.initialize(_hash, _url, _params, _handler);
+    }
+}
+
+class ImageRequest extends WebRequest {
+    function initialize(
+        _hash as String,
+        _url as String,
+        _params as Dictionary<Object, Object>, 
+        _handler as WebHandler)
+    {
+       WebRequest.initialize(_hash, _url, _params, _handler);
     }
 }
 
@@ -42,16 +64,11 @@ class WebRequestHandle {
         handler = _handler;
     }
 
-    function handle(responseCode as Number, data as Dictionary or String or Iterator or Null) as Void
+    function handle(responseCode as Number, data as Dictionary or String or Iterator or WatchUi.BitmapResource or Graphics.BitmapReference or Null) as Void
     {
         handler.handle(responseCode, data);
-        var updateErrors = [Communications.BLE_HOST_TIMEOUT, Communications.NETWORK_REQUEST_TIMED_OUT];
-        if (updateErrors.indexOf(responseCode) > -1)
-        {
-            webHandler.updateUrlPrefix();
-        }
 
-        if (responseCode != 200)
+        if (responseCode != 200 && webHandler._settings.tileUrl == COMPANION_APP_TILE_URL)
         {
             // todo only send this on certain errors, and only probbaly only after some limit?
             Communications.transmit("startserice", {}, getApp()._commStatus);
@@ -76,78 +93,13 @@ class WebRequestHandler
     // only 3 web requests are allowed in parallel, so we need to buffer them up and make new requests when we get responses
     // using 2 arrays so we get FIFO
     // also dictionary seemed to make the code 2X slower, think because we had to serch all the keys for a string several times
-    var pending as Array<JsonRequest> = [];
+    var pending as Array<JsonRequest or ImageRequest> = [];
     var pendingHashes as Array<String> = [];
     var _outstandingCount as Number = 0;
-    var _urlPrefix as String;
-    var _ipsToTry as Array<String>;
-    var _ipsToTryIndex as Number;
     var _settings as Settings;
 
     function initialize(settings as Settings) {
         _settings = settings;
-        // todo: expose this through settings
-        // we want to allow 
-        // local connections through bluetooth bridge (slow but doess work): http://127.0.0.1:8080
-        // connections where the watch is on a wifi network (this will be very rare, since it would be an activity 
-        // thats always in range of the network, but good for testing): http://<android ip on same network>:8080
-        // connections where the watch is tethered to the android phone (fater than bluetooth): http://<android teather host ip>:8080
-        // note: depending on the network the watch is on, only 1 of these will work at any point
-        // could auto detect, but seems complicated (maybe have a list to try in settings, and on failed web requests try the next url)
-        // to make this work on the emulator you ned to run 
-        // adb forward tcp:8080 tcp:8080
-        // eg.
-        // _urlPrefix = "http://127.0.0.1:8080"; // localhost (bluetooth bridge)
-        // _urlPrefix = "http://192.168.1.103:8080/"; // android phone ip on wlan
-        // _urlPrefix = "http://192.168.79.82:8080/"; // androids hotspot ip (the default gateway ip from the connected devices)
-        // if (isSimulator())
-        // {
-        //     _urlPrefix = "http://192.168.1.101:81";
-        // }
-
-        // todo load from settings
-        // to make this work on the emulator you ned to run 
-        // adb forward tcp:8080 tcp:8080
-        _urlPrefix = "http://127.0.0.1:8080";
-        _ipsToTry = ["127.0.0.1", "192.168.1.103", "192.168.79.82"];
-        _ipsToTryIndex = 0;
-    }
-
-    // function connectionStatusCallback(result as { :wifiAvailable as Lang.Boolean, :errorCode as Communications.WifiConnectionStatus }) as Void
-    // {
-    //     System.println("wifi status: " + result[:wifiAvailable] + " " + result[:errorCode]);
-    //     // think if we start a request whilst wifi is active it will keep it active for us (with any hope)
-    //     realStartNext();
-    // }
-
-    function updateUrlPrefix() as Void
-    {
-        // keeping since we way experiment with wifi again at some point, but it appear there is no way to force a connection to use wifi .
-        // I never saw a single request pass, even if bluetooth was disabled, seems like wifi can only be used for a sync (but we want it always in for the lifetime of our activity)
-        // it would probbaly use too much power anyway, so falling back to slower bluetooth and smaller colour pallete images
-        // this does rotate the url fine though
-
-        // to make this work on the emulator you ned to run 
-        // adb forward tcp:8080 tcp:8080
-        _urlPrefix = "http://127.0.0.1:8080";
-        return;
-
-        // System.println("updating url");
-        // if (_ipsToTry.size() == 0)
-        // {
-        //     _urlPrefix = "http://127.0.0.1:8080";
-        //     System.println("url changed to " + _urlPrefix);
-        //     return;
-        // }
-
-        // _ipsToTryIndex++;
-        // if (_ipsToTryIndex >= _ipsToTry.size())
-        // {
-        //     _ipsToTryIndex = 0;
-        // }
-
-        // _urlPrefix = "http://" + _ipsToTry[_ipsToTryIndex] + ":8080";
-        // System.println("url changed to " + _urlPrefix);
     }
 
     function clearValues() as Void
@@ -156,7 +108,7 @@ class WebRequestHandler
         pendingHashes = [];
     }
 
-    function add(jsonReq as JsonRequest) as Void 
+    function add(jsonOrImageReq as JsonRequest or ImageRequest) as Void 
     {
         // todo remove old requests if we get too many (slow network and requests too often mean the internal array grows and we OOM)
         // hard to know if there is one outstanding though, also need to startNext() on a timer if we have not seen any requests in a while
@@ -168,7 +120,7 @@ class WebRequestHandler
             return;
         }
 
-        var hash = jsonReq.hash;
+        var hash = jsonOrImageReq.hash;
         if (pendingHashes.indexOf(hash) > -1)
         {
             // log("Dropping req for: " + hash);
@@ -176,7 +128,7 @@ class WebRequestHandler
             return;
         }
 
-        pending.add(jsonReq);
+        pending.add(jsonOrImageReq);
         pendingHashes.add(hash);
         // for now just start one at a time, simpler to track
         // At most 3 outstanding can occur, todo query this limit
@@ -204,11 +156,6 @@ class WebRequestHandler
         return false;
     }
 
-    // function startNext() as Void 
-    // {
-    //     Communications.checkWifiConnection(method(:connectionStatusCallback));
-    // }
-
     function decrementOutstanding() as Void 
     {
         --_outstandingCount; 
@@ -217,10 +164,10 @@ class WebRequestHandler
     function start() as Void 
     {
         ++_outstandingCount;
-        var jsonReq = pending[0];
-        pending.remove(jsonReq);
+        var jsonOrImageReq = pending[0];
+        pending.remove(jsonOrImageReq);
         // trust that the keys are in the same order as the hash
-        pendingHashes.remove(jsonReq.hash);
+        pendingHashes.remove(jsonOrImageReq.hash);
         if (pending.size() != pendingHashes.size())
         {
             logE("size mismatch: " + pending.size() + " " + pendingHashes.size());
@@ -228,9 +175,27 @@ class WebRequestHandler
             pendingHashes = [];
         }
 
+        // System.println("url: "  + jsonOrImageReq.url);
+
+        if (jsonOrImageReq instanceof ImageRequest)
+        {
+            var callback = (new WebRequestHandle(me, jsonOrImageReq.handler)).method(:handle) as Method(responseCode as Lang.Number, data as WatchUi.BitmapResource or Graphics.BitmapReference or Null) as Void;
+            Communications.makeImageRequest(
+                jsonOrImageReq.url,
+                jsonOrImageReq.params,
+                {
+
+                }, // options
+                // see https://forums.garmin.com/developer/connect-iq/f/discussion/2289/documentation-clarification-object-method-and-lang-method
+                callback
+            );
+            return;
+        }
+
+        var callback = (new WebRequestHandle(me, jsonOrImageReq.handler)).method(:handle) as Method(responseCode as Lang.Number, data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null) as Void or Method(responseCode as Lang.Number, data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null, context as Lang.Object) as Void;
         Communications.makeWebRequest(
-            _urlPrefix + jsonReq.method,
-            jsonReq.params,
+            jsonOrImageReq.url,
+            jsonOrImageReq.params,
             {
                 :method => Communications.HTTP_REQUEST_METHOD_GET,
                 :headers => {
@@ -244,7 +209,7 @@ class WebRequestHandler
                 :responseType => Communications.HTTP_RESPONSE_CONTENT_TYPE_JSON,
             }, // options
             // see https://forums.garmin.com/developer/connect-iq/f/discussion/2289/documentation-clarification-object-method-and-lang-method
-            (new WebRequestHandle(me, jsonReq.handler)).method(:handle)
+            callback
         );
     }
 }
