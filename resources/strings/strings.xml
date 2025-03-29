@@ -19,6 +19,7 @@
     <string id="maxPendingWebRequests">Max pending web requests</string>
     <string id="maxPendingWebRequestsPrompt"></string>
     <string id="scale">Scale (0 for auto)</string>
+    <string id="scaleLabel">Scale</string>
     <!-- todo add promp based on scale and give relative numbers -->
     <string id="scalePrompt">0 - auto, eg. 0.98 - 100m, 0.1 - 1km</string>
     <string id="metersAroundUser">Meters around user</string>

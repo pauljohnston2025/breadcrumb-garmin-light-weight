@@ -5,8 +5,10 @@ import Toybox.WatchUi;
 import Toybox.Communications;
 import Toybox.Graphics;
 
+
 class SettingsFloatPicker extends FloatPicker {
     private var callback as Method;
+    public var parent = null;
     function initialize(callback as Method) {
         FloatPicker.initialize();
         self.callback = callback;
@@ -20,11 +22,16 @@ class SettingsFloatPicker extends FloatPicker {
         }
 
         callback.invoke(value);
+        if (parent != null && parent has :rerender)
+        {
+            parent.rerender();
+        }
     }
 }
 
 class SettingsNumberPicker extends IntPicker {
     private var callback as Method;
+    public var parent = null;
     function initialize(callback as Method) {
         IntPicker.initialize();
         self.callback = callback;
@@ -38,11 +45,16 @@ class SettingsNumberPicker extends IntPicker {
         }
 
         callback.invoke(value);
+        if (parent != null && parent has :rerender)
+        {
+            parent.rerender();
+        }
     }
 }
 
 class SettingsColourPicker extends ColourPicker {
     private var callback as Method;
+    public var parent = null;
     function initialize(callback as Method) {
         ColourPicker.initialize();
         self.callback = callback;
@@ -56,43 +68,287 @@ class SettingsColourPicker extends ColourPicker {
         }
 
         callback.invoke(value);
+        if (parent != null && parent has :rerender)
+        {
+            parent.rerender();
+        }
     }
 }
 
-function startPicker(picker as NumberPicker) as Void
+function startPicker(picker as SettingsFloatPicker or SettingsColourPicker or SettingsNumberPicker, parent) as Void
 {
+    picker.parent = parent;
     WatchUi.pushView(new $.NumberPickerView(picker), new $.NumberPickerDelegate(picker), WatchUi.SLIDE_IMMEDIATE);
 }
 
-// todo show currently selected option with '*' for mode menus - or switch them to a picker type
-// think this requires menu2 so we can updateItem or setFocus or setIcon
-class SettingsMainDelegate extends WatchUi.MenuInputDelegate {
-    function initialize() {
-        WatchUi.MenuInputDelegate.initialize();
+function safeSetSubLabel(menu as WatchUi.Menu2, id as Object, value as String) as Void
+{
+    var itemIndex = menu.findItemById(id);
+    if (itemIndex <= -1)
+    {
+        return;
     }
 
-    public function onMenuItem(item as Symbol) as Void {
+    var item = menu.getItem(itemIndex);
+    if (item == null)
+    {
+        return;
+    }
+
+    item.setSubLabel(value);
+}
+
+
+function safeSetToggle(menu as WatchUi.Menu2, id as Object, value as Boolean) as Void
+{
+    var itemIndex = menu.findItemById(id);
+    if (itemIndex <= -1)
+    {
+        return;
+    }
+
+    var item = menu.getItem(itemIndex);
+    if (item == null)
+    {
+        return;
+    }
+
+    if (item instanceof WatchUi.ToggleMenuItem)
+    {
+        item.setEnabled(value);
+    }
+}
+
+// https://forums.garmin.com/developer/connect-iq/f/discussion/379406/vertically-center-icon-in-iconmenuitem-using-menu2#pifragment-1298=4
+const iconMenuWidthPercent = 0.6;
+class ColourIcon extends WatchUi.Drawable {
+    var colour as Number;
+
+    function initialize(colour as Number) {
+        Drawable.initialize({});
+        self.colour = colour;
+    }
+
+    function draw(dc as Graphics.Dc) {
+        var iconWidthHeight;
+
+        // Calculate Width Height of Icon based on drawing area
+        if (dc.getHeight() > dc.getWidth()) {
+            iconWidthHeight = iconMenuWidthPercent * dc.getHeight();
+        } else {
+            iconWidthHeight = iconMenuWidthPercent * dc.getWidth();
+        }
+
+        dc.setColor(colour, colour);
+        dc.fillCircle(dc.getWidth() / 2, dc.getHeight() / 2, iconWidthHeight / 2f);
+    }
+}
+
+function safeSetIcon(menu as WatchUi.Menu2, id as Object, value as WatchUi.Drawable) as Void
+{
+    var itemIndex = menu.findItemById(id);
+    if (itemIndex <= -1)
+    {
+        return;
+    }
+
+    var item = menu.getItem(itemIndex);
+    if (item == null)
+    {
+        return;
+    }
+
+
+    if (item instanceof WatchUi.IconMenuItem)
+    {
+        item.setIcon(value);
+    }
+}
+
+// https://forums.garmin.com/developer/connect-iq/f/discussion/304179/programmatically-set-the-state-of-togglemenuitem
+class SettingsMain extends Rez.Menus.SettingsMain {
+    function initialize() {
+        Rez.Menus.SettingsMain.initialize();
+        rerender();
+    }
+
+    function rerender() as Void
+    {
         var settings = getApp()._breadcrumbContext.settings();
-        if (item == :settingsMainMode) {
-            WatchUi.pushView(new $.Rez.Menus.SettingsMode(), new $.SettingsModeDelegate(), WatchUi.SLIDE_IMMEDIATE);
-        } else if (item == :settingsMainModeUiMode) {
-            WatchUi.pushView(new $.Rez.Menus.SettingsUiMode(), new $.SettingsUiModeDelegate(), WatchUi.SLIDE_IMMEDIATE);
-        } else if (item == :settingsMainScale) {
-            startPicker(new SettingsFloatPicker(settings.method(:setScale)));
-        } else if (item == :settingsMainZoomAtPace) {
-            WatchUi.pushView(new $.Rez.Menus.SettingsZoomAtPace(), new $.SettingsZoomAtPaceDelegate(), WatchUi.SLIDE_IMMEDIATE);
-        } else if (item == :settingsMainMap) {
-            WatchUi.pushView(new $.Rez.Menus.SettingsMap(), new $.SettingsMapDelegate(), WatchUi.SLIDE_IMMEDIATE);            
-        } else if (item == :settingsMainColours) {
-            WatchUi.pushView(new $.Rez.Menus.SettingsColours(), new $.SettingsColoursDelegate(), WatchUi.SLIDE_IMMEDIATE);            
-        } else if (item == :settingsMainResetDefaults) {
-            var dialog = new WatchUi.Confirmation("RestSettings?");
+        var modeString = "";
+        switch(settings.mode)
+        {
+            case MODE_NORMAL:
+                modeString = Rez.Strings.track_route_mode;
+                break;
+            case MODE_ELEVATION:
+                modeString = Rez.Strings.elevation_mode;
+                break;
+        }
+        safeSetSubLabel(me, :settingsMainMode, modeString);
+        var uiModeString = "";
+        switch(settings.uiMode)
+        {
+            case UI_MODE_SHOW_ALL:
+                uiModeString = Rez.Strings.uiModeShowAll;
+                break;
+            case UI_MODE_HIDDEN:
+                uiModeString = Rez.Strings.uiModeHidden;
+                break;
+            case UI_MODE_NONE:
+                uiModeString = Rez.Strings.uiModeNone;
+                break;
+        }
+        safeSetSubLabel(me, :settingsMainModeUiMode, uiModeString);
+        var scaleString = settings.scale == null ? "Auto" : settings.scale.format("%.2f");
+        safeSetSubLabel(me, :settingsMainScale, scaleString);
+    }
+}
+
+class SettingsZoomAtPace extends Rez.Menus.SettingsZoomAtPace {
+    function initialize() {
+        Rez.Menus.SettingsZoomAtPace.initialize();
+        rerender();
+    }
+
+    function rerender() as Void
+    {
+        var settings = getApp()._breadcrumbContext.settings();
+        var modeString = "";
+        switch(settings.zoomAtPaceMode)
+        {
+            case ZOOM_AT_PACE_MODE_PACE:
+                modeString = Rez.Strings.zoomAtPaceModePace;
+                break;
+            case ZOOM_AT_PACE_MODE_STOPPED:
+                modeString = Rez.Strings.zoomAtPaceModeStopped;
+                break;
+        }
+        safeSetSubLabel(me, :settingsZoomAtPaceMode, modeString);
+        safeSetSubLabel(me, :settingsZoomAtPaceUserMeters, settings.metersAroundUser.toString() + "m");
+        safeSetSubLabel(me, :settingsZoomAtPaceMPS, settings.zoomAtPaceSpeedMPS.format("%.2f") + "m/s");
+    }
+}
+
+class SettingsMap extends Rez.Menus.SettingsMap {
+    function initialize() {
+        Rez.Menus.SettingsMap.initialize();
+        rerender();
+    }
+
+    function rerender() as Void
+    {
+        var settings = getApp()._breadcrumbContext.settings();
+        safeSetToggle(me, :settingsMapEnabled, true);
+        safeSetSubLabel(me, :settingsMapTileSize, settings.tileSize.toString());
+        safeSetSubLabel(me, :settingsMapTileCacheSize, settings.tileCacheSize.toString());
+        safeSetSubLabel(me, :settingsMapMaxPendingWebRequests, settings.maxPendingWebRequests.toString());
+        var latString = settings.fixedLatitude == null ? "Disabled" : settings.fixedLatitude.format("%.2f");
+        safeSetSubLabel(me, :settingsMapFixedLatitude, latString);
+        var longString = settings.fixedLongitude == null ? "Disabled" : settings.fixedLongitude.format("%.2f");
+        safeSetSubLabel(me, :settingsMapFixedLongitude, longString);
+    }
+}
+
+class SettingsMapDisabled extends Rez.Menus.SettingsMapDisabled {
+    function initialize() {
+        Rez.Menus.SettingsMapDisabled.initialize();
+        rerender();
+    }
+
+    function rerender() as Void
+    {
+        safeSetToggle(me, :settingsMapEnabled, false);
+    }
+}
+
+class SettingsColours extends Rez.Menus.SettingsColours {
+    function initialize() {
+        Rez.Menus.SettingsColours.initialize();
+        rerender();
+    }
+
+    function rerender() as Void
+    {
+        var settings = getApp()._breadcrumbContext.settings();
+        safeSetIcon(me, :settingsColoursTrackColour, new ColourIcon(settings.trackColour));
+        safeSetIcon(me, :settingsColoursRouteColour, new ColourIcon(settings.routeColour));
+        safeSetIcon(me, :settingsColoursUserColour, new ColourIcon(settings.userColour));
+        safeSetIcon(me, :settingsColoursElevationColour, new ColourIcon(settings.elevationColour));
+    }
+}
+
+class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
+    var view as SettingsMain;
+    function initialize(view as SettingsMain) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.view = view;
+    }
+
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var itemId = item.getId();
+        if (itemId == :settingsMainMode) {
+            WatchUi.pushView(new $.Rez.Menus.SettingsMode(), new $.SettingsModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMainModeUiMode) {
+            WatchUi.pushView(new $.Rez.Menus.SettingsUiMode(), new $.SettingsUiModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMainScale) {
+            startPicker(new SettingsFloatPicker(settings.method(:setScale)), view);
+        } else if (itemId == :settingsMainZoomAtPace) {
+            var view = new $.SettingsZoomAtPace();
+            WatchUi.pushView(view, new $.SettingsZoomAtPaceDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMainMap) {
+            if (settings.mapEnabled)
+            {
+                var view = new SettingsMap();
+                WatchUi.pushView(view, new $.SettingsMapDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+                return;
+            }
+            var disabledView = new SettingsMapDisabled();
+            WatchUi.pushView(disabledView, new $.SettingsMapDisabledDelegate(disabledView), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMainColours) {
+            var view = new SettingsColours();
+            WatchUi.pushView(view, new $.SettingsColoursDelegate(view), WatchUi.SLIDE_IMMEDIATE);            
+        } else if (itemId == :settingsMainResetDefaults) {
+            var dialog = new WatchUi.Confirmation("Reset all settings?");
             WatchUi.pushView(
                 dialog,
                 new ResetSettingsDelegate(),
                 WatchUi.SLIDE_IMMEDIATE
             );
         }
+    }
+
+    function onBack() as Void
+    {
+        System.println("onBack");
+    }
+    function onDone() as Void
+    {
+        System.println("onDone");
+    }
+    function onFooter() as Void
+    {
+        System.println("onFooter");
+    }
+    function onNextPage() as Lang.Boolean
+    {
+        System.println("onNextPage");
+        return true;
+    }
+    function onPreviousPage() as Lang.Boolean
+    {
+        System.println("onPreviousPage");
+        return true;
+    }
+    function onTitle() as Void
+    {
+        System.println("onTitle");
+    }
+    function onWrap(key as WatchUi.Key) as Lang.Boolean
+    {
+        System.println("onWrap");
+        return true;
     }
 }
 
@@ -109,91 +365,162 @@ class ResetSettingsDelegate extends WatchUi.ConfirmationDelegate {
     }
 } 
 
-class SettingsModeDelegate extends WatchUi.MenuInputDelegate {
-    function initialize() {
-        WatchUi.MenuInputDelegate.initialize();
+class SettingsModeDelegate extends WatchUi.Menu2InputDelegate {
+    var parent as SettingsMain;
+    function initialize(parent as SettingsMain) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.parent = parent;
     }
-    public function onMenuItem(item as Symbol) as Void {
+    public function onSelect(item as WatchUi.MenuItem) as Void {
         var settings = getApp()._breadcrumbContext.settings();
-        if (item == :settingsModeTrackRoute) {
+        var itemId = item.getId();
+        if (itemId == :settingsModeTrackRoute) {
             settings.setMode(MODE_NORMAL);
-        } else if (item == :settingsModeElevation) {
+        } else if (itemId == :settingsModeElevation) {
             settings.setMode(MODE_ELEVATION);
         }
+
+        parent.rerender();
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+    }
+
+    function onBack() as Void
+    {
+        System.println("onBack from mode menu");
+        Menu2InputDelegate.onBack();
+    }
+    function onDone() as Void
+    {
+        System.println("onDone  from mode menu");
+    }
+    function onFooter() as Void
+    {
+        System.println("onFooter  from mode menu");
+    }
+    function onNextPage() as Lang.Boolean
+    {
+        System.println("onNextPage  from mode menu");
+        return false;
+    }
+    function onPreviousPage() as Lang.Boolean
+    {
+        System.println("onPreviousPage  from mode menu");
+        return false;
+    }
+    function onTitle() as Void
+    {
+        System.println("onTitle  from mode menu");
+    }
+    function onWrap(key as WatchUi.Key) as Lang.Boolean
+    {
+        System.println("onWrap  from mode menu");
+        return false;
     }
 }
 
-class SettingsUiModeDelegate extends WatchUi.MenuInputDelegate {
-    function initialize() {
-        WatchUi.MenuInputDelegate.initialize();
+class SettingsUiModeDelegate extends WatchUi.Menu2InputDelegate {
+    var parent as SettingsMain;
+    function initialize(parent as SettingsMain) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.parent = parent;
     }
-    public function onMenuItem(item as Symbol) as Void {
+    public function onSelect(item as WatchUi.MenuItem) as Void {
         var settings = getApp()._breadcrumbContext.settings();
-        if (item == :settingsUiModeShowall) {
+        var itemId = item.getId();
+        if (itemId == :settingsUiModeShowall) {
             settings.setUiMode(UI_MODE_SHOW_ALL);
-        } else if (item == :settingsUiModeHidden) {
+        } else if (itemId == :settingsUiModeHidden) {
             settings.setUiMode(UI_MODE_HIDDEN);
-        } else if (item == :settingsUiModeNone) {
+        } else if (itemId == :settingsUiModeNone) {
             settings.setUiMode(UI_MODE_NONE);
         }
+
+        parent.rerender();
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }
 }
 
-class SettingsZoomAtPaceDelegate extends WatchUi.MenuInputDelegate {
-    function initialize() {
-        WatchUi.MenuInputDelegate.initialize();
+class SettingsZoomAtPaceDelegate extends WatchUi.Menu2InputDelegate {
+    var view as SettingsZoomAtPace;
+    function initialize(view as SettingsZoomAtPace) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.view = view;
     }
-    public function onMenuItem(item as Symbol) as Void {
+    public function onSelect(item as WatchUi.MenuItem) as Void {
         var settings = getApp()._breadcrumbContext.settings();
-        if (item == :settingsZoomAtPaceMode) {
-            WatchUi.pushView(new $.Rez.Menus.SettingsZoomAtPaceMode(), new $.SettingsZoomAtPaceModeDelegate(), WatchUi.SLIDE_IMMEDIATE);
-        } else if (item == :settingsZoomAtPaceUserMeters) {
-            startPicker(new SettingsNumberPicker(settings.method(:setMetersAroundUser)));
-        } else if (item == :settingsZoomAtPaceMPS) {
-            startPicker(new SettingsFloatPicker(settings.method(:setZoomAtPaceSpeedMPS)));
+        var itemId = item.getId();
+        if (itemId == :settingsZoomAtPaceMode) {
+            WatchUi.pushView(new $.Rez.Menus.SettingsZoomAtPaceMode(), new $.SettingsZoomAtPaceModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsZoomAtPaceUserMeters) {
+            startPicker(new SettingsNumberPicker(settings.method(:setMetersAroundUser)), view);
+        } else if (itemId == :settingsZoomAtPaceMPS) {
+            startPicker(new SettingsFloatPicker(settings.method(:setZoomAtPaceSpeedMPS)), view);
         }
     }
 }
 
-class SettingsZoomAtPaceModeDelegate extends WatchUi.MenuInputDelegate {
-    function initialize() {
-        WatchUi.MenuInputDelegate.initialize();
+class SettingsZoomAtPaceModeDelegate extends WatchUi.Menu2InputDelegate {
+    var parent as SettingsZoomAtPace;
+    function initialize(parent as SettingsZoomAtPace) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.parent = parent;
     }
-    public function onMenuItem(item as Symbol) as Void {
+    public function onSelect(item as WatchUi.MenuItem) as Void {
         var settings = getApp()._breadcrumbContext.settings();
-        if (item == :settingsZoomAtPaceModePace) {
+        var itemId = item.getId();
+        if (itemId == :settingsZoomAtPaceModePace) {
             settings.setZoomAtPaceMode(ZOOM_AT_PACE_MODE_PACE);
-        } else if (item == :settingsZoomAtPaceModeStopped) {
+        } else if (itemId == :settingsZoomAtPaceModeStopped) {
             settings.setZoomAtPaceMode(ZOOM_AT_PACE_MODE_STOPPED);
         }
+
+        parent.rerender();
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }
 }
 
-// todo remove the other items if maps enabled
-// maybe have a second view? and switch it out on maps enabled
-class SettingsMapDelegate extends WatchUi.MenuInputDelegate {
-    function initialize() {
-        WatchUi.MenuInputDelegate.initialize();
+class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
+    var view as SettingsMap;
+    function initialize(view as SettingsMap) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.view = view;
     }
-    public function onMenuItem(item as Symbol) as Void {
+    public function onSelect(item as WatchUi.MenuItem) as Void {
         var settings = getApp()._breadcrumbContext.settings();
-        if (item == :settingsMapEnabled) {
-            var dialog = new WatchUi.Confirmation("EnableMaps?");
-            WatchUi.pushView(
-                dialog,
-                new MapEnabledDelegate(),
-                WatchUi.SLIDE_IMMEDIATE
-            );
-        } else if (item == :settingsMapTileSize) {
-            startPicker(new SettingsNumberPicker(settings.method(:setTileSize)));
-        } else if (item == :settingsMapTileCacheSize) {
-            startPicker(new SettingsNumberPicker(settings.method(:setTileCacheSize)));
-        } else if (item == :settingsMapMaxPendingWebRequests) {
-            startPicker(new SettingsNumberPicker(settings.method(:setMaxPendingWebRequests)));
-        } else if (item == :settingsMapFixedLatitude) {
-            startPicker(new SettingsFloatPicker(settings.method(:setFixedLatitude)));
-        } else if (item == :settingsMapFixedLongitude) {
-            startPicker(new SettingsFloatPicker(settings.method(:setFixedLongitude)));
+        var itemId = item.getId();
+        if (itemId == :settingsMapEnabled) {
+            settings.setMapEnabled(false);
+            var view = new SettingsMapDisabled();
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(view, new $.SettingsMapDisabledDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMapTileSize) {
+            startPicker(new SettingsNumberPicker(settings.method(:setTileSize)), view);
+        } else if (itemId == :settingsMapTileCacheSize) {
+            startPicker(new SettingsNumberPicker(settings.method(:setTileCacheSize)), view);
+        } else if (itemId == :settingsMapMaxPendingWebRequests) {
+            startPicker(new SettingsNumberPicker(settings.method(:setMaxPendingWebRequests)), view);
+        } else if (itemId == :settingsMapFixedLatitude) {
+            startPicker(new SettingsFloatPicker(settings.method(:setFixedLatitude)), view);
+        } else if (itemId == :settingsMapFixedLongitude) {
+            startPicker(new SettingsFloatPicker(settings.method(:setFixedLongitude)), view);
+        }
+    }
+}
+
+class SettingsMapDisabledDelegate extends WatchUi.Menu2InputDelegate {
+    var view as SettingsMapDisabled;
+    function initialize(view as SettingsMapDisabled) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.view = view;
+    }
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var itemId = item.getId();
+        if (itemId == :settingsMapEnabled) {
+            settings.setMapEnabled(true);
+            var view = new SettingsMap();
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(view, new $.SettingsMapDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         }
     }
 }
@@ -213,20 +540,23 @@ class MapEnabledDelegate extends WatchUi.ConfirmationDelegate {
     }
 } 
 
-class SettingsColoursDelegate extends WatchUi.MenuInputDelegate {
-    function initialize() {
-        WatchUi.MenuInputDelegate.initialize();
+class SettingsColoursDelegate extends WatchUi.Menu2InputDelegate {
+    var view as SettingsColours;
+    function initialize(view as SettingsColours) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.view = view;
     }
-    public function onMenuItem(item as Symbol) as Void {
+    public function onSelect(item as WatchUi.MenuItem) as Void {
         var settings = getApp()._breadcrumbContext.settings();
-        if (item == :settingsColoursTrackColour) {
-            startPicker(new SettingsColourPicker(settings.method(:setTrackColour)));
-        } else if (item == :settingsColoursRouteColour) {
-            startPicker(new SettingsColourPicker(settings.method(:setRouteColour)));
-        } else if (item == :settingsColoursElevationColour) {
-            startPicker(new SettingsColourPicker(settings.method(:setElevationColour)));
-        } else if (item == :settingsColoursUserColour) {
-            startPicker(new SettingsColourPicker(settings.method(:setUserColour)));
+        var itemId = item.getId();
+        if (itemId == :settingsColoursTrackColour) {
+            startPicker(new SettingsColourPicker(settings.method(:setTrackColour)), view);
+        } else if (itemId == :settingsColoursRouteColour) {
+            startPicker(new SettingsColourPicker(settings.method(:setRouteColour)), view);
+        } else if (itemId == :settingsColoursElevationColour) {
+            startPicker(new SettingsColourPicker(settings.method(:setElevationColour)), view);
+        } else if (itemId == :settingsColoursUserColour) {
+            startPicker(new SettingsColourPicker(settings.method(:setUserColour)), view);
         }
     }
 }

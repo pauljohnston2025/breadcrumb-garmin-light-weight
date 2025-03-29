@@ -223,7 +223,9 @@ class NumberPickerView extends WatchUi.View {
 
   function onUpdate(dc as Dc) as Void {
     picker.onUpdate(dc);
-    System.println("onUpdate");
+    // System.println("onUpdate");
+    // Some exampls have the line below, do not do that, screen goes black (though it does work in the examples, guess just not when lanunched from menu?)
+    // View.onUpdate(dc);
   }
 }
 
@@ -236,8 +238,8 @@ class NumberPickerDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onTap(evt as WatchUi.ClickEvent) as Boolean {
-        System.println("got number picker tap (x,y): (" + evt.getCoordinates()[0] + "," +
-                       evt.getCoordinates()[1] + ")");
+        // System.println("got number picker tap (x,y): (" + evt.getCoordinates()[0] + "," +
+        //                evt.getCoordinates()[1] + ")");
 
         var coords = evt.getCoordinates();
         var x = coords[0];

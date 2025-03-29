@@ -1,3 +1,4 @@
 <drawables>
     <bitmap id="LauncherIcon" filename="launcher_icon.png" />
+    <bitmap id="ColourIcon" class="ColourIcon" filename="launcher_icon.png" automaticPalette="true" dithering="none" scaleX="15%" scaleRelativeTo="screen" />
 </drawables>
