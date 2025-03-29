@@ -47,16 +47,6 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         System.println("registering for phone messages");
         Communications.registerForPhoneAppMessages(method( : onPhone));
       }
-
-      // this would be nice to have (so the user is pormpted to open the app), but appears it does not work
-      // System.println("opening app");
-      // opens browser only if valid url
-      // Communications.openWebPage("http://open.breadcrumb.app.example.com", null, null);
-      //  does not work on real device if its not a valid url
-      // Communications.openWebPage("open the app please", null, null);
-      // https://forums.garmin.com/developer/connect-iq/f/discussion/4339/start-an-android-service-from-watch?pifragment-1298=2#pifragment-1298=2
-      // describes how to handle it on android
-      Communications.transmit("startserice", {}, _commStatus);
     }
 
     // onStop() is called when your application is exiting
@@ -65,9 +55,12 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
     // Return the initial view of your application here
     function getInitialView() as [Views] or [Views, InputDelegates] {
-        // return [ _view, new BreadcrumbDataFieldDelegate(_breadcrumbContext, false) ];
+        // prompts user to open the app
+        Communications.transmit("startserice", {}, _commStatus);
+
+        return [ _view, new BreadcrumbDataFieldDelegate(_breadcrumbContext, false) ];
         // uncomment to test settings in simulator, also need to change manifest to be 'watch app'
-        return getSettingsView();
+        // return getSettingsView();
     }
 
     function getSettingsView() as [Views] or [Views, InputDelegates] or Null {

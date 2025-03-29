@@ -200,7 +200,7 @@ class SettingsMain extends Rez.Menus.SettingsMain {
                 break;
         }
         safeSetSubLabel(me, :settingsMainModeUiMode, uiModeString);
-        var scaleString = settings.scale == null ? "Auto" : settings.scale.format("%.2f");
+        var scaleString = settings.scale == null ? "Auto" : settings.scale.format("%.5f");
         safeSetSubLabel(me, :settingsMainScale, scaleString);
     }
 }
@@ -243,9 +243,9 @@ class SettingsMap extends Rez.Menus.SettingsMap {
         safeSetSubLabel(me, :settingsMapTileSize, settings.tileSize.toString());
         safeSetSubLabel(me, :settingsMapTileCacheSize, settings.tileCacheSize.toString());
         safeSetSubLabel(me, :settingsMapMaxPendingWebRequests, settings.maxPendingWebRequests.toString());
-        var latString = settings.fixedLatitude == null ? "Disabled" : settings.fixedLatitude.format("%.2f");
+        var latString = settings.fixedLatitude == null ? "Disabled" : settings.fixedLatitude.format("%.5f");
         safeSetSubLabel(me, :settingsMapFixedLatitude, latString);
-        var longString = settings.fixedLongitude == null ? "Disabled" : settings.fixedLongitude.format("%.2f");
+        var longString = settings.fixedLongitude == null ? "Disabled" : settings.fixedLongitude.format("%.5f");
         safeSetSubLabel(me, :settingsMapFixedLongitude, longString);
     }
 }
@@ -322,6 +322,7 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
     function onBack() as Void
     {
         System.println("onBack");
+        Menu2InputDelegate.onBack();
     }
     function onDone() as Void
     {
