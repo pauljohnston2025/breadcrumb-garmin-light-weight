@@ -155,6 +155,8 @@ class TileCache {
     var _webRequestHandler as WebRequestHandler;
     var _palette as Array<Number>;
     var _settings as Settings;
+    var _hits as Number = 0;
+    var _misses as Number = 0;
 
     function initialize(
         webRequestHandler as WebRequestHandler,
@@ -327,17 +329,31 @@ class TileCache {
         if (tile != null)
         {
             // System.println("cache hit: " + x  + " " + y + " " + z);
+            _hits++;
             tile.markUsed();
             return tile;
         }
 
         // System.println("cache miss: " + x  + " " + y + " " + z);
         // System.println("have tiles: " + _internalCache.keys());
+        _misses++;
         return null;
     }
     
     function haveTile(tileKey as TileKey) as Boolean {
         return _internalCache.hasKey(tileKey);
+    }
+
+    function tileCount() as Number {
+        return _internalCache.size();
+    }
+    
+    function hits() as Number {
+        return _hits;
+    }
+
+    function misses() as Number {
+        return _misses;
     }
 
     function evictLeastRecentlyUsedTile() as Void {
@@ -399,5 +415,11 @@ class TileCache {
         }
 
         return localBitmap;
+    }
+
+    function clearStats() as Void
+    {
+        _hits = 0;
+        _misses = 0;
     }
 }

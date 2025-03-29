@@ -84,6 +84,15 @@ class WebRequestHandle {
         // so we might have to call 'startNext' every time the compute method runs :(
         // new Timer.Timer(); Error: Permission Required ; Details: Module 'Toybox.Timer' not available to 'Data Field'
         webHandler.decrementOutstanding();
+
+        if (responseCode == 200)
+        {
+            webHandler._successCount++;
+        }
+        else {
+            webHandler._errorCount++;
+        }
+        webHandler._lastResult = responseCode;
     }
 }
 
@@ -97,6 +106,9 @@ class WebRequestHandler
     var pendingHashes as Array<String> = [];
     var _outstandingCount as Number = 0;
     var _settings as Settings;
+    var _errorCount as Number = 0;
+    var _successCount as Number = 0;
+    var _lastResult as Number = 0;
 
     function initialize(settings as Settings) {
         _settings = settings;
@@ -212,5 +224,28 @@ class WebRequestHandler
             // see https://forums.garmin.com/developer/connect-iq/f/discussion/2289/documentation-clarification-object-method-and-lang-method
             callback
         );
+    }
+
+    function pendingCount() as Number {
+        return pending.size();
+    }
+
+    function errorCount() as Number {
+        return _errorCount;
+    }
+    
+    function successCount() as Number {
+        return _successCount;
+    }
+    
+    function lastResult() as Number {
+        return _lastResult;
+    }
+
+    function clearStats() as Void
+    {
+        _errorCount = 0;
+        _successCount = 0;
+        _lastResult = 0;
     }
 }

@@ -67,6 +67,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     }
 
+    var settings = _breadcrumbContext.settings();
+    var disableMapsFailureCount = settings.disableMapsFailureCount;
+    if (disableMapsFailureCount != 0 && _breadcrumbContext.webRequestHandler().errorCount() > disableMapsFailureCount)
+    {
+      System.println("disabling maps, too many errors");
+      settings.setMapEnabled(false);
+    }
+
     _breadcrumbContext.track().onActivityInfo(info);
     _breadcrumbContext.trackRenderer().onActivityInfo(info);
     var currentSpeed = info.currentSpeed;
@@ -310,7 +318,27 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
     dc.clear();
     dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-    dc.drawText(100, 100, Graphics.FONT_XTINY, "todo: debug screen", Graphics.TEXT_JUSTIFY_CENTER);
+    // its only a debug menu that should probbaly be optimised out in release, hard code to venu2s screen coordinates
+    // it is actually pretty nice info, best guess on string sizes down the screen
+    var fieldCount = 7;
+    var y = 30;
+    var spacing = (_breadcrumbContext.trackRenderer()._screenSize - y) / fieldCount;
+    var x = _breadcrumbContext.trackRenderer()._xHalf;
+    dc.drawText(x, y, Graphics.FONT_XTINY, "pending web: " + _breadcrumbContext.webRequestHandler().pendingCount(), Graphics.TEXT_JUSTIFY_CENTER);
+    y+=spacing;
+    var combined = "last web res: " + _breadcrumbContext.webRequestHandler().lastResult() + 
+                   "  tiles: " + _breadcrumbContext.tileCache().tileCount();
+    dc.drawText(x, y, Graphics.FONT_XTINY, combined, Graphics.TEXT_JUSTIFY_CENTER);
+    y+=spacing;
+    // could do as a ratio for a single field
+    dc.drawText(x, y, Graphics.FONT_XTINY, "hits: " + _breadcrumbContext.tileCache().hits(), Graphics.TEXT_JUSTIFY_CENTER);
+    y+=spacing;
+    dc.drawText(x, y, Graphics.FONT_XTINY, "misses: " + _breadcrumbContext.tileCache().misses(), Graphics.TEXT_JUSTIFY_CENTER);
+    y+=spacing;
+    // could do as a ratio for a single field
+    dc.drawText(x, y, Graphics.FONT_XTINY, "web err: " + _breadcrumbContext.webRequestHandler().errorCount(), Graphics.TEXT_JUSTIFY_CENTER);
+    y+=spacing;
+    dc.drawText(x, y, Graphics.FONT_XTINY, "web ok: " + _breadcrumbContext.webRequestHandler().successCount(), Graphics.TEXT_JUSTIFY_CENTER);
   }
 
   function renderElevation(dc as Dc) as Void {

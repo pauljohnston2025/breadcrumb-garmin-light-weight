@@ -67,6 +67,7 @@ class Settings {
     // see oddity with route name and route loading new in context.newRoute
     var routes as Array<Dictionary> = [];
     var routesEnabled as Boolean = true;
+    var disableMapsFailureCount as Number = 200; // 0 for unlimited
 
     // calculated whenever others change
     var smallTilesPerBigTile = Math.ceil(256f/tileSize);
@@ -177,6 +178,8 @@ class Settings {
         {
            clearTileCache();
            clearPendingWebRequests();
+           clearTileCacheStats();
+           clearWebStats();
         }
     }
     
@@ -528,6 +531,18 @@ class Settings {
         }
     }
     
+    function clearTileCacheStats() as Void {
+        // symbol not found if the loadSettings method is called before we set tile cache
+        // should n ot happen unless onsettingschange is called before initalise finishes
+        // it alwasys has the symbol, but it might not be initalised yet
+        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
+        var context = getApp()._breadcrumbContext;
+        if (context != null and context instanceof BreadcrumbContext && context has :_tileCache && context._tileCache != null && context._tileCache instanceof TileCache)
+        {
+            context._tileCache.clearStats();
+        }
+    }
+    
     function clearPendingWebRequests() as Void {
         // symbol not found if the loadSettings method is called before we set tile cache
         // should n ot happen unless onsettingschange is called before initalise finishes
@@ -537,6 +552,18 @@ class Settings {
         if (context != null and context instanceof BreadcrumbContext && context has :_webRequestHandler && context._webRequestHandler != null && context._webRequestHandler instanceof WebRequestHandler)
         {
             context._webRequestHandler.clearValues();
+        }
+    }
+    
+    function clearWebStats() as Void {
+        // symbol not found if the loadSettings method is called before we set tile cache
+        // should n ot happen unless onsettingschange is called before initalise finishes
+        // it alwasys has the symbol, but it might not be initalised yet
+        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
+        var context = getApp()._breadcrumbContext;
+        if (context != null and context instanceof BreadcrumbContext && context has :_webRequestHandler && context._webRequestHandler != null && context._webRequestHandler instanceof WebRequestHandler)
+        {
+            context._webRequestHandler.clearStats();
         }
     }
     
@@ -786,6 +813,8 @@ class Settings {
         Application.Storage.clearValues();
         clearTileCache();
         clearPendingWebRequests();
+        clearTileCacheStats();
+        clearWebStats();
         clearContextRoutes();
         // load all the settings we just wrote
         loadSettings();
