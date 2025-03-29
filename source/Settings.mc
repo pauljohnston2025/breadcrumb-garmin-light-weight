@@ -175,6 +175,11 @@ class Settings {
         }
     }
 
+    function getRouteColour(index as Number)
+    {
+        return routeColour;
+    }
+
     function setRouteColour(value as Number) as Void {
         routeColour = value;
         Application.Properties.setValue("routeColour", routeColour.format("%X"));
@@ -469,16 +474,16 @@ class Settings {
 
     // Load the values initially from storage
     function loadSettings() as Void {
-        Application.Properties.setValue("routes", [
-            {
-                "name" => "route1",
-                "enabled" => false,
-            },
-            {
-                "name" => "route2",
-                "enabled" => true,
-            }
-        ]);
+        // Application.Properties.setValue("routes", [
+        //     {
+        //         "name" => "route1",
+        //         "enabled" => false,
+        //     },
+        //     {
+        //         "name" => "route2",
+        //         "enabled" => true,
+        //     }
+        // ]);
         var resetDefaults = Application.Properties.getValue("resetDefaults") as Boolean;
         if (resetDefaults)
         {

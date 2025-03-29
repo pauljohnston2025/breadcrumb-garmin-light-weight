@@ -56,7 +56,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     // Return the initial view of your application here
     function getInitialView() as [Views] or [Views, InputDelegates] {
         // prompts user to open the app
-        if (_breadcrumbContext.settings().tileUrl == COMPANION_APP_TILE_URL)
+        if (_breadcrumbContext.settings().tileUrl.equals(COMPANION_APP_TILE_URL))
         {
           Communications.transmit("startserice", {}, _commStatus);
         }

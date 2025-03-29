@@ -5,7 +5,7 @@ import Toybox.Application;
 
 class BreadcrumbContext {
   var _breadcrumbRenderer as BreadcrumbRenderer;
-  var _route as BreadcrumbTrack or Null;
+  var _routes as Array<BreadcrumbTrack>;
   var _track as BreadcrumbTrack;
   var _settings as Settings;
   var _webRequestHandler as WebRequestHandler;
@@ -15,12 +15,14 @@ class BreadcrumbContext {
   // Set the label of the data field here.
   function initialize() {
     _breadcrumbRenderer = new BreadcrumbRenderer(me);
-    _route = null;
-    _track = new BreadcrumbTrack(me);
+    _routes = [];
+    _track = new BreadcrumbTrack(me, 0);
 
-    var route = BreadcrumbTrack.readFromDisk(ROUTE_KEY, me);
-    if (route != null) {
-      _route = route;
+    for (var i = 0; i < ROUTE_MAX; ++i) {
+      var route = BreadcrumbTrack.readFromDisk(ROUTE_KEY, i, me);
+      if (route != null) {
+        _routes.add(route);
+      }
     }
 
     _settings = new Settings();
@@ -36,13 +38,30 @@ class BreadcrumbContext {
   function trackRenderer() as BreadcrumbRenderer { return _breadcrumbRenderer; }
   function mapRenderer() as MapRenderer { return _mapRenderer; }
   function track() as BreadcrumbTrack { return _track; }
-  function route() as BreadcrumbTrack or Null { return _route; }
+  function routes() as Array<BreadcrumbTrack> or Null { return _routes; }
   function newRoute() as BreadcrumbTrack {
-    _route = new BreadcrumbTrack(me);
-    return _route;
+    if (_routes.size() >= ROUTE_MAX)
+    {
+      var oldestRoute = null;
+      for (var i = 0; i < _routes.size(); ++i) {
+        var thisRoute = _routes[i];
+        if (oldestRoute == null || oldestRoute.epoch > thisRoute.epoch)
+        {
+            oldestRoute = thisRoute;
+        }
+      }
+      _routes.remove(oldestRoute);
+      var route = new BreadcrumbTrack(me, oldestRoute.storageIndex);
+      return route;
+    }
+    var route = new BreadcrumbTrack(me, _routes.size());
+    _routes.add(route);
+    return route;
   }
-  function clearRoute() as Void {
-    newRoute();
-    _route.writeToDisk(ROUTE_KEY);
+  function clearRoutes() as Void {
+    for (var i = 0; i < ROUTE_MAX; ++i) {
+      var route = new BreadcrumbTrack(me, i);
+      route.writeToDisk(ROUTE_KEY);
+    }
   }
 }

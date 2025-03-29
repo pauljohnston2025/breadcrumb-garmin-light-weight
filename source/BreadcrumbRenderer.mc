@@ -479,7 +479,7 @@ class BreadcrumbRenderer {
         // press right to confirm, left cancels
         if (x > _xHalf)
         {
-            _breadcrumbContext.clearRoute();
+            _breadcrumbContext.clearRoutes();
         }
         _clearRouteProgress = 0;
         return true;
@@ -549,7 +549,8 @@ class BreadcrumbRenderer {
     dc as Dc, 
     hScale as Float, 
     vScale as Float,
-    startAt as Float
+    startAt as Float,
+    distanceM as Float
   ) as Void {
     var hScaleData = getScaleSizeGeneric(hScale, DESIRED_SCALE_PIXEL_WIDTH, SCALE_NAMES);
     var hPixelWidth = hScaleData[0];
@@ -632,31 +633,35 @@ class BreadcrumbRenderer {
       // dc.drawRadialText(0, _yHalf, vectorFont, vFoundName, Graphics.TEXT_JUSTIFY_LEFT, 90, 0, Graphics.RADIAL_TEXT_DIRECTION_COUNTER_CLOCKWISE);
       // drawAngledText and drawRadialText not available :(
     }
+
+    dc.drawText(_xHalf, 20, Graphics.FONT_XTINY, distanceM.format("%.0f") + "m", Graphics.TEXT_JUSTIFY_CENTER);
   }
 
-  function getElevationScale(track as BreadcrumbTrack, route as BreadcrumbTrack or Null) as [Float, Float, Float] {
-    if (route == null || route.coordinates.pointSize() < 2)
+  function getElevationScale(track as BreadcrumbTrack, routes as Array<BreadcrumbTrack>) as [Float, Float, Float] {
+    var maxDistance = 0f;
+    var minElevation = FLOAT_MAX;
+    var maxElevation = FLOAT_MIN;
+    if (track.coordinates.pointSize() > 2)
     {
-      var elevationChange = abs(track.elevationMax - track.elevationMin);
-      return getElevationScaleRaw(track.distanceTotal, elevationChange, track.elevationMin + elevationChange / 2);
+        maxDistance = maxF(maxDistance, track.distanceTotal);
+        minElevation = minF(minElevation, track.elevationMin);
+        maxElevation = maxF(maxElevation, track.elevationMax);
     }
 
-    if (track.coordinates.pointSize() < 2)
-    {
-      // we did not have enough points on the track to get good elevation, we cannot use the default start at, 
-      // since our route will be off the screen unless it has elevation that spreads over the default start at
-      // we also do not have any points to get a good distance, so just use the route
-      var elevationChange = abs(route.elevationMax - route.elevationMin);
-      return getElevationScaleRaw(route.distanceTotal, elevationChange, route.elevationMin + elevationChange / 2);
+    for (var i = 0; i < routes.size(); ++i) {
+        var route = routes[i];
+        if (route.coordinates.pointSize() > 2)
+        {
+            maxDistance = maxF(maxDistance, route.distanceTotal);
+            minElevation = minF(minElevation, route.elevationMin);
+            maxElevation = maxF(maxElevation, route.elevationMax);
+        }
     }
-    
-    // a combination of both
-    var distance = maxF(track.distanceTotal, route.distanceTotal);
-    var minElevation = minF(track.elevationMin, route.elevationMin);
+
     // abs really only needed until we get the first point (then max should always be more than min)
-    var elevationChange = abs(maxF(track.elevationMax, route.elevationMax) - minElevation);
+    var elevationChange = abs(maxElevation - minElevation);
     var startAt = minElevation + elevationChange / 2;
-    return getElevationScaleRaw(distance, elevationChange, startAt);
+    return getElevationScaleRaw(maxDistance, elevationChange, startAt);
   }
 
   function getElevationScaleRaw(distance as Float, elevationChange as Float, startAt as Float) as [Float, Float, Float] {

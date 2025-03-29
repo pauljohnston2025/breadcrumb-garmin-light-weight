@@ -27,6 +27,8 @@ class BreadcrumbTrack {
   // suspect 1 would result in faster itteration when drawing
   // shall store them as poit classes for now, and can convert to using just
   // arrays
+  var epoch as Number = 0;
+  var storageIndex as Number = 0;
   var coordinates as PointArray = new PointArray();
   var seenStartupPoints as Number = 0;
   var possibleBadPointsAdded as Number = 0;
@@ -41,12 +43,15 @@ class BreadcrumbTrack {
   var _breadcrumbContext as BreadcrumbContext;
   var _neverStarted as Boolean;
 
-  function initialize(breadcrumbContext as BreadcrumbContext) {
+  function initialize(breadcrumbContext as BreadcrumbContext, routeIndex as Number) {
     _breadcrumbContext = breadcrumbContext;
     _neverStarted = true;
+    epoch = Time.now().value();
+    storageIndex = routeIndex;
   }
 
   function writeToDisk(key as String) as Void {
+    key = key + storageIndex;
     Storage.setValue(key + "bb", boundingBox);
     Storage.setValue(key + "bbc", [
       boundingBoxCenter.x, boundingBoxCenter.y, boundingBoxCenter.altitude
@@ -56,9 +61,11 @@ class BreadcrumbTrack {
     Storage.setValue(key + "distanceTotal", distanceTotal);
     Storage.setValue(key + "elevationMin", elevationMin);
     Storage.setValue(key + "elevationMax", elevationMax);
+    Storage.setValue(key + "epoch", epoch);
   }
 
-  static function readFromDisk(key as String, breadcrumbContext as BreadcrumbContext) as BreadcrumbTrack or Null {
+  static function readFromDisk(key as String, storageIndex as Number, breadcrumbContext as BreadcrumbContext) as BreadcrumbTrack or Null {
+    key = key + storageIndex;
     try {
       var bb = Storage.getValue(key + "bb");
       if (bb == null) {
@@ -92,8 +99,13 @@ class BreadcrumbTrack {
       if (elevationMax == null) {
         return null;
       }
+      
+      var epoch = Storage.getValue(key + "epoch");
+      if (epoch == null) {
+        return null;
+      }
 
-      var track = new BreadcrumbTrack(breadcrumbContext);
+      var track = new BreadcrumbTrack(breadcrumbContext, storageIndex);
       track.boundingBox = bb as[Float, Float, Float, Float];
       if (track.boundingBox.size() != 4) {
         return null;
@@ -105,6 +117,7 @@ class BreadcrumbTrack {
       track.distanceTotal = distanceTotal as Decimal;
       track.elevationMin = elevationMin as Float;
       track.elevationMax = elevationMax as Float;
+      track.epoch = epoch as Number;
       if (track.coordinates.size() % ARRAY_POINT_SIZE != 0) {
         return null;
       }

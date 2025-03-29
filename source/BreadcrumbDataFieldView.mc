@@ -18,6 +18,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   var _breadcrumbContext as BreadcrumbContext;
   var _speedMPS as Float = 0.0;  // start at no speed
   var _scratchPadBitmap as BufferedBitmap;
+  var settings as Settings;
   // var _renderCounter = 0;
 
   // Set the label of the data field here.
@@ -25,6 +26,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     _breadcrumbContext = breadcrumbContext;
     _scratchPadBitmap = newBitmap(_breadcrumbContext.trackRenderer()._screenSize.toNumber(), null);
     DataField.initialize();
+    settings = _breadcrumbContext.settings();
   }
 
   function onLayout(dc as Dc) as Void {
@@ -84,7 +86,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
   function center(point as RectangularPoint) as RectangularPoint
   {
-      var settings = _breadcrumbContext.settings();
       if (settings.fixedPosition != null)
       {
         return settings.fixedPosition;
@@ -114,7 +115,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     var renderer = _breadcrumbContext.trackRenderer();
     var mapRenderer = _breadcrumbContext.mapRenderer();
-    var settings = _breadcrumbContext.settings();
     if (renderer.renderClearTrackUi(dc))
     {
       return;
@@ -128,18 +128,22 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
        return;
     }
 
-    var route = _breadcrumbContext.route();
+    var routes = _breadcrumbContext.routes();
     var track = _breadcrumbContext.track();
 
     var lastPoint = track.lastPoint();
     if (lastPoint == null) {
       // edge case on startup when we have not got any readings yet (also when
       // viewing in settings) just render the route if we have one
-      if (route != null) {
-        var _center = center(route.boundingBoxCenter);
+      var outerBoundingBox = calcOuterBoundingBox(routes, null);
+      var centerPoint = calcCenterPointForBoundingBox(outerBoundingBox);
+      if (routes.size() != 0) {
+        var _center = center(centerPoint);
         mapRenderer.renderMap(dc, _scratchPadBitmap, _center, renderer.rotationRadians());
-        renderer.updateCurrentScale(route.boundingBox);
-        renderer.renderTrack(dc, route, settings.routeColour, _center);
+        renderer.updateCurrentScale(outerBoundingBox);
+        for (var i = 0; i < routes.size(); ++i) {
+          renderer.renderTrack(dc, routes[i], settings.getRouteColour(i), _center);
+        }
         renderer.renderCurrentScale(dc);
       }
 
@@ -150,11 +154,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // zoom in or out
     if (_speedMPS > settings.zoomAtPaceSpeedMPS) {
       if (settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_PACE) {
-        renderCloseAroundCurrentPosition(dc, mapRenderer, renderer, lastPoint, route, track);
+        renderCloseAroundCurrentPosition(dc, mapRenderer, renderer, lastPoint, routes, track);
         return;
       }
 
-      renderZoomedOut(dc, mapRenderer, renderer, lastPoint, route, track);
+      renderZoomedOut(dc, mapRenderer, renderer, lastPoint, routes, track);
       return;
     }
 
@@ -164,11 +168,43 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // (rather than having to manually zoom in from the outer level) once zoomed
     // in we lock onto the user position anyway
     if (settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_PACE) {
-      renderZoomedOut(dc, mapRenderer, renderer, lastPoint, route, track);
+      renderZoomedOut(dc, mapRenderer, renderer, lastPoint, routes, track);
       return;
     }
 
-    renderCloseAroundCurrentPosition(dc, mapRenderer, renderer, lastPoint, route, track);
+    renderCloseAroundCurrentPosition(dc, mapRenderer, renderer, lastPoint, routes, track);
+  }
+
+  function calcOuterBoundingBox(routes as Array<BreadcrumbTrack>, trackBoundingBox as [Float, Float, Float, Float] or Null) as [Float, Float, Float, Float]
+  {
+    // we need to make a new object, otherwise we will modify the one thats passed in
+    var outerBoundingBox = BOUNDING_BOX_DEFAULT();
+    if (trackBoundingBox != null)
+    {
+      outerBoundingBox[0] = trackBoundingBox[0];
+      outerBoundingBox[1] = trackBoundingBox[1];
+      outerBoundingBox[2] = trackBoundingBox[2];
+      outerBoundingBox[3] = trackBoundingBox[3];
+    }
+
+    for (var i = 0; i < routes.size(); ++i) {
+      var route = routes[i];
+      outerBoundingBox[0] = minF(route.boundingBox[0], outerBoundingBox[0]);
+      outerBoundingBox[1] = minF(route.boundingBox[1], outerBoundingBox[1]);
+      outerBoundingBox[2] = maxF(route.boundingBox[2], outerBoundingBox[2]);
+      outerBoundingBox[3] = maxF(route.boundingBox[3], outerBoundingBox[3]);
+    }
+
+    return outerBoundingBox;
+  }
+
+  function calcCenterPointForBoundingBox(boundingBox as [Float, Float, Float, Float]) as RectangularPoint
+  {
+      return new RectangularPoint(
+          boundingBox[0] + (boundingBox[2] - boundingBox[0]) / 2.0,
+          boundingBox[1] + (boundingBox[3] - boundingBox[1]) / 2.0,
+          0.0f
+      );
   }
 
   function renderZoomedOut(
@@ -176,7 +212,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       mapRenderer as MapRenderer,
       renderer as BreadcrumbRenderer, 
       lastPoint as RectangularPoint,
-      route as BreadcrumbTrack or Null, 
+      routes as Array<BreadcrumbTrack>, 
       track as BreadcrumbTrack) as Void {
     // when the scale is locked, we need to be where the user is, otherwise we
     // could see a blank part of the map, when we are zoomed in and have no
@@ -184,31 +220,22 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     var useUserLocation = _breadcrumbContext.settings().scale != null;
 
     // we are in 'full render mode', so do the entire extent
-    if (route != null) {
+    if (routes.size() != 0) {
       // render the whole track and route if we stop
-      var outerBoundingBox = [
-        minF(route.boundingBox[0], track.boundingBox[0]),
-        minF(route.boundingBox[1], track.boundingBox[1]),
-        maxF(route.boundingBox[2], track.boundingBox[2]),
-        maxF(route.boundingBox[3], track.boundingBox[3]),
-      ];
-
-      var centerPoint = new RectangularPoint(
-          outerBoundingBox[0] +
-              (outerBoundingBox[2] - outerBoundingBox[0]) / 2.0,
-          outerBoundingBox[1] +
-              (outerBoundingBox[3] - outerBoundingBox[1]) / 2.0,
-          0.0f);
+      var outerBoundingBox = calcOuterBoundingBox(routes, track.boundingBox);
+      var centerPoint = calcCenterPointForBoundingBox(outerBoundingBox);
 
       if (useUserLocation) {
-        centerPoint = lastPoint;
+          centerPoint = lastPoint;
       }
 
       centerPoint = center(centerPoint);
 
       mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians());
       renderer.updateCurrentScale(outerBoundingBox);
-      renderer.renderTrack(dc, route, _breadcrumbContext.settings().routeColour, centerPoint);
+      for (var i = 0; i < routes.size(); ++i) {
+        renderer.renderTrack(dc, routes[i], settings.getRouteColour(i), centerPoint);
+      }
       renderer.renderTrack(dc, track, _breadcrumbContext.settings().trackColour, centerPoint);
       renderer.renderUser(dc, centerPoint, lastPoint);
       renderer.renderCurrentScale(dc);
@@ -232,7 +259,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       dc as Dc, 
       mapRenderer as MapRenderer,
       renderer as BreadcrumbRenderer, lastPoint as RectangularPoint,
-      route as BreadcrumbTrack or Null, track as BreadcrumbTrack) as Void {
+      routes as Array<BreadcrumbTrack>, track as BreadcrumbTrack) as Void {
     var renderDistanceM = _breadcrumbContext.settings().metersAroundUser;
     var outerBoundingBox = [
       lastPoint.x - renderDistanceM,
@@ -246,28 +273,32 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians());
     renderer.updateCurrentScale(outerBoundingBox);
 
-    if (route != null) {
-      renderer.renderTrack(dc, route, _breadcrumbContext.settings().routeColour, centerPoint);
+    if (routes.size() != 0) {
+      for (var i = 0; i < routes.size(); ++i) {
+        renderer.renderTrack(dc, routes[i], settings.getRouteColour(i), centerPoint);
+      }
     }
-    renderer.renderTrack(dc, track, _breadcrumbContext.settings().trackColour, centerPoint);
+    renderer.renderTrack(dc, track, settings.trackColour, centerPoint);
     renderer.renderUser(dc, centerPoint, lastPoint);
     renderer.renderCurrentScale(dc);
   }
 
   function rederElevation(dc as Dc) as Void {
-    var route = _breadcrumbContext.route();
+    var routes = _breadcrumbContext.routes();
     var track = _breadcrumbContext.track();   
     var renderer = _breadcrumbContext.trackRenderer();
 
-    var elevationScale = renderer.getElevationScale(track, route);
+    var elevationScale = renderer.getElevationScale(track, routes);
     var hScale = elevationScale[0];
     var vScale = elevationScale[1];
     var startAt = elevationScale[2];
 
-    renderer.renderElevationChart(dc, hScale, vScale, startAt);
-    if (route != null) {
-      renderer.renderTrackElevtion(dc, route, _breadcrumbContext.settings().routeColour, hScale, vScale, startAt);
+    renderer.renderElevationChart(dc, hScale, vScale, startAt, track.distanceTotal);
+    if (routes.size() != 0) {
+      for (var i = 0; i < routes.size(); ++i) {
+        renderer.renderTrackElevtion(dc, routes[i], settings.getRouteColour(i), hScale, vScale, startAt);
+      }
     }
-    renderer.renderTrackElevtion(dc, track, _breadcrumbContext.settings().trackColour, hScale, vScale, startAt);
+    renderer.renderTrackElevtion(dc, track, settings.trackColour, hScale, vScale, startAt);
   }
 }

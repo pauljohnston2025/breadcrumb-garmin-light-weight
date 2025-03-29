@@ -68,7 +68,7 @@ class WebRequestHandle {
     {
         handler.handle(responseCode, data);
 
-        if (responseCode != 200 && webHandler._settings.tileUrl == COMPANION_APP_TILE_URL)
+        if (responseCode != 200 && webHandler._settings.tileUrl.equals(COMPANION_APP_TILE_URL))
         {
             // todo only send this on certain errors, and only probbaly only after some limit?
             Communications.transmit("startserice", {}, getApp()._commStatus);
@@ -176,22 +176,23 @@ class WebRequestHandler
         }
 
         // System.println("url: "  + jsonOrImageReq.url);
+        // System.println("params: "  + jsonOrImageReq.params);
 
         if (jsonOrImageReq instanceof ImageRequest)
         {
+            // System.println("sending image request");
             var callback = (new WebRequestHandle(me, jsonOrImageReq.handler)).method(:handle) as Method(responseCode as Lang.Number, data as WatchUi.BitmapResource or Graphics.BitmapReference or Null) as Void;
             Communications.makeImageRequest(
                 jsonOrImageReq.url,
                 jsonOrImageReq.params,
-                {
-
-                }, // options
+                {}, // options
                 // see https://forums.garmin.com/developer/connect-iq/f/discussion/2289/documentation-clarification-object-method-and-lang-method
                 callback
             );
             return;
         }
 
+        // System.println("sending json request");
         var callback = (new WebRequestHandle(me, jsonOrImageReq.handler)).method(:handle) as Method(responseCode as Lang.Number, data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null) as Void or Method(responseCode as Lang.Number, data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null, context as Lang.Object) as Void;
         Communications.makeWebRequest(
             jsonOrImageReq.url,

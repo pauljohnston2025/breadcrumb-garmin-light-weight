@@ -124,7 +124,7 @@ class WebTileRequestHandler extends WebHandler {
 
         if (!(data instanceof Dictionary))
         {
-            System.println("wrong data type, not dict");
+            System.println("wrong data type, not dict: " + data);
             return;
         }
 
@@ -274,32 +274,32 @@ class TileCache {
 
         // System.println("starting load tile: " + x + " " + y + " " + z);
 
-        if (_settings.tileUrl != COMPANION_APP_TILE_URL)
+        if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL))
         {
             // todo get correct larger tile from the small tile request
             _webRequestHandler.add(
-            new ImageRequest(
-                "tileimage" + tileKey,
-                stringReplaceFirst(
+                new ImageRequest(
+                    "tileimage" + tileKey,
                     stringReplaceFirst(
-                        stringReplaceFirst(_settings.tileUrl, "{x}", tileKey.x.toString()), 
-                        "{y}", 
-                        tileKey.y.toString()
+                        stringReplaceFirst(
+                            stringReplaceFirst(_settings.tileUrl, "{x}", tileKey.x.toString()), 
+                            "{y}", 
+                            tileKey.y.toString()
+                        ),
+                        "{z}", 
+                        tileKey.z.toString()
                     ),
-                    "{z}", 
-                    tileKey.z.toString()
-                ),
-                {},
-                new WebTileRequestHandler(me, tileKey)
-            )
-        );
+                    {},
+                    new WebTileRequestHandler(me, tileKey)
+                )
+            );
             return;
         }
 
         _webRequestHandler.add(
             new JsonRequest(
-                "/loadtile/" + tileKey,
-                _settings.tileUrl + "/loadtile/",
+                "/loadtile" + tileKey,
+                _settings.tileUrl + "/loadtile",
                 {
                     "x" => tileKey.x,
                     "y" => tileKey.y,
