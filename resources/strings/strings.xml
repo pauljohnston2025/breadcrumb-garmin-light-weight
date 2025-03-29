@@ -58,6 +58,8 @@
     <string id="routeName">Name</string>
     <string id="routeEnabled">Enabled</string>
     <string id="routesEnabled">Enable Routes</string>
+    <string id="mapMove">Map move</string>
+    <string id="debug">Debug</string>
     <string id="routesDescription">Adding routes will do nothing (use the companion app), but they may be removed or enabled/disabled</string>
 
 </strings>

@@ -124,7 +124,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // should structure this way better, but oh well (renderer per mode etc.)
     if (settings.mode == MODE_ELEVATION)
     {
-       rederElevation(dc);
+       renderElevation(dc);
+       return;
+    } else if (settings.mode == MODE_DEBUG)
+    {
+       renderDebug(dc);
        return;
     }
 
@@ -302,7 +306,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     renderer.renderCurrentScale(dc);
   }
 
-  function rederElevation(dc as Dc) as Void {
+  function renderDebug(dc as Dc) as Void {
+    dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+    dc.clear();
+    dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+    dc.drawText(100, 100, Graphics.FONT_XTINY, "todo: debug screen", Graphics.TEXT_JUSTIFY_CENTER);
+  }
+
+  function renderElevation(dc as Dc) as Void {
     var routes = _breadcrumbContext.routes();
     var track = _breadcrumbContext.track();   
     var renderer = _breadcrumbContext.trackRenderer();

@@ -228,6 +228,12 @@ class SettingsMain extends Rez.Menus.SettingsMain {
             case MODE_ELEVATION:
                 modeString = Rez.Strings.elevation_mode;
                 break;
+            case MODE_MAP_MOVE:
+                modeString = Rez.Strings.mapMove;
+                break;
+            case MODE_DEBUG:
+                modeString = Rez.Strings.debug;
+                break;
         }
         safeSetSubLabel(me, :settingsMainMode, modeString);
         var uiModeString = "";
@@ -516,6 +522,10 @@ class SettingsModeDelegate extends WatchUi.Menu2InputDelegate {
             settings.setMode(MODE_NORMAL);
         } else if (itemId == :settingsModeElevation) {
             settings.setMode(MODE_ELEVATION);
+        } else if (itemId == :settingsModeMapMove) {
+            settings.setMode(MODE_MAP_MOVE);
+        } else if (itemId == :settingsModeMapDebug) {
+            settings.setMode(MODE_DEBUG);
         }
 
         parent.rerender();

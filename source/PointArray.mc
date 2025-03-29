@@ -3,6 +3,7 @@ import Toybox.Lang;
 import Toybox.Activity;
 import Toybox.Math;
 import Toybox.Application;
+import Toybox.System;
 
 const ARRAY_POINT_SIZE = 3;
 
@@ -35,10 +36,16 @@ class RectangularPoint {
     return !isnan(x) && !isnan(y) && !isnan(altitude);
   }
 
+  function toString() as String
+  {
+    return "RectangularPoint(" + x + " " + y + " " + altitude + ")";
+  }
+
+  // inverse of https://gis.stackexchange.com/a/387677
+  // Converting lat, lon (epsg:4326) into EPSG:3857
   static function latLon2xy(lat as Float, lon as Float,
                      altitude as Float) as RectangularPoint or Null {
 
-    // todo cache all these as constants
     var latRect = ((Math.ln(Math.tan((90 + lat) * _pi360)) / _pi180) * _lonConversion);
     var lonRect = lon * _lonConversion;
 
@@ -49,6 +56,20 @@ class RectangularPoint {
     }
 
     return point;
+  }
+
+  // should be the inverse of latLon2xy ie. https://gis.stackexchange.com/a/387677
+  static function xyToLatLon(x as Float, y as Float) as Array<Float> or Null {
+      // Inverse Mercator projection formulas
+      var lon = x / _lonConversion;  // Longitude (degrees)
+      var lat = (Math.atan(Math.pow(Math.E, (y / _lonConversion) *  _pi180)) /  _pi360) - 90;
+      
+      if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+          System.println("Invalid lat/lon values: " + lat + " " + lon);
+          return null;
+      }
+
+      return [lat, lon];
   }
 }
 

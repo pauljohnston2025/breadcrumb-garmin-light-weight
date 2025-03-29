@@ -6,6 +6,8 @@
         <settingConfig type="list">
             <listEntry value="0">@Strings.track_route_mode</listEntry>
             <listEntry value="1">@Strings.elevation_mode</listEntry>
+            <listEntry value="2">@Strings.mapMove</listEntry>
+            <listEntry value="3">@Strings.debug</listEntry>
         </settingConfig>
     </setting>
 

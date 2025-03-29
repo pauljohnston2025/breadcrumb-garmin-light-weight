@@ -39,6 +39,8 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
 
     if (renderer.handleClearRoute(x, y))
     {
+      // returns true if it handles touches on top left
+      // also blocks input if we are in the menu
       return true;
     }
 
@@ -52,33 +54,73 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
        && y < renderer.modeSelectY + halfHitboxSize  
        && x > renderer.modeSelectX - halfHitboxSize
        && x < renderer.modeSelectX + halfHitboxSize) {
+      // top right
       settings.nextMode();
       return true;
-    } else if (  y > renderer.returnToUserY - halfHitboxSize 
+    } 
+
+    if (settings.mode == MODE_DEBUG)
+    {
+      return false;
+    }
+    
+    if (  y > renderer.returnToUserY - halfHitboxSize 
        && y < renderer.returnToUserY + halfHitboxSize  
        && x > renderer.returnToUserX - halfHitboxSize
        && x < renderer.returnToUserX + halfHitboxSize) {
+      // return to users location
+      // bottom left
       settings.setFixedPosition(0f, 0f);
       return true;
     } else if (  y > renderer.mapEnabledY - halfHitboxSize 
        && y < renderer.mapEnabledY + halfHitboxSize  
        && x > renderer.mapEnabledX - halfHitboxSize
        && x < renderer.mapEnabledX + halfHitboxSize) {
-      settings.toggleMapEnabled();
-      return true;
+        // botom right
+      if (settings.mode == MODE_NORMAL)
+      {
+        settings.toggleMapEnabled();
+        return true;
+      }
+      
+      return false;
     }
     else if (y < hitboxSize) {
+      if (settings.mode == MODE_MAP_MOVE)
+      {
+        settings.moveFixedPositionUp();
+        return true;
+      }
+      // top of screen
       renderer.incScale();
       return true;
     } else if(y > renderer._screenSize - hitboxSize) {
+      // bottom of screen
+      if (settings.mode == MODE_MAP_MOVE)
+      {
+        settings.moveFixedPositionDown();
+        return true;
+      }
       renderer.decScale();
       return true;
     }
     else if(x > renderer._screenSize - hitboxSize) {
+      // right of screen
+      if (settings.mode == MODE_MAP_MOVE)
+      {
+        settings.moveFixedPositionRight();
+        return true;
+      }
       renderer.resetScale();
       return true;
     }
     else if(x < hitboxSize) {
+      // left of screen
+      if (settings.mode == MODE_MAP_MOVE)
+      {
+        settings.moveFixedPositionLeft();
+        return true;
+      }
       settings.toggleZoomAtPace();
       return true;
     }

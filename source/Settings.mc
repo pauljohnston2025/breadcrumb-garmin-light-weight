@@ -6,6 +6,8 @@ import Toybox.System;
 enum /*Mode*/ {
   MODE_NORMAL,
   MODE_ELEVATION,
+  MODE_MAP_MOVE,
+  MODE_DEBUG,
   MODE_MAX,
 }
 
@@ -69,6 +71,8 @@ class Settings {
     // calculated whenever others change
     var smallTilesPerBigTile = Math.ceil(256f/tileSize);
     var fixedPosition as RectangularPoint or Null = null;
+    // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
+    var mapMoveDistanceM as Float = metersAroundUser * 1f;
     
     function setMode(_mode as Number) as Void {
         mode = _mode;
@@ -81,6 +85,7 @@ class Settings {
     }
     
     function setFixedPosition(lat as Float or Null, long as Float or Null) as Void {
+        // System.println("moving to: " + lat + " " + long);
         // be very careful about putting null into properties, it breaks everything
         if (lat == null || !(lat instanceof Float))
         {
@@ -95,24 +100,21 @@ class Settings {
         Application.Properties.setValue("fixedLatitude", lat);
         Application.Properties.setValue("fixedLongitude", long);
 
-        if (fixedLatitude != null && fixedLatitude == 0)
+        var latIsBasicallyNull = fixedLatitude == null || fixedLatitude == 0;
+        var longIsBasicallyNull = fixedLongitude == null || fixedLongitude == 0;
+        if (latIsBasicallyNull && longIsBasicallyNull)
         {
             fixedLatitude = null;
-        }
-        if (fixedLongitude != null && fixedLongitude == 0)
-        {
             fixedLongitude = null;
-        }
-
-        if (fixedLatitude == null || fixedLongitude == null)
-        {
             fixedPosition = null;
             clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
             return;
         }
 
-        // breadcrumb context might not be set yet
-        fixedPosition = RectangularPoint.latLon2xy(lat, long, 0f);
+        // ensure any remaing nulls are removed and gets us a fixedPosition
+        setPositionIfNotSet();
+        var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y);
+        // System.println("round trip conversion result: " + latlong);
         clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
     }
     
@@ -212,7 +214,6 @@ class Settings {
 
     function routeEnabled(routeId as Number) as Boolean
     {
-        // todo find by id instead of index
         if (!routesEnabled)
         {
             return false;
@@ -359,10 +360,85 @@ class Settings {
         // be very careful about putting null into properties, it breaks everything
         if (scale == null)
         {
-            Application.Properties.setValue("scale", 0);        
+            Application.Properties.setValue("scale", 0);
+            mapMoveDistanceM = metersAroundUser.toFloat();
             return;
         }
+
+        mapMoveDistanceM = metersAroundUser.toFloat(); // todo: caculate this off scale
         Application.Properties.setValue("scale", scale);
+    }
+
+    // todo: make all of these take into acount the sceen rotation, and move in the direction the screen is pointing
+    // for now just moving NSEW as if there was no screen rotation (N is up)
+    function moveFixedPositionUp() as Void
+    {
+        setPositionIfNotSet();
+        var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y + mapMoveDistanceM);
+        if (latlong != null)
+        {
+            setFixedPosition(latlong[0], latlong[1]);
+        }
+    }
+
+    function moveFixedPositionDown() as Void
+    {
+        setPositionIfNotSet();
+        var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y - mapMoveDistanceM);
+        if (latlong != null)
+        {
+            setFixedPosition(latlong[0], latlong[1]);
+        }
+    }
+
+    function moveFixedPositionLeft() as Void
+    {
+        setPositionIfNotSet();
+        var latlong = RectangularPoint.xyToLatLon(fixedPosition.x - mapMoveDistanceM, fixedPosition.y);
+        if (latlong != null)
+        {
+            setFixedPosition(latlong[0], latlong[1]);
+        }
+    }
+
+    function moveFixedPositionRight() as Void
+    {
+        setPositionIfNotSet();
+        var latlong = RectangularPoint.xyToLatLon(fixedPosition.x + mapMoveDistanceM, fixedPosition.y);
+        if (latlong != null)
+        {
+            setFixedPosition(latlong[0], latlong[1]);
+        }
+    }
+
+    // note: this does not save the position just sets it
+    function setPositionIfNotSet() as Void
+    {
+        var lastRenderedLatLongCenter = null;
+        // context might not be set yet
+        var context = getApp()._breadcrumbContext;
+        if (context != null and context instanceof BreadcrumbContext && context has :_breadcrumbRenderer && context._breadcrumbRenderer != null && context._breadcrumbRenderer instanceof BreadcrumbRenderer)
+        {
+            if (context._breadcrumbRenderer.lastRenderedCenter != null)
+            {
+                lastRenderedLatLongCenter = RectangularPoint.xyToLatLon(
+                    context._breadcrumbRenderer.lastRenderedCenter.x, 
+                    context._breadcrumbRenderer.lastRenderedCenter.y
+                );
+            }
+        }
+        
+        if (fixedLatitude == null)
+        {
+            fixedLatitude = lastRenderedLatLongCenter == null ? 0f : lastRenderedLatLongCenter[0];
+        }
+
+        if (fixedLongitude == null)
+        {
+            fixedLongitude = lastRenderedLatLongCenter == null ? 0f : lastRenderedLatLongCenter[1];;
+        }
+        fixedPosition = RectangularPoint.latLon2xy(fixedLatitude, fixedLongitude, 0f);
+        // System.println("new fixed pos: " + fixedPosition);
     }
 
     function nextMode() as Void
@@ -373,6 +449,11 @@ class Settings {
         if (mode >= MODE_MAX)
         {
             mode = MODE_NORMAL;
+        }
+        
+        if (mode == MODE_MAP_MOVE && !mapEnabled)
+        {
+            nextMode();
         }
 
         setMode(mode);

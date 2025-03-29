@@ -15,6 +15,7 @@ class BreadcrumbRenderer {
   var _currentScale as Float = 0.0;
   var _rotationRad as Float = 0.0;  // heading in radians
   var _clearRouteProgress as Number = 0;
+  var lastRenderedCenter as RectangularPoint or Null;
 
   // units in meters (float/int) to label
   var SCALE_NAMES as Dictionary = {
@@ -191,6 +192,15 @@ class BreadcrumbRenderer {
   function renderTrack(dc as Dc, breadcrumb as BreadcrumbTrack,
                        colour as Graphics.ColorType,
                        centerPosition as RectangularPoint) as Void {
+
+    lastRenderedCenter = centerPosition;
+
+    if (_breadcrumbContext.settings().mode != MODE_NORMAL)
+    {
+        // map move mode does not need to draw tracks
+        return;
+    }
+
     dc.setColor(colour, Graphics.COLOR_BLACK);
     dc.setPenWidth(4);
 
@@ -286,37 +296,6 @@ class BreadcrumbRenderer {
     dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
     dc.setPenWidth(1);
 
-    // single line across the screen
-    // dc.drawLine(0, yHalf, dc.getWidth(), yHalf);
-    // var text = "LU Scale: " + _currentScale;
-    // var font = Graphics.FONT_XTINY;
-    // var textHeight = dc.getTextDimensions(text, font)[1];
-    // dc.drawText(0, _yHalf - textHeight - 0.1, font, text,
-    //             Graphics.TEXT_JUSTIFY_LEFT);
-
-    // var text2 = "Scale: " + settings.scale;
-    // var textHeight2 = dc.getTextDimensions(text2, font)[1];
-    // dc.drawText(0, _yHalf + textHeight2 + 0.1, font, text2,
-    //             Graphics.TEXT_JUSTIFY_LEFT);
-
-    // clear route
-    dc.drawText(clearRouteX, clearRouteY, Graphics.FONT_XTINY, "C", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-    var mapletter = "Y";
-    if (!settings.mapEnabled)
-    {
-      mapletter = "N";
-    }
-    dc.drawText(mapEnabledX, mapEnabledY, Graphics.FONT_XTINY, mapletter, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-    if (settings.fixedPosition == null)
-    {
-      dc.drawText(returnToUserX, returnToUserY, Graphics.FONT_XTINY, "U", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-    }
-    else if (settings.fixedLatitude != null && settings.fixedLongitude != null) {
-      var txt = settings.fixedLatitude.format("%.1f") + ", " + settings.fixedLongitude.format("%.1f");
-      dc.drawText(returnToUserX, returnToUserY, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-    }
-    
-
     // current mode displayed
     var modeLetter = "T";
     switch(_breadcrumbContext.settings().mode)
@@ -327,18 +306,66 @@ class BreadcrumbRenderer {
       case MODE_ELEVATION:
         modeLetter = "E";
         break;
+      case MODE_MAP_MOVE:
+        modeLetter = "M";
+        break;
+      case MODE_DEBUG:
+        modeLetter = "D";
+        break;
     }
 
     dc.drawText(modeSelectX, modeSelectY, Graphics.FONT_XTINY, modeLetter, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
+    if (_breadcrumbContext.settings().mode == MODE_DEBUG)
+    {
+        // mode button is the only thing to show
+        return;
+    }
+
+    // clear routes
+    if (_breadcrumbContext.settings().mode != MODE_MAP_MOVE)
+    {
+        dc.drawText(clearRouteX, clearRouteY, Graphics.FONT_XTINY, "C", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+    
     if (_breadcrumbContext.settings().mode == MODE_ELEVATION)
     {
       return;
     }
 
+    if (_breadcrumbContext.settings().mode != MODE_MAP_MOVE)
+    {
+      // do not allow disabling maps from mapmove mode
+      var mapletter = "Y";
+      if (!settings.mapEnabled)
+      {
+        mapletter = "N";
+      }
+      dc.drawText(mapEnabledX, mapEnabledY, Graphics.FONT_XTINY, mapletter, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
     // make this a const
     var halfLineLength = 10;
     var lineFromEdge = 10;
+    var textHeight = 15; // guestimate
+    var scaleFromEdge = 75; // guestimate
+
+    // always show 'return to user' icon
+    dc.drawText(returnToUserX, returnToUserY, Graphics.FONT_XTINY, "U", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+
+    if (settings.fixedPosition != null && settings.fixedLatitude != null && settings.fixedLongitude != null) {
+      var txt = settings.fixedLatitude.format("%.1f") + ", " + settings.fixedLongitude.format("%.1f");
+      dc.drawText(_xHalf, _screenSize - scaleFromEdge, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_CENTER);
+    }
+
+    if (_breadcrumbContext.settings().mode == MODE_MAP_MOVE)
+    {
+      dc.drawText(_xHalf, lineFromEdge, Graphics.FONT_XTINY, "^", Graphics.TEXT_JUSTIFY_CENTER);
+      dc.drawText(_xHalf, dc.getHeight() - (lineFromEdge + textHeight), Graphics.FONT_XTINY, "V", Graphics.TEXT_JUSTIFY_CENTER);
+      dc.drawText(lineFromEdge, _yHalf, Graphics.FONT_XTINY, "<", Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+      dc.drawText(dc.getWidth() - lineFromEdge, _yHalf, Graphics.FONT_XTINY, ">", Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
+      return;
+    }
 
     // plus at the top of screen
     dc.drawLine(_xHalf - halfLineLength, lineFromEdge, _xHalf + halfLineLength,
@@ -444,6 +471,12 @@ class BreadcrumbRenderer {
 
   function handleClearRoute(x as Number, y as Number) as Boolean
   {
+    var settings = _breadcrumbContext.settings();
+    if (settings.mode != MODE_NORMAL && settings.mode != MODE_ELEVATION)
+    {
+        return false; // debug and map move do not clear routes
+    }
+
     switch(_clearRouteProgress) {
       case 0:
         // press top left to start clear route
@@ -490,7 +523,7 @@ class BreadcrumbRenderer {
 
   function resetScale() as Void { 
     var settings = _breadcrumbContext.settings();
-    if (settings.mode == MODE_ELEVATION)
+    if (settings.mode != MODE_NORMAL)
     {
       return;
     }
