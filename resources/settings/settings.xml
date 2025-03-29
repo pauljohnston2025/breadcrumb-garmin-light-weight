@@ -83,7 +83,7 @@
     </group>
 
     <group id="routesdesc" title="@Strings.routesTitle" description="@Strings.routesDescription">
-        <setting propertyKey="@Properties.allRoutesDisabled" title="@Strings.allRoutesDisabled">
+        <setting propertyKey="@Properties.routesEnabled" title="@Strings.routesEnabled">
             <settingConfig type="boolean" readonly="true"/>
         </setting>
     </group>

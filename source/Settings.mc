@@ -62,8 +62,9 @@ class Settings {
     // adb forward tcp:8080 tcp:8080
     var tileUrl as String = COMPANION_APP_TILE_URL;
     // see keys below in routes = getArraySchema(...)
+    // see oddity with route name and route loading new in context.newRoute
     var routes as Array<Dictionary> = [];
-    var allRoutesDisabled as Boolean = false;
+    var routesEnabled as Boolean = true;
 
     // calculated whenever others change
     var smallTilesPerBigTile = Math.ceil(256f/tileSize);
@@ -177,109 +178,128 @@ class Settings {
         }
     }
     
-    function setAllRoutesDisabled(_allRoutesDisabled as Boolean) as Void {
-        allRoutesDisabled = _allRoutesDisabled;
-        if (allRoutesDisabled == null || !(allRoutesDisabled instanceof Boolean))
+    function setRoutesEnabled(_routesEnabled as Boolean) as Void {
+        routesEnabled = _routesEnabled;
+        if (routesEnabled == null || !(routesEnabled instanceof Boolean))
         {
-            allRoutesDisabled = true;
+            routesEnabled = true;
         }
-        Application.Properties.setValue("allRoutesDisabled", allRoutesDisabled);
+        Application.Properties.setValue("routesEnabled", routesEnabled);
     }
 
-    function routeColour(index as Number) as Number
+    function routeColour(routeId as Number) as Number
     {
-        // todo find by id instead of index
-        if (index < 0 || routes.size() <= index)
+        var routeIndex = getRouteIndexById(routeId);
+        if (routeIndex == null)
         {
             return Graphics.COLOR_BLUE;
         }
-        return routes[index]["colour"];
+
+        return routes[routeIndex]["colour"];
     }
 
-    function routeName(index as Number) as String
+    // see oddity with route name and route loading new in context.newRoute
+    function routeName(routeId as Number) as String
     {
-        // todo find by id instead of index
-        if (index < 0 || routes.size() <= index)
+        var routeIndex = getRouteIndexById(routeId);
+        if (routeIndex == null)
         {
             return "";
         }
-        return routes[index]["name"];
+        
+        return routes[routeIndex]["name"];
     }
 
-    function routeEnabled(index as Number) as Boolean
+    function routeEnabled(routeId as Number) as Boolean
     {
         // todo find by id instead of index
-        if (allRoutesDisabled)
+        if (!routesEnabled)
         {
             return false;
         }
 
-        if (index < 0 || routes.size() <= index)
+        var routeIndex = getRouteIndexById(routeId);
+        if (routeIndex == null)
         {
             return false;
         }
-        return routes[index]["enabled"];
+        return routes[routeIndex]["enabled"];
     }
 
-    function setRouteColour(index as Number, value as Number) as Void {
-        // todo find by id instead of index
-        if (index < 0 || routes.size() <= index)
+    function setRouteColour(routeId as Number, value as Number) as Void {
+        ensureRouteId(routeId);
+        var routeIndex = getRouteIndexById(routeId);
+        if (routeIndex == null)
         {
             return;
         }
 
-        routes[index]["colour"] = value;
+        routes[routeIndex]["colour"] = value;
         saveRoutes();
     }
     
-    function setRouteName(index as Number, value as String) as Void {
-        // todo find by id instead of index
-        if (index < 0 || routes.size() <= index)
+    // see oddity with route name and route loading new in context.newRoute
+    function setRouteName(routeId as Number, value as String) as Void {
+        ensureRouteId(routeId);
+        var routeIndex = getRouteIndexById(routeId);
+        if (routeIndex == null)
         {
             return;
         }
 
-        routes[index]["name"] = value;
+        routes[routeIndex]["name"] = value;
         saveRoutes();
     }
 
-    function setRouteEnabled(index as Number, value as Boolean) as Void {
-        // todo find by id instead of index
-        if (index < 0 || routes.size() <= index)
+    function setRouteEnabled(routeId as Number, value as Boolean) as Void {
+        ensureRouteId(routeId);
+        var routeIndex = getRouteIndexById(routeId);
+        if (routeIndex == null)
         {
             return;
         }
-
-        routes[index]["enabled"] = value;
+        
+        routes[routeIndex]["enabled"] = value;
         saveRoutes();
     }
 
-    function ensureRouteId(index as Number) as Void
+    function ensureRouteId(routeId as Number) as Void
     {
-        // todo find by id instead of index
-        if (index < 0 || routes.size() > index)
+        var routeIndex = getRouteIndexById(routeId);
+        if (routeIndex != null)
         {
             return;
         }
 
-        if (index >= ROUTE_MAX)
+        if (routes.size() >= ROUTE_MAX)
         {
             return;
         }
 
-        for (var i = routes.size(); i < index + 1; ++i) {
-            routes.add(
-                {
-                    "id" => i,
-                    "name" => routeName(i),
-                    "enabled" => true,
-                    "colour" => routeColour(i) 
-                }
-            );
-        }
+        routes.add(
+            {
+                "id" => routeId,
+                "name" => routeName(routeId),
+                "enabled" => true,
+                "colour" => routeColour(routeId)
+            }
+        );
         saveRoutes();
     }
 
+    function getRouteIndexById(routeId as Number) as Number or Null
+    {
+        for (var i = 0; i < routes.size(); ++i) {
+            var route = routes[i];
+            if (route["id"] == routeId)
+            {
+                return i;
+            }
+        }
+
+        return null;
+    }
+    
     function saveRoutes()
     {
         var toSave = [];
@@ -323,15 +343,15 @@ class Settings {
         setMapEnabled(true);
     }
     
-    function toggleAllRoutesDisabled() as Void 
+    function toggleRoutesEnabled() as Void 
     {
-        if (allRoutesDisabled)
+        if (routesEnabled)
         {
-            setAllRoutesDisabled(false);
+            setRoutesEnabled(false);
             return;
         }
 
-        setAllRoutesDisabled(true);
+        setRoutesEnabled(true);
     }
     
     function setScale(_scale as Float or Null) as Void {
@@ -662,7 +682,7 @@ class Settings {
         setTileUrl(tileUrl);
         routes = settings.routes;
         saveRoutes();
-        setAllRoutesDisabled(settings.allRoutesDisabled);
+        setRoutesEnabled(settings.routesEnabled);
 
         // purge storage too on reset
         Application.Storage.clearValues();
@@ -698,8 +718,8 @@ class Settings {
         mode = parseNumber("mode", mode);
         mapEnabled = Application.Properties.getValue("mapEnabled") as Boolean;
         setMapEnabled(mapEnabled);
-        allRoutesDisabled = Application.Properties.getValue("allRoutesDisabled") as Boolean;
-        setAllRoutesDisabled(allRoutesDisabled);
+        routesEnabled = Application.Properties.getValue("routesEnabled") as Boolean;
+        setRoutesEnabled(routesEnabled);
         trackColour = parseColour("trackColour", trackColour);
         elevationColour = parseColour("elevationColour", elevationColour);
         userColour = parseColour("userColour", userColour);
@@ -759,11 +779,19 @@ class Settings {
         loadSettings();
         if ( routes.size() < oldRoutes.size())
         {
-            for (var i=routes.size(); i<oldRoutes.size(); ++i)
+            for (var i=0; i<oldRoutes.size(); ++i)
             {
-                var routeEntry = oldRoutes[i];
+                var oldRouteEntry = oldRoutes[i];
+                var oldRouteId = oldRouteEntry["id"];
+
+                var routeIndex = getRouteIndexById(oldRouteId);
+                if (routeIndex != null)
+                {
+                    continue;
+                }
+
                 // clear the route
-                var route = new BreadcrumbTrack(getApp()._breadcrumbContext, routeEntry["id"], "");
+                var route = new BreadcrumbTrack(getApp()._breadcrumbContext, oldRouteId, "");
                 route.writeToDisk(ROUTE_KEY);
             }
         }

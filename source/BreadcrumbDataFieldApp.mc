@@ -95,6 +95,10 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         var routeData = rawData.slice(1, null);
         if (routeData.size() % 3 == 0) {
           var route = _breadcrumbContext.newRoute(name);
+          if(route == null)
+          {
+            return;
+          }
           for (var i = 0; i < routeData.size(); i += 3) {
             route.addLatLongRaw(routeData[i].toFloat(), routeData[i + 1].toFloat(),
                               routeData[i + 2].toFloat());

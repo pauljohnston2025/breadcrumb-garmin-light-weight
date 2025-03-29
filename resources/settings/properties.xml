@@ -24,7 +24,7 @@
 
 	<property id="resetDefaults" type="boolean">false</property>
 
-	<property id="allRoutesDisabled" type="boolean">1</property>
+	<property id="routesEnabled" type="boolean">true</property>
 	<property id="routes" type="array"></property>
 
 </properties>

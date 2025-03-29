@@ -125,6 +125,23 @@ function safeSetSubLabel(menu as WatchUi.Menu2, id as Object, value as String) a
     item.setSubLabel(value);
 }
 
+function safeSetLabel(menu as WatchUi.Menu2, id as Object, value as String) as Void
+{
+    var itemIndex = menu.findItemById(id);
+    if (itemIndex <= -1)
+    {
+        return;
+    }
+
+    var item = menu.getItem(itemIndex);
+    if (item == null)
+    {
+        return;
+    }
+
+    item.setLabel(value);
+}
+
 
 function safeSetToggle(menu as WatchUi.Menu2, id as Object, value as Boolean) as Void
 {
@@ -305,6 +322,96 @@ class SettingsColours extends Rez.Menus.SettingsColours {
     }
 }
 
+class SettingsRoute extends Rez.Menus.SettingsRoute {
+    var settings as Settings;
+    var routeId as Number;
+    var parent as SettingsRoutes;
+    function initialize(settings as Settings, routeId as Number, parent as SettingsRoutes) {
+        Rez.Menus.SettingsRoute.initialize();
+        self.settings = settings;
+        self.routeId = routeId;
+        self.parent = parent;
+        rerender();
+    }
+
+    function rerender() as Void
+    {
+        var name = settings.routeName(routeId);
+        setTitle(name);
+        safeSetSubLabel(me, :settingsRouteName, name);
+        safeSetToggle(me, :settingsRouteEnabled, settings.routeEnabled(routeId));
+        safeSetIcon(me, :settingsRouteColour, new ColourIcon(settings.routeColour(routeId)));
+        parent.rerender();
+    }
+
+    function setName(value as String) as Void
+    {
+        settings.setRouteName(routeId, value);
+    }
+    
+    function setEnabled(value as Boolean) as Void
+    {
+        settings.setRouteEnabled(routeId, value);
+    }
+
+    function setColour(value as Number) as Void
+    {
+        settings.setRouteColour(routeId, value);
+    }
+}
+
+class SettingsRoutes extends WatchUi.Menu2 {
+    var settings as Settings;
+    function initialize(settings as Settings) {
+        WatchUi.Menu2.initialize({
+            :title => Rez.Strings.routesTitle,
+        });
+        me.settings = settings;
+        setup();
+        rerender();
+    }
+
+    function setup() {
+        addItem(
+            new ToggleMenuItem(
+                Rez.Strings.routesEnabled,
+                "", // sublabel
+                :settingsRoutesEnabled,
+                settings.routesEnabled,
+                {}
+            )
+        );
+        if (!settings.routesEnabled)
+        {
+            return;
+        }
+        
+        for (var i = 0; i < ROUTE_MAX; ++i) {
+            var routeName = settings.routeName(i);
+            addItem(
+                new IconMenuItem(
+                    routeName.equals("") ? "<unlabeled>" : routeName,
+                    settings.routeEnabled(i) ? "Enabled" : "Disabled",
+                    i,
+                    new ColourIcon(settings.routeColour(i)),
+                    {}
+                )
+            );
+        }
+    }
+
+    function rerender() as Void
+    {
+        safeSetToggle(me, :settingsRoutesEnabled, settings.routesEnabled);
+        for (var i = 0; i < ROUTE_MAX; ++i) {
+            var routeName = settings.routeName(i);
+            safeSetLabel(me, i, routeName.equals("") ? "<unlabeled>" : routeName);
+            safeSetIcon(me, i, new ColourIcon(settings.routeColour(i)));
+            safeSetSubLabel(me, i, settings.routeEnabled(i) ? "Enabled" : "Disabled");
+        }
+    }
+}
+
 class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
     var view as SettingsMain;
     function initialize(view as SettingsMain) {
@@ -324,6 +431,9 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
         } else if (itemId == :settingsMainZoomAtPace) {
             var view = new $.SettingsZoomAtPace();
             WatchUi.pushView(view, new $.SettingsZoomAtPaceDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMainRoutes) {
+            var view = new $.SettingsRoutes(settings);
+            WatchUi.pushView(view, new $.SettingsRoutesDelegate(view, settings), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainMap) {
             if (settings.mapEnabled)
             {
@@ -487,6 +597,54 @@ class SettingsZoomAtPaceDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
+class SettingsRoutesDelegate extends WatchUi.Menu2InputDelegate {
+    var view as SettingsRoutes;
+    var settings as Settings;
+    function initialize(view as SettingsRoutes, settings as Settings) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.view = view;
+        me.settings = settings;
+    }
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var itemId = item.getId();
+        if (itemId == :settingsRoutesEnabled) {
+            settings.toggleRoutesEnabled();
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+            var view = new $.SettingsRoutes(settings);
+            WatchUi.pushView(view, new $.SettingsRoutesDelegate(view, settings), WatchUi.SLIDE_IMMEDIATE);
+        }
+
+        // itemId should now be the route storageIndex = routeId
+        if (itemId instanceof Number)
+        {
+            var thisView = new $.SettingsRoute(settings, itemId, view);
+            WatchUi.pushView(thisView, new $.SettingsRouteDelegate(thisView, settings), WatchUi.SLIDE_IMMEDIATE);
+        }
+    }
+}
+
+class SettingsRouteDelegate extends WatchUi.Menu2InputDelegate {
+    var view as SettingsRoute;
+    var settings as Settings;
+    function initialize(view as SettingsRoute, settings as Settings) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.view = view;
+        me.settings = settings;
+    }
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var itemId = item.getId();
+        if (itemId == :settingsRouteName) {
+            var picker = new SettingsStringPicker(view.method(:setName), view);
+            WatchUi.pushView(new WatchUi.TextPicker(settings.routeName(view.routeId)), picker, WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsRoutesEnabled) {
+            settings.toggleRoutesEnabled();
+            view.rerender();
+        } else if (itemId == :settingsRouteColour) {
+            startPicker(new SettingsColourPicker(view.method(:setColour)), view);
+        }
+    }
+}
+
 class SettingsZoomAtPaceModeDelegate extends WatchUi.Menu2InputDelegate {
     var parent as SettingsZoomAtPace;
     function initialize(parent as SettingsZoomAtPace) {
@@ -589,13 +747,3 @@ class SettingsColoursDelegate extends WatchUi.Menu2InputDelegate {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-

@@ -57,7 +57,7 @@
     <string id="routeId">Id</string>
     <string id="routeName">Name</string>
     <string id="routeEnabled">Enabled</string>
-    <string id="allRoutesDisabled">Disable all routes</string>
+    <string id="routesEnabled">Enable Routes</string>
     <string id="routesDescription">Adding routes will do nothing (use the companion app), but they may be removed or enabled/disabled</string>
 
 </strings>
