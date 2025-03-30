@@ -88,10 +88,7 @@ class MapRenderer {
         //    |____________________
         //  -180,-90              180
         var firstTileLeftM = firstTileX * tileWidthM - originShift;
-        var firstTileBottomM = originShift - firstTileY * tileWidthM;
-
-        var tileTopM = firstTileBottomM + tileCount * tileWidthM; // this should be 
-
+        var firstTileTopM = originShift - firstTileY * tileWidthM;
 
         var screenToTileMRatio = screenWidthM / tileWidthM;
         var screenToTilePixelRatio = _screenSize / _settings.tileSize;
@@ -107,10 +104,12 @@ class MapRenderer {
 
         // how many pixels on the screen the tile should take up this can be smaller or larger than the actual tile, 
         // depending on if we scale up or down
-        var scalePixelSize = Math.floor(_settings.tileSize * scaleFactor);
+        // find the closest pixel size
+        var scalePixelSize = Math.round(_settings.tileSize * scaleFactor);
 
-        var offsetX = (screenLeftM - firstTileLeftM) * currentScale * scaleFactor;
-        var offsetY = (firstTileBottomM - screenTopM) * currentScale * scaleFactor;
+        // find the closest pixel size
+        var offsetX = Math.round(((firstTileLeftM - screenLeftM) * currentScale) * scaleFactor);
+        var offsetY = Math.round((screenTopM - firstTileTopM) * currentScale * scaleFactor);
 
         for (var x=0 ; x<tileCount; ++x)
         {
@@ -128,9 +127,7 @@ class MapRenderer {
                 // cant rotate individual tiles as you can see the seams between tiles
                 // one large one then rotate looks much better, and is possibly faster
                 // we must scale as the tile we picked is only close to the resolution we need
-                scratchPadDc.drawScaledBitmap(-offsetX + x * scalePixelSize, -offsetY + y * scalePixelSize, scalePixelSize, scalePixelSize, tileFromCache.bitmap);
-                // no scaling incase issues
-                // scratchPadDc.drawBitmap(xx, yy, tileFromCache.bitmap);
+                scratchPadDc.drawScaledBitmap(offsetX + x * scalePixelSize, offsetY + y * scalePixelSize, scalePixelSize, scalePixelSize, tileFromCache.bitmap);
             }
         }
 

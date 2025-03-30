@@ -414,14 +414,14 @@ class BreadcrumbRenderer {
 
     // always show location
     if (settings.fixedPosition != null && settings.fixedLatitude != null && settings.fixedLongitude != null) {
-      var txt = settings.fixedLatitude.format("%.1f") + ", " + settings.fixedLongitude.format("%.1f");
+      var txt = settings.fixedLatitude.format("%.3f") + ", " + settings.fixedLongitude.format("%.3f");
       dc.drawText(_xHalf, _screenSize - scaleFromEdge, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_CENTER);
     }
     else if (lastRenderedCenter != null) {
       var latLong = RectangularPoint.xyToLatLon(lastRenderedCenter.x, lastRenderedCenter.y);
       if (latLong != null)
       {
-        var txt = latLong[0].format("%.1f") + ", " + latLong[1].format("%.1f");
+        var txt = latLong[0].format("%.3f") + ", " + latLong[1].format("%.3f");
         dc.drawText(_xHalf, _screenSize - scaleFromEdge, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_CENTER);
       }
     }

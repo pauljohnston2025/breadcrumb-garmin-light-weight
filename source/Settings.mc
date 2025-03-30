@@ -992,6 +992,10 @@ class Settings {
         System.println("parsed routes: " + routes);
         disableMapsFailureCount = parseNumber("disableMapsFailureCount", disableMapsFailureCount);
         offTrackAlertsDistanceM = parseNumber("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
+
+        // testing coordinates (piper-comanche-wreck)
+        setFixedPosition(-27.297773, 152.753883);
+        setScale(0.39);
     }
 
     function emptyString(key as String, value) as String
