@@ -33,6 +33,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // for now we render everything in the onUpdate view, and assume only 1 data
     // screen
     var textDim = dc.getTextDimensions("1234", Graphics.FONT_XTINY);
+    _breadcrumbContext.mapRenderer()._screenSize = dc.getWidth() * 1.0f;
     _breadcrumbContext.trackRenderer().setScreenSize(
       dc.getWidth() * 1.0f,
       textDim[0] * 1.0f
@@ -151,7 +152,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       var centerPoint = calcCenterPointForBoundingBox(outerBoundingBox);
       if (routes.size() != 0) {
         var _center = center(centerPoint);
-        mapRenderer.renderMap(dc, _scratchPadBitmap, _center, renderer.rotationRadians());
+        mapRenderer.renderMap(dc, _scratchPadBitmap, _center, renderer.rotationRadians(), renderer._currentScale);
         renderer.updateCurrentScale(outerBoundingBox);
         for (var i = 0; i < routes.size(); ++i) {
           if (!settings.routeEnabled(i))
@@ -252,7 +253,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
       centerPoint = center(centerPoint);
 
-      mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians());
+      mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians(), renderer._currentScale);
       renderer.updateCurrentScale(outerBoundingBox);
       for (var i = 0; i < routes.size(); ++i) {
         if (!settings.routeEnabled(i))
@@ -296,7 +297,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     var centerPoint = center(lastPoint);
 
-    mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians());
+    mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians(),  renderer._currentScale);
     renderer.updateCurrentScale(outerBoundingBox);
 
     if (routes.size() != 0) {
@@ -358,9 +359,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             continue;
         }
         var route = routes[i];
-        renderer.renderTrackElevtion(dc, route, settings.routeColour(route.storageIndex), hScale, vScale, startAt);
+        renderer.renderTrackElevation(dc, route, settings.routeColour(route.storageIndex), hScale, vScale, startAt);
       }
     }
-    renderer.renderTrackElevtion(dc, track, settings.trackColour, hScale, vScale, startAt);
+    renderer.renderTrackElevation(dc, track, settings.trackColour, hScale, vScale, startAt);
   }
 }

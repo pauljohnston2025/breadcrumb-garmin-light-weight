@@ -4,25 +4,25 @@ import Toybox.Activity;
 import Toybox.Application;
 
 class BreadcrumbContext {
+  var _settings as Settings;
   var _breadcrumbRenderer as BreadcrumbRenderer;
   var _routes as Array<BreadcrumbTrack>;
   var _track as BreadcrumbTrack;
-  var _settings as Settings;
   var _webRequestHandler as WebRequestHandler;
   var _tileCache as TileCache;
   var _mapRenderer as MapRenderer;
 
   // Set the label of the data field here.
   function initialize() {
-    _breadcrumbRenderer = new BreadcrumbRenderer(me);
-    _routes = [];
-    _track = new BreadcrumbTrack(me, -1, "");
-
     _settings = new Settings();
     _settings.loadSettings();
 
+    _routes = [];
+    _track = new BreadcrumbTrack(-1, "");
+    _breadcrumbRenderer = new BreadcrumbRenderer(_settings);
+
     for (var i = 0; i < ROUTE_MAX; ++i) {
-      var route = BreadcrumbTrack.readFromDisk(ROUTE_KEY, i, me);
+      var route = BreadcrumbTrack.readFromDisk(ROUTE_KEY, i);
       if (route != null) {
         _routes.add(route);
         _settings.ensureRouteId(route.storageIndex);
@@ -74,7 +74,7 @@ class BreadcrumbContext {
         }
       }
       _routes.remove(oldestRoute);
-      var route = new BreadcrumbTrack(me, oldestRoute.storageIndex, name);
+      var route = new BreadcrumbTrack(oldestRoute.storageIndex, name);
       _settings.ensureRouteId(oldestRoute.storageIndex);
       _settings.setRouteName(oldestRoute.storageIndex, route.name);
       _settings.setRouteEnabled(oldestRoute.storageIndex, true);
@@ -88,7 +88,7 @@ class BreadcrumbContext {
       System.println("failed to get route");
       return null; // should never happen, we remove the oldest above if we are full
     }
-    var route = new BreadcrumbTrack(me, nextId, name);
+    var route = new BreadcrumbTrack(nextId, name);
     _routes.add(route);
     _settings.ensureRouteId(nextId);
     _settings.setRouteName(nextId, route.name);

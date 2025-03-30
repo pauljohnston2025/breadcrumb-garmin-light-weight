@@ -47,6 +47,14 @@ function minF(lhs as Float, rhs as Float) as Float {
   return rhs;
 }
 
+function minN(lhs as Number, rhs as Number) as Number {
+  if (lhs < rhs) {
+    return lhs;
+  }
+
+  return rhs;
+}
+
 function abs(val as Float) as Float {
   if (val < 0)
   {

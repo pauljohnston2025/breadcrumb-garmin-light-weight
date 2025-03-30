@@ -11,7 +11,7 @@ class NumberPicker {
     private var letterPositions as Array<Array<Number>>;
     private var halfWidth as Number or Null;
     private var myText as WatchUi.Text;
-    const halfHitboxSize as Number = 25;
+    const halfHitboxSize as Number = 35;
 
     function initialize(charset as String) {
         _charset = charset;

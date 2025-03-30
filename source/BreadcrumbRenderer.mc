@@ -11,11 +11,11 @@ const DESIRED_ELEV_SCALE_PIXEL_WIDTH as Float = 50.0f;
 const MIN_SCALE as Float = DESIRED_SCALE_PIXEL_WIDTH / 100000.0f;
 
 class BreadcrumbRenderer {
-  var _breadcrumbContext as BreadcrumbContext;
-  var _currentScale as Float = 0.0;
+  var _currentScale as Float = 0.0; // pixels per meter so <pixel count> / _currentScale = meters  or  meters * _currentScale = pixels
   var _rotationRad as Float = 0.0;  // heading in radians
   var _clearRouteProgress as Number = 0;
   var lastRenderedCenter as RectangularPoint or Null;
+  var settings as Settings;
 
   // units in meters (float/int) to label
   var SCALE_NAMES as Dictionary = {
@@ -59,8 +59,8 @@ class BreadcrumbRenderer {
   var _rotateCos = Math.cos(_rotationRad);
   var _rotateSin = Math.sin(_rotationRad);
 
-  function initialize(breadcrumbContext as BreadcrumbContext) {
-    _breadcrumbContext = breadcrumbContext;
+  function initialize(settings as Settings) {
+    self.settings = settings;
     setScreenSize(360.0f, 50f); // start with known good size of the venu2s
   }
 
@@ -71,7 +71,7 @@ class BreadcrumbRenderer {
     var currentHeading = activityInfo.currentHeading;
     if (currentHeading != null) {
       // extra 180 deg so it points to top of page
-      _rotationRad = currentHeading + Math.toRadians(180);
+      _rotationRad = currentHeading;
       _rotateCos = Math.cos(_rotationRad);
       _rotateSin = Math.sin(_rotationRad);
     }
@@ -84,7 +84,7 @@ class BreadcrumbRenderer {
 
   function calculateScale(
       outerBoundingBox as[Float, Float, Float, Float]) as Float {
-    var scale = _breadcrumbContext.settings().scale;
+    var scale = settings.scale;
     if (scale != null) {
       return scale;
     }
@@ -136,7 +136,6 @@ class BreadcrumbRenderer {
   }
 
   function renderCurrentScale(dc as Dc) {
-    var settings = _breadcrumbContext.settings();
     var scaleData = getScaleSize();
     var pixelWidth = scaleData[0];
     var distanceM = scaleData[1];
@@ -161,28 +160,54 @@ class BreadcrumbRenderer {
     centerPosition as RectangularPoint,
     usersLastLocation as RectangularPoint
   ) as Void {
-    var triangleSizeY = 10;
-    var triangleSizeX = 4;
     var userPosUnrotatedX =
         (usersLastLocation.x - centerPosition.x) * _currentScale;
     var userPosUnrotatedY =
         (usersLastLocation.y - centerPosition.y) * _currentScale;
 
-    var userPosRotatedX =
-        _rotateCos * userPosUnrotatedX - _rotateSin * userPosUnrotatedY;
-    var userPosRotatedY =
-        _rotateSin * userPosUnrotatedX + _rotateCos * userPosUnrotatedY;
+    var userPosRotatedX = _xHalf + userPosUnrotatedX;
+    var userPosRotatedY = _yHalf - userPosUnrotatedY;
+    if (settings.enableRotation)
+    {
+      userPosRotatedX = _xHalf + _rotateCos * userPosUnrotatedX - _rotateSin * userPosUnrotatedY;
+      userPosRotatedY = _yHalf - (_rotateSin * userPosUnrotatedX + _rotateCos * userPosUnrotatedY);
+    }
 
-    var triangleTopX = userPosRotatedX + _xHalf;
-    var triangleTopY = userPosRotatedY + _yHalf - triangleSizeY;
+    var triangleSizeY = 10;
+    var triangleSizeX = 4;
+    var triangleTopX = userPosRotatedX;
+    var triangleTopY = userPosRotatedY - triangleSizeY;
 
     var triangleLeftX = triangleTopX - triangleSizeX;
-    var triangleLeftY = triangleTopY + triangleSizeY * 2;
+    var triangleLeftY = userPosRotatedY + triangleSizeY;
 
     var triangleRightX = triangleTopX + triangleSizeX;
     var triangleRightY = triangleLeftY;
+    
+    var triangleCenterX = userPosRotatedX;
+    var triangleCenterY = userPosRotatedY;
 
-    dc.setColor(_breadcrumbContext.settings().userColour, Graphics.COLOR_BLACK);
+    if (!settings.enableRotation)
+    {
+      // todo: load user arrow from bitmap and draw rotated instead
+      // we normally rotate the track, but we now need to rotate the user
+      var triangleTopXRot = triangleCenterX + _rotateCos * (triangleTopX - triangleCenterX) - _rotateSin * (triangleTopY - triangleCenterY);
+      // yes + and not -, we are in pixel coordinates, the rest are in latitude which is negative at the bottom of the page
+      triangleTopY = triangleCenterY + (_rotateSin * (triangleTopX - triangleCenterX) + _rotateCos * (triangleTopY - triangleCenterY));
+      triangleTopX = triangleTopXRot;
+      
+      var triangleLeftXRot = triangleCenterX + _rotateCos * (triangleLeftX - triangleCenterX) - _rotateSin * (triangleLeftY - triangleCenterY);
+      // yes + and not -, we are in pixel coordinates, the rest are in latitude which is negative at the bottom of the page
+      triangleLeftY = triangleCenterY + (_rotateSin * (triangleLeftX - triangleCenterX) + _rotateCos * (triangleLeftY - triangleCenterY));
+      triangleLeftX = triangleLeftXRot;
+      
+      var triangleRightXRot = triangleCenterX + _rotateCos * (triangleRightX - triangleCenterX) - _rotateSin * (triangleRightY - triangleCenterY);
+      // yes + and not -, we are in pixel coordinates, the rest are in latitude which is negative at the bottom of the page
+      triangleRightY = triangleCenterY + (_rotateSin * (triangleRightX - triangleCenterX) + _rotateCos * (triangleRightY - triangleCenterY));
+      triangleRightX = triangleRightXRot;
+    }
+
+    dc.setColor(settings.userColour, Graphics.COLOR_BLACK);
     dc.setPenWidth(6);
     dc.drawLine(triangleTopX, triangleTopY, triangleRightX, triangleRightY);
     dc.drawLine(triangleRightX, triangleRightY, triangleLeftX, triangleLeftY);
@@ -194,7 +219,6 @@ class BreadcrumbRenderer {
                        centerPosition as RectangularPoint) as Void {
 
     lastRenderedCenter = centerPosition;
-    var settings = _breadcrumbContext.settings();
 
     if (settings.mode != MODE_NORMAL)
     {
@@ -208,35 +232,42 @@ class BreadcrumbRenderer {
     var size = breadcrumb.coordinates.size();
     var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
 
+    // performance local variables are faster
     var rotateCosLocal = _rotateCos;
     var rotateSinLocal = _rotateSin;
+    var currentScaleLocal = _currentScale;
 
-    // note: size is using the overload of memeory safe array
+    // note: size is using the overload of points array (the reduced pointarray size)
     // but we draw from the raw points
     if (size >= ARRAY_POINT_SIZE * 2) {
       var firstXScaledAtCenter =
-          (coordinatesRaw[0] - centerPosition.x) * _currentScale;
+          (coordinatesRaw[0] - centerPosition.x) * currentScaleLocal;
       var firstYScaledAtCenter =
-          (coordinatesRaw[1] - centerPosition.y) * _currentScale;
-      var lastXRotated = _xHalf + rotateCosLocal * firstXScaledAtCenter -
-                         rotateSinLocal * firstYScaledAtCenter;
-      var lastYRotated = _yHalf + rotateSinLocal * firstXScaledAtCenter +
-                         rotateCosLocal * firstYScaledAtCenter;
+          (coordinatesRaw[1] - centerPosition.y) * currentScaleLocal;
+        var lastXRotated = _xHalf + firstXScaledAtCenter;
+        var lastYRotated = _yHalf - firstYScaledAtCenter;
+        if (settings.enableRotation)
+        {
+          lastXRotated = _xHalf + rotateCosLocal * firstXScaledAtCenter -
+                            rotateSinLocal * firstYScaledAtCenter;
+          lastYRotated = _yHalf - (rotateSinLocal * firstXScaledAtCenter +
+                            rotateCosLocal * firstYScaledAtCenter);
+        }
       for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
         var nextX = coordinatesRaw[i];
         var nextY = coordinatesRaw[i + 1];
 
-        var nextXScaledAtCenter = (nextX - centerPosition.x) * _currentScale;
-        var nextYScaledAtCenter = (nextY - centerPosition.y) * _currentScale;
+        var nextXScaledAtCenter = (nextX - centerPosition.x) * currentScaleLocal;
+        var nextYScaledAtCenter = (nextY - centerPosition.y) * currentScaleLocal;
 
         var nextXRotated = _xHalf + nextXScaledAtCenter;
-        var nextYRotated = _yHalf + nextYScaledAtCenter;
+        var nextYRotated = _yHalf - nextYScaledAtCenter;
         if (settings.enableRotation)
         {
           nextXRotated = _xHalf + rotateCosLocal * nextXScaledAtCenter -
                            rotateSinLocal * nextYScaledAtCenter;
-          nextYRotated = _yHalf + rotateSinLocal * nextXScaledAtCenter +
-                           rotateCosLocal * nextYScaledAtCenter;
+          nextYRotated = _yHalf - (rotateSinLocal * nextXScaledAtCenter +
+                           rotateCosLocal * nextYScaledAtCenter);
         }
 
         dc.drawLine(lastXRotated, lastYRotated, nextXRotated, nextYRotated);
@@ -247,15 +278,15 @@ class BreadcrumbRenderer {
 
       if (settings.displayRouteNames)
       {
-        var xScaledAtCenter = (breadcrumb.boundingBoxCenter.x - centerPosition.x) * _currentScale;
-        var yScaledAtCenter = (breadcrumb.boundingBoxCenter.y - centerPosition.y) * _currentScale;
+        var xScaledAtCenter = (breadcrumb.boundingBoxCenter.x - centerPosition.x) * currentScaleLocal;
+        var yScaledAtCenter = (breadcrumb.boundingBoxCenter.y - centerPosition.y) * currentScaleLocal;
 
         var xRotated = _xHalf + xScaledAtCenter;
-        var yRotated = _yHalf + yScaledAtCenter;
+        var yRotated = _yHalf - yScaledAtCenter;
         if (settings.enableRotation)
         {
           xRotated = _xHalf + rotateCosLocal * xScaledAtCenter - rotateSinLocal * yScaledAtCenter;
-          yRotated = _yHalf + rotateSinLocal * xScaledAtCenter + rotateCosLocal * yScaledAtCenter;
+          yRotated = _yHalf - (rotateSinLocal * xScaledAtCenter + rotateCosLocal * yScaledAtCenter);
         }
 
         dc.drawText(xRotated, yRotated, Graphics.FONT_XTINY, settings.routeName(breadcrumb.storageIndex), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
@@ -267,7 +298,6 @@ class BreadcrumbRenderer {
   }
 
   function renderClearTrackUi(dc as Dc) as Boolean {
-    var settings = _breadcrumbContext.settings();
     // should be using Toybox.WatchUi.Confirmation and Toybox.WatchUi.ConfirmationDelegate for questions
     var padding = _xHalf / 2.0f;
     var topText = _yHalf / 2.0f;
@@ -315,13 +345,12 @@ class BreadcrumbRenderer {
   }
 
   function renderUi(dc as Dc) as Void {
-    var settings = _breadcrumbContext.settings();
     dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
     dc.setPenWidth(1);
 
     // current mode displayed
     var modeLetter = "T";
-    switch(_breadcrumbContext.settings().mode)
+    switch(settings.mode)
     {
       case MODE_NORMAL:
         modeLetter = "T";
@@ -339,24 +368,24 @@ class BreadcrumbRenderer {
 
     dc.drawText(modeSelectX, modeSelectY, Graphics.FONT_XTINY, modeLetter, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
-    if (_breadcrumbContext.settings().mode == MODE_DEBUG)
+    if (settings.mode == MODE_DEBUG)
     {
         // mode button is the only thing to show
         return;
     }
 
     // clear routes
-    if (_breadcrumbContext.settings().mode != MODE_MAP_MOVE)
+    if (settings.mode != MODE_MAP_MOVE)
     {
         dc.drawText(clearRouteX, clearRouteY, Graphics.FONT_XTINY, "C", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
     
-    if (_breadcrumbContext.settings().mode == MODE_ELEVATION)
+    if (settings.mode == MODE_ELEVATION)
     {
       return;
     }
 
-    if (_breadcrumbContext.settings().mode != MODE_MAP_MOVE)
+    if (settings.mode != MODE_MAP_MOVE)
     {
       // do not allow disabling maps from mapmove mode
       var mapletter = "Y";
@@ -389,7 +418,7 @@ class BreadcrumbRenderer {
       }
     }
 
-    if (_breadcrumbContext.settings().mode == MODE_MAP_MOVE)
+    if (settings.mode == MODE_MAP_MOVE)
     {
       dc.drawText(_xHalf, lineFromEdge, Graphics.FONT_XTINY, "^", Graphics.TEXT_JUSTIFY_CENTER);
       dc.drawText(_xHalf, dc.getHeight() - (lineFromEdge + textHeight), Graphics.FONT_XTINY, "V", Graphics.TEXT_JUSTIFY_CENTER);
@@ -460,7 +489,7 @@ class BreadcrumbRenderer {
           var nextDistanceM = keys[nextScaleIndex] as Float;
           // -2 since we need some fudge factor to make sure we are very close to desired length, but not past it
           var desiredScale = (DESIRED_SCALE_PIXEL_WIDTH - 2) / nextDistanceM;
-          var toInc = (desiredScale - _breadcrumbContext.settings().scale );
+          var toInc = (desiredScale - settings.scale );
           return toInc;
       }
     }
@@ -469,7 +498,6 @@ class BreadcrumbRenderer {
   }
 
   function incScale() as Void {
-    var settings = _breadcrumbContext.settings();
     if (settings.mode != MODE_NORMAL)
     {
       return;
@@ -482,7 +510,6 @@ class BreadcrumbRenderer {
   }
 
   function decScale() as Void {
-    var settings = _breadcrumbContext.settings();
     if (settings.mode != MODE_NORMAL)
     {
       return;
@@ -502,7 +529,6 @@ class BreadcrumbRenderer {
 
   function handleClearRoute(x as Number, y as Number) as Boolean
   {
-    var settings = _breadcrumbContext.settings();
     if (settings.mode != MODE_NORMAL && settings.mode != MODE_ELEVATION)
     {
         return false; // debug and map move do not clear routes
@@ -543,7 +569,7 @@ class BreadcrumbRenderer {
         // press right to confirm, left cancels
         if (x > _xHalf)
         {
-            _breadcrumbContext.clearRoutes();
+            getApp()._breadcrumbContext.clearRoutes();
         }
         _clearRouteProgress = 0;
         return true;
@@ -553,7 +579,6 @@ class BreadcrumbRenderer {
   }
 
   function resetScale() as Void { 
-    var settings = _breadcrumbContext.settings();
     if (settings.mode != MODE_NORMAL)
     {
       return;
@@ -622,7 +647,6 @@ class BreadcrumbRenderer {
     var vScaleData = getScaleSizeGeneric(vScale, DESIRED_ELEV_SCALE_PIXEL_WIDTH, ELEVATION_SCALE_NAMES);
     var vPixelWidth = vScaleData[0];
     var vDistanceM = vScaleData[1];
-    var settings = _breadcrumbContext.settings();
     dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
     dc.setPenWidth(1);
     
@@ -664,7 +688,7 @@ class BreadcrumbRenderer {
       dc.drawText(_xElevationStart, _yHalf + _halfYElevationHeight, Graphics.FONT_XTINY, bottomScaleM.format("%.0f") + "m", Graphics.TEXT_JUSTIFY_LEFT);
     }
     
-    dc.setColor(_breadcrumbContext.settings().elevationColour, Graphics.COLOR_TRANSPARENT);
+    dc.setColor(settings.elevationColour, Graphics.COLOR_TRANSPARENT);
     dc.setPenWidth(3);
 
     if (hPixelWidth != 0) // if statement makes sure that we can get a SCALE_NAMES[hDistanceM]
@@ -702,7 +726,6 @@ class BreadcrumbRenderer {
   }
 
   function getElevationScale(track as BreadcrumbTrack, routes as Array<BreadcrumbTrack>) as [Float, Float, Float] {
-    var settings = _breadcrumbContext.settings();
     var maxDistance = 0f;
     var minElevation = FLOAT_MAX;
     var maxElevation = FLOAT_MIN;
@@ -759,7 +782,7 @@ class BreadcrumbRenderer {
     return [hScale, vScale, startAt];
   }
 
-  function renderTrackElevtion(
+  function renderTrackElevation(
     dc as Dc, 
     track as BreadcrumbTrack, 
     colour as Graphics.ColorType, 

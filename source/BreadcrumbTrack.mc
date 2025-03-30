@@ -42,15 +42,13 @@ class BreadcrumbTrack {
   var distanceTotal as Decimal = 0f;
   var elevationMin as Float = FLOAT_MAX;
   var elevationMax as Float = FLOAT_MIN;
-  var _breadcrumbContext as BreadcrumbContext;
   var _neverStarted as Boolean;
 
   function initialize(
-      breadcrumbContext as BreadcrumbContext, 
       routeIndex as Number,
-      name as String) 
+      name as String
+  ) 
   {
-    _breadcrumbContext = breadcrumbContext;
     _neverStarted = true;
     epoch = Time.now().value();
     storageIndex = routeIndex;
@@ -86,7 +84,7 @@ class BreadcrumbTrack {
     Storage.deleteValue(key + "name");
   }
 
-  static function readFromDisk(key as String, storageIndex as Number, breadcrumbContext as BreadcrumbContext) as BreadcrumbTrack or Null {
+  static function readFromDisk(key as String, storageIndex as Number) as BreadcrumbTrack or Null {
     key = key + storageIndex;
     try {
       var bb = Storage.getValue(key + "bb");
@@ -132,7 +130,7 @@ class BreadcrumbTrack {
         return null;
       }
 
-      var track = new BreadcrumbTrack(breadcrumbContext, storageIndex, name);
+      var track = new BreadcrumbTrack(storageIndex, name);
       track.boundingBox = bb as[Float, Float, Float, Float];
       if (track.boundingBox.size() != 4) {
         return null;

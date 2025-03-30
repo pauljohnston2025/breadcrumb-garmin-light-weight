@@ -62,7 +62,7 @@ class Settings {
     // but you can also use something like https://a.tile.opentopomap.org/{z}/{x}/{y}.png
     // to make this work on the emulator you ned to run 
     // adb forward tcp:8080 tcp:8080
-    var tileUrl as String = "https://a.tile.opentopomap.org/{z}/{x}/{y}.png";
+    var tileUrl as String = COMPANION_APP_TILE_URL;
     // see keys below in routes = getArraySchema(...)
     // see oddity with route name and route loading new in context.newRoute
     var routes as Array<Dictionary> = [];
@@ -74,10 +74,14 @@ class Settings {
     var uiColour as Number = Graphics.COLOR_DK_GRAY;
     var debugColour as Number = Graphics.COLOR_WHITE;
 
-    // todo impl features for alerte
+    // todo impl features for alerts
     // note this only works if a single track is enabled (multiple tracks would always error)
     var enableOffTrackAlerts as Boolean = true;
     var offTrackAlertsDistanceM as Number = 20;
+
+    // todo make configurable
+    var tileLayerMin as Number = 2;
+    var tileLayerMax as Number = 15;
     
     // calculated whenever others change
     var smallTilesPerBigTile as Number = Math.ceil(256f/tileSize).toNumber();
