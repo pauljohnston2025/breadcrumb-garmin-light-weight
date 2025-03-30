@@ -115,7 +115,67 @@ class WebTileRequestHandler extends WebHandler {
 
         if (data instanceof WatchUi.BitmapResource || data instanceof Graphics.BitmapReference)
         {
-            // todo slice the tile to the correct tile size
+            var settings = getApp()._breadcrumbContext.settings();
+            // we have to downsample the tile, not recomendedd, as this mean we will have to request the same tile multiple times (cant save big tiles around anywhere)
+            // also means we have to use scratch space to draw the tile and downsample it
+            
+            if (data.getWidth() != settings.tileSize || data.getHeight() != settings.tileSize)
+            {
+                // dangerous large bitmap could cause oom, buts its the only way to upscale the image and then slice it
+                // we cannot downscale because we would be slicing a pixel in half
+                // I guess we could just figure out which pixels to double up on?
+                // anyone using an external tile server should be setting thier tileSize to 256, but perhaps some devices will run out of memory?
+                // if users are using a smaller size it should be a multiple of 256.
+                // if its not, we will stretch the image then downsize, if its already a multiple we will use the image as is (optimal)
+                var maxDim = maxN(data.getWidth(), data.getHeight()); // should be equal (every time server i know of is 256*256), but who knows
+                var pixelsPerTile = maxDim / settings.smallTilesPerBigTile.toFloat();
+                var sourceBitmap = data;
+                if (Math.ceil(pixelsPerTile) != pixelsPerTile)
+                {
+                    // we have an aloying situation - stretch the image
+                    var scaleUpSize = settings.smallTilesPerBigTile * settings.tileSize;
+                    var upscaledBitmap = newBitmap(scaleUpSize, null);
+                    var upscaledBitmapDc = upscaledBitmap.getDc();
+                    upscaledBitmapDc.drawScaledBitmap(0, 0, scaleUpSize, scaleUpSize, sourceBitmap);
+                    System.println("scaled up to: " + upscaledBitmap.getWidth() + " " + upscaledBitmap.getHeight());
+                    System.println("from: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
+                    sourceBitmap = upscaledBitmap; // resume what we were doing as if it was always the larger bitmap
+                }
+
+                var croppedSection = newBitmap(settings.tileSize, null);
+                var croppedSectionDc = croppedSection.getDc();
+                var xOffset = _tileKey.x % settings.smallTilesPerBigTile;
+                var yOffset = _tileKey.y % settings.smallTilesPerBigTile;
+                System.println("tile: " + _tileKey);
+                System.println("croppedSection: " + croppedSection.getWidth() + " " + croppedSection.getHeight());
+                System.println("source: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
+                System.println("drawing from: " + xOffset * settings.tileSize + " " + yOffset * settings.tileSize);
+                croppedSectionDc.drawBitmap2(
+                    0,
+                    0,
+                    sourceBitmap,
+                    {
+                        // if this results in hitting the edge of the bitmap nothing is drawn
+                        // so even though x=192 with width=64 should be drawn it is not
+                        // it results in an empty image
+                        // ie. it should be 0-64, 65-128, 128-192, 192-256 ie. half-open range [begin, end)
+                        // but it look like they are using closed ranges?
+                        // I cannot get this to work on a phsical device, see isues in Webrequest around Communications.makeImageRequest( and packing format
+                        // the simulator also does the weird becaviour as listed above only first tile crop works
+                        // I think the math and usage is correct, its possiby my venu2s just does not support it, even though its listed as supported in the docs
+                        // it is API Level 4.2.1 so I would not be surprised if thats it
+                        :bitmapX => xOffset * settings.tileSize,
+                        :bitmapY => yOffset * settings.tileSize,
+                        :bitmapWidth => settings.tileSize,
+                        :bitmapHeight => settings.tileSize,
+                        // :filterMode => Graphics.FILTER_MODE_BILINEAR,
+                        // :dithering => Communications.IMAGE_DITHERING_NONE,
+                    }
+                );
+
+                data = croppedSection;
+            }
+
             var tile = new Tile();
             tile.setBitmap(data);
             _tileCache.addTile(_tileKey, tile);
@@ -278,15 +338,16 @@ class TileCache {
 
         if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL))
         {
-            // todo get correct larger tile from the small tile request
+            var x = tileKey.x / _settings.smallTilesPerBigTile;
+            var y = tileKey.y / _settings.smallTilesPerBigTile;
             _webRequestHandler.add(
                 new ImageRequest(
-                    "tileimage" + tileKey,
+                    "tileimage" + new TileKey( x, y, tileKey.z),
                     stringReplaceFirst(
                         stringReplaceFirst(
-                            stringReplaceFirst(_settings.tileUrl, "{x}", tileKey.x.toString()), 
+                            stringReplaceFirst(_settings.tileUrl, "{x}", x.toString()), 
                             "{y}", 
-                            tileKey.y.toString()
+                            y.toString()
                         ),
                         "{z}", 
                         tileKey.z.toString()
@@ -423,3 +484,54 @@ class TileCache {
         _misses = 0;
     }
 }
+
+
+// stack i encountered
+// Error: Stack Overflow Error
+// Details: 'Failed invoking <symbol>'
+// Time: 2025-03-30T05:04:34Z
+// Part-Number: 006-B3704-00
+// Firmware-Version: '19.05'
+// Language-Code: eng
+// ConnectIQ-Version: 5.1.0
+// Filename: BreadcrumbDataField
+// Appname: BreadcrumbDataField
+// Stack: 
+//   - pc: 0x3000017c
+//   - pc: 0x10009850
+//     File: 'BreadcrumbDataField\source\TileCache.mc'
+//     Line: 112
+//     Function: handle
+//   - pc: 0x10007b61
+//     File: 'BreadcrumbDataField\source\WebRequest.mc'
+//     Line: 69
+//     Function: handle
+//   - pc: 0x300003b6
+//   - pc: 0x10002f4f
+//     File: 'BreadcrumbDataField\source\WebRequest.mc'
+//     Line: 198
+//     Function: start
+//   - pc: 0x1000300f
+//     File: 'BreadcrumbDataField\source\WebRequest.mc'
+//     Line: 165
+//     Function: startNextIfWeCan
+//   - pc: 0x10002e3f
+//     File: 'BreadcrumbDataField\source\WebRequest.mc'
+//     Line: 150
+//     Function: add
+//   - pc: 0x1000526e
+//     File: 'BreadcrumbDataField\source\TileCache.mc'
+//     Line: 339
+//     Function: seedTile
+//   - pc: 0x10009635
+//     File: 'BreadcrumbDataField\source\MapRenderer.mc'
+//     Line: 106
+//     Function: renderMap
+//   - pc: 0x100082c7
+//     File: 'BreadcrumbDataField\source\BreadcrumbDataFieldView.mc'
+//     Line: 154
+//     Function: renderMain
+//   - pc: 0x1000877f
+//     File: 'BreadcrumbDataField\source\BreadcrumbDataFieldView.mc'
+//     Line: 87
+//     Function: onUpdate

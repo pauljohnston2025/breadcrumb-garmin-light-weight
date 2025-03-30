@@ -62,7 +62,7 @@ class Settings {
     // but you can also use something like https://a.tile.opentopomap.org/{z}/{x}/{y}.png
     // to make this work on the emulator you ned to run 
     // adb forward tcp:8080 tcp:8080
-    var tileUrl as String = COMPANION_APP_TILE_URL;
+    var tileUrl as String = "https://a.tile.opentopomap.org/{z}/{x}/{y}.png";
     // see keys below in routes = getArraySchema(...)
     // see oddity with route name and route loading new in context.newRoute
     var routes as Array<Dictionary> = [];
@@ -80,7 +80,7 @@ class Settings {
     var offTrackAlertsDistanceM as Number = 20;
     
     // calculated whenever others change
-    var smallTilesPerBigTile = Math.ceil(256f/tileSize);
+    var smallTilesPerBigTile as Number = Math.ceil(256f/tileSize).toNumber();
     var fixedPosition as RectangularPoint or Null = null;
     // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
     var mapMoveDistanceM as Float = metersAroundUser * 1f;
@@ -910,34 +910,35 @@ class Settings {
         // clear the flag first thing in case of crash we do not want to try clearing over and over
         Application.Properties.setValue("resetDefaults", false);
 
-        var settings = new Settings();
-        setTileSize(settings.tileSize);
-        setTileCacheSize(settings.tileCacheSize);
-        setMode(settings.mode);
-        setMapEnabled(settings.mapEnabled);
-        setTrackColour(settings.trackColour);
-        setElevationColour(settings.elevationColour);
-        setUserColour(settings.userColour);
-        setMaxPendingWebRequests(settings.maxPendingWebRequests);
-        setScale(0f);
-        setMetersAroundUser(settings.metersAroundUser);
-        setZoomAtPaceMode(settings.zoomAtPaceMode);
-        setZoomAtPaceSpeedMPS(settings.zoomAtPaceSpeedMPS);
-        setUiMode(settings.uiMode);
-        setFixedLatitude(0f);
-        setFixedLongitude(0f);
-        setTileUrl(tileUrl);
-        routes = settings.routes;
+        // note: this pulls the defaults from whatever we have at the top of the filem these may differ from the defaults in properties.xml
+        var defaultSettings = new Settings();
+        setTileSize(defaultSettings.tileSize);
+        setTileCacheSize(defaultSettings.tileCacheSize);
+        setMode(defaultSettings.mode);
+        setMapEnabled(defaultSettings.mapEnabled);
+        setTrackColour(defaultSettings.trackColour);
+        setElevationColour(defaultSettings.elevationColour);
+        setUserColour(defaultSettings.userColour);
+        setMaxPendingWebRequests(defaultSettings.maxPendingWebRequests);
+        setScale(defaultSettings.scale);
+        setMetersAroundUser(defaultSettings.metersAroundUser);
+        setZoomAtPaceMode(defaultSettings.zoomAtPaceMode);
+        setZoomAtPaceSpeedMPS(defaultSettings.zoomAtPaceSpeedMPS);
+        setUiMode(defaultSettings.uiMode);
+        setFixedLatitude(defaultSettings.fixedLatitude);
+        setFixedLongitude(defaultSettings.fixedLongitude);
+        setTileUrl(defaultSettings.tileUrl);
+        routes = defaultSettings.routes;
         saveRoutes();
-        setRoutesEnabled(settings.routesEnabled);
-        setDisplayRouteNames(settings.displayRouteNames);
-        setDisableMapsFailureCount(settings.disableMapsFailureCount);
-        setEnableRotation(settings.enableRotation);
-        setEnableOffTrackAlerts(settings.enableOffTrackAlerts);
-        setOffTrackAlertsDistanceM(settings.offTrackAlertsDistanceM);
-        setNormalModeColour(settings.normalModeColour);
-        setUiColour(settings.uiColour);
-        setDebugColour(settings.debugColour);
+        setRoutesEnabled(defaultSettings.routesEnabled);
+        setDisplayRouteNames(defaultSettings.displayRouteNames);
+        setDisableMapsFailureCount(defaultSettings.disableMapsFailureCount);
+        setEnableRotation(defaultSettings.enableRotation);
+        setEnableOffTrackAlerts(defaultSettings.enableOffTrackAlerts);
+        setOffTrackAlertsDistanceM(defaultSettings.offTrackAlertsDistanceM);
+        setNormalModeColour(defaultSettings.normalModeColour);
+        setUiColour(defaultSettings.uiColour);
+        setDebugColour(defaultSettings.debugColour);
 
         // purge storage too on reset
         Application.Storage.clearValues();

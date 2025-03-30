@@ -8,7 +8,7 @@ import Toybox.Graphics;
 // note to get this to work on the simulator need to modify simulator.json and
 // add isTouchable this is already on edgo devices with touch, but not the
 // venu2s, even though I tested and it worked on the actual device
-// C:\Users\RandomGuy2.1\AppData\Roaming\Garmin\ConnectIQ\Devices\venu2s\simulator.json
+// AppData\Roaming\Garmin\ConnectIQ\Devices\venu2s\simulator.json
 // "datafields": {
 // 				"isTouchable": true,
 //                 "datafields": [

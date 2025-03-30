@@ -31,6 +31,14 @@ function maxF(lhs as Float, rhs as Float) as Float {
   return rhs;
 }
 
+function maxN(lhs as Number, rhs as Number) as Number {
+  if (lhs > rhs) {
+    return lhs;
+  }
+
+  return rhs;
+}
+
 function minF(lhs as Float, rhs as Float) as Float {
   if (lhs < rhs) {
     return lhs;

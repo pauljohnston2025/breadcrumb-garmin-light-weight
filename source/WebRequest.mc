@@ -137,7 +137,11 @@ class WebRequestHandler
         if (pendingHashes.indexOf(hash) > -1)
         {
             // log("Dropping req for: " + hash);
-            startNextIfWeCan(); // start any other ones whilst we are in a different function
+            // note: we cannot attempt to run the request, as i've gotten stack over flows on real devices
+            // all web requests will be started from the top level compute loop
+            // stack overflow comes when it completes immediately, and calls into handle
+            // see report at end of TileCache.mc
+            // startNextIfWeCan(); // start any other ones whilst we are in a different function
             return;
         }
 
@@ -147,7 +151,11 @@ class WebRequestHandler
         // At most 3 outstanding can occur, todo query this limit
         // https://forums.garmin.com/developer/connect-iq/f/discussion/204298/ble-queue-full
         // otherwise you will get BLE_QUEUE_FULL (-101)
-        startNextIfWeCan();
+        // note: we cannot attempt to run the request, as i've gotten stack over flows on real devices
+        // all web requests will be started from the top level compute loop
+        // stack overflow comes when it completes immediately, and calls into handle
+        // see report at end of TileCache.mc
+        // startNextIfWeCan();
     }
 
     function startNextIfWeCan() as Boolean
@@ -198,7 +206,19 @@ class WebRequestHandler
             Communications.makeImageRequest(
                 jsonOrImageReq.url,
                 jsonOrImageReq.params,
-                {}, // options
+                {
+                    // needs to be png or we will get 
+                    // Error: Unhandled Exception
+                    // Exception: Source must not use a color palette if we try and draw it to another bufferredBitmap
+                    // it appears PACKING_FORMAT_DEFAULT is the only one that has heese issues
+                    // PACKING_FORMAT_YUV, PACKING_FORMAT_PNG, PACKING_FORMAT_JPG are also fine
+                    // docs say png is slow to load, yuv is fast and jpg is reasonably fast
+                    // PACKING_FORMAT_YUV has weird issues in the physical device (its just tinting the image, not preserving pixel data)
+                    // PACKING_FORMAT_JPG also does the same weird issue
+                    // PACKING_FORMAT_PNG also does this on physical device
+                    // leaving as PACKING_FORMAT_PNG since thats the format of most tile servers
+                    :packingFormat => Communications.PACKING_FORMAT_PNG
+                }, // options
                 // see https://forums.garmin.com/developer/connect-iq/f/discussion/2289/documentation-clarification-object-method-and-lang-method
                 callback
             );

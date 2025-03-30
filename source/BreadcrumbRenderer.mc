@@ -380,7 +380,7 @@ class BreadcrumbRenderer {
       var txt = settings.fixedLatitude.format("%.1f") + ", " + settings.fixedLongitude.format("%.1f");
       dc.drawText(_xHalf, _screenSize - scaleFromEdge, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_CENTER);
     }
-    else {
+    else if (lastRenderedCenter != null) {
       var latLong = RectangularPoint.xyToLatLon(lastRenderedCenter.x, lastRenderedCenter.y);
       if (latLong != null)
       {
