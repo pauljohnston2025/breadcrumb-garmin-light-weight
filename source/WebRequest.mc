@@ -203,6 +203,8 @@ class WebRequestHandler
         {
             // System.println("sending image request");
             var callback = (new WebRequestHandle(me, jsonOrImageReq.handler)).method(:handle) as Method(responseCode as Lang.Number, data as WatchUi.BitmapResource or Graphics.BitmapReference or Null) as Void;
+            // we only use image requests for exeternal servers
+            var requiresScaling = _settings.tileSize != 256;
             Communications.makeImageRequest(
                 jsonOrImageReq.url,
                 jsonOrImageReq.params,
@@ -210,14 +212,16 @@ class WebRequestHandler
                     // needs to be png or we will get 
                     // Error: Unhandled Exception
                     // Exception: Source must not use a color palette if we try and draw it to another bufferredBitmap
-                    // it appears PACKING_FORMAT_DEFAULT is the only one that has heese issues
+                    // it appears PACKING_FORMAT_DEFAULT is the culprit
                     // PACKING_FORMAT_YUV, PACKING_FORMAT_PNG, PACKING_FORMAT_JPG are also fine
                     // docs say png is slow to load, yuv is fast and jpg is reasonably fast
                     // PACKING_FORMAT_YUV has weird issues in the physical device (its just tinting the image, not preserving pixel data)
-                    // PACKING_FORMAT_JPG also does the same weird issue
-                    // PACKING_FORMAT_PNG also does this on physical device
-                    // leaving as PACKING_FORMAT_PNG since thats the format of most tile servers
-                    :packingFormat => Communications.PACKING_FORMAT_PNG
+                    // looks like PACKING_FORMAT_PNG does work, but its really slow -> we shold only fallback to this if we really need it 
+                    // PACKING_FORMAT_JPG does weird things
+                    // (we have to scale the image - at this point im thinking i should just override the users setting to 256 if the tile server is not the companion app)
+                    // so we must use PACKING_FORMAT_PNG if they really want a slow response and smaller tiles cache
+                    // so tried it again, ang PNG did the same colour issue as JPG/YUV :( AHHHHHHHHHHHH
+                    :packingFormat => requiresScaling ? Communications.PACKING_FORMAT_PNG : Communications.PACKING_FORMAT_DEFAULT
                 }, // options
                 // see https://forums.garmin.com/developer/connect-iq/f/discussion/2289/documentation-clarification-object-method-and-lang-method
                 callback

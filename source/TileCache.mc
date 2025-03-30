@@ -160,10 +160,13 @@ class WebTileRequestHandler extends WebHandler {
                         // it results in an empty image
                         // ie. it should be 0-64, 65-128, 128-192, 192-256 ie. half-open range [begin, end)
                         // but it look like they are using closed ranges?
-                        // I cannot get this to work on a phsical device, see isues in Webrequest around Communications.makeImageRequest( and packing format
+                        // see Webrequest issues around Communications.makeImageRequest( and packing format
                         // the simulator also does the weird becaviour as listed above only first tile crop works
-                        // I think the math and usage is correct, its possiby my venu2s just does not support it, even though its listed as supported in the docs
-                        // it is API Level 4.2.1 so I would not be surprised if thats it
+                        // it is good to note that i can only get this to work on the physical device, which makes it a real pain to test
+                        // tried again with PNG, that did work at least once, and it broke like the simulator does
+                        // in essence - use 256 as a user setting or this just wont work
+                        // one of the first 12 tiles actually renderred - similar to the simulator
+                        // must be something wrong with getting the bitmap from, or because its a reference? calling get() seems to be no different.
                         :bitmapX => xOffset * settings.tileSize,
                         :bitmapY => yOffset * settings.tileSize,
                         :bitmapWidth => settings.tileSize,
@@ -342,7 +345,7 @@ class TileCache {
             var y = tileKey.y / _settings.smallTilesPerBigTile;
             _webRequestHandler.add(
                 new ImageRequest(
-                    "tileimage" + new TileKey( x, y, tileKey.z),
+                    "tileimage" + tileKey, // the hash is for the small tile request, not the big one (they will send the same phiscial request out, but again use 256 tilSize if your using external sources)
                     stringReplaceFirst(
                         stringReplaceFirst(
                             stringReplaceFirst(_settings.tileUrl, "{x}", x.toString()), 
