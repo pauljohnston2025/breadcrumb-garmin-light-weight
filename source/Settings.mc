@@ -571,51 +571,6 @@ class Settings {
         setZoomAtPaceMode(zoomAtPaceMode);
     }
 
-    function parseTileCacheSizeString(key as String, defaultValue as Number) as Number {
-        try {
-            var value = Application.Properties.getValue(key);
-            if (value == null)
-            {
-                return defaultValue;
-            }
-
-            // even though it says its a string in properties, you betcha it can come in as a number
-            // this is because we have saved it as a number at some point, why is that not validated against the super strict property map???????
-            // think we should just save it as a number at this point, the string was so we can do 10KB storage, but i doubt we will ever try to
-            // and the ui only sets it as a number
-            if (value instanceof Float || value instanceof Number || value instanceof Double)
-            {
-                return value.toNumber();
-            }
-
-            if (!(value instanceof String))
-            {
-                return defaultValue;
-            }
-
-            var unit = value.substring(value.length() - 2, value.length()); // Extract unit ("KB")
-            if (unit.equals("KB")) {
-                var value = value.substring(0, value.length() - 2).toNumber();
-                // empty or invalid strings convert to null
-                if (value == null)
-                {
-                    return defaultValue;
-                }
-                // todo figure out a sane value for _memoryKbPerPixel
-                // probably better to just specify a number
-                var memoryKbPerPixel = 1;
-                return value / (memoryKbPerPixel * defaultValue * defaultValue);
-            }
-
-            return parseNumber(key, defaultValue);
-        } 
-        catch (e) {
-            logE("Error parsing tile size: " + key );
-        }
-
-        return defaultValue;
-    }
-
     function clearTileCache() as Void {
         // symbol not found if the loadSettings method is called before we set tile cache
         // should n ot happen unless onsettingschange is called before initalise finishes
@@ -997,7 +952,7 @@ class Settings {
         }
         smallTilesPerBigTile = Math.ceil(256f/tileSize).toNumber();
 
-        tileCacheSize = parseTileCacheSizeString("tileCacheSize", tileCacheSize);
+        tileCacheSize = parseNumber("tileCacheSize", tileCacheSize);
         mode = parseNumber("mode", mode);
         mapEnabled = parseBool("mapEnabled", mapEnabled);
         displayRouteNames = parseBool("displayRouteNames", displayRouteNames);

@@ -66,11 +66,11 @@
         </setting>
         
         <setting propertyKey="@Properties.tileCacheSize" title="@Strings.tile_cache_size_title" prompt="@Strings.tileCacheSizePrompt">
-            <settingConfig type="alphaNumeric"/>
+            <settingConfig type="numeric" min="0"/>
         </setting>
         
         <setting propertyKey="@Properties.maxPendingWebRequests" title="@Strings.maxPendingWebRequests" prompt="@Strings.maxPendingWebRequestsPrompt">
-            <settingConfig type="numeric" min="10" max="100"/>
+            <settingConfig type="numeric" min="0" max="100"/>
         </setting>
         
         <setting propertyKey="@Properties.disableMapsFailureCount" title="@Strings.disableMapsFailureCountTitle" prompt="@Strings.disableMapsFailureCountPrompt">
@@ -91,7 +91,7 @@
     </setting>
     <group id="offTrackAlertsGroup" title="@Strings.offTrackAlertsGroupTitle" description="@Strings.enableOffTrackAlertsDescription" enableIfTrue="@Properties.enableOffTrackAlerts">
         <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle" prompt="@Strings.offTrackAlertsDistanceMPrompt">
-            <settingConfig type="numeric" min="2" max="256"/>
+            <settingConfig type="numeric" min="0"/>
         </setting>
     </group>
 
