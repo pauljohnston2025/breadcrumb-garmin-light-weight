@@ -70,7 +70,7 @@ class MapRenderer {
         var screenWidthM = _screenSize / currentScale;
         var tileCount = Math.ceil(screenWidthM / tileWidthM).toNumber();
         
-        // where the sccreen corner starts
+        // where the screen corner starts
         var halfScreenWidthM = screenWidthM / 2;
         var screenLeftM = centerPosition.x - halfScreenWidthM;
         var screenTopM = centerPosition.y + halfScreenWidthM;
@@ -79,9 +79,14 @@ class MapRenderer {
         var firstTileX = ((screenLeftM + originShift) / tileWidthM).toNumber();
         var firstTileY = ((originShift - screenTopM) / tileWidthM).toNumber();
 
-        // remember, tiles are a different coordinate system
-        // 0,0 is the bottom left
-        // using the rounded tile position find where in the world it starts
+        // remember, lat/long is a different coordinate system (the lower we are the more negative we are)
+        //  x calculations are the same - more left = more negative
+        //  tile inside graph
+        // 90
+        //    | 0,0 1,0   tile 
+        //    | 0,1 1,1
+        //    |____________________
+        //  -180,-90              180
         var firstTileLeftM = firstTileX * tileWidthM - originShift;
         var firstTileBottomM = originShift - firstTileY * tileWidthM;
 
@@ -90,16 +95,22 @@ class MapRenderer {
 
         var screenToTileMRatio = screenWidthM / tileWidthM;
         var screenToTilePixelRatio = _screenSize / _settings.tileSize;
-        var scaleFactor = screenToTileMRatio/screenToTilePixelRatio; // we need to stretch or shrink the tiles by this much
+        var scaleFactor = screenToTilePixelRatio / screenToTileMRatio; // we need to stretch or shrink the tiles by this much
+        // eg. tile = 10m screen = 10m tile = 256pixel screen = 360pixel scaleFactor = 1.4 each tile pixel needs to become 1.4 sceen pixels
+        // eg. 2
+        //     tile = 20m screen = 10m tile = 256pixel screen = 360pixel scaleFactor = 2.8 we only want to render half the tile, so we only have half the pixels
+        //     screenToTileMRatio = 0.5 screenToTilePixelRatio = 1.4 
+        // eg. 3
+        //     tile = 10m screen = 20m tile = 256pixel screen = 360pixel scaleFactor = 0.7 we need 2 tiles, each tile pixel needs to be squashed into screen pixels
+        //     screenToTileMRatio = 2 screenToTilePixelRatio = 1.4 
+        // 
 
-        var scaleRatio = Math.floor(_settings.tileSize * scaleFactor);
-
-        var offsetX = (screenLeftM - firstTileLeftM) / scaleRatio;
-        var offsetY = (tileTopM - screenTopM) / scaleRatio;
-
-        // how many pixels on the sscreen the tile should take up this can be smaller or larger than the actual tile, 
+        // how many pixels on the screen the tile should take up this can be smaller or larger than the actual tile, 
         // depending on if we scale up or down
-        var scalePixelSize = scaleRatio;
+        var scalePixelSize = Math.floor(_settings.tileSize * scaleFactor);
+
+        var offsetX = (screenLeftM - firstTileLeftM) * currentScale * scaleFactor;
+        var offsetY = (firstTileBottomM - screenTopM) * currentScale * scaleFactor;
 
         for (var x=0 ; x<tileCount; ++x)
         {
