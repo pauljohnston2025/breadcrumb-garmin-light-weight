@@ -294,6 +294,8 @@ class SettingsMap extends Rez.Menus.SettingsMap {
         safeSetToggle(me, :settingsMapEnabled, true);
         safeSetSubLabel(me, :settingsTileUrl, settings.tileUrl);
         safeSetSubLabel(me, :settingsMapTileSize, settings.tileSize.toString());
+        safeSetSubLabel(me, :settingsMapTileLayerMax, settings.tileLayerMax.toString());
+        safeSetSubLabel(me, :settingsMapTileLayerMin, settings.tileLayerMin.toString());
         safeSetSubLabel(me, :settingsMapTileCacheSize, settings.tileCacheSize.toString());
         safeSetSubLabel(me, :settingsMapMaxPendingWebRequests, settings.maxPendingWebRequests.toString());
         safeSetSubLabel(me, :settingsMapDisableMapsFailureCount, settings.disableMapsFailureCount.toString());
@@ -790,6 +792,10 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(new WatchUi.TextPicker(settings.tileUrl), picker, WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMapTileSize) {
             startPicker(new SettingsNumberPicker(settings.method(:setTileSize)), view);
+        } else if (itemId == :settingsMapTileLayerMax) {
+            startPicker(new SettingsNumberPicker(settings.method(:setTileLayerMax)), view);
+        } else if (itemId == :settingsMapTileLayerMin) {
+            startPicker(new SettingsNumberPicker(settings.method(:setTileLayerMin)), view);
         } else if (itemId == :settingsMapTileCacheSize) {
             startPicker(new SettingsNumberPicker(settings.method(:setTileCacheSize)), view);
         } else if (itemId == :settingsMapMaxPendingWebRequests) {

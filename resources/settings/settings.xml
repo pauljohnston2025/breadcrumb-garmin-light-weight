@@ -57,6 +57,14 @@
             <settingConfig type="numeric" min="2" max="256"/>
         </setting>
 
+        <setting propertyKey="@Properties.tileLayerMax" title="@Strings.tileLayerMaxTitle" prompt="@Strings.tileLayerMaxPrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.tileLayerMin" title="@Strings.tileLayerMinTitle" prompt="@Strings.tileLayerMinPrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+        
         <setting propertyKey="@Properties.tileCacheSize" title="@Strings.tile_cache_size_title" prompt="@Strings.tileCacheSizePrompt">
             <settingConfig type="alphaNumeric"/>
         </setting>

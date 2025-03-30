@@ -32,6 +32,8 @@ class Settings {
     // so math.ceil should be used what figuring out how many meters a tile is.
     // eg. maybe we cannot do 128 but we can do 120 (this would limit the number of tiles, but the resolution would be slightly off)
     var tileSize as Number = 64;
+    var tileLayerMax as Number = 15;
+    var tileLayerMin as Number = 2;
     // there is both a memory limit to the number of tiles we can store, as well as a storage limit
     // for now this is both, though we may be able to store more than we can in memory 
     // so we could use the storage as a tile cache, and revert to loading from there, as it would be much faster than 
@@ -78,10 +80,6 @@ class Settings {
     // note this only works if a single track is enabled (multiple tracks would always error)
     var enableOffTrackAlerts as Boolean = true;
     var offTrackAlertsDistanceM as Number = 20;
-
-    // todo make configurable
-    var tileLayerMin as Number = 2;
-    var tileLayerMax as Number = 15;
     
     // calculated whenever others change
     var smallTilesPerBigTile as Number = Math.ceil(256f/tileSize).toNumber();
@@ -173,6 +171,16 @@ class Settings {
         Application.Properties.setValue("tileSize", tileSize);
         clearPendingWebRequests();
         clearTileCache();
+    }
+    
+    function setTileLayerMax(value as Number) as Void {
+        tileLayerMax = value;
+        Application.Properties.setValue("tileLayerMax", tileLayerMax);
+    }
+    
+    function setTileLayerMin(value as Number) as Void {
+        tileLayerMin = value;
+        Application.Properties.setValue("tileLayerMin", tileLayerMin);
     }
     
     function setDisableMapsFailureCount(value as Number) as Void {
@@ -563,41 +571,49 @@ class Settings {
         setZoomAtPaceMode(zoomAtPaceMode);
     }
 
-    function parseTileCacheSizeString(key as String, _tileSize as Number) as Number {
-        var sizeString = null;
+    function parseTileCacheSizeString(key as String, defaultValue as Number) as Number {
         try {
-            sizeString = Application.Properties.getValue(key);
-            if (sizeString == null)
+            var value = Application.Properties.getValue(key);
+            if (value == null)
             {
-                return _tileSize;
+                return defaultValue;
             }
 
-            if (!(sizeString instanceof String))
+            // even though it says its a string in properties, you betcha it can come in as a number
+            // this is because we have saved it as a number at some point, why is that not validated against the super strict property map???????
+            // think we should just save it as a number at this point, the string was so we can do 10KB storage, but i doubt we will ever try to
+            // and the ui only sets it as a number
+            if (value instanceof Float || value instanceof Number || value instanceof Double)
             {
-                return _tileSize;
+                return value.toNumber();
             }
 
-            var unit = sizeString.substring(sizeString.length() - 2, sizeString.length()); // Extract unit ("KB")
+            if (!(value instanceof String))
+            {
+                return defaultValue;
+            }
+
+            var unit = value.substring(value.length() - 2, value.length()); // Extract unit ("KB")
             if (unit.equals("KB")) {
-                var value = sizeString.substring(0, sizeString.length() - 2).toNumber();
+                var value = value.substring(0, value.length() - 2).toNumber();
                 // empty or invalid strings convert to null
                 if (value == null)
                 {
-                    return _tileSize;
+                    return defaultValue;
                 }
                 // todo figure out a sane value for _memoryKbPerPixel
                 // probably better to just specify a number
                 var memoryKbPerPixel = 1;
-                return value / (memoryKbPerPixel * _tileSize * _tileSize);
+                return value / (memoryKbPerPixel * defaultValue * defaultValue);
             }
 
-            return parseNumber(key, _tileSize);
+            return parseNumber(key, defaultValue);
         } 
         catch (e) {
-            logE("Error parsing tile size: " + key + " " + sizeString);
+            logE("Error parsing tile size: " + key );
         }
 
-        return _tileSize;
+        return defaultValue;
     }
 
     function clearTileCache() as Void {
@@ -917,6 +933,8 @@ class Settings {
         // note: this pulls the defaults from whatever we have at the top of the filem these may differ from the defaults in properties.xml
         var defaultSettings = new Settings();
         setTileSize(defaultSettings.tileSize);
+        setTileLayerMax(defaultSettings.tileLayerMax);
+        setTileLayerMin(defaultSettings.tileLayerMin);
         setTileCacheSize(defaultSettings.tileCacheSize);
         setMode(defaultSettings.mode);
         setMapEnabled(defaultSettings.mapEnabled);
@@ -966,6 +984,8 @@ class Settings {
 
         System.println("loadSettings: Loading all settings");
         tileSize = parseNumber("tileSize", tileSize);
+        tileLayerMax = parseNumber("tileLayerMax", tileLayerMax);
+        tileLayerMin = parseNumber("tileLayerMin", tileLayerMin);
         // System.println("tileSize: " + tileSize);
         if (tileSize < 2)
         {
@@ -977,7 +997,7 @@ class Settings {
         }
         smallTilesPerBigTile = Math.ceil(256f/tileSize).toNumber();
 
-        tileCacheSize = parseTileCacheSizeString("tileCacheSize", tileSize);
+        tileCacheSize = parseTileCacheSizeString("tileCacheSize", tileCacheSize);
         mode = parseNumber("mode", mode);
         mapEnabled = parseBool("mapEnabled", mapEnabled);
         displayRouteNames = parseBool("displayRouteNames", displayRouteNames);

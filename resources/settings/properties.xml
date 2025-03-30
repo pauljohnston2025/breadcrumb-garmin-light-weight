@@ -11,6 +11,8 @@
 	<property id="mapEnabled" type="boolean">true</property>
 	<property id="tileUrl" type="string">http://127.0.0.1:8080</property>
 	<property id="tileSize" type="number">64</property>
+	<property id="tileLayerMax" type="number">15</property>
+	<property id="tileLayerMin" type="number">2</property>
 	<property id="tileCacheSize" type="string">64</property>
 	<property id="maxPendingWebRequests" type="number">100</property>
 

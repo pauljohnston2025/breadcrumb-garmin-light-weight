@@ -2,6 +2,8 @@
     <toggle-menu-item id="settingsMapEnabled" label="@Strings.map_enabled_title"/>
     <menu-item id="settingsTileUrl" label="@Strings.tileUrlTitle"/>
     <menu-item id="settingsMapTileSize" label="@Strings.tile_size_title"/>
+    <menu-item id="settingsMapTileLayerMax" label="@Strings.tileLayerMaxTitle"/>
+    <menu-item id="settingsMapTileLayerMin" label="@Strings.tileLayerMinTitle"/>
     <menu-item id="settingsMapTileCacheSize" label="@Strings.tile_cache_size_title"/>
     <menu-item id="settingsMapMaxPendingWebRequests" label="@Strings.maxPendingWebRequests"/>
     <menu-item id="settingsMapDisableMapsFailureCount" label="@Strings.disableMapsFailureCountTitleShort"/>

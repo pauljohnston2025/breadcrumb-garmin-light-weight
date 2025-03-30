@@ -6,6 +6,10 @@
     <string id="back">Back</string>
 
     <string id="tile_size_title">Tile Size (pixels)</string>
+    <string id="tileLayerMaxTitle">Tile Layer Max</string>
+    <string id="tileLayerMaxPrompt">15</string>
+    <string id="tileLayerMinTitle">Tile Layer Min</string>
+    <string id="tileLayerMinPrompt">2</string>
     <string id="tile_cache_size_title">Tile Cache Size (tiles)</string>
     <string id="mode_title">Display Mode</string>
     <string id="tileUrlTitle">Tile Url</string>
