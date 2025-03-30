@@ -118,9 +118,12 @@ class MapRenderer {
         var xyOffset = _screenSize / 2.0f;
         
         var transform = new AffineTransform();
-        transform.translate(xyOffset, xyOffset); // move to center
-        transform.rotate(rotationRad); // rotate
-        transform.translate(-xyOffset, -xyOffset); // move back to position
+        if (_settings.enableRotation)
+        {
+            transform.translate(xyOffset, xyOffset); // move to center
+            transform.rotate(rotationRad); // rotate
+            transform.translate(-xyOffset, -xyOffset); // move back to position
+        }
 
         dc.drawBitmap2(
             0,

@@ -18,11 +18,20 @@
 	<property id="routeColour" type="string">0000FF</property>
 	<property id="elevationColour" type="string">FF5500</property>
 	<property id="userColour" type="string">FF5500</property>
+	<property id="normalModeColour" type="string">0000FF</property>
+	<property id="uiColour" type="string">555555</property>
+	<property id="debugColour" type="string">FFFFFF</property>
 
 	<property id="fixedLatitude" type="float">0</property>
 	<property id="fixedLongitude" type="float">0</property>
 
+	<property id="offTrackAlertsDistanceM" type="number">20</property>
+	<property id="disableMapsFailureCount" type="number">200</property>
+
 	<property id="resetDefaults" type="boolean">false</property>
+	<property id="enableOffTrackAlerts" type="boolean">true</property>
+	<property id="enableRotation" type="boolean">true</property>
+	<property id="displayRouteNames" type="boolean">true</property>
 
 	<property id="routesEnabled" type="boolean">true</property>
 	<property id="routes" type="array"></property>

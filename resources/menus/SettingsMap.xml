@@ -4,6 +4,7 @@
     <menu-item id="settingsMapTileSize" label="@Strings.tile_size_title"/>
     <menu-item id="settingsMapTileCacheSize" label="@Strings.tile_cache_size_title"/>
     <menu-item id="settingsMapMaxPendingWebRequests" label="@Strings.maxPendingWebRequests"/>
+    <menu-item id="settingsMapDisableMapsFailureCount" label="@Strings.disableMapsFailureCountTitleShort"/>
     <menu-item id="settingsMapFixedLatitude" label="@Strings.fixedLatitude"/>
     <menu-item id="settingsMapFixedLongitude" label="@Strings.fixedLongitude"/>
 </menu2>

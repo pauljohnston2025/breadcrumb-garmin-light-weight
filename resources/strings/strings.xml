@@ -5,37 +5,51 @@
     <string id="exit">Exit</string>
     <string id="back">Back</string>
 
-    <string id="tile_size_title">Tile size (pixels)</string>
-    <string id="tile_cache_size_title">Tile cache size (tiles)</string>
+    <string id="tile_size_title">Tile Size (pixels)</string>
+    <string id="tile_cache_size_title">Tile Cache Size (tiles)</string>
     <string id="mode_title">Display Mode</string>
-    <string id="mapSettingsDescription">Tile size should be a multiple of 256 for best results. Choose these values wisely. too big = crash, too small = crash or slow performance. tileUrl=http://127.0.0.1:8080 for companion app or template eg. https://a.tile.opentopomap.org/{z}/{x}/{y}.png tilesize should generally be 256 if using a template</string>
-    <string id="tileUrlTitle">Tile url</string>
-    <string id="tileUrlPrompt">http://127.0.0.1:8080 or template eg. https://a.tile.opentopomap.org/{z}/{x}/{y}.png</string>
+    <string id="tileUrlTitle">Tile Url</string>
+    <string id="mapSettingsDescription">Tile size should be a multiple of 256 for best results. Choose these values wisely. Too big = crash, too small = crash or slow performance. Tile url should be 'http://127.0.0.1:8080' for companion app or template eg. 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png'. Tile size should generally be 256 if using a template.</string>
+    <string id="tileUrlPrompt">https://fancytileserver/{z}/{x}/{y}.png</string>
     <string id="elevation_mode">Elevation</string>
     <string id="track_route_mode">Track/Route</string>
     <string id="map_enabled_title">Map Enabled</string>
     <string id="track_colour_title">Track Colour</string>
     <string id="routeColourTitle">Route Colour</string>
+    <string id="debugColour">Debug Colour</string>
+    <string id="uiColour">UI Colour</string>
+    <string id="normalModeColour">Normal Mode Colour</string>
+    <string id="displayRouteNamesTitle">Display Route Names</string>
+    <string id="enableRotationTitle">Enable Rotation</string>
+    <string id="offTrackAlertsDistanceMTitle">Alert Distance (m)</string>
+    <string id="offTrackAlertsDistanceMPrompt"></string>
+    <string id="offTrackAlertsGroupTitle">Off Track Alerts</string>
+    <string id="enableOffTrackAlerts"></string>
+    <string id="enableOffTrackAlertsTitle">Off Track Alerts</string>
+    <string id="enableOffTrackAlertsDescription"></string>
+    <string id="disableMapsFailureCountTitle">Disable Maps After X Failures (0 for unlimited failures)</string>
+    <string id="disableMapsFailureCountTitleShort">Disable After Failures</string>
+    <string id="disableMapsFailureCountPrompt"></string>
     <string id="elevation_colour_title">Elevation Colour</string>
-    <string id="resetDefaults">Restore defaults</string>
+    <string id="resetDefaults">Restore Defaults</string>
     <string id="userColour">User Colour</string>
-    <string id="maxPendingWebRequests">Max pending web requests</string>
+    <string id="maxPendingWebRequests">Max Pending Web Requests</string>
     <string id="maxPendingWebRequestsPrompt"></string>
     <string id="scale">Scale (0 for auto)</string>
     <string id="scaleLabel">Scale</string>
     <!-- todo add promp based on scale and give relative numbers -->
-    <string id="scalePrompt">0 - auto, eg. 0.98 - 100m, 0.1 - 1km</string>
-    <string id="metersAroundUser">Meters around user</string>
+    <string id="scalePrompt">0.98 - 100m, 0.1 - 1km</string>
+    <string id="metersAroundUser">Meters Around User</string>
     <string id="metersAroundUserPrompt">100</string>
-    <string id="zoomAtPaceTitle">Zoom at pace</string>
+    <string id="zoomAtPaceTitle">Zoom At Pace</string>
     <string id="zoomAtPaceDescription">Map will automatically zoom when moving or stopped, can be disabled by manually settings scale</string>
     <string id="zoomAtPaceModeTitle">Mode</string>
-    <string id="zoomAtPaceModePace">Zoom when moving</string>
-    <string id="zoomAtPaceModeStopped">Zoom when stopped</string>
+    <string id="zoomAtPaceModePace">Zoom When Moving</string>
+    <string id="zoomAtPaceModeStopped">Zoom When Stopped</string>
     <string id="zoomAtPaceSpeedMPS">Speed (m/s)</string>
     <string id="zoomAtPaceSpeedMPSPrompt">1.0</string>
     <string id="uiModeTitle">UI Mode</string>
-    <string id="uiModeShowAll">Show on top</string>
+    <string id="uiModeShowAll">Show On Top</string>
     <string id="uiModeHidden">Hidden</string>
     <string id="uiModeSettings">Any touch opens settings</string>
     <string id="uiModeNone">Disabled</string>
@@ -46,7 +60,7 @@
 
     <string id="coloursTitle">Colours</string>
     <string id="coloursDescription"></string>
-    <string id="mapSettingsTitle">Map settings</string>
+    <string id="mapSettingsTitle">Map Settings</string>
 
     <string id="tileSizePrompt">Pixels per tile x and y</string>
     <string id="tileCacheSizePrompt">Number of tiles to cache</string>
@@ -58,8 +72,9 @@
     <string id="routeName">Name</string>
     <string id="routeEnabled">Enabled</string>
     <string id="routesEnabled">Enable Routes</string>
-    <string id="mapMove">Map move</string>
+    <string id="mapMove">Map Move</string>
     <string id="debug">Debug</string>
-    <string id="routesDescription">Adding routes will do nothing (use the companion app), but they may be removed or enabled/disabled</string>
+    <string id="clearRoutes">Clear All Routes</string>
+    <string id="routesDescription">Do not add routes from the settings page, instead use the companion app. Routes may be removed or modified from within settings</string>
 
 </strings>

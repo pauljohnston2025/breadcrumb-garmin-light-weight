@@ -315,9 +315,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   }
 
   function renderDebug(dc as Dc) as Void {
-    dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+    dc.setColor(settings.debugColour, Graphics.COLOR_BLACK);
     dc.clear();
-    dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
     // its only a debug menu that should probbaly be optimised out in release, hard code to venu2s screen coordinates
     // it is actually pretty nice info, best guess on string sizes down the screen
     var fieldCount = 7;

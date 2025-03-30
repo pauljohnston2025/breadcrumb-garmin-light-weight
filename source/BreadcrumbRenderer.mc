@@ -136,7 +136,7 @@ class BreadcrumbRenderer {
   }
 
   function renderCurrentScale(dc as Dc) {
-    
+    var settings = _breadcrumbContext.settings();
     var scaleData = getScaleSize();
     var pixelWidth = scaleData[0];
     var distanceM = scaleData[1];
@@ -148,7 +148,7 @@ class BreadcrumbRenderer {
     var foundName = SCALE_NAMES[distanceM];
 
     var y = _screenSize - 20;
-    dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
+    dc.setColor(settings.normalModeColour, Graphics.COLOR_TRANSPARENT);
     dc.setPenWidth(4);
     dc.drawLine(_xHalf - pixelWidth / 2.0f, y,
                 _xHalf + pixelWidth / 2.0f, y);
@@ -194,8 +194,9 @@ class BreadcrumbRenderer {
                        centerPosition as RectangularPoint) as Void {
 
     lastRenderedCenter = centerPosition;
+    var settings = _breadcrumbContext.settings();
 
-    if (_breadcrumbContext.settings().mode != MODE_NORMAL)
+    if (settings.mode != MODE_NORMAL)
     {
         // map move mode does not need to draw tracks
         return;
@@ -228,15 +229,36 @@ class BreadcrumbRenderer {
         var nextXScaledAtCenter = (nextX - centerPosition.x) * _currentScale;
         var nextYScaledAtCenter = (nextY - centerPosition.y) * _currentScale;
 
-        var nextXRotated = _xHalf + rotateCosLocal * nextXScaledAtCenter -
+        var nextXRotated = nextXScaledAtCenter;
+        var nextYRotated = nextYScaledAtCenter;
+        if (settings.enableRotation)
+        {
+          nextXRotated = _xHalf + rotateCosLocal * nextXScaledAtCenter -
                            rotateSinLocal * nextYScaledAtCenter;
-        var nextYRotated = _yHalf + rotateSinLocal * nextXScaledAtCenter +
+          nextYRotated = _yHalf + rotateSinLocal * nextXScaledAtCenter +
                            rotateCosLocal * nextYScaledAtCenter;
+        }
 
         dc.drawLine(lastXRotated, lastYRotated, nextXRotated, nextYRotated);
 
         lastXRotated = nextXRotated;
         lastYRotated = nextYRotated;
+      }
+
+      if (settings.displayRouteNames)
+      {
+        var xScaledAtCenter = (breadcrumb.boundingBoxCenter.x - centerPosition.x) * _currentScale;
+        var yScaledAtCenter = (breadcrumb.boundingBoxCenter.y - centerPosition.y) * _currentScale;
+
+        var xRotated = xScaledAtCenter;
+        var yRotated = yScaledAtCenter;
+        if (settings.enableRotation)
+        {
+          xRotated = _xHalf + rotateCosLocal * xScaledAtCenter - rotateSinLocal * yScaledAtCenter;
+          yRotated = _yHalf + rotateSinLocal * xScaledAtCenter + rotateCosLocal * yScaledAtCenter;
+        }
+
+        dc.drawText(xRotated, yRotated, Graphics.FONT_XTINY, settings.routeName(breadcrumb.storageIndex), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
       }
     }
 
@@ -245,6 +267,7 @@ class BreadcrumbRenderer {
   }
 
   function renderClearTrackUi(dc as Dc) as Boolean {
+    var settings = _breadcrumbContext.settings();
     // should be using Toybox.WatchUi.Confirmation and Toybox.WatchUi.ConfirmationDelegate for questions
     var padding = _xHalf / 2.0f;
     var topText = _yHalf / 2.0f;
@@ -259,7 +282,7 @@ class BreadcrumbRenderer {
         dc.fillRectangle(0, 0, _xHalf, _screenSize);
         dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_GREEN);
         dc.fillRectangle(_xHalf, 0, _xHalf, _screenSize);
-        dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
         dc.drawText(_xHalf - padding, _yHalf, Graphics.FONT_XTINY,
                   "N", Graphics.TEXT_JUSTIFY_CENTER);
         dc.drawText(_xHalf + padding, _yHalf, Graphics.FONT_XTINY,
@@ -276,7 +299,7 @@ class BreadcrumbRenderer {
         dc.fillRectangle(0, 0, _xHalf, _screenSize);
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
         dc.fillRectangle(_xHalf, 0, _xHalf, _screenSize);
-        dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
         dc.drawText(_xHalf - padding, _yHalf, Graphics.FONT_XTINY,
                   "Y", Graphics.TEXT_JUSTIFY_CENTER);
         dc.drawText(_xHalf + padding, _yHalf, Graphics.FONT_XTINY,
@@ -293,7 +316,7 @@ class BreadcrumbRenderer {
 
   function renderUi(dc as Dc) as Void {
     var settings = _breadcrumbContext.settings();
-    dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+    dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
     dc.setPenWidth(1);
 
     // current mode displayed
@@ -591,8 +614,8 @@ class BreadcrumbRenderer {
     var vScaleData = getScaleSizeGeneric(vScale, DESIRED_ELEV_SCALE_PIXEL_WIDTH, ELEVATION_SCALE_NAMES);
     var vPixelWidth = vScaleData[0];
     var vDistanceM = vScaleData[1];
-
-    dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK);
+    var settings = _breadcrumbContext.settings();
+    dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
     dc.setPenWidth(1);
     
     // vertical and horizontal lines for extreems

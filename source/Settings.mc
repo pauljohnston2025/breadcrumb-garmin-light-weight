@@ -68,7 +68,17 @@ class Settings {
     var routes as Array<Dictionary> = [];
     var routesEnabled as Boolean = true;
     var disableMapsFailureCount as Number = 200; // 0 for unlimited
+    var enableRotation as Boolean = true;
+    var displayRouteNames as Boolean = true;
+    var normalModeColour as Number = Graphics.COLOR_BLUE;
+    var uiColour as Number = Graphics.COLOR_DK_GRAY;
+    var debugColour as Number = Graphics.COLOR_WHITE;
 
+    // todo impl features for alerte
+    // note this only works if a single track is enabled (multiple tracks would always error)
+    var enableOffTrackAlerts as Boolean = true;
+    var offTrackAlertsDistanceM as Number = 20;
+    
     // calculated whenever others change
     var smallTilesPerBigTile = Math.ceil(256f/tileSize);
     var fixedPosition as RectangularPoint or Null = null;
@@ -161,6 +171,16 @@ class Settings {
         clearTileCache();
     }
     
+    function setDisableMapsFailureCount(value as Number) as Void {
+        disableMapsFailureCount = value;
+        Application.Properties.setValue("disableMapsFailureCount", disableMapsFailureCount);
+    }
+    
+    function setOffTrackAlertsDistanceM(value as Number) as Void {
+        offTrackAlertsDistanceM = value;
+        Application.Properties.setValue("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
+    }
+    
     function setTileCacheSize(value as Number) as Void {
         tileCacheSize = value;
         Application.Properties.setValue("tileCacheSize", tileCacheSize);
@@ -168,10 +188,6 @@ class Settings {
     
     function setMapEnabled(_mapEnabled as Boolean) as Void {
         mapEnabled = _mapEnabled;
-        if (mapEnabled == null || !(mapEnabled instanceof Boolean))
-        {
-            mapEnabled = true;
-        }
         Application.Properties.setValue("mapEnabled", mapEnabled);
 
         if (!mapEnabled)
@@ -183,12 +199,23 @@ class Settings {
         }
     }
     
+    function setDisplayRouteNames(_displayRouteNames as Boolean) as Void {
+        displayRouteNames = _displayRouteNames;
+        Application.Properties.setValue("displayRouteNames", displayRouteNames);
+    }
+    
+    function setEnableOffTrackAlerts(_enableOffTrackAlerts as Boolean) as Void {
+        enableOffTrackAlerts = _enableOffTrackAlerts;
+        Application.Properties.setValue("enableOffTrackAlerts", enableOffTrackAlerts);
+    }
+    
+    function setEnableRotation(_enableRotation as Boolean) as Void {
+        enableRotation = _enableRotation;
+        Application.Properties.setValue("enableRotation", enableRotation);
+    }
+    
     function setRoutesEnabled(_routesEnabled as Boolean) as Void {
         routesEnabled = _routesEnabled;
-        if (routesEnabled == null || !(routesEnabled instanceof Boolean))
-        {
-            routesEnabled = true;
-        }
         Application.Properties.setValue("routesEnabled", routesEnabled);
     }
 
@@ -336,6 +363,21 @@ class Settings {
         Application.Properties.setValue("userColour", userColour.format("%X"));
     }
     
+    function setNormalModeColour(value as Number) as Void {
+        normalModeColour = value;
+        Application.Properties.setValue("normalModeColour", normalModeColour.format("%X"));
+    }
+    
+    function setDebugColour(value as Number) as Void {
+        debugColour = value;
+        Application.Properties.setValue("debugColour", debugColour.format("%X"));
+    }
+    
+    function setUiColour(value as Number) as Void {
+        uiColour = value;
+        Application.Properties.setValue("uiColour", uiColour.format("%X"));
+    }
+    
     function setElevationColour(value as Number) as Void {
         elevationColour = value;
         Application.Properties.setValue("elevationColour", elevationColour.format("%X"));
@@ -350,6 +392,39 @@ class Settings {
         }
 
         setMapEnabled(true);
+    }
+    
+    function toggleDisplayRouteNames() as Void 
+    {
+        if (displayRouteNames)
+        {
+            setDisplayRouteNames(false);
+            return;
+        }
+
+        setDisplayRouteNames(true);
+    }
+    
+    function toggleEnableOffTrackAlerts() as Void 
+    {
+        if (enableOffTrackAlerts)
+        {
+            setEnableOffTrackAlerts(false);
+            return;
+        }
+
+        setEnableOffTrackAlerts(true);
+    }
+    
+    function toggleEnableRotation() as Void 
+    {
+        if (enableRotation)
+        {
+            setEnableRotation(false);
+            return;
+        }
+
+        setEnableRotation(true);
     }
     
     function toggleRoutesEnabled() as Void 
@@ -578,6 +653,18 @@ class Settings {
             context.clearRoutes();
         }
     }
+    
+    function clearRouteFromContext(routeId as Number) as Void {
+        // symbol not found if the loadSettings method is called before we set tile cache
+        // should n ot happen unless onsettingschange is called before initalise finishes
+        // it alwasys has the symbol, but it might not be initalised yet
+        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
+        var context = getApp()._breadcrumbContext;
+        if (context != null and context instanceof BreadcrumbContext)
+        {
+            context.clearRouteId(routeId);
+        }
+    }
 
     // some times these parserswere throwing when it was an empty strings seem to result in, or wrong type
     // 
@@ -651,6 +738,39 @@ class Settings {
             return defaultValue;
         } catch (e) {
             System.println("Error parsing number: " + key + " " + value);
+        }
+        return defaultValue;
+    }
+    
+    function parseBool(key as String, defaultValue as Boolean) as Boolean {
+        try {
+            return parseBoolRaw(key, Application.Properties.getValue(key), defaultValue);
+        } catch (e) {
+            System.println("Error parsing bool: " + key);
+        }
+        return defaultValue;
+    }
+    
+    function parseBoolRaw(key as String, value as String or Boolean or Null, defaultValue as Boolean) as Boolean {
+        try {
+            if (value == null)
+            {
+                return false;
+            }
+
+            if (value instanceof String)
+            {
+                return value.equals("") || value.equals("false") || value.equals("False") || value.equals("FALSE") || value.equals("0");
+            }
+
+            if (!(value instanceof Boolean))
+            {
+                return false;
+            }
+
+            return value;
+        } catch (e) {
+            System.println("Error parsing bool: " + key + " " + value);
         }
         return defaultValue;
     }
@@ -808,6 +928,14 @@ class Settings {
         routes = settings.routes;
         saveRoutes();
         setRoutesEnabled(settings.routesEnabled);
+        setDisplayRouteNames(settings.displayRouteNames);
+        setDisableMapsFailureCount(settings.disableMapsFailureCount);
+        setEnableRotation(settings.enableRotation);
+        setEnableOffTrackAlerts(settings.enableOffTrackAlerts);
+        setOffTrackAlertsDistanceM(settings.offTrackAlertsDistanceM);
+        setNormalModeColour(settings.normalModeColour);
+        setUiColour(settings.uiColour);
+        setDebugColour(settings.debugColour);
 
         // purge storage too on reset
         Application.Storage.clearValues();
@@ -844,13 +972,17 @@ class Settings {
 
         tileCacheSize = parseTileCacheSizeString("tileCacheSize", tileSize);
         mode = parseNumber("mode", mode);
-        mapEnabled = Application.Properties.getValue("mapEnabled") as Boolean;
-        setMapEnabled(mapEnabled);
-        routesEnabled = Application.Properties.getValue("routesEnabled") as Boolean;
-        setRoutesEnabled(routesEnabled);
+        mapEnabled = parseBool("mapEnabled", mapEnabled);
+        displayRouteNames = parseBool("displayRouteNames", displayRouteNames);
+        enableOffTrackAlerts = parseBool("enableOffTrackAlerts", enableOffTrackAlerts);
+        enableRotation = parseBool("enableRotation", enableRotation);
+        routesEnabled = parseBool("routesEnabled", routesEnabled);
         trackColour = parseColour("trackColour", trackColour);
         elevationColour = parseColour("elevationColour", elevationColour);
         userColour = parseColour("userColour", userColour);
+        normalModeColour = parseColour("normalModeColour", normalModeColour);
+        uiColour = parseColour("uiColour", uiColour);
+        debugColour = parseColour("debugColour", debugColour);
         maxPendingWebRequests = parseNumber("maxPendingWebRequests", maxPendingWebRequests);
         scale = parseOptionalFloat("scale", scale);
         if (scale == 0)
@@ -874,6 +1006,8 @@ class Settings {
             routes
         );
         System.println("parsed routes: " + routes);
+        disableMapsFailureCount = parseNumber("disableMapsFailureCount", disableMapsFailureCount);
+        offTrackAlertsDistanceM = parseNumber("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
     }
 
     function emptyString(key as String, value) as String
@@ -919,8 +1053,7 @@ class Settings {
                 }
 
                 // clear the route
-                var route = new BreadcrumbTrack(getApp()._breadcrumbContext, oldRouteId, "");
-                route.writeToDisk(ROUTE_KEY);
+                clearRouteFromContext(oldRouteId);
             }
         }
     }

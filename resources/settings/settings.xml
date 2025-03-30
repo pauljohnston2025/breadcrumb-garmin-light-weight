@@ -23,6 +23,10 @@
     <setting propertyKey="@Properties.scale" title="@Strings.scale" prompt="@Strings.scalePrompt">
         <settingConfig type="numeric" min="0" max="10"/>
     </setting>
+
+    <setting propertyKey="@Properties.enableRotation" title="@Strings.enableRotationTitle">
+        <settingConfig type="boolean"/>
+    </setting>
     
     <group id="zoomAtPace" title="@Strings.zoomAtPaceTitle" description="@Strings.zoomAtPaceDescription">
         <setting propertyKey="@Properties.zoomAtPaceMode" title="@Strings.zoomAtPaceModeTitle">
@@ -60,6 +64,10 @@
         <setting propertyKey="@Properties.maxPendingWebRequests" title="@Strings.maxPendingWebRequests" prompt="@Strings.maxPendingWebRequestsPrompt">
             <settingConfig type="numeric" min="10" max="100"/>
         </setting>
+        
+        <setting propertyKey="@Properties.disableMapsFailureCount" title="@Strings.disableMapsFailureCountTitle" prompt="@Strings.disableMapsFailureCountPrompt">
+            <settingConfig type="numeric"/>
+        </setting>
 
         <setting propertyKey="@Properties.fixedLatitude" title="@Strings.fixedLatitude" prompt="@Strings.fixedLatitudePrompt">
             <settingConfig type="numeric" min="-90" max="90"/>
@@ -67,6 +75,15 @@
 
         <setting propertyKey="@Properties.fixedLongitude" title="@Strings.fixedLongitude" prompt="@Strings.fixedLongitudePrompt">
             <settingConfig type="numeric" min="-180" max="180"/>
+        </setting>
+    </group>
+
+    <setting propertyKey="@Properties.enableOffTrackAlerts" title="@Strings.enableOffTrackAlertsTitle">
+        <settingConfig type="boolean"/>
+    </setting>
+    <group id="offTrackAlertsGroup" title="@Strings.offTrackAlertsGroupTitle" description="@Strings.enableOffTrackAlertsDescription" enableIfTrue="@Properties.enableOffTrackAlerts">
+        <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle" prompt="@Strings.offTrackAlertsDistanceMPrompt">
+            <settingConfig type="numeric" min="2" max="256"/>
         </setting>
     </group>
 
@@ -82,10 +99,26 @@
         <setting propertyKey="@Properties.userColour" title="@Strings.userColour" prompt="@Strings.colourPrompt">
             <settingConfig type="alphaNumeric"/>
         </setting>
+        
+        <setting propertyKey="@Properties.normalModeColour" title="@Strings.normalModeColour" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.uiColour" title="@Strings.uiColour" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.debugColour" title="@Strings.debugColour" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
     </group>
 
     <group id="routesdesc" title="@Strings.routesTitle" description="@Strings.routesDescription">
         <setting propertyKey="@Properties.routesEnabled" title="@Strings.routesEnabled">
+            <settingConfig type="boolean" readonly="true"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.displayRouteNames" title="@Strings.displayRouteNamesTitle">
             <settingConfig type="boolean" readonly="true"/>
         </setting>
     </group>

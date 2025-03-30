@@ -251,6 +251,7 @@ class SettingsMain extends Rez.Menus.SettingsMain {
                 break;
         }
         safeSetSubLabel(me, :settingsMainModeUiMode, uiModeString);
+        safeSetToggle(me, :settingsMainEnableRotation, settings.enableRotation);
         var scaleString = settings.scale == null ? "Auto" : settings.scale.format("%.5f");
         safeSetSubLabel(me, :settingsMainScale, scaleString);
     }
@@ -295,6 +296,7 @@ class SettingsMap extends Rez.Menus.SettingsMap {
         safeSetSubLabel(me, :settingsMapTileSize, settings.tileSize.toString());
         safeSetSubLabel(me, :settingsMapTileCacheSize, settings.tileCacheSize.toString());
         safeSetSubLabel(me, :settingsMapMaxPendingWebRequests, settings.maxPendingWebRequests.toString());
+        safeSetSubLabel(me, :settingsMapDisableMapsFailureCount, settings.disableMapsFailureCount.toString());
         var latString = settings.fixedLatitude == null ? "Disabled" : settings.fixedLatitude.format("%.5f");
         safeSetSubLabel(me, :settingsMapFixedLatitude, latString);
         var longString = settings.fixedLongitude == null ? "Disabled" : settings.fixedLongitude.format("%.5f");
@@ -314,6 +316,32 @@ class SettingsMapDisabled extends Rez.Menus.SettingsMapDisabled {
     }
 }
 
+class SettingsAlerts extends Rez.Menus.SettingsAlerts {
+    function initialize() {
+        Rez.Menus.SettingsAlerts.initialize();
+        rerender();
+    }
+
+    function rerender() as Void
+    {
+        var settings = getApp()._breadcrumbContext.settings();
+        safeSetToggle(me, :settingsAlertsEnabled, true);
+        safeSetSubLabel(me, :settingsAlertsOffTrackDistanceM, settings.offTrackAlertsDistanceM.toString());
+    }
+}
+
+class SettingsAlertsDisabled extends Rez.Menus.SettingsAlertsDisabled {
+    function initialize() {
+        Rez.Menus.SettingsAlertsDisabled.initialize();
+        rerender();
+    }
+
+    function rerender() as Void
+    {
+        safeSetToggle(me, :settingsAlertsEnabled, false);
+    }
+}
+
 class SettingsColours extends Rez.Menus.SettingsColours {
     function initialize() {
         Rez.Menus.SettingsColours.initialize();
@@ -326,6 +354,9 @@ class SettingsColours extends Rez.Menus.SettingsColours {
         safeSetIcon(me, :settingsColoursTrackColour, new ColourIcon(settings.trackColour));
         safeSetIcon(me, :settingsColoursUserColour, new ColourIcon(settings.userColour));
         safeSetIcon(me, :settingsColoursElevationColour, new ColourIcon(settings.elevationColour));
+        safeSetIcon(me, :settingsColoursNormalModeColour, new ColourIcon(settings.normalModeColour));
+        safeSetIcon(me, :settingsColoursUiColour, new ColourIcon(settings.uiColour));
+        safeSetIcon(me, :settingsColoursDebugColour, new ColourIcon(settings.debugColour));
     }
 }
 
@@ -397,8 +428,33 @@ class SettingsRoutes extends WatchUi.Menu2 {
         {
             return;
         }
+
+        addItem(
+            new ToggleMenuItem(
+                Rez.Strings.displayRouteNamesTitle,
+                "", // sublabel
+                :settingsDisplayRouteNames,
+                settings.displayRouteNames,
+                {}
+            )
+        );
+        
+        addItem(
+            new MenuItem(
+                Rez.Strings.clearRoutes,
+                "", // sublabel
+                :settingsRoutesClearAll,
+                {}
+            )
+        );
         
         for (var i = 0; i < ROUTE_MAX; ++i) {
+            var routeIndex = settings.getRouteIndexById(i);
+            if (routeIndex == null) {
+                // do not show routes that are not in the settings array
+                // but still show disabled routes that are in the array
+                continue;
+            }
             var routeName = settings.routeName(i);
             addItem(
                 // do not be tempted to switch this to a menuitem (IconMenuItem is supported since API 3.0.0, MenuItem only supports icons from API 3.4.0)
@@ -419,6 +475,7 @@ class SettingsRoutes extends WatchUi.Menu2 {
     function rerender() as Void
     {
         safeSetToggle(me, :settingsRoutesEnabled, settings.routesEnabled);
+        safeSetToggle(me, :settingsDisplayRouteNames, settings.displayRouteNames);
         for (var i = 0; i < ROUTE_MAX; ++i) {
             var routeName = settings.routeName(i);
             safeSetLabel(me, i, routeName.equals("") ? "<unlabeled>" : routeName);
@@ -442,6 +499,9 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(new $.Rez.Menus.SettingsMode(), new $.SettingsModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainModeUiMode) {
             WatchUi.pushView(new $.Rez.Menus.SettingsUiMode(), new $.SettingsUiModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMainEnableRotation) {
+            settings.toggleEnableRotation();
+            view.rerender();
         } else if (itemId == :settingsMainScale) {
             startPicker(new SettingsFloatPicker(settings.method(:setScale)), view);
         } else if (itemId == :settingsMainZoomAtPace) {
@@ -459,6 +519,15 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
             }
             var disabledView = new SettingsMapDisabled();
             WatchUi.pushView(disabledView, new $.SettingsMapDisabledDelegate(disabledView), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMainAlerts) {
+            if (settings.enableOffTrackAlerts)
+            {
+                var view = new SettingsAlerts();
+                WatchUi.pushView(view, new $.SettingsAlertsDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+                return;
+            }
+            var disabledView = new SettingsAlertsDisabled();
+            WatchUi.pushView(disabledView, new $.SettingsAlertsDisabledDelegate(disabledView), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainColours) {
             var view = new SettingsColours();
             WatchUi.pushView(view, new $.SettingsColoursDelegate(view), WatchUi.SLIDE_IMMEDIATE);            
@@ -632,6 +701,16 @@ class SettingsRoutesDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
             var view = new $.SettingsRoutes(settings);
             WatchUi.pushView(view, new $.SettingsRoutesDelegate(view, settings), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsDisplayRouteNames) {
+            settings.toggleDisplayRouteNames();
+            view.rerender();
+        } else if (itemId == :settingsRoutesClearAll) {
+            var dialog = new WatchUi.Confirmation("Clear all routes?");
+            WatchUi.pushView(
+                dialog,
+                new ClearRoutesDelegate(),
+                WatchUi.SLIDE_IMMEDIATE
+            );
         }
 
         // itemId should now be the route storageIndex = routeId
@@ -715,6 +794,8 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(new SettingsNumberPicker(settings.method(:setTileCacheSize)), view);
         } else if (itemId == :settingsMapMaxPendingWebRequests) {
             startPicker(new SettingsNumberPicker(settings.method(:setMaxPendingWebRequests)), view);
+        } else if (itemId == :settingsMapDisableMapsFailureCount) {
+            startPicker(new SettingsNumberPicker(settings.method(:setDisableMapsFailureCount)), view);
         } else if (itemId == :settingsMapFixedLatitude) {
             startPicker(new SettingsFloatPicker(settings.method(:setFixedLatitude)), view);
         } else if (itemId == :settingsMapFixedLongitude) {
@@ -741,15 +822,69 @@ class SettingsMapDisabledDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-class MapEnabledDelegate extends WatchUi.ConfirmationDelegate {
+class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
+    var view as SettingsAlerts;
+    function initialize(view as SettingsAlerts) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.view = view;
+    }
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var itemId = item.getId();
+        if (itemId == :settingsAlertsEnabled) {
+            settings.setEnableOffTrackAlerts(false);
+            var view = new SettingsAlertsDisabled();
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(view, new $.SettingsAlertsDisabledDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsAlertsOffTrackDistanceM) {
+            startPicker(new SettingsNumberPicker(settings.method(:setOffTrackAlertsDistanceM)), view);
+        }
+    }
+}
+
+class SettingsAlertsDisabledDelegate extends WatchUi.Menu2InputDelegate {
+    var view as SettingsAlertsDisabled;
+    function initialize(view as SettingsAlertsDisabled) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.view = view;
+    }
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var itemId = item.getId();
+        if (itemId == :settingsAlertsEnabled) {
+            settings.setEnableOffTrackAlerts(true);
+            var view = new SettingsAlerts();
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(view, new $.SettingsAlertsDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        }
+    }
+}
+
+class DummyView extends WatchUi.View {
+    function initialize() {
+        View.initialize();
+    }
+}
+
+class ClearRoutesDelegate extends WatchUi.ConfirmationDelegate {
+    var settings as Settings;
     function initialize() {
         WatchUi.ConfirmationDelegate.initialize();
+        self.settings = getApp()._breadcrumbContext.settings();
     }
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
-            getApp()._breadcrumbContext.settings().setMapEnabled(true);
-        } else {
-            getApp()._breadcrumbContext.settings().setMapEnabled(false);
+            getApp()._breadcrumbContext.clearRoutes();
+
+            // WARNING: this is a massive hack, probably dependant on platform
+            // just poping the vew and replacing does not work, because the confirmation is still active whilst we are in this function
+            // so we need to pop the confirmation too
+            // but the confirmation is also about to call WatchUi.popView()
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop confirmation
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop routes view
+            var view = new $.SettingsRoutes(settings);
+            WatchUi.pushView(view, new $.SettingsRoutesDelegate(view, settings), WatchUi.SLIDE_IMMEDIATE); // replace with new updated routes view
+            WatchUi.pushView(new DummyView(), null, WatchUi.SLIDE_IMMEDIATE); // push dummy view for the confirmation to pop
         }
 
         return true; // we always handle it
@@ -771,6 +906,12 @@ class SettingsColoursDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(new SettingsColourPicker(settings.method(:setElevationColour)), view);
         } else if (itemId == :settingsColoursUserColour) {
             startPicker(new SettingsColourPicker(settings.method(:setUserColour)), view);
+        } else if (itemId == :settingsColoursNormalModeColour) {
+            startPicker(new SettingsColourPicker(settings.method(:setNormalModeColour)), view);
+        } else if (itemId == :settingsColoursUiColour) {
+            startPicker(new SettingsColourPicker(settings.method(:setUiColour)), view);
+        } else if (itemId == :settingsColoursDebugColour) {
+            startPicker(new SettingsColourPicker(settings.method(:setDebugColour)), view);
         }
     }
 }

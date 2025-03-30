@@ -28,7 +28,7 @@ class BreadcrumbTrack {
   // shall store them as poit classes for now, and can convert to using just
   // arrays
   var epoch as Number = 0;
-  // storageIndex is the id of the route
+  // storageIndex is the id of the route (-1 is the in progress track)
   var storageIndex as Number = 0;
   var name as String;
   var coordinates as PointArray = new PointArray();
@@ -70,6 +70,20 @@ class BreadcrumbTrack {
     Storage.setValue(key + "elevationMax", elevationMax);
     Storage.setValue(key + "epoch", epoch);
     Storage.setValue(key + "name", name);
+  }
+
+  static function clearRoute(key as String, storageIndex as Number) as Void {
+    key = key + storageIndex;
+    // removing any key should cause it to fail to load next time, but would look weird when debugging, so remove all keys
+    Storage.deleteValue(key + "bb");
+    Storage.deleteValue(key + "bbc");
+    Storage.deleteValue(key + "coords");
+    Storage.deleteValue(key + "coordsSize");
+    Storage.deleteValue(key + "distanceTotal");
+    Storage.deleteValue(key + "elevationMin");
+    Storage.deleteValue(key + "elevationMax");
+    Storage.deleteValue(key + "epoch");
+    Storage.deleteValue(key + "name");
   }
 
   static function readFromDisk(key as String, storageIndex as Number, breadcrumbContext as BreadcrumbContext) as BreadcrumbTrack or Null {

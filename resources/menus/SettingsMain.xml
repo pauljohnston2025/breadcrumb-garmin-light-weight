@@ -1,10 +1,12 @@
 <menu2 id="SettingsMain" title="@Strings.SettingsTitle" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
     <menu-item id="settingsMainMode" label="@Strings.mode_title"/>
     <menu-item id="settingsMainModeUiMode" label="@Strings.uiModeTitle"/>
+    <toggle-menu-item id="settingsMainEnableRotation" label="@Strings.enableRotationTitle"/>
     <menu-item id="settingsMainScale" label="@Strings.scaleLabel"/>
     <menu-item id="settingsMainZoomAtPace" label="@Strings.zoomAtPaceTitle"/>
     <menu-item id="settingsMainRoutes" label="@Strings.routesTitle"/>
     <menu-item id="settingsMainMap" label="@Strings.mapSettingsTitle"/>
+    <menu-item id="settingsMainAlerts" label="@Strings.offTrackAlertsGroupTitle"/>
     <menu-item id="settingsMainColours" label="@Strings.coloursTitle"/>
     <menu-item id="settingsMainResetDefaults" label="@Strings.resetDefaults"/>
 </menu2>

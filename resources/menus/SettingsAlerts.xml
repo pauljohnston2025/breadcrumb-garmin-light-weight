@@ -1,0 +1,4 @@
+<menu2 id="SettingsAlerts" title="@Strings.offTrackAlertsGroupTitle" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <toggle-menu-item id="settingsAlertsEnabled" label="@Strings.enableOffTrackAlertsTitle"/>
+    <menu-item id="settingsAlertsOffTrackDistanceM" label="@Strings.offTrackAlertsDistanceMTitle"/>
+</menu2>

@@ -16,7 +16,7 @@ class BreadcrumbContext {
   function initialize() {
     _breadcrumbRenderer = new BreadcrumbRenderer(me);
     _routes = [];
-    _track = new BreadcrumbTrack(me, 0, "");
+    _track = new BreadcrumbTrack(me, -1, "");
 
     _settings = new Settings();
     _settings.loadSettings();
@@ -125,10 +125,21 @@ class BreadcrumbContext {
 
   function clearRoutes() as Void {
     for (var i = 0; i < ROUTE_MAX; ++i) {
-      var route = new BreadcrumbTrack(me, i, "");
-      route.writeToDisk(ROUTE_KEY);
+      BreadcrumbTrack.clearRoute(ROUTE_KEY, i);
     }
     _routes = [];
     _settings.clearRoutes();
+  }
+  
+  function clearRouteId(routeId as Number) as Void {
+    BreadcrumbTrack.clearRoute(ROUTE_KEY, routeId);
+    for (var i = 0; i < _routes.size(); ++i) {
+      var route = _routes[i];
+      if (route.storageIndex == routeId)
+      {
+        _routes.remove(route); // remove only safe because we return and stop itteration
+        return;
+      }
+    }
   }
 }
