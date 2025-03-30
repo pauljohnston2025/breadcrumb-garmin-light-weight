@@ -459,11 +459,13 @@ class Settings {
         {
             Application.Properties.setValue("scale", 0);
             mapMoveDistanceM = metersAroundUser.toFloat();
+            clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
             return;
         }
 
         mapMoveDistanceM = metersAroundUser.toFloat(); // todo: caculate this off scale
         Application.Properties.setValue("scale", scale);
+        clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
     }
 
     // todo: make all of these take into acount the sceen rotation, and move in the direction the screen is pointing
@@ -1044,7 +1046,7 @@ class Settings {
         }
 
         // run any tile cache clearing that we need to when map features change
-        if (oldTileUrl != tileUrl)
+        if (!oldTileUrl.equals(tileUrl))
         {
             setTileUrl(tileUrl);
         }

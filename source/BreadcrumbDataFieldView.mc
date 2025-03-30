@@ -19,6 +19,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   var _speedMPS as Float = 0.0;  // start at no speed
   var _scratchPadBitmap as BufferedBitmap;
   var settings as Settings;
+  var wasLastZoomedAtPace as Boolean = false;
   // var _renderCounter = 0;
 
   // Set the label of the data field here.
@@ -236,6 +237,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       lastPoint as RectangularPoint,
       routes as Array<BreadcrumbTrack>, 
       track as BreadcrumbTrack) as Void {
+
+      checkLastRenderType(false);
     // when the scale is locked, we need to be where the user is, otherwise we
     // could see a blank part of the map, when we are zoomed in and have no
     // context
@@ -294,6 +297,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       lastPoint.x + renderDistanceM,
       lastPoint.y + renderDistanceM,
     ];
+
+    checkLastRenderType(true);
 
     var centerPoint = center(lastPoint);
 
@@ -363,5 +368,15 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       }
     }
     renderer.renderTrackElevation(dc, track, settings.trackColour, hScale, vScale, startAt);
+  }
+
+  function checkLastRenderType(current as Boolean) as Void
+  {
+    // we change from zoomed in to zoomed out, cl;ear the tile requests so we can queu more up immediately
+    if (wasLastZoomedAtPace != current)
+    {
+      settings.clearPendingWebRequests();
+    }
+    wasLastZoomedAtPace = current;
   }
 }

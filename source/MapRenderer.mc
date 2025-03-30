@@ -105,19 +105,20 @@ class MapRenderer {
         // smaller since we only have 64*64 tiles, so its /4
         var bigTileWidthM = (2 * originShift) / Math.pow(2, z);
         // this needs to factor in the 
-        var tileWidthMPartTile = bigTileWidthM/_settings.smallTilesPerBigTile;
+        var smallTileWidthM = bigTileWidthM/_settings.smallTilesPerBigTile;
 
         var screenWidthM = _screenSize / currentScale;
-        var screenToTileMRatio = screenWidthM / tileWidthMPartTile;
+        var screenToTileMRatio = screenWidthM / smallTileWidthM;
         var screenToTilePixelRatio = _screenSize / _settings.tileSize;
-        var scaleFactor = screenToTileMRatio / screenToTilePixelRatio; // we need to stretch or shrink the tiles by this much
+        var scaleFactor = screenToTilePixelRatio/screenToTileMRatio; // we need to stretch or shrink the tiles by this much
 
-        var scaleSize = Math.floor(_settings.tileSize * scaleFactor);
+        var scaleSize = Math.ceil(_settings.tileSize * scaleFactor);
         var tileCount = Math.ceil(_screenSize / scaleSize).toNumber();
         var tileOffset = ((tileCount * scaleSize) - _screenSize) / 2f;
 
-        var smallScaledTilesPerBigTile = Math.ceil(256f/scaleSize).toNumber();
-        var tileWidthMPartTileReq = bigTileWidthM/smallScaledTilesPerBigTile;
+        var halfTileCountM = (tileCount / 2f) * smallTileWidthM;
+        var tilesLoadFromX = centerPosition.x - halfTileCountM;
+        var tilesLoadFromY = centerPosition.y + halfTileCountM;
 
         for (var x=0 ; x<tileCount; ++x)
         {
@@ -128,8 +129,8 @@ class MapRenderer {
                 // add a cache for the tiles loaded
                 // todo figure out actual meters per tile size based of scale
                 var tile = epsg3857ToTile(
-                    centerPosition.x + x * tileWidthMPartTile, 
-                    centerPosition.y - y * tileWidthMPartTile, 
+                    tilesLoadFromX + x * smallTileWidthM, 
+                    tilesLoadFromY - y * smallTileWidthM, 
                     z
                 );
 

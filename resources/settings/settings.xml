@@ -123,11 +123,11 @@
 
     <group id="routesdesc" title="@Strings.routesTitle" description="@Strings.routesDescription">
         <setting propertyKey="@Properties.routesEnabled" title="@Strings.routesEnabled">
-            <settingConfig type="boolean" readonly="true"/>
+            <settingConfig type="boolean"/>
         </setting>
         
         <setting propertyKey="@Properties.displayRouteNames" title="@Strings.displayRouteNamesTitle">
-            <settingConfig type="boolean" readonly="true"/>
+            <settingConfig type="boolean"/>
         </setting>
     </group>
     <!-- array settings are a complex beast see 

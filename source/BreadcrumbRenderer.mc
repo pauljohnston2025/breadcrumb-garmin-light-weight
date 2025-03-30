@@ -220,9 +220,10 @@ class BreadcrumbRenderer {
 
     lastRenderedCenter = centerPosition;
 
-    if (settings.mode != MODE_NORMAL)
+    if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE)
     {
-        // map move mode does not need to draw tracks
+        // its very cofusing seeing the routes disappear when scrolling
+        // and it makes sense to want to sroll around the route too
         return;
     }
 
@@ -403,8 +404,15 @@ class BreadcrumbRenderer {
     var scaleFromEdge = 75; // guestimate
 
     // always show 'return to user' icon
-    dc.drawText(returnToUserX, returnToUserY, Graphics.FONT_XTINY, "U", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    if (settings.fixedPosition != null) {
+      // x marks the spot
+      dc.drawText(returnToUserX, returnToUserY, Graphics.FONT_XTINY, "X", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    } else {
+      // user on the move
+      dc.drawText(returnToUserX, returnToUserY, Graphics.FONT_XTINY, "U", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
 
+    // always show location
     if (settings.fixedPosition != null && settings.fixedLatitude != null && settings.fixedLongitude != null) {
       var txt = settings.fixedLatitude.format("%.1f") + ", " + settings.fixedLongitude.format("%.1f");
       dc.drawText(_xHalf, _screenSize - scaleFromEdge, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_CENTER);
