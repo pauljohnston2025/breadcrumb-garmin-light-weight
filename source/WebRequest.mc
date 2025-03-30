@@ -188,12 +188,12 @@ class WebRequestHandler
             pendingHashes = [];
         }
 
-        System.println("url: "  + jsonOrImageReq.url);
-        System.println("params: "  + jsonOrImageReq.params);
+        // System.println("url: "  + jsonOrImageReq.url);
+        // System.println("params: "  + jsonOrImageReq.params);
 
         if (jsonOrImageReq instanceof ImageRequest)
         {
-            System.println("sending image request");
+            // System.println("sending image request");
             var callback = (new WebRequestHandle(me, jsonOrImageReq.handler)).method(:handle) as Method(responseCode as Lang.Number, data as WatchUi.BitmapResource or Graphics.BitmapReference or Null) as Void;
             Communications.makeImageRequest(
                 jsonOrImageReq.url,
@@ -205,7 +205,7 @@ class WebRequestHandler
             return;
         }
 
-        System.println("sending json request");
+        // System.println("sending json request");
         var callback = (new WebRequestHandle(me, jsonOrImageReq.handler)).method(:handle) as Method(responseCode as Lang.Number, data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null) as Void or Method(responseCode as Lang.Number, data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null, context as Lang.Object) as Void;
         Communications.makeWebRequest(
             jsonOrImageReq.url,
