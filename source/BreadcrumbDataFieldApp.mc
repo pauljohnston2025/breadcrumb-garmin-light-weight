@@ -62,7 +62,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         }
 
         // uncomment to test settings in simulator, also need to change manifest to be 'watch app'
-        return getSettingsView();
+        // return getSettingsView();
         return [ _view, new BreadcrumbDataFieldDelegate(_breadcrumbContext) ];
     }
 

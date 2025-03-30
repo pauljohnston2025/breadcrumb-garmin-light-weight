@@ -184,6 +184,8 @@ class Settings {
     function setTileCacheSize(value as Number) as Void {
         tileCacheSize = value;
         Application.Properties.setValue("tileCacheSize", tileCacheSize);
+        clearPendingWebRequests();
+        clearTileCache();
     }
     
     function setMapEnabled(_mapEnabled as Boolean) as Void {
@@ -1038,6 +1040,10 @@ class Settings {
    function onSettingsChanged() as Void {
         System.println("onSettingsChanged: Setting Changed, loading");
         var oldRoutes = routes;
+        var oldTileUrl = tileUrl;
+        var oldTileSize = tileSize;
+        var oldTileCacheSize = tileCacheSize;
+        var oldMapEnabled = mapEnabled;
         loadSettings();
         if ( routes.size() < oldRoutes.size())
         {
@@ -1055,6 +1061,24 @@ class Settings {
                 // clear the route
                 clearRouteFromContext(oldRouteId);
             }
+        }
+
+        // run any tile cache clearing that we need to when map features change
+        if (oldTileUrl != tileUrl)
+        {
+            setTileUrl(tileUrl);
+        }
+        if (oldTileSize != tileSize)
+        {
+            setTileSize(tileSize);
+        }
+        if (oldTileCacheSize != tileCacheSize)
+        {
+            setTileCacheSize(tileCacheSize);
+        }
+        if (oldMapEnabled != mapEnabled)
+        {
+            setMapEnabled(mapEnabled);
         }
     }
 }

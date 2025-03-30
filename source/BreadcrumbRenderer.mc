@@ -229,8 +229,8 @@ class BreadcrumbRenderer {
         var nextXScaledAtCenter = (nextX - centerPosition.x) * _currentScale;
         var nextYScaledAtCenter = (nextY - centerPosition.y) * _currentScale;
 
-        var nextXRotated = nextXScaledAtCenter;
-        var nextYRotated = nextYScaledAtCenter;
+        var nextXRotated = _xHalf + nextXScaledAtCenter;
+        var nextYRotated = _yHalf + nextYScaledAtCenter;
         if (settings.enableRotation)
         {
           nextXRotated = _xHalf + rotateCosLocal * nextXScaledAtCenter -
@@ -250,8 +250,8 @@ class BreadcrumbRenderer {
         var xScaledAtCenter = (breadcrumb.boundingBoxCenter.x - centerPosition.x) * _currentScale;
         var yScaledAtCenter = (breadcrumb.boundingBoxCenter.y - centerPosition.y) * _currentScale;
 
-        var xRotated = xScaledAtCenter;
-        var yRotated = yScaledAtCenter;
+        var xRotated = _xHalf + xScaledAtCenter;
+        var yRotated = _yHalf + yScaledAtCenter;
         if (settings.enableRotation)
         {
           xRotated = _xHalf + rotateCosLocal * xScaledAtCenter - rotateSinLocal * yScaledAtCenter;
@@ -379,6 +379,14 @@ class BreadcrumbRenderer {
     if (settings.fixedPosition != null && settings.fixedLatitude != null && settings.fixedLongitude != null) {
       var txt = settings.fixedLatitude.format("%.1f") + ", " + settings.fixedLongitude.format("%.1f");
       dc.drawText(_xHalf, _screenSize - scaleFromEdge, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_CENTER);
+    }
+    else {
+      var latLong = RectangularPoint.xyToLatLon(lastRenderedCenter.x, lastRenderedCenter.y);
+      if (latLong != null)
+      {
+        var txt = latLong[0].format("%.1f") + ", " + latLong[1].format("%.1f");
+        dc.drawText(_xHalf, _screenSize - scaleFromEdge, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_CENTER);
+      }
     }
 
     if (_breadcrumbContext.settings().mode == MODE_MAP_MOVE)
