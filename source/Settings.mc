@@ -126,7 +126,7 @@ class Settings {
 
         // ensure any remaing nulls are removed and gets us a fixedPosition
         setPositionIfNotSet();
-        var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y);
+        // var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y);
         // System.println("round trip conversion result: " + latlong);
         clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
     }

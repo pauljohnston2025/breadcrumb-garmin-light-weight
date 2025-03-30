@@ -3,24 +3,6 @@ import Toybox.Graphics;
 import Toybox.WatchUi;
 import Toybox.PersistedContent;
 
-class TileCoordinates
-{
-    var x as Number;
-    var y as Number;
-    var z as Number;
-
-    function initialize(
-        _x as Number, 
-        _y as Number,
-        _z as Number)
-    {
-        x = _x;
-        y = _y;
-        z = _z;
-    }
-
-}
-
 class MapRenderer {
     // single dim array might be better performance? 
     // Could do multidim array to make calling code slightly easier
@@ -29,9 +11,9 @@ class MapRenderer {
     var _tileCache as TileCache;
     var _settings as Settings;
     var earthRadius = 6378137; // Earth radius in meters
-    var originShift = 2 * Math.PI * earthRadius / 2.0; // Half circumference of Earth
-    var originShiftTime2 = originShift * 2;
-
+    var earthsCircumference = 2 * Math.PI * earthRadius;
+    var originShift = earthsCircumference / 2.0; // Half circumference of Earth
+    
     function initialize(
         tileCache as TileCache,
         settings as Settings) {
@@ -39,32 +21,14 @@ class MapRenderer {
         _tileCache = tileCache;
         _settings = settings;
     }
-    
-    function epsg3857ToTile(xIn as Float, yIn as Float, z as Number) as TileCoordinates {
-        // System.println("converting point to tile: " + xIn + " " + yIn + " " + z);
-        var x = (xIn + originShift) / originShiftTime2 * Math.pow(2, z);
-        var y = (originShift - yIn) / originShiftTime2 * Math.pow(2, z);
-
-        var tileX = Math.floor(x * _settings.smallTilesPerBigTile).toNumber();
-        var tileY = Math.floor(y * _settings.smallTilesPerBigTile).toNumber();
-
-        // var tileXStandard = Math.floor(x).toNumber();
-        // var tileYStandard = Math.floor(y).toNumber();
-        // System.println("tile url should be: https://a.tile.opentopomap.org/" + z + "/" + tileXStandard + "/" + tileYStandard + ".png");
-
-        return new TileCoordinates(tileX, tileY, z);
-    }
 
     // Desired resolution (meters per pixel)
     function calculateTileLevel(desiredResolution as Float) as Number {
-        var earthRadius = 6378137; // Earth radius in meters
-        var originShift = 2 * Math.PI * earthRadius / 2.0; // Half circumference of Earth
-
         // Tile width in meters at zoom level 0
-        var tileWidthAtZoom0 = (2 * originShift) / 1;
+        // var tileWidthAtZoom0 = earthsCircumference;
 
         // Pixel resolution (meters per pixel) at zoom level 0
-        var resolutionAtZoom0 = tileWidthAtZoom0 / 256; // 256 is standard tile size
+        var resolutionAtZoom0 = earthsCircumference / 256f; // big tile coordinates
 
         // Calculate the tile level (Z)
         var tileLevel = Math.ln(resolutionAtZoom0 / desiredResolution) / Math.ln(2);
@@ -102,39 +66,46 @@ class MapRenderer {
         var z = calculateTileLevel(desiredResolution);
         z = minN(maxN(z, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
 
-        // smaller since we only have 64*64 tiles, so its /4
-        var bigTileWidthM = (2 * originShift) / Math.pow(2, z);
-        // this needs to factor in the 
-        var smallTileWidthM = bigTileWidthM/_settings.smallTilesPerBigTile;
-
+        var tileWidthM = earthsCircumference / Math.pow(2, z) / _settings.smallTilesPerBigTile;
         var screenWidthM = _screenSize / currentScale;
-        var screenToTileMRatio = screenWidthM / smallTileWidthM;
+        var tileCount = Math.ceil(screenWidthM / tileWidthM).toNumber();
+        
+        // where the sccreen corner starts
+        var halfScreenWidthM = screenWidthM / 2;
+        var screenLeftM = centerPosition.x - halfScreenWidthM;
+        var screenTopM = centerPosition.y + halfScreenWidthM;
+
+        // find which tile we are closest to
+        var firstTileX = ((screenLeftM + originShift) / tileWidthM).toNumber();
+        var firstTileY = ((originShift - screenTopM) / tileWidthM).toNumber();
+
+        // remember, tiles are a different coordinate system
+        // 0,0 is the bottom left
+        // using the rounded tile position find where in the world it starts
+        var firstTileLeftM = firstTileX * tileWidthM - originShift;
+        var firstTileBottomM = originShift - firstTileY * tileWidthM;
+
+        var tileTopM = firstTileBottomM + tileCount * tileWidthM; // this should be 
+
+
+        var screenToTileMRatio = screenWidthM / tileWidthM;
         var screenToTilePixelRatio = _screenSize / _settings.tileSize;
-        var scaleFactor = screenToTilePixelRatio/screenToTileMRatio; // we need to stretch or shrink the tiles by this much
+        var scaleFactor = screenToTileMRatio/screenToTilePixelRatio; // we need to stretch or shrink the tiles by this much
 
-        var scaleSize = Math.ceil(_settings.tileSize * scaleFactor);
-        var tileCount = Math.ceil(_screenSize / scaleSize).toNumber();
-        var tileOffset = ((tileCount * scaleSize) - _screenSize) / 2f;
+        var scaleRatio = Math.floor(_settings.tileSize * scaleFactor);
 
-        var halfTileCountM = (tileCount / 2f) * smallTileWidthM;
-        var tilesLoadFromX = centerPosition.x - halfTileCountM;
-        var tilesLoadFromY = centerPosition.y + halfTileCountM;
+        var offsetX = (screenLeftM - firstTileLeftM) / scaleRatio;
+        var offsetY = (tileTopM - screenTopM) / scaleRatio;
+
+        // how many pixels on the sscreen the tile should take up this can be smaller or larger than the actual tile, 
+        // depending on if we scale up or down
+        var scalePixelSize = scaleRatio;
 
         for (var x=0 ; x<tileCount; ++x)
         {
             for (var y=0 ; y<tileCount; ++y)
             {
-                // todo calculate zoom base off scale
-                // calculate a different tile for each x/y coordintate
-                // add a cache for the tiles loaded
-                // todo figure out actual meters per tile size based of scale
-                var tile = epsg3857ToTile(
-                    tilesLoadFromX + x * smallTileWidthM, 
-                    tilesLoadFromY - y * smallTileWidthM, 
-                    z
-                );
-
-                var tileKey = new TileKey(tile.x, tile.y, tile.z);
+                var tileKey = new TileKey(firstTileX + x, firstTileY + y, z);
                 _tileCache.seedTile(tileKey); // seed it for the next render
                 var tileFromCache = _tileCache.getTile(tileKey);
                 if (tileFromCache == null || tileFromCache.bitmap == null)
@@ -146,9 +117,9 @@ class MapRenderer {
                 // cant rotate individual tiles as you can see the seams between tiles
                 // one large one then rotate looks much better, and is possibly faster
                 // we must scale as the tile we picked is only close to the resolution we need
-                scratchPadDc.drawScaledBitmap(-tileOffset + x * scaleSize, -tileOffset + y * scaleSize, scaleSize, scaleSize, tileFromCache.bitmap);
+                scratchPadDc.drawScaledBitmap(-offsetX + x * scalePixelSize, -offsetY + y * scalePixelSize, scalePixelSize, scalePixelSize, tileFromCache.bitmap);
                 // no scaling incase issues
-                // scratchPadDc.drawBitmap(-tileOffset + x * scaleSize, -tileOffset + y * scaleSize, tileFromCache.bitmap);
+                // scratchPadDc.drawBitmap(xx, yy, tileFromCache.bitmap);
             }
         }
 
