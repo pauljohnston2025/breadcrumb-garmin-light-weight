@@ -10,9 +10,8 @@ class MapRenderer {
     var _screenSize as Float = 360f;
     var _tileCache as TileCache;
     var _settings as Settings;
-    var earthRadius = 6378137; // Earth radius in meters
-    var earthsCircumference = 2 * Math.PI * earthRadius;
-    var originShift = earthsCircumference / 2.0; // Half circumference of Earth
+    var earthsCircumference as Float = 40075016.686f;
+    var originShift as Float = earthsCircumference / 2.0; // Half circumference of Earth
     
     function initialize(
         tileCache as TileCache,
@@ -66,12 +65,12 @@ class MapRenderer {
         var z = calculateTileLevel(desiredResolution);
         z = minN(maxN(z, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
 
-        var tileWidthM = earthsCircumference / Math.pow(2, z) / _settings.smallTilesPerBigTile;
+        var tileWidthM = (earthsCircumference / Math.pow(2, z)) / _settings.smallTilesPerBigTile;
         var screenWidthM = _screenSize / currentScale;
         var tileCount = Math.ceil(screenWidthM / tileWidthM).toNumber();
         
         // where the screen corner starts
-        var halfScreenWidthM = screenWidthM / 2;
+        var halfScreenWidthM = screenWidthM / 2f;
         var screenLeftM = centerPosition.x - halfScreenWidthM;
         var screenTopM = centerPosition.y + halfScreenWidthM;
 
@@ -108,8 +107,8 @@ class MapRenderer {
         var scalePixelSize = Math.round(_settings.tileSize * scaleFactor);
 
         // find the closest pixel size
-        var offsetX = Math.round(((firstTileLeftM - screenLeftM) * currentScale) * scaleFactor);
-        var offsetY = Math.round((screenTopM - firstTileTopM) * currentScale * scaleFactor);
+        var offsetX = Math.round(((firstTileLeftM - screenLeftM) * currentScale));
+        var offsetY = Math.round((screenTopM - firstTileTopM) * currentScale);
 
         for (var x=0 ; x<tileCount; ++x)
         {
