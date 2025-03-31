@@ -323,7 +323,7 @@ class Settings {
 
         routes.add(
             {
-                "id" => routeId,
+                "routeId" => routeId,
                 "name" => routeName(routeId),
                 "enabled" => true,
                 "colour" => routeColour(routeId)
@@ -336,7 +336,7 @@ class Settings {
     {
         for (var i = 0; i < routes.size(); ++i) {
             var route = routes[i];
-            if (route["id"] == routeId)
+            if (route["routeId"] == routeId)
             {
                 return i;
             }
@@ -357,7 +357,7 @@ class Settings {
             var entry = routes[i];
             toSave.add(
                 {
-                    "id" => entry["id"],
+                    "routeId" => entry["routeId"],
                     "name" => entry["name"],
                     "enabled" => entry["enabled"],
                     "colour" => entry["colour"].format("%X") // this is why we have to copy it :(
@@ -994,7 +994,7 @@ class Settings {
         tileUrl = parseString("tileUrl", tileUrl);
         routes = getArraySchema(
             "routes", 
-            ["id", "name", "enabled", "colour"], 
+            ["routeId", "name", "enabled", "colour"], 
             [method(:defaultNumberParser), method(:emptyString), method(:defaultFalse), method(:defaultColourParser)],
             routes
         );
@@ -1041,12 +1041,15 @@ class Settings {
         var oldTileCacheSize = tileCacheSize;
         var oldMapEnabled = mapEnabled;
         loadSettings();
+        // this logic is also broken because of the array settings not working properly, routes aleways come in as an empty array
+        // when any property is modified, so we have to explain to users not to touch the settings, but we cannot because it looks 
+        // like garmmins ettings are not rendering desciptions anymore :(
         if ( routes.size() < oldRoutes.size())
         {
             for (var i=0; i<oldRoutes.size(); ++i)
             {
                 var oldRouteEntry = oldRoutes[i];
-                var oldRouteId = oldRouteEntry["id"];
+                var oldRouteId = oldRouteEntry["routeId"];
 
                 var routeIndex = getRouteIndexById(oldRouteId);
                 if (routeIndex != null)

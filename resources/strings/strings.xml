@@ -72,7 +72,7 @@
 
     <string id="selectedRoute">Selected route</string>
     <string id="routesTitle">Routes</string>
-    <string id="routesTitle2">Per Route Settings</string>
+    <string id="routesTitle2">Routes (read only)</string>
     <string id="routeId">Id</string>
     <string id="routeName">Name</string>
     <string id="routeEnabled">Enabled</string>
