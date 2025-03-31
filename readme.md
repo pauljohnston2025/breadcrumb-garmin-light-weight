@@ -25,7 +25,11 @@ Breadcrumb-Only Mode: (Optional) A simplified display mode showing only the brea
 
 note: Map support is disabled by default, but can be turned on in app settings, this is because map tile loading is memory intensive and may cause crashes on some devices.
 
-Pretty much every feature of the app can be configured through on device settings, or through garmin connect iq settings.   
+Companion app:
+The companion app is available on my github: https://github.com/pauljohnston2025/breadcrumb-mobile.git  
+While all settings can be configured directly on the watch or through Connect IQ settings, the companion app unlocks powerful features such as offline map support via Bluetooth transfer and route loading. Currently, the companion app is only available on Android, but contributions from iOS developers are highly welcomed to expand platform support and bring these functionalities to a wider audience.
+
+
 This is a datafield, not a full fledged app, it runs in the context of native activity.  
 
 The datafield is expected to be used to cover the full available area of a round watchface.  
