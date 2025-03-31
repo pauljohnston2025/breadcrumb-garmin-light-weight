@@ -44,7 +44,7 @@ class Settings {
     var tileCacheSize as Number = 64; // represented in number of tiles, parsed from a string eg. "64"=64tiles, "100KB"=100/2Kb per tile = 50 
     var mode as Number = MODE_NORMAL;
     // todo clear tile cache when this changes
-    var mapEnabled as Boolean = true;
+    var mapEnabled as Boolean = false;
     var trackColour as Number = Graphics.COLOR_GREEN;
     var elevationColour as Number = Graphics.COLOR_ORANGE;
     var userColour as Number = Graphics.COLOR_ORANGE;

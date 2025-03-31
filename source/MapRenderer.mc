@@ -127,7 +127,15 @@ class MapRenderer {
                 // cant rotate individual tiles as you can see the seams between tiles
                 // one large one then rotate looks much better, and is possibly faster
                 // we must scale as the tile we picked is only close to the resolution we need
-                scratchPadDc.drawScaledBitmap(offsetX + x * scalePixelSize, offsetY + y * scalePixelSize, scalePixelSize, scalePixelSize, tileFromCache.bitmap);
+                if (scratchPadDc has :drawScaledBitmap) {
+                    scratchPadDc.drawScaledBitmap(offsetX + x * scalePixelSize, offsetY + y * scalePixelSize, scalePixelSize, scalePixelSize, tileFromCache.bitmap);
+                }
+                else {
+                    // todo: lock scales on these devices to map tile sizes (so we can render without scaling)
+                    // scratchPadDc.drawBitmap(offsetX + x * scalePixelSize, offsetY + y * scalePixelSize, scalePixelSize, scalePixelSize, tileFromCache.bitmap);
+                    // eg. vivoactive 5
+                    scratchPadDc.drawBitmap(offsetX + x * _settings.tileSize, offsetY + y * _settings.tileSize, tileFromCache.bitmap);
+                }
             }
         }
 
@@ -138,7 +146,7 @@ class MapRenderer {
         if (_settings.enableRotation)
         {
             transform.translate(xyOffset, xyOffset); // move to center
-            transform.rotate(rotationRad); // rotate
+            transform.rotate(-rotationRad); // rotate
             transform.translate(-xyOffset, -xyOffset); // move back to position
         }
 
@@ -156,6 +164,11 @@ class MapRenderer {
                 :transform => transform
             }
         );
+
+        if (!(scratchPadDc has :drawScaledBitmap)) {
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
+            dc.drawText(0, _screenSize / 2, Graphics.FONT_XTINY, " full support comming soon", Graphics.TEXT_JUSTIFY_LEFT);
+        }
     }
 }
 

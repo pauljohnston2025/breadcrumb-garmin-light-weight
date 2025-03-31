@@ -23,6 +23,7 @@ Routing (companion app required): Users can import routes from Google Maps or GP
 Customizable Settings: Fully customizable via the watch or Connect IQ settings. No companion app required for basic functionality.  
 Breadcrumb-Only Mode: (Optional) A simplified display mode showing only the breadcrumb trail, without the underlying map tiles, for increased battery life on devices with limited screen resolution or memory.  
 
+note: Map support is disabled by default, but can be turned on in app settings, this is because map tile loading is memory intensive and may cause crashes on some devices.
 
 Pretty much every feature of the app can be configured through on device settings, or through garmin connect iq settings.   
 This is a datafield, not a full fledged app, it runs in the context of native activity.  
