@@ -7,8 +7,42 @@ Use the companion app to add a route that you can follow.
 Intended for use with round watches, but will work on others (might not look the best though).  
 Some watches/devices with touch support will be able switch between elevation and track view during activity.
 
-
 Donations are always welcome, but not required: paypal.me/pauljohnston2025
+
+Settings:
+
+Garmin has an issue with array settings where they cannot be modified by the connect iq app it appears to be a known issue, but unlikely to be solved. Per route settings should be edited from the wath only, attempts to edit them from the connect iq settings page will likely break until garmin fix the issue.
+
+Garmin also do not seem to show any of the descriptions anymore, so here they are:
+
+Most settings should be prety obvious, or can be playe with to find out what they do. The complicated ones are.
+
+Scale: Pixels per meter 0 to use the distance specified by `Meters Around User` in the `Zoom At Pace` menu
+
+Zoom At Pace:
+Map will automatically zoom when moving or stopped, can be disabled by manually settings scale
+
+Meters Around User: how far to render around the user when zoomed in
+Speed: How fast the user needs to be moving in order to trigger zoom changes. You could set this to a really high value if you do not want zoom to occur. and then configure `Meters Around User` to the desired value.
+
+
+Maps:
+Choose these values wisely. Too big = crash, too small = crash or slow performance. 
+
+Tile Url: Should be 'http://127.0.0.1:8080' for companion app or template eg. 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png'. 
+Tile Size: Tile size should be a multiple of 256 for best results. The tile size in pixels loaded from the companion app or other source. Should be 256 if using a template. There are known issues with settings it smaller (performance baing a big one), but it does work on some devices.
+Tile Layer Max: The maximum tile layer that can be fetched.
+Tile Layer Min: The maximum tile layer that can be fetched.
+Tile Cache Size: The number of tiles to store locally in memory.
+Max Pending Web Requests: The macx number of tile fetch requests we can have quued ready to be sent.
+Disable Maps After X Failures: Maps wil be auto matically disabled if this many tile fetch requests fail. 0 - unlimited
+Fixed Latitude: The latitude to render (must also set longitude)
+Fixed Longitude: The longitude to render (must also set latitude)
+
+Set both latitude and longitude to 0 to disable fixed position and use the current location.
+
+Colours: Should be set to a vali hex code AARRGGBB not all are required eg. FF00 will render as green
+
 
 Target User: Hikers, backpackers, cyclists, trail runners, and outdoor enthusiasts seeking a flexible navigation tool for their Garmin watches. Especially valuable for users with Garmin devices that do not have built-in map support. Suitable for both on- and off-grid exploration, with customizable maps and route following capabilities.
 

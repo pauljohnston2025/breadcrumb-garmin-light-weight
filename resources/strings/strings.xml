@@ -27,7 +27,7 @@
     <string id="enableRotationTitle">Enable Rotation</string>
     <string id="offTrackAlertsDistanceMTitle">Alert Distance (m)</string>
     <string id="offTrackAlertsDistanceMPrompt"></string>
-    <string id="offTrackAlertsGroupTitle">Off Track Alerts</string>
+    <string id="offTrackAlertsGroupTitle">Off Track Alert Settings</string>
     <string id="enableOffTrackAlerts"></string>
     <string id="enableOffTrackAlertsTitle">Off Track Alerts</string>
     <string id="enableOffTrackAlertsDescription"></string>
