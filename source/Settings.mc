@@ -994,8 +994,9 @@ class Settings {
         offTrackAlertsDistanceM = parseNumber("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
 
         // testing coordinates (piper-comanche-wreck)
-        setFixedPosition(-27.297773, 152.753883);
-        setScale(0.39);
+        // setFixedPosition(-27.297773, 152.753883);
+        // // setScale(0.39); // zoomed out a bit
+        // setScale(1.96); // really close
     }
 
     function emptyString(key as String, value) as String

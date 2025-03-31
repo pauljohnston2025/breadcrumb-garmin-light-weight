@@ -67,7 +67,6 @@ class MapRenderer {
 
         var tileWidthM = (earthsCircumference / Math.pow(2, z)) / _settings.smallTilesPerBigTile;
         var screenWidthM = _screenSize / currentScale;
-        var tileCount = Math.ceil(screenWidthM / tileWidthM).toNumber();
         
         // where the screen corner starts
         var halfScreenWidthM = screenWidthM / 2f;
@@ -110,9 +109,11 @@ class MapRenderer {
         var offsetX = Math.round(((firstTileLeftM - screenLeftM) * currentScale));
         var offsetY = Math.round((screenTopM - firstTileTopM) * currentScale);
 
-        for (var x=0 ; x<tileCount; ++x)
+        var tileCountX = Math.ceil((-offsetX + _screenSize) / scalePixelSize);
+        var tileCountY = Math.ceil((-offsetY + _screenSize) / scalePixelSize);
+        for (var x=0 ; x<tileCountX; ++x)
         {
-            for (var y=0 ; y<tileCount; ++y)
+            for (var y=0 ; y<tileCountY; ++y)
             {
                 var tileKey = new TileKey(firstTileX + x, firstTileY + y, z);
                 _tileCache.seedTile(tileKey); // seed it for the next render
