@@ -31,11 +31,14 @@
 	<property id="disableMapsFailureCount" type="number">200</property>
 
 	<property id="resetDefaults" type="boolean">false</property>
-	<property id="enableOffTrackAlerts" type="boolean">true</property>
-	<property id="enableRotation" type="boolean">true</property>
-	<property id="displayRouteNames" type="boolean">true</property>
 
-	<property id="routesEnabled" type="boolean">true</property>
 	<property id="routes" type="array"></property>
+    <!-- https://forums.garmin.com/developer/connect-iq/i/bug-reports/bug-boolean-properties-with-default-value-true-can-t-be-changed-in-simulator -->
+	<!-- any setting that defaults to true seems to be stuck that way, so defaulting these all to false and adding a hiden property that i will set for 'first app load' -->
+	<property id="enableOffTrackAlerts" type="boolean">false</property>
+	<property id="enableRotation" type="boolean">false</property>
+	<property id="displayRouteNames" type="boolean">false</property>
+	<property id="routesEnabled" type="boolean">false</property>
+	<property id="haveDoneFirstLoadSetup" type="boolean">false</property>
 
 </properties>

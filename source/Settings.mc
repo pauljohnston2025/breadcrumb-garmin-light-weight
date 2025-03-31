@@ -932,6 +932,15 @@ class Settings {
 
     // Load the values initially from storage
     function loadSettings() as Void {
+        // fix for a garmin bug where bool settings are not changable if they default to true
+        // https://forums.garmin.com/developer/connect-iq/i/bug-reports/bug-boolean-properties-with-default-value-true-can-t-be-changed-in-simulator
+        var haveDoneFirstLoadSetup = Application.Properties.getValue("haveDoneFirstLoadSetup");
+        if (!haveDoneFirstLoadSetup)
+        {
+            Application.Properties.setValue("haveDoneFirstLoadSetup", true);
+            resetDefaults(); // pulls from our defaults
+        }
+
         var resetDefaults = Application.Properties.getValue("resetDefaults") as Boolean;
         if (resetDefaults)
         {

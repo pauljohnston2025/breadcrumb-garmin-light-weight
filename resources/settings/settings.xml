@@ -134,7 +134,11 @@
     https://forums.garmin.com/developer/connect-iq/i/bug-reports/confusion-and-bugs-in-array-settings
     and  https://forums.garmin.com/developer/connect-iq/f/discussion/296786/working-example-of-array-settings-kind-of -->
     <!-- https://forums.garmin.com/developer/connect-iq/i/bug-reports/bug-we-were-unable-to-update-your-settings-at-this-time-please-try-again-later-in-connectiq -->
-    <setting propertyKey="@Properties.routes" title="@Strings.routesTitle" maxLength="5">
+    <!-- no matter what i do i get 'Sorry, this page is currently unavailable.' when trying to edit any of these settings-->
+    <!-- they can be created from the ui, but do not persist when settings opened again -->
+    <!-- I thought it might have been a simulator issue, but even settings pushed to real app was broken -->
+    <!-- even if I set defaults, remove a bunch of things or anything, users will just have to set these through the watch ui, however anoyting that is -->
+    <!-- <setting propertyKey="@Properties.routes" title="@Strings.routesTitle" maxLength="5">
         <setting title="@Strings.routeId" type="number">
             <settingConfig id="id" type="numeric" readonly="true"/>
         </setting>
@@ -147,7 +151,7 @@
         <setting title="@Strings.routeColourTitle" type="string" prompt="@Strings.colourPrompt">
             <settingConfig id="colour" type="alphaNumeric"/>
         </setting>
-    </setting>
+    </setting> -->
 
     <setting propertyKey="@Properties.resetDefaults" title="@Strings.resetDefaults">
         <settingConfig type="boolean"/>
