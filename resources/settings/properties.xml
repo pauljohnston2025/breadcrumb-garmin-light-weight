@@ -28,7 +28,9 @@
 	<property id="fixedLongitude" type="float">0</property>
 
 	<property id="offTrackAlertsDistanceM" type="number">20</property>
+	<property id="offTrackAlertsMaxReportIntervalS" type="number">60</property>
 	<property id="disableMapsFailureCount" type="number">200</property>
+	<property id="routeMax" type="number">5</property>
 
 	<property id="resetDefaults" type="boolean">false</property>
 

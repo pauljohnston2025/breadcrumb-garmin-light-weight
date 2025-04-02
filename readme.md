@@ -51,7 +51,7 @@ Key Features:
 Breadcrumb Trail Navigation: Displays a route as a breadcrumb trail overlaid on a map, allowing users to easily follow the intended path. Brings map-based navigation to Garmin devices that do not have native map support.  
 Map Tile Loading (Online): Supports any tile server that uses EPSG:3857 image tiles.  
 Map Tile Loading (Offline): Loads pre-cached tile data from the companion app.  
-Off-Track Alerts: Notifies the user when they deviate from the planned route.  
+Off-Track Alerts (needs to be enbaled in garmins setting menu, see below): Notifies the user when they deviate from the planned route.  
 Elevation Overview: Shows an elevation profile of the route, allowing users to anticipate upcoming climbs and descents.  
 Routing (companion app required): Users can import routes from Google Maps or GPX files using the companion app.  
 Customizable Settings: Fully customizable via the watch or Connect IQ settings. No companion app required for basic functionality.  
@@ -87,6 +87,14 @@ To edit settings from on device (on venu series):
 * Use touch screen to slide up settings. DO NOT long press, as that only gives you access to the run settings (layouts etc.), not our settings
 * You should now see a menu 'ConnectIQ Fields'
 * From here we can select 'BreadCrumbDataField' and modify our settings
+
+Settings Can now also be now be edited through the alerts menu (on venu series):
+* Open the app (eg. running). Start the activity.
+* Long press the bottom button to open run settings
+* Click Alerts / Add new
+* Scroll down to 'Connect IQ'
+* From here we can select 'BreadCrumbDataField' and modify our settings
+* Opening the settings again can be found in the alerts tab (click 'BreadCrumbDataField' then modify settings)
 
 For online routing, the tile server url can be set to something like:
 

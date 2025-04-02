@@ -1,24 +1,24 @@
 <strings>
     <string id="AppName">BreadcrumbDataField</string>
-    <string id="SettingsTitle">Breadcrumb Data Field Settings</string>
+    <string id="settingsTitle">Breadcrumb Data Field Settings</string>
     <string id="cancel">Cancel</string>
     <string id="exit">Exit</string>
     <string id="back">Back</string>
 
-    <string id="tile_size_title">Tile Size (pixels)</string>
+    <string id="layerTileSize">Tile Size (pixels)</string>
     <string id="tileLayerMaxTitle">Tile Layer Max</string>
     <string id="tileLayerMaxPrompt">15</string>
     <string id="tileLayerMinTitle">Tile Layer Min</string>
     <string id="tileLayerMinPrompt">2</string>
-    <string id="tile_cache_size_title">Tile Cache Size (tiles)</string>
-    <string id="mode_title">Display Mode</string>
+    <string id="tileCacheSizeTitle">Tile Cache Size (tiles)</string>
+    <string id="modeTitle">Display Mode</string>
     <string id="tileUrlTitle">Tile Url</string>
     <string id="mapSettingsDescription">Tile size should be a multiple of 256 for best results. Choose these values wisely. Too big = crash, too small = crash or slow performance. Tile url should be 'http://127.0.0.1:8080' for companion app or template eg. 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png'. Tile size should generally be 256 if using a template.</string>
     <string id="tileUrlPrompt">https://fancytileserver/{z}/{x}/{y}.png</string>
-    <string id="elevation_mode">Elevation</string>
-    <string id="track_route_mode">Track/Route</string>
-    <string id="map_enabled_title">Map Enabled</string>
-    <string id="track_colour_title">Track Colour</string>
+    <string id="elevationMode">Elevation</string>
+    <string id="trackRouteMode">Track/Route</string>
+    <string id="mapEnabledTitle">Map Enabled</string>
+    <string id="trackColourTitle">Track Colour</string>
     <string id="routeColourTitle">Route Colour</string>
     <string id="debugColour">Debug Colour</string>
     <string id="uiColour">UI Colour</string>
@@ -27,6 +27,8 @@
     <string id="enableRotationTitle">Enable Rotation</string>
     <string id="offTrackAlertsDistanceMTitle">Alert Distance (m)</string>
     <string id="offTrackAlertsDistanceMPrompt"></string>
+    <string id="offTrackAlertsMaxReportIntervalSTitle">Max Report Interval (s)</string>
+    <string id="offTrackAlertsMaxReportIntervalSPrompt"></string>
     <string id="offTrackAlertsGroupTitle">Off Track Alert Settings</string>
     <string id="enableOffTrackAlerts"></string>
     <string id="enableOffTrackAlertsTitle">Off Track Alerts</string>
@@ -34,7 +36,7 @@
     <string id="disableMapsFailureCountTitle">Disable Maps After X Failures (0 for unlimited failures)</string>
     <string id="disableMapsFailureCountTitleShort">Disable After Failures</string>
     <string id="disableMapsFailureCountPrompt"></string>
-    <string id="elevation_colour_title">Elevation Colour</string>
+    <string id="elevationColourTitle">Elevation Colour</string>
     <string id="resetDefaults">Restore Defaults</string>
     <string id="userColour">User Colour</string>
     <string id="maxPendingWebRequests">Max Pending Web Requests</string>
@@ -64,7 +66,7 @@
 
     <string id="coloursTitle">Colours</string>
     <string id="coloursDescription"></string>
-    <string id="mapSettingsTitle">Map Settings</string>
+    <string id="mapsettingsTitle">Map Settings</string>
 
     <string id="tileSizePrompt">Pixels per tile x and y</string>
     <string id="tileCacheSizePrompt">Number of tiles to cache</string>
@@ -75,6 +77,7 @@
     <string id="routesTitle2">Routes (read only)</string>
     <string id="routeId">Id</string>
     <string id="routeName">Name</string>
+    <string id="routeMax">Max Routes</string>
     <string id="routeEnabled">Enabled</string>
     <string id="routesEnabled">Enable Routes</string>
     <string id="mapMove">Map Move</string>

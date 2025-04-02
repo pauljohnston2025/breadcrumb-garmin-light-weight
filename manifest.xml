@@ -74,6 +74,7 @@
         -->
         <iq:permissions>
             <iq:uses-permission id="Communications"/>
+            <iq:uses-permission id="DataFieldAlert"/>
             <iq:uses-permission id="Positioning"/>
         </iq:permissions>
         <!--

@@ -4,6 +4,30 @@ import Toybox.Time;
 import Toybox.WatchUi;
 import Toybox.Communications;
 import Toybox.Graphics;
+import Toybox.Attention;
+
+class OffTrackAlert extends WatchUi.DataFieldAlert {
+  function initialize()
+  {
+    WatchUi.DataFieldAlert.initialize();
+  }
+
+  function onUpdate(dc as Dc) as Void {
+    if (Attention has :vibrate)
+    {
+      var vibeData = [
+        new Attention.VibeProfile(25, 1000),
+        new Attention.VibeProfile(50, 1000),
+        new Attention.VibeProfile(100, 2000)
+      ];
+      Attention.vibrate(vibeData);
+    }
+
+      var halfHeight = dc.getHeight()/2;
+      dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);    
+      dc.drawText(halfHeight, halfHeight, Graphics.FONT_SYSTEM_MEDIUM, "OFF TRACK", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+  }
+}
 
 // note to get this to work on the simulator need to modify simulator.json and
 // add isTouchable this is already on edgo devices with touch, but not the
@@ -20,6 +44,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   var _scratchPadBitmap as BufferedBitmap;
   var settings as Settings;
   var wasLastZoomedAtPace as Boolean = false;
+  var lastOffTrackAlertSent = 0;
   // var _renderCounter = 0;
 
   // Set the label of the data field here.
@@ -51,6 +76,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   }
   
   function compute(info as Activity.Info) as Void {
+    
 
     // temp hack for debugging (since it seems altitude does not work when playing activity data from gpx file)
     // var route = _breadcrumbContext.route();
@@ -77,11 +103,48 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       settings.setMapEnabled(false);
     }
 
-    _breadcrumbContext.track().onActivityInfo(info);
+    var newPoint = _breadcrumbContext.track().pointFromActivityInfo(info);
+    if (newPoint != null)
+    {
+      _breadcrumbContext.track().onActivityInfo(newPoint);
+      if (settings.enableOffTrackAlerts)
+      {
+        handleOffTrackAlerts(newPoint);
+      }
+    }
     _breadcrumbContext.trackRenderer().onActivityInfo(info);
+    
     var currentSpeed = info.currentSpeed;
     if (currentSpeed != null) {
       _speedMPS = currentSpeed;
+    }
+  }
+
+  function handleOffTrackAlerts(newPoint as RectangularPoint) as Void
+  {
+    var epoch = Time.now().value();
+    if (epoch - settings.offTrackAlertsMaxReportIntervalS < lastOffTrackAlertSent)
+    {
+      return;
+    }
+
+    var onlyEnabledRouteId = settings.getOnlyEnabledRouteId();
+    for (var i=0; i< _breadcrumbContext.routes().size(); ++i)
+    {
+      var route = _breadcrumbContext.routes()[i];
+      if (route.storageIndex == onlyEnabledRouteId)
+      {
+        if (route.checkOffTrack(newPoint, settings.offTrackAlertsDistanceM))
+        {
+          try {
+            showAlert(new OffTrackAlert());
+            lastOffTrackAlertSent = epoch;
+          } catch (e) {
+            // not sure there is a way to check that we can display or not, so just catch errors
+          }
+        }
+        break;
+      }
     }
   }
 

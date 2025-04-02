@@ -21,7 +21,7 @@ class BreadcrumbContext {
     _track = new BreadcrumbTrack(-1, "");
     _breadcrumbRenderer = new BreadcrumbRenderer(_settings);
 
-    for (var i = 0; i < ROUTE_MAX; ++i) {
+    for (var i = 0; i < _settings.routeMax; ++i) {
       var route = BreadcrumbTrack.readFromDisk(ROUTE_KEY, i);
       if (route != null) {
         _routes.add(route);
@@ -63,7 +63,7 @@ class BreadcrumbContext {
     // eg me.routes = [BreadcrumbTrack{storageIndex:0, name: "phoneroute"}] settings.routes = [{id:2, name: "customroute2"}, {id:0, name: "phoneroute"}],
     // the colours will be uneffected
     // note: the route will also be force enabled, as described above
-    if (_routes.size() >= ROUTE_MAX)
+    if (_routes.size() >= _settings.routeMax)
     {
       var oldestRoute = null;
       for (var i = 0; i < _routes.size(); ++i) {
@@ -99,7 +99,7 @@ class BreadcrumbContext {
   function nextAvailableRouteId() as Number or Null
   {
       // ie. we might have storageIndex=0, storageIndex=3 so we should allocate storageIndex=1
-      for (var i = 0; i < ROUTE_MAX; ++i) {
+      for (var i = 0; i < _settings.routeMax; ++i) {
           if(haveRouteId(i))
           {
             continue;
@@ -124,7 +124,7 @@ class BreadcrumbContext {
   }
 
   function clearRoutes() as Void {
-    for (var i = 0; i < ROUTE_MAX; ++i) {
+    for (var i = 0; i < _settings.routeMax; ++i) {
       BreadcrumbTrack.clearRoute(ROUTE_KEY, i);
     }
     _routes = [];

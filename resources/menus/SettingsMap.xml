@@ -1,10 +1,10 @@
-<menu2 id="SettingsMap" title="@Strings.mapSettingsTitle" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
-    <toggle-menu-item id="settingsMapEnabled" label="@Strings.map_enabled_title"/>
+<menu2 id="SettingsMap" title="@Strings.mapsettingsTitle" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <toggle-menu-item id="settingsMapEnabled" label="@Strings.mapEnabledTitle"/>
     <menu-item id="settingsTileUrl" label="@Strings.tileUrlTitle"/>
-    <menu-item id="settingsMapTileSize" label="@Strings.tile_size_title"/>
+    <menu-item id="settingsMapTileSize" label="@Strings.layerTileSize"/>
     <menu-item id="settingsMapTileLayerMax" label="@Strings.tileLayerMaxTitle"/>
     <menu-item id="settingsMapTileLayerMin" label="@Strings.tileLayerMinTitle"/>
-    <menu-item id="settingsMapTileCacheSize" label="@Strings.tile_cache_size_title"/>
+    <menu-item id="settingsMapTileCacheSize" label="@Strings.tileCacheSizeTitle"/>
     <menu-item id="settingsMapMaxPendingWebRequests" label="@Strings.maxPendingWebRequests"/>
     <menu-item id="settingsMapDisableMapsFailureCount" label="@Strings.disableMapsFailureCountTitleShort"/>
     <menu-item id="settingsMapFixedLatitude" label="@Strings.fixedLatitude"/>

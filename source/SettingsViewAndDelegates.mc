@@ -224,10 +224,10 @@ class SettingsMain extends Rez.Menus.SettingsMain {
         switch(settings.mode)
         {
             case MODE_NORMAL:
-                modeString = Rez.Strings.track_route_mode;
+                modeString = Rez.Strings.trackRouteMode;
                 break;
             case MODE_ELEVATION:
-                modeString = Rez.Strings.elevation_mode;
+                modeString = Rez.Strings.elevationMode;
                 break;
             case MODE_MAP_MOVE:
                 modeString = Rez.Strings.mapMove;
@@ -329,6 +329,7 @@ class SettingsAlerts extends Rez.Menus.SettingsAlerts {
         var settings = getApp()._breadcrumbContext.settings();
         safeSetToggle(me, :settingsAlertsEnabled, true);
         safeSetSubLabel(me, :settingsAlertsOffTrackDistanceM, settings.offTrackAlertsDistanceM.toString());
+        safeSetSubLabel(me, :settingsAlertsOffTrackAlertsMaxReportIntervalS, settings.offTrackAlertsMaxReportIntervalS.toString());
     }
 }
 
@@ -443,6 +444,15 @@ class SettingsRoutes extends WatchUi.Menu2 {
         
         addItem(
             new MenuItem(
+                Rez.Strings.routeMax,
+                settings.routeMax.toString(),
+                :settingsDisplayRouteMax,
+                {}
+            )
+        );
+        
+        addItem(
+            new MenuItem(
                 Rez.Strings.clearRoutes,
                 "", // sublabel
                 :settingsRoutesClearAll,
@@ -450,7 +460,7 @@ class SettingsRoutes extends WatchUi.Menu2 {
             )
         );
         
-        for (var i = 0; i < ROUTE_MAX; ++i) {
+        for (var i = 0; i < settings.routeMax; ++i) {
             var routeIndex = settings.getRouteIndexById(i);
             if (routeIndex == null) {
                 // do not show routes that are not in the settings array
@@ -478,7 +488,8 @@ class SettingsRoutes extends WatchUi.Menu2 {
     {
         safeSetToggle(me, :settingsRoutesEnabled, settings.routesEnabled);
         safeSetToggle(me, :settingsDisplayRouteNames, settings.displayRouteNames);
-        for (var i = 0; i < ROUTE_MAX; ++i) {
+        safeSetSubLabel(me, :settingsDisplayRouteMax, settings.routeMax.toString());
+        for (var i = 0; i < settings.routeMax; ++i) {
             var routeName = settings.routeName(i);
             safeSetLabel(me, i, routeName.equals("") ? "<unlabeled>" : routeName);
             safeSetIcon(me, i, new ColourIcon(settings.routeColour(i)));
@@ -706,6 +717,8 @@ class SettingsRoutesDelegate extends WatchUi.Menu2InputDelegate {
         } else if (itemId == :settingsDisplayRouteNames) {
             settings.toggleDisplayRouteNames();
             view.rerender();
+        } else if (itemId == :settingsDisplayRouteMax) {
+            startPicker(new SettingsNumberPicker(settings.method(:setRouteMax)), view);
         } else if (itemId == :settingsRoutesClearAll) {
             var dialog = new WatchUi.Confirmation("Clear all routes?");
             WatchUi.pushView(
@@ -844,6 +857,8 @@ class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(view, new $.SettingsAlertsDisabledDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsAlertsOffTrackDistanceM) {
             startPicker(new SettingsNumberPicker(settings.method(:setOffTrackAlertsDistanceM)), view);
+        } else if (itemId == :settingsAlertsOffTrackAlertsMaxReportIntervalS) {
+            startPicker(new SettingsNumberPicker(settings.method(:setOffTrackAlertsMaxReportIntervalS)), view);
         }
     }
 }

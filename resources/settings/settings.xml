@@ -2,10 +2,10 @@
     <!-- https://developer.garmin.com/connect-iq/core-topics/properties-and-app-settings/ -->
     <!-- todo add prompt to some of these -->
 
-    <setting propertyKey="@Properties.mode" title="@Strings.mode_title">
+    <setting propertyKey="@Properties.mode" title="@Strings.modeTitle">
         <settingConfig type="list">
-            <listEntry value="0">@Strings.track_route_mode</listEntry>
-            <listEntry value="1">@Strings.elevation_mode</listEntry>
+            <listEntry value="0">@Strings.trackRouteMode</listEntry>
+            <listEntry value="1">@Strings.elevationMode</listEntry>
             <listEntry value="2">@Strings.mapMove</listEntry>
             <listEntry value="3">@Strings.debug</listEntry>
         </settingConfig>
@@ -45,15 +45,15 @@
         </setting>
     </group>
 
-    <setting propertyKey="@Properties.mapEnabled" title="@Strings.map_enabled_title">
+    <setting propertyKey="@Properties.mapEnabled" title="@Strings.mapEnabledTitle">
         <settingConfig type="boolean"/>
     </setting>
-    <group id="mapSettings" title="@Strings.mapSettingsTitle" description="@Strings.mapSettingsDescription" enableIfTrue="@Properties.mapEnabled">
+    <group id="mapSettings" title="@Strings.mapsettingsTitle" description="@Strings.mapSettingsDescription" enableIfTrue="@Properties.mapEnabled">
         <setting propertyKey="@Properties.tileUrl" title="@Strings.tileUrlTitle" prompt="@Strings.tileUrlPrompt">
             <settingConfig type="alphaNumeric"/>
         </setting>
         
-        <setting propertyKey="@Properties.tileSize" title="@Strings.tile_size_title" prompt="@Strings.tileSizePrompt">
+        <setting propertyKey="@Properties.tileSize" title="@Strings.layerTileSize" prompt="@Strings.tileSizePrompt">
             <settingConfig type="numeric" min="2" max="256"/>
         </setting>
 
@@ -65,7 +65,7 @@
             <settingConfig type="numeric" min="0"/>
         </setting>
         
-        <setting propertyKey="@Properties.tileCacheSize" title="@Strings.tile_cache_size_title" prompt="@Strings.tileCacheSizePrompt">
+        <setting propertyKey="@Properties.tileCacheSize" title="@Strings.tileCacheSizeTitle" prompt="@Strings.tileCacheSizePrompt">
             <settingConfig type="numeric" min="0"/>
         </setting>
         
@@ -93,14 +93,17 @@
         <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle" prompt="@Strings.offTrackAlertsDistanceMPrompt">
             <settingConfig type="numeric" min="0"/>
         </setting>
+        <setting propertyKey="@Properties.offTrackAlertsMaxReportIntervalS" title="@Strings.offTrackAlertsMaxReportIntervalSTitle" prompt="@Strings.offTrackAlertsMaxReportIntervalSPrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
     </group>
 
     <group id="colours" title="@Strings.coloursTitle" description="@Strings.coloursDescription">
-        <setting propertyKey="@Properties.trackColour" title="@Strings.track_colour_title" prompt="@Strings.colourPrompt">
+        <setting propertyKey="@Properties.trackColour" title="@Strings.trackColourTitle" prompt="@Strings.colourPrompt">
             <settingConfig type="alphaNumeric"/>
         </setting>
 
-        <setting propertyKey="@Properties.elevationColour" title="@Strings.elevation_colour_title" prompt="@Strings.colourPrompt">
+        <setting propertyKey="@Properties.elevationColour" title="@Strings.elevationColourTitle" prompt="@Strings.colourPrompt">
             <settingConfig type="alphaNumeric"/>
         </setting>
         
@@ -128,6 +131,10 @@
         
         <setting propertyKey="@Properties.displayRouteNames" title="@Strings.displayRouteNamesTitle">
             <settingConfig type="boolean"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.routeMax" title="@Strings.routeMax">
+            <settingConfig type="numeric"/>
         </setting>
     </group>
     <!-- array settings are a complex beast see 

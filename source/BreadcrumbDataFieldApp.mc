@@ -14,9 +14,8 @@ enum Protocol {
 }
 
 enum ProtocolSend {
-  PROTOCOL_SEND_HELLO = 0,
+  PROTOCOL_SEND_OPEN_APP = 0,
   PROTOCOL_SEND_SETTINGS = 1,
-  PROTOCOL_SEND_OPEN_APP = 2,
 }
 
 class VersionInfo extends Communications.ConnectionListener {
@@ -67,7 +66,6 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     AppBase.initialize();
     _breadcrumbContext = new BreadcrumbContext();
     _view = new BreadcrumbDataFieldView(_breadcrumbContext);
-    Communications.transmit([PROTOCOL_SEND_HELLO, 0], {}, new VersionInfo());
   }
 
   function onSettingsChanged() as Void

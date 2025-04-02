@@ -75,17 +75,19 @@ class Settings {
     var normalModeColour as Number = Graphics.COLOR_BLUE;
     var uiColour as Number = Graphics.COLOR_DK_GRAY;
     var debugColour as Number = Graphics.COLOR_WHITE;
+    var routeMax as Number = 5;
 
-    // todo impl features for alerts
     // note this only works if a single track is enabled (multiple tracks would always error)
     var enableOffTrackAlerts as Boolean = true;
     var offTrackAlertsDistanceM as Number = 20;
+    var offTrackAlertsMaxReportIntervalS as Number = 60;
     
     // calculated whenever others change
     var smallTilesPerBigTile as Number = Math.ceil(256f/tileSize).toNumber();
     var fixedPosition as RectangularPoint or Null = null;
     // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
     var mapMoveDistanceM as Float = metersAroundUser * 1f;
+    var onlyRouteEnabledId as Number or Null = null;
     
     function setMode(_mode as Number) as Void {
         mode = _mode;
@@ -191,6 +193,16 @@ class Settings {
     function setOffTrackAlertsDistanceM(value as Number) as Void {
         offTrackAlertsDistanceM = value;
         Application.Properties.setValue("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
+    }
+    
+    function setOffTrackAlertsMaxReportIntervalS(value as Number) as Void {
+        offTrackAlertsMaxReportIntervalS = value;
+        Application.Properties.setValue("offTrackAlertsMaxReportIntervalS", offTrackAlertsMaxReportIntervalS);
+    }
+    
+    function setRouteMax(value as Number) as Void {
+        routeMax = value;
+        Application.Properties.setValue("routeMax", routeMax);
     }
     
     function setTileCacheSize(value as Number) as Void {
@@ -316,7 +328,7 @@ class Settings {
             return;
         }
 
-        if (routes.size() >= ROUTE_MAX)
+        if (routes.size() >= routeMax)
         {
             return;
         }
@@ -344,6 +356,11 @@ class Settings {
 
         return null;
     }
+    
+    function getOnlyEnabledRouteId() as Number or Null
+    {
+        return onlyRouteEnabledId;
+    }
 
     function clearRoutes() as Void {
         routes = [];
@@ -365,6 +382,7 @@ class Settings {
             );
         }
         Application.Properties.setValue("routes", toSave);
+        updateOnlyEnabledRoute();
     }
     
     function setTrackColour(value as Number) as Void {
@@ -915,6 +933,8 @@ class Settings {
         setEnableRotation(defaultSettings.enableRotation);
         setEnableOffTrackAlerts(defaultSettings.enableOffTrackAlerts);
         setOffTrackAlertsDistanceM(defaultSettings.offTrackAlertsDistanceM);
+        setOffTrackAlertsMaxReportIntervalS(defaultSettings.offTrackAlertsMaxReportIntervalS);
+        setRouteMax(defaultSettings.routeMax);
         setNormalModeColour(defaultSettings.normalModeColour);
         setUiColour(defaultSettings.uiColour);
         setDebugColour(defaultSettings.debugColour);
@@ -958,7 +978,9 @@ class Settings {
             "enableRotation" => enableRotation,
             "enableOffTrackAlerts" => enableOffTrackAlerts,
             "offTrackAlertsDistanceM" => offTrackAlertsDistanceM,
+            "offTrackAlertsMaxReportIntervalS" => offTrackAlertsMaxReportIntervalS,
             "normalModeColour" => normalModeColour,
+            "routeMax" => routeMax,
             "uiColour" => uiColour,
             "debugColour" => debugColour,
         };
@@ -1008,6 +1030,7 @@ class Settings {
         elevationColour = parseColour("elevationColour", elevationColour);
         userColour = parseColour("userColour", userColour);
         normalModeColour = parseColour("normalModeColour", normalModeColour);
+        routeMax = parseColour("routeMax", routeMax);
         uiColour = parseColour("uiColour", uiColour);
         debugColour = parseColour("debugColour", debugColour);
         maxPendingWebRequests = parseNumber("maxPendingWebRequests", maxPendingWebRequests);
@@ -1033,13 +1056,45 @@ class Settings {
             routes
         );
         System.println("parsed routes: " + routes);
+        updateOnlyEnabledRoute();
         disableMapsFailureCount = parseNumber("disableMapsFailureCount", disableMapsFailureCount);
         offTrackAlertsDistanceM = parseNumber("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
+        offTrackAlertsMaxReportIntervalS = parseNumber("offTrackAlertsMaxReportIntervalS", offTrackAlertsMaxReportIntervalS);
+
 
         // testing coordinates (piper-comanche-wreck)
         // setFixedPosition(-27.297773, 152.753883);
         // // setScale(0.39); // zoomed out a bit
         // setScale(1.96); // really close
+    }
+
+    function updateOnlyEnabledRoute() as Void
+    {
+        var checkingOnlyRouteEnabledId = null;
+        for (var i = 0; i < routes.size(); ++i) {
+            var route = routes[i];
+
+            if (route["enabled"] && checkingOnlyRouteEnabledId == null)
+            {
+                // we found the first enabled one
+                checkingOnlyRouteEnabledId = route["routeId"];
+                break;
+            }
+
+            if (route["enabled"] && checkingOnlyRouteEnabledId != null)
+            {
+                // we found a second enabled one
+                checkingOnlyRouteEnabledId = null;
+                break;
+            }
+        }
+
+        if (checkingOnlyRouteEnabledId != null) {
+            onlyRouteEnabledId = checkingOnlyRouteEnabledId;
+        }
+        else {
+            onlyRouteEnabledId = null;
+        }
     }
 
     function emptyString(key as String, value) as String
@@ -1075,25 +1130,23 @@ class Settings {
         var oldTileCacheSize = tileCacheSize;
         var oldMapEnabled = mapEnabled;
         loadSettings();
-        // this logic is also broken because of the array settings not working properly, routes aleways come in as an empty array
+        // route settins do not work because garmins setting spage cannot edit them
         // when any property is modified, so we have to explain to users not to touch the settings, but we cannot because it looks 
-        // like garmmins ettings are not rendering desciptions anymore :(
-        if ( routes.size() < oldRoutes.size())
+        // like garmmins settings are not rendering desciptions anymore :(
+        for (var i=0; i<oldRoutes.size(); ++i)
         {
-            for (var i=0; i<oldRoutes.size(); ++i)
+            var oldRouteEntry = oldRoutes[i];
+            var oldRouteId = oldRouteEntry["routeId"];
+
+            var routeIndex = getRouteIndexById(oldRouteId);
+            if (routeIndex != null)
             {
-                var oldRouteEntry = oldRoutes[i];
-                var oldRouteId = oldRouteEntry["routeId"];
-
-                var routeIndex = getRouteIndexById(oldRouteId);
-                if (routeIndex != null)
-                {
-                    continue;
-                }
-
-                // clear the route
-                clearRouteFromContext(oldRouteId);
+                // we have the same route
+                continue;
             }
+
+            // clear the route
+            clearRouteFromContext(oldRouteId);
         }
 
         // run any tile cache clearing that we need to when map features change

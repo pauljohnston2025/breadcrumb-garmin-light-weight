@@ -27,6 +27,7 @@ class BreadcrumbTrack {
   // suspect 1 would result in faster itteration when drawing
   // shall store them as poit classes for now, and can convert to using just
   // arrays
+  var lastClosePoint as Number or Null;
   var epoch as Number = 0;
   // storageIndex is the id of the route (-1 is the in progress track)
   var storageIndex as Number = 0;
@@ -320,42 +321,66 @@ class BreadcrumbTrack {
     }
   }
 
-  function onActivityInfo(activityInfo as Activity.Info) as Void {
+  function pointFromActivityInfo(activityInfo as Activity.Info) as RectangularPoint or Null {
     // System.println("computing data field");
     _computeCounter++;
     // slow down the calls to onActivityInfo as its a heavy operation checking
     // the distance we don't really need data much faster than this anyway
     if (_computeCounter != DELAY_COMPUTE_COUNT) {
-      return;
+      return null;
     }
 
     _computeCounter = 0;
 
-    // todo skip if 'last logged' is not large enough (we don't want to do
-    // complex calcualtions all the time)
     var loc = activityInfo.currentLocation;
     if (loc == null) {
-      return;
+      return null;
     }
 
     var altitude = activityInfo.altitude;
     if (altitude == null) {
-      return;
+      return null;
     }
 
-    // todo only add point if it is futher aways than x meters
-    // or if we have been in the same spot for some time?
-    // need to limit coordinates to a certain size
     var asDeg = loc.toDegrees();
     var lat = asDeg[0].toFloat();
     var lon = asDeg[1].toFloat();
 
-    var newPoint = RectangularPoint.latLon2xy(lat, lon, altitude);
-    if (newPoint == null)
-    {
-      return;
+    return RectangularPoint.latLon2xy(lat, lon, altitude);
+  }
+
+  function checkOffTrack(checkPoint as RectangularPoint, distanceM as Number) as Boolean {
+    var endSecondScanAt = coordinates.pointSize();
+    if (lastClosePoint != null) {
+      endSecondScanAt = lastClosePoint < endSecondScanAt ? lastClosePoint : endSecondScanAt;
+      for (var i = lastClosePoint; i < coordinates.pointSize(); ++i) {
+        var point = coordinates.getPoint(i);
+        var distance = point.distanceTo(checkPoint);
+        if (distance < distanceM)
+        {
+          lastClosePoint = i;
+          return false;
+        }
+      }
+
+      lastClosePoint = null; // we have to search the start of the range now
     }
 
+    // System.println("lastClosePoint: " + lastClosePoint);
+    
+    for (var i = 0; i < endSecondScanAt; ++i) {
+      var point = coordinates.getPoint(i);
+      var distance = point.distanceTo(checkPoint);
+      if (distance < distanceM)
+      {
+        lastClosePoint = i;
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function onActivityInfo(newPoint as RectangularPoint) as Void {
     // todo only call this when a point is added (some points are skipped on smaller distances)
     // _breadcrumbContext.mapRenderer().loadMapTilesForPosition(newPoint, _breadcrumbContext.trackRenderer()._currentScale);
     
