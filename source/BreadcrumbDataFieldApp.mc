@@ -10,6 +10,26 @@ enum Protocol {
   PROTOCOL_MAP_TILE = 1,
   PROTOCOL_REQUEST_LOCATION_LOAD = 2,
   PROTOCOL_CANCEL_LOCATION_REQUEST = 3,
+  PROTOCOL_REQUEST_SETTINGS = 4,
+}
+
+enum ProtocolSend {
+  PROTOCOL_SEND_HELLO = 0,
+  PROTOCOL_SEND_SETTINGS = 1,
+  PROTOCOL_SEND_OPEN_APP = 2,
+}
+
+class VersionInfo extends Communications.ConnectionListener {
+    function initialize() {
+      Communications.ConnectionListener.initialize();
+    }
+    function onComplete() {
+        System.println("Version info message sent");
+    }
+
+    function onError() {
+        System.println("Version info message fail");
+    }
 }
 
 class CommStatus extends Communications.ConnectionListener {
@@ -25,6 +45,19 @@ class CommStatus extends Communications.ConnectionListener {
     }
 }
 
+class SettingsSent extends Communications.ConnectionListener {
+    function initialize() {
+      Communications.ConnectionListener.initialize();
+    }
+    function onComplete() {
+        System.println("Settings sent");
+    }
+
+    function onError() {
+        System.println("Settings send failed");
+    }
+}
+
 class BreadcrumbDataFieldApp extends Application.AppBase {
   var _view as BreadcrumbDataFieldView;
   var _breadcrumbContext as BreadcrumbContext;
@@ -34,6 +67,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     AppBase.initialize();
     _breadcrumbContext = new BreadcrumbContext();
     _view = new BreadcrumbDataFieldView(_breadcrumbContext);
+    Communications.transmit([PROTOCOL_SEND_HELLO, 0], {}, new VersionInfo());
   }
 
   function onSettingsChanged() as Void
@@ -59,7 +93,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         // prompts user to open the app
         if (_breadcrumbContext.settings().tileUrl.equals(COMPANION_APP_TILE_URL))
         {
-          Communications.transmit("startserice", {}, _commStatus);
+          Communications.transmit([PROTOCOL_SEND_OPEN_APP], {}, _commStatus);
         }
 
         // uncomment to test settings in simulator, also need to change manifest to be 'watch app'
@@ -160,8 +194,12 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         return;
       }
       else if (type == PROTOCOL_CANCEL_LOCATION_REQUEST) {
-        System.println("got cancel location req req: " + rawData);
+        System.println("got cancel location req: " + rawData);
         _breadcrumbContext.settings().setFixedPosition(null, null);
+        return;
+      } else if (type == PROTOCOL_REQUEST_SETTINGS) {
+        System.println("got send settings req: " + rawData);
+        Communications.transmit([PROTOCOL_SEND_OPEN_APP, _breadcrumbContext.settings().asDict()], {}, new SettingsSent());
         return;
       }
 

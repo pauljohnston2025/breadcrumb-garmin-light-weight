@@ -930,6 +930,40 @@ class Settings {
         loadSettings();
     }
 
+    function asDict() as Dictionary
+    {
+        return {
+            "tileSize" => tileSize,
+            "tileLayerMax" => tileLayerMax,
+            "tileLayerMin" => tileLayerMin,
+            "tileCacheSize" => tileCacheSize,
+            "mode" => mode,
+            "mapEnabled" => mapEnabled,
+            "trackColour" => trackColour,
+            "elevationColour" => elevationColour,
+            "userColour" => userColour,
+            "maxPendingWebRequests" => maxPendingWebRequests,
+            "scale" => scale,
+            "metersAroundUser" => metersAroundUser,
+            "zoomAtPaceMode" => zoomAtPaceMode,
+            "zoomAtPaceSpeedMPS" => zoomAtPaceSpeedMPS,
+            "uiMode" => uiMode,
+            "fixedLatitude" => fixedLatitude,
+            "fixedLongitude" => fixedLongitude,
+            "tileUrl" => tileUrl,
+            "routes" => routes,
+            "routesEnabled" => routesEnabled,
+            "displayRouteNames" => displayRouteNames,
+            "disableMapsFailureCount" => disableMapsFailureCount,
+            "enableRotation" => enableRotation,
+            "enableOffTrackAlerts" => enableOffTrackAlerts,
+            "offTrackAlertsDistanceM" => offTrackAlertsDistanceM,
+            "normalModeColour" => normalModeColour,
+            "uiColour" => uiColour,
+            "debugColour" => debugColour,
+        };
+    }
+
     // Load the values initially from storage
     function loadSettings() as Void {
         // fix for a garmin bug where bool settings are not changable if they default to true

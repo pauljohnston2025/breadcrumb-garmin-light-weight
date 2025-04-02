@@ -71,7 +71,7 @@ class WebRequestHandle {
         if (responseCode != 200 && webHandler._settings.tileUrl.equals(COMPANION_APP_TILE_URL))
         {
             // todo only send this on certain errors, and only probbaly only after some limit?
-            Communications.transmit("startserice", {}, getApp()._commStatus);
+            Communications.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
         }
 
         // got some stack overflows, as handle can be called inline if it knows it will fail (eg. BLE_CONNECTION_UNAVAILABLE)
