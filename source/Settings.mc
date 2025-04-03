@@ -963,13 +963,13 @@ class Settings {
             "elevationColour" => elevationColour,
             "userColour" => userColour,
             "maxPendingWebRequests" => maxPendingWebRequests,
-            "scale" => scale,
+            "scale" => scale == null ? 0f : scale,
             "metersAroundUser" => metersAroundUser,
             "zoomAtPaceMode" => zoomAtPaceMode,
             "zoomAtPaceSpeedMPS" => zoomAtPaceSpeedMPS,
             "uiMode" => uiMode,
-            "fixedLatitude" => fixedLatitude,
-            "fixedLongitude" => fixedLongitude,
+            "fixedLatitude" => fixedLatitude == null ? 0f : fixedLatitude,
+            "fixedLongitude" => fixedLongitude == null ? 0f : fixedLongitude,
             "tileUrl" => tileUrl,
             "routes" => routes,
             "routesEnabled" => routesEnabled,
@@ -983,7 +983,22 @@ class Settings {
             "routeMax" => routeMax,
             "uiColour" => uiColour,
             "debugColour" => debugColour,
+            "resetDefaults" => false,
         };
+    }
+
+    function saveSettings(settings as Dictionary) as Void
+    {
+        // should we sanitize this as its untrusted? makes it significantly more annoying to do
+        var keys = settings.keys();
+        for (var i = 0; i < keys.size(); ++i) {
+            var key = keys[i];
+            var value = settings[key];
+            // for now just blindly trust the users
+            // we do reload which sanitizes, but they could break garmins settings page with unexpected types
+            Application.Properties.setValue(key, value);
+        }
+        loadSettings();
     }
 
     // Load the values initially from storage

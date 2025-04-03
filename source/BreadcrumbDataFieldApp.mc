@@ -11,6 +11,7 @@ enum Protocol {
   PROTOCOL_REQUEST_LOCATION_LOAD = 2,
   PROTOCOL_CANCEL_LOCATION_REQUEST = 3,
   PROTOCOL_REQUEST_SETTINGS = 4,
+  PROTOCOL_SAVE_SETTINGS = 5,
 }
 
 enum ProtocolSend {
@@ -94,8 +95,9 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
           Communications.transmit([PROTOCOL_SEND_OPEN_APP], {}, _commStatus);
         }
 
-        // uncomment to test settings in simulator, also need to change manifest to be 'watch app'
-        // return getSettingsView();
+        // to open settings to test the simulator has it in an obvious place
+        // Settings -> Trigger App Settings (right down the bottom - almost off the screen)
+        // then to go back you need to Settings -> Time Out App Settings
         return [ _view, new BreadcrumbDataFieldDelegate(_breadcrumbContext) ];
     }
 
@@ -197,7 +199,11 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         return;
       } else if (type == PROTOCOL_REQUEST_SETTINGS) {
         System.println("got send settings req: " + rawData);
-        Communications.transmit([PROTOCOL_SEND_OPEN_APP, _breadcrumbContext.settings().asDict()], {}, new SettingsSent());
+        Communications.transmit([PROTOCOL_SEND_SETTINGS, _breadcrumbContext.settings().asDict()], {}, new SettingsSent());
+        return;
+      } else if (type == PROTOCOL_SAVE_SETTINGS) {
+        System.println("got save settings req: " + rawData);
+        _breadcrumbContext.settings().saveSettings(rawData[0] as Dictionary);
         return;
       }
 
