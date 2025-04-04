@@ -687,10 +687,12 @@ class Settings {
             if (colourString instanceof String)
             {
                 // want final string as AARRGGBB
-                colourString = padStart(colourString, 6, '0'); // fill in 24 bit colour with 0's
-                colourString = padStart(colourString, 8, 'F'); // pad alpha channel with FF
+                // colourString = padStart(colourString, 6, '0'); // fill in 24 bit colour with 0's
+                // colourString = padStart(colourString, 8, 'F'); // pad alpha channel with FF
                 // empty or invalid strings convert to null
-                // anything with leading FF needs to be a long, because its too big to fit in Number
+                // anything with leading FF (when 8 characters supplied) needs to be a long, because its too big to fit in Number
+                // if a user chooses FFFFFFFF (white) it is (-1) which is fully transparent, should choose FFFFFF (no alpha) or something close like FFFFFFFE
+                // in any case we are currently ignoring alpha because we use setColor (text does not support alpha)
                 var long = colourString.toLongWithBase(16);
                 if (long == null)
                 {
@@ -698,7 +700,7 @@ class Settings {
                 }
 
                 // calling tonumber breaks - because its out of range, but we need to set the alpha bits
-                var number = (long && 0xFFFFFFFF).toNumber(); 
+                var number = (long & 0xFFFFFFFFl).toNumber(); 
                 return number;
             }
 
@@ -1002,13 +1004,13 @@ class Settings {
         // should we sanitize this as its untrusted? makes it significantly more annoying to do
         var keys = settings.keys();
         for (var i = 0; i < keys.size(); ++i) {
-            var key = keys[i];
+            var key = keys[i] as Application.PropertyKeyType;
             var value = settings[key];
             // for now just blindly trust the users
             // we do reload which sanitizes, but they could break garmins settings page with unexpected types
             Application.Properties.setValue(key, value);
         }
-        loadSettings();
+        onSettingsChanged();
     }
 
     // Load the values initially from storage

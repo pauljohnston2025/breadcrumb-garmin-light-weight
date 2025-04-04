@@ -147,9 +147,7 @@ class BreadcrumbRenderer {
     var foundName = SCALE_NAMES[distanceM];
 
     var y = _screenSize - 20;
-    dc.setColor(settings.normalModeColour, Graphics.COLOR_TRANSPARENT); // for text (seems this is the only way to control text colour, and it does not support alpha)
-    setStrokeHelper(dc, settings.normalModeColour); // for the lines (so we support alpha channel)
-    setFillHelper(dc, settings.normalModeColour); // for the text? (so we support alpha channel)
+    dc.setColor(settings.normalModeColour, Graphics.COLOR_TRANSPARENT);
     dc.setPenWidth(4);
     dc.drawLine(_xHalf - pixelWidth / 2.0f, y,
                 _xHalf + pixelWidth / 2.0f, y);

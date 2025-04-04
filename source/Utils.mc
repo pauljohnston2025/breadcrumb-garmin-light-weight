@@ -108,6 +108,7 @@ function logE(message as String) as Void
 }
 
 // todo (perf): make these inline functions, and set options for vivoactive so these functions result in a direct call to dc
+// only  way to set colour of text is through setColour, which does not support alpha channel, so reverting these changes
 function setFillHelper(dc as Dc, colour as Number) as Void {
   if (dc has :setFill)
   {

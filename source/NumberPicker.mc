@@ -53,13 +53,10 @@ class NumberPicker {
     }
 
     function onUpdate(dc as Dc) as Void {
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-        dc.clear();
         var bgColour = backgroundColour(currentVal);
-        setFillHelper(dc, bgColour);
-        dc.fillRectangle(0, 0, dc.getWidth(), dc.getHeight());
+        dc.setColor(Graphics.COLOR_WHITE, bgColour);
         dc.clear();
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.clear();
         dc.setPenWidth(4);
         for (var i = 0; i < letterPositions.size(); i++) {
             var point = letterPositions[i];
