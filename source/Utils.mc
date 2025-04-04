@@ -107,6 +107,50 @@ function logE(message as String) as Void
   logLevel("E", message);
 }
 
+// todo (perf): make these inline functions, and set options for vivoactive so these functions result in a direct call to dc
+function setFillHelper(dc as Dc, colour as Number) as Void {
+  if (dc has :setFill)
+  {
+    // vivoactive does not have setFill
+    dc.setFill(colour);
+    return;
+  }
+
+  dc.setColor(colour, colour);
+}
+
+function setStrokeHelper(dc as Dc, colour as Number) as Void {
+  if (dc has :setStroke)
+  {
+    // vivoactive does not have setStroke
+    dc.setStroke(colour);
+    return;
+  }
+
+  dc.setColor(colour, colour);
+}
+
+function padStart(str as String?, targetLength as Number, padChar as Char) as String {
+    var currentStr = (str == null) ? "" : str;
+    var currentLength = currentStr.length();
+
+    if (targetLength <= 0 || currentLength >= targetLength) {
+        return currentStr; // No padding needed or invalid target length
+    }
+
+    var paddingNeeded = targetLength - currentLength;
+    var padding = "";
+
+    // Build the padding string
+    // Note: Repeated string concatenation can be inefficient in MonkeyC
+    // for VERY long padding, but is usually fine for typical use cases.
+    for (var i = 0; i < paddingNeeded; i++) {
+        padding += padChar;
+    }
+
+    return padding + currentStr;
+}
+
 function stringReplaceFirst(originalString as String, target as String, replacement as String) as String {
     var index = originalString.find(target);
 

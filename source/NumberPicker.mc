@@ -8,12 +8,14 @@ import Toybox.Lang;
 class NumberPicker {
     private var currentVal as String;
     private var _charset as String;
+    private var maxLength as Number;
     private var letterPositions as Array<Array<Number>>;
     private var halfWidth as Number or Null;
     private var myText as WatchUi.Text;
     const halfHitboxSize as Number = 35;
 
-    function initialize(charset as String) {
+    function initialize(charset as String, maxLength as Number) {
+        self.maxLength = maxLength;
         _charset = charset;
         currentVal = "";
         letterPositions = [];
@@ -51,9 +53,11 @@ class NumberPicker {
     }
 
     function onUpdate(dc as Dc) as Void {
-        // todo use system colours (there are consts for this somewhere)
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.clear();
         var bgColour = backgroundColour(currentVal);
-        dc.setColor(bgColour, bgColour);
+        setFillHelper(dc, bgColour);
+        dc.fillRectangle(0, 0, dc.getWidth(), dc.getHeight());
         dc.clear();
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(4);
@@ -65,11 +69,7 @@ class NumberPicker {
             dc.drawText(pointX, pointY, Graphics.FONT_SMALL, letter, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
 
-        if (halfWidth != null)
-        {
-            myText.draw(dc);
-            // dc.drawText(halfWidth, halfWidth, Graphics.FONT_SMALL, currentVal, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        }
+        myText.draw(dc);
     }
 
     function confirm() as Void
@@ -93,7 +93,7 @@ class NumberPicker {
     function onTap(x as Number, y as Number) as Boolean
     {
         var letter = letterOfTap(x, y);
-        if (letter == null)
+        if (letter == null || currentVal.length() >= maxLength)
         {
             return false;
         }
@@ -131,7 +131,7 @@ class NumberPicker {
 
 class FloatPicker extends NumberPicker {
     function initialize() {
-        NumberPicker.initialize("0123456789.");
+        NumberPicker.initialize("0123456789.", 10);
     }
 
     protected function onReading(value as String) as Void
@@ -144,7 +144,7 @@ class FloatPicker extends NumberPicker {
 
 class IntPicker extends NumberPicker {
     function initialize() {
-        NumberPicker.initialize("0123456789");
+        NumberPicker.initialize("0123456789", 10);
     }
 
     protected function onReading(value as String) as Void
@@ -157,25 +157,19 @@ class IntPicker extends NumberPicker {
 
 class ColourPicker extends NumberPicker {
     function initialize() {
-        NumberPicker.initialize("0123456789ABCDEF");
+        NumberPicker.initialize("0123456789ABCDEF", 8);
     }
 
     protected function onReading(value as String) as Void
     {
-        onValue(value.toNumberWithBase(16));
+        onValue(Settings.parseColourRaw("key", value, Graphics.COLOR_BLACK));
     }
 
     protected function onValue(value as Number or Null) as Void;
 
     protected function backgroundColour(value as String) as Number
     {
-        var ret = value.toNumberWithBase(16);
-        if (ret == null)
-        {
-            return Graphics.COLOR_BLACK;
-        }
-
-        return ret;
+        return Settings.parseColourRaw("key", value, Graphics.COLOR_BLACK);
     }
 }
 

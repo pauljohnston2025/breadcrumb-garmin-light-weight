@@ -677,29 +677,35 @@ class Settings {
         return defaultValue;
     }
     
-    function parseColourRaw(key as String, colorString as String or Null, defaultValue as Number) as Number {
+    static function parseColourRaw(key as String, colourString as String or Null, defaultValue as Number) as Number {
         try {
-            if (colorString == null)
+            if (colourString == null)
             {
                 return defaultValue;
             }
 
-            if (colorString instanceof String)
+            if (colourString instanceof String)
             {
+                // want final string as AARRGGBB
+                colourString = padStart(colourString, 6, '0'); // fill in 24 bit colour with 0's
+                colourString = padStart(colourString, 8, 'F'); // pad alpha channel with FF
                 // empty or invalid strings convert to null
-                var ret = colorString.toNumberWithBase(16);
-                if (ret == null)
+                // anything with leading FF needs to be a long, because its too big to fit in Number
+                var long = colourString.toLongWithBase(16);
+                if (long == null)
                 {
                     return defaultValue;
                 }
 
-                return ret;
+                // calling tonumber breaks - because its out of range, but we need to set the alpha bits
+                var number = (long && 0xFFFFFFFF).toNumber(); 
+                return number;
             }
 
-            return parseNumberRaw(key, colorString, defaultValue);
+            return parseNumberRaw(key, colourString, defaultValue);
                 
         } catch (e) {
-            System.println("Error parsing colour: " + key + " " + colorString);
+            System.println("Error parsing colour: " + key + " " + colourString);
         }
         return defaultValue;
     }
@@ -952,6 +958,10 @@ class Settings {
 
     function asDict() as Dictionary
     {
+        // all thse return values should bnebe identical to the storage value
+        // eg. nulls are exposed as 0
+        // colours are strings
+
         return {
             "tileSize" => tileSize,
             "tileLayerMax" => tileLayerMax,
@@ -959,9 +969,9 @@ class Settings {
             "tileCacheSize" => tileCacheSize,
             "mode" => mode,
             "mapEnabled" => mapEnabled,
-            "trackColour" => trackColour,
-            "elevationColour" => elevationColour,
-            "userColour" => userColour,
+            "trackColour" => trackColour.format("%X"),
+            "elevationColour" => elevationColour.format("%X"),
+            "userColour" => userColour.format("%X"),
             "maxPendingWebRequests" => maxPendingWebRequests,
             "scale" => scale == null ? 0f : scale,
             "metersAroundUser" => metersAroundUser,
@@ -979,10 +989,10 @@ class Settings {
             "enableOffTrackAlerts" => enableOffTrackAlerts,
             "offTrackAlertsDistanceM" => offTrackAlertsDistanceM,
             "offTrackAlertsMaxReportIntervalS" => offTrackAlertsMaxReportIntervalS,
-            "normalModeColour" => normalModeColour,
+            "normalModeColour" => normalModeColour.format("%X"),
             "routeMax" => routeMax,
-            "uiColour" => uiColour,
-            "debugColour" => debugColour,
+            "uiColour" => uiColour.format("%X"),
+            "debugColour" => debugColour.format("%X"),
             "resetDefaults" => false,
         };
     }
