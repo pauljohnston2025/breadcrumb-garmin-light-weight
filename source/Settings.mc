@@ -222,6 +222,13 @@ class Settings {
            clearPendingWebRequests();
            clearTileCacheStats();
            clearWebStats();
+           return;
+        }
+
+        // prompts user to open the app
+        if (tileUrl.equals(COMPANION_APP_TILE_URL))
+        {
+          Communications.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
         }
     }
     
@@ -1049,6 +1056,7 @@ class Settings {
         tileCacheSize = parseNumber("tileCacheSize", tileCacheSize);
         mode = parseNumber("mode", mode);
         mapEnabled = parseBool("mapEnabled", mapEnabled);
+        setMapEnabled(mapEnabled); // prompt for app to open if needed
         displayRouteNames = parseBool("displayRouteNames", displayRouteNames);
         enableOffTrackAlerts = parseBool("enableOffTrackAlerts", enableOffTrackAlerts);
         enableRotation = parseBool("enableRotation", enableRotation);

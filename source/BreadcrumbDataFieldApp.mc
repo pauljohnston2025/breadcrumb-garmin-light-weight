@@ -89,12 +89,6 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
     // Return the initial view of your application here
     function getInitialView() as [Views] or [Views, InputDelegates] {
-        // prompts user to open the app
-        if (_breadcrumbContext.settings().tileUrl.equals(COMPANION_APP_TILE_URL))
-        {
-          Communications.transmit([PROTOCOL_SEND_OPEN_APP], {}, _commStatus);
-        }
-
         // to open settings to test the simulator has it in an obvious place
         // Settings -> Trigger App Settings (right down the bottom - almost off the screen)
         // then to go back you need to Settings -> Time Out App Settings

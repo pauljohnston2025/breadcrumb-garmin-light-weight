@@ -154,7 +154,7 @@ class IntPicker extends NumberPicker {
 
 class ColourPicker extends NumberPicker {
     function initialize() {
-        NumberPicker.initialize("0123456789ABCDEF", 8);
+        NumberPicker.initialize("0123456789ABCDEF", 6);
     }
 
     protected function onReading(value as String) as Void
