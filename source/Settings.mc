@@ -374,7 +374,7 @@ class Settings {
         saveRoutes();
     }
     
-    function saveRoutes()
+    function routesToSave() as Array
     {
         var toSave = [];
         for (var i = 0; i < routes.size(); ++i) {
@@ -388,6 +388,12 @@ class Settings {
                 }
             );
         }
+        return toSave;
+    }
+    
+    function saveRoutes() as Void
+    {
+        var toSave = routesToSave();
         Application.Properties.setValue("routes", toSave);
         updateOnlyEnabledRoute();
     }
@@ -990,7 +996,7 @@ class Settings {
             "fixedLatitude" => fixedLatitude == null ? 0f : fixedLatitude,
             "fixedLongitude" => fixedLongitude == null ? 0f : fixedLongitude,
             "tileUrl" => tileUrl,
-            "routes" => routes,
+            "routes" => routesToSave(),
             "routesEnabled" => routesEnabled,
             "displayRouteNames" => displayRouteNames,
             "disableMapsFailureCount" => disableMapsFailureCount,
