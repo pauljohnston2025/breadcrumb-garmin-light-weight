@@ -72,11 +72,11 @@ function isnan(a as Float) as Boolean {
 // https://developer.garmin.com/connect-iq/core-topics/graphics/#graphics
 // we must call get and keep the reference otherwise it can get cleanup up from under us
 // not too bad for temporaries, but terrible for tiles (they can not be garbage collected)
-function newBitmap(size as Number, palette as Array or Null) as Graphics.BufferedBitmap
+function newBitmap(width as Number, height as Number, palette as Array or Null) as Graphics.BufferedBitmap
 {
     var options = {
-      :width => size,
-      :height => size,
+      :width => width,
+      :height => height,
       :palette => palette,
     };
 
@@ -129,6 +129,18 @@ function setStrokeHelper(dc as Dc, colour as Number) as Void {
   }
 
   dc.setColor(colour, colour);
+}
+
+(:scaledbitmap)
+function drawScaledBitmapHelper(dc as Dc, x as Numeric, y as Numeric, width as Numeric, height as Numeric, bitmap as BitmapType) as Void
+{
+    dc.drawScaledBitmap(x, y, width, height, bitmap);
+}
+
+(:noscaledbitmap)
+function drawScaledBitmapHelper(dc as Dc, x as Numeric, y as Numeric, width as Numeric, height as Numeric, bitmap as BitmapType) as Void
+{
+  dc.drawBitmap(x, y, bitmap);
 }
 
 function padStart(str as String?, targetLength as Number, padChar as Char) as String {

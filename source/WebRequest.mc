@@ -5,60 +5,66 @@ import Toybox.PersistedContent;
 import Toybox.System;
 import Toybox.Communications;
 
-class WebHandler {
+class JsonWebHandler {
     // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
-    function handle(responseCode as Number, data as Dictionary or String or Iterator or WatchUi.BitmapResource or Graphics.BitmapReference or Null) as Void;
+    function handle(responseCode as Number, data as Dictionary or String or Iterator or Null) as Void;
+}
+
+class ImageWebHandler {
+    // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
+    function handle(responseCode as Number, data as WatchUi.BitmapResource or Graphics.BitmapReference or Null) as Void;
 }
 
 class WebRequest {
     var url as String;
     var params as Dictionary<Object, Object>;
-    var handler as WebHandler;
     // unique id for this request, if two requests have the same hash the second one will be dropped if the first is pending
     var hash as String;
 
     function initialize(
         _hash as String,
         _url as String,
-        _params as Dictionary<Object, Object>, 
-        _handler as WebHandler)
+        _params as Dictionary<Object, Object>)
     {
         hash = _hash;
         url = _url;
         params = _params;
-        handler = _handler;
     }
 }
 
 class JsonRequest extends WebRequest {
+    var handler as JsonWebHandler;
     function initialize(
         _hash as String,
         _url as String,
         _params as Dictionary<Object, Object>, 
-        _handler as WebHandler)
+        _handler as JsonWebHandler)
     {
-        WebRequest.initialize(_hash, _url, _params, _handler);
+        WebRequest.initialize(_hash, _url, _params);
+        handler = _handler;
     }
 }
 
 class ImageRequest extends WebRequest {
+    var handler as ImageWebHandler;
     function initialize(
         _hash as String,
         _url as String,
         _params as Dictionary<Object, Object>, 
-        _handler as WebHandler)
+        _handler as ImageWebHandler)
     {
-       WebRequest.initialize(_hash, _url, _params, _handler);
+       WebRequest.initialize(_hash, _url, _params);
+       handler = _handler;
     }
 }
 
-class WebRequestHandle {
+class WebRequestHandleWrapper {
     var webHandler as WebRequestHandler;
-    var handler as WebHandler;
+    var handler as JsonWebHandler or ImageWebHandler;
 
     function initialize(
         _webHandler as WebRequestHandler,
-        _handler as WebHandler)
+        _handler as JsonWebHandler or ImageWebHandler)
     {
         webHandler = _webHandler;
         handler = _handler;
@@ -202,7 +208,7 @@ class WebRequestHandler
         if (jsonOrImageReq instanceof ImageRequest)
         {
             // System.println("sending image request");
-            var callback = (new WebRequestHandle(me, jsonOrImageReq.handler)).method(:handle) as Method(responseCode as Lang.Number, data as WatchUi.BitmapResource or Graphics.BitmapReference or Null) as Void;
+            var callback = (new WebRequestHandleWrapper(me, jsonOrImageReq.handler)).method(:handle) as Method(responseCode as Lang.Number, data as WatchUi.BitmapResource or Graphics.BitmapReference or Null) as Void;
             // we only use image requests for exeternal servers
             var requiresScaling = _settings.tileSize != 256;
             Communications.makeImageRequest(
@@ -230,7 +236,13 @@ class WebRequestHandler
         }
 
         // System.println("sending json request");
-        var callback = (new WebRequestHandle(me, jsonOrImageReq.handler)).method(:handle) as Method(responseCode as Lang.Number, data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null) as Void or Method(responseCode as Lang.Number, data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null, context as Lang.Object) as Void;
+        var callback = (new WebRequestHandleWrapper(me, jsonOrImageReq.handler)).method(:handle) as Method(responseCode as Lang.Number, data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null) as Void or Method(responseCode as Lang.Number, data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null, context as Lang.Object) as Void;
+        // note: even though docs say that this could be sent over wifi it seems it never is, and requires the blueotth connection
+        // also i tried several ways to force wifi, inclusding calls to checkWifiConnection - which does ocnnect wifi but the request still seems 
+        // to go through the bluetooth bridge
+        // https://forums.garmin.com/developer/connect-iq/f/discussion/5230/web-requests-without-mobile-connect
+        // it seems like edge devices in the simulator do not support this, the callback is just never called (could be a simulator bug)
+        // routes still work though, so allowing them to still be used
         Communications.makeWebRequest(
             jsonOrImageReq.url,
             jsonOrImageReq.params,

@@ -65,7 +65,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
        && x < renderer.returnToUserX + halfHitboxSize) {
       // return to users location
       // bottom left
-      settings.setFixedPosition(0f, 0f);
+      settings.setFixedPosition(null, null, true);
       return true;
     } else if (  y > renderer.mapEnabledY - halfHitboxSize 
        && y < renderer.mapEnabledY + halfHitboxSize  
@@ -89,7 +89,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
       // top of screen
       renderer.incScale();
       return true;
-    } else if(y > renderer._screenSize - hitboxSize) {
+    } else if(y > renderer._screenHeight - hitboxSize) {
       // bottom of screen
       if (settings.mode == MODE_MAP_MOVE)
       {
@@ -99,7 +99,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
       renderer.decScale();
       return true;
     }
-    else if(x > renderer._screenSize - hitboxSize) {
+    else if(x > renderer._screenWidth - hitboxSize) {
       // right of screen
       if (settings.mode == MODE_MAP_MOVE)
       {

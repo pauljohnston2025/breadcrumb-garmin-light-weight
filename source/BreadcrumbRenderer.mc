@@ -36,7 +36,9 @@ class BreadcrumbRenderer {
 
   // cache some important maths to make everything faster
   // things set to -1 are set by setScreenSize()
-  var _screenSize as Float = 360.0f; // default to venu2s screen size
+  var _screenWidth as Float = 360.0f; // default to venu2s screen size
+  var _screenHeight as Float = 360.0f; // default to venu2s screen size
+  var _minScreenDim = minF(_screenWidth, _screenHeight);
   var _xHalf as Float = -1f;
   var _yHalf as Float = -1f;
   
@@ -61,7 +63,7 @@ class BreadcrumbRenderer {
 
   function initialize(settings as Settings) {
     self.settings = settings;
-    setScreenSize(360.0f, 50f); // start with known good size of the venu2s
+    setScreenSize(360.0f, 360.0f, 50f); // start with known good size of the venu2s
   }
 
   function onActivityInfo(activityInfo as Activity.Info) as Void {
@@ -82,7 +84,14 @@ class BreadcrumbRenderer {
     return _rotationRad;
   }
 
+  (:scaledbitmap)
   function calculateScale(
+      outerBoundingBox as[Float, Float, Float, Float]) as Float {
+    return calculateScaleStandard(outerBoundingBox);
+  }
+
+  // todo inline
+  function calculateScaleStandard(
       outerBoundingBox as[Float, Float, Float, Float]) as Float {
     var scale = settings.scale;
     if (scale != null) {
@@ -103,7 +112,37 @@ class BreadcrumbRenderer {
     // venu 2s
     // but this would only work for sqaures, so 0.75 fudge factor for circle
     // watch face
-    return _screenSize / maxDistanceM * 0.75;
+    return _minScreenDim / maxDistanceM * 0.75;
+  }
+
+
+  (:noscaledbitmap)
+  function calculateScale(
+      outerBoundingBox as[Float, Float, Float, Float]) as Float {
+    // note: this can come from user intervention, and settings the sclae overload, we will get a close as we can
+    var perfectScale = calculateScaleStandard(outerBoundingBox);
+    
+    if (settings.mapEnabled)
+    {
+      // only allow map tile scale levels so that we can render the tiles without any gaps, and at the correct size
+      // todo cache these calcs, it is for the slower devices after all
+      var desiredResolution = 1 / perfectScale;
+      var z = Math.floor(getApp()._breadcrumbContext.mapRenderer().calculateTileLevel(desiredResolution)).toNumber();
+      z = minN(maxN(z, settings.tileLayerMin), settings.tileLayerMax); // cap to our limits
+      
+      // we want these ratios to be the same
+      // var minScreenDimM = _minScreenDim / currentScale;
+      // var screenToTileMRatio = minScreenDimM / tileWidthM;
+      // var screenToTilePixelRatio = minScreenDim / _settings.tileSize;
+       var tileWidthM = (getApp()._breadcrumbContext.mapRenderer().earthsCircumference / Math.pow(2, z)) / settings.smallTilesPerBigTile;
+      //  var screenToTilePixelRatio = _minScreenDim / settings.tileSize;
+      
+      // note: this gets as close as it can to the zoom level, some route clipping might occur
+      // we have to go to the largertile sizes so that we can see the whole route
+      return settings.tileSize / tileWidthM;
+    }
+
+    return perfectScale;
   }
 
   function updateCurrentScale(outerBoundingBox as[Float, Float, Float, Float]) as Void {
@@ -146,7 +185,7 @@ class BreadcrumbRenderer {
 
     var foundName = SCALE_NAMES[distanceM];
 
-    var y = _screenSize - 20;
+    var y = _screenHeight - 20;
     dc.setColor(settings.normalModeColour, Graphics.COLOR_TRANSPARENT);
     dc.setPenWidth(4);
     dc.drawLine(_xHalf - pixelWidth / 2.0f, y,
@@ -310,9 +349,9 @@ class BreadcrumbRenderer {
       {
         // press right to confirm, left cancels
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
-        dc.fillRectangle(0, 0, _xHalf, _screenSize);
+        dc.fillRectangle(0, 0, _xHalf, _screenHeight);
         dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_GREEN);
-        dc.fillRectangle(_xHalf, 0, _xHalf, _screenSize);
+        dc.fillRectangle(_xHalf, 0, _xHalf, _screenHeight);
         dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
         dc.drawText(_xHalf - padding, _yHalf, Graphics.FONT_XTINY,
                   "N", Graphics.TEXT_JUSTIFY_CENTER);
@@ -327,9 +366,9 @@ class BreadcrumbRenderer {
       {
         // press left to confirm, right cancels
         dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_GREEN);
-        dc.fillRectangle(0, 0, _xHalf, _screenSize);
+        dc.fillRectangle(0, 0, _xHalf, _screenHeight);
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
-        dc.fillRectangle(_xHalf, 0, _xHalf, _screenSize);
+        dc.fillRectangle(_xHalf, 0, _xHalf, _screenHeight);
         dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
         dc.drawText(_xHalf - padding, _yHalf, Graphics.FONT_XTINY,
                   "Y", Graphics.TEXT_JUSTIFY_CENTER);
@@ -415,14 +454,14 @@ class BreadcrumbRenderer {
     // always show location
     if (settings.fixedPosition != null && settings.fixedLatitude != null && settings.fixedLongitude != null) {
       var txt = settings.fixedLatitude.format("%.3f") + ", " + settings.fixedLongitude.format("%.3f");
-      dc.drawText(_xHalf, _screenSize - scaleFromEdge, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_CENTER);
+      dc.drawText(_xHalf, _screenHeight - scaleFromEdge, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_CENTER);
     }
     else if (lastRenderedCenter != null) {
       var latLong = RectangularPoint.xyToLatLon(lastRenderedCenter.x, lastRenderedCenter.y);
       if (latLong != null)
       {
         var txt = latLong[0].format("%.3f") + ", " + latLong[1].format("%.3f");
-        dc.drawText(_xHalf, _screenSize - scaleFromEdge, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_CENTER);
+        dc.drawText(_xHalf, _screenHeight - scaleFromEdge, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_CENTER);
       }
     }
 
@@ -612,19 +651,29 @@ class BreadcrumbRenderer {
   var hitboxSize as Float = 50f;
   var halfHitboxSize as Float = hitboxSize / 2.0f;
 
-  function setScreenSize(size as Float, xElevationStart as Float) as Void
+  function setScreenSize(width as Float, height as Float, xElevationStart as Float) as Void
   {
     _xElevationStart = xElevationStart; 
-    _screenSize = size;
-    _xHalf = _screenSize / 2.0f;
-    _yHalf = _screenSize / 2.0f;    
-    _xElevationEnd = _screenSize - _xElevationStart;
+    _screenWidth = width;
+    _screenHeight = height;
+    _minScreenDim = minF(_screenWidth, _screenHeight);
+    _xHalf = width / 2.0f;
+    _yHalf = height / 2.0f;    
+    _xElevationEnd = _screenWidth - _xElevationStart;
     var xElevationFromCenter = _xHalf - _xElevationStart;
     _yElevationHeight = Math.sqrt(_xHalf * _xHalf - xElevationFromCenter * xElevationFromCenter) * 2 - 40;
     _halfYElevationHeight = _yElevationHeight / 2.0f;
     yElevationTop = _yHalf - _halfYElevationHeight;
     yElevationBottom = _yHalf + _halfYElevationHeight;    
+
+    setCornerPositions();
+  }
+
+  (:round)
+  function setCornerPositions() as Void
+  {
     var offsetSize = Math.sqrt((_yHalf - halfHitboxSize )*(_yHalf - halfHitboxSize) / 2);
+
     // top left
     clearRouteX = _xHalf - offsetSize;
     clearRouteY = _yHalf - offsetSize;
@@ -640,6 +689,26 @@ class BreadcrumbRenderer {
     // bottom right
     mapEnabledX = _xHalf + offsetSize;
     mapEnabledY = _yHalf + offsetSize;
+  }
+  
+  (:rectangle)
+  function setCornerPositions() as Void
+  {
+    // top left
+    clearRouteX = halfHitboxSize;
+    clearRouteY = halfHitboxSize;
+    
+    // top right
+    modeSelectX = _screenWidth - halfHitboxSize;
+    modeSelectY = halfHitboxSize;
+    
+    // bottom left
+    returnToUserX = halfHitboxSize;
+    returnToUserY = _screenHeight - halfHitboxSize;
+    
+    // bottom right
+    mapEnabledX = _screenWidth - halfHitboxSize;
+    mapEnabledY = _screenHeight - halfHitboxSize;
   }
 
   function renderElevationChart(
@@ -662,7 +731,7 @@ class BreadcrumbRenderer {
     dc.drawLine(_xElevationStart, yElevationTop, _xElevationStart, yElevationBottom);
     dc.drawLine(_xElevationStart, _yHalf, _xElevationEnd, _yHalf);
     // border (does not look great)
-    // dc.drawRectangle(_xElevationStart, _yHalf - _halfYElevationHeight, _screenSize - _xElevationStart * 2, _yElevationHeight);
+    // dc.drawRectangle(_xElevationStart, _yHalf - _halfYElevationHeight, _screenWidth - _xElevationStart * 2, _yElevationHeight);
 
     // horizontal lines vertical scale
     if (vPixelWidth != 0) // do not want infinite for loop
@@ -703,7 +772,7 @@ class BreadcrumbRenderer {
     {
       var hFoundName = SCALE_NAMES[hDistanceM];
 
-      var y = _screenSize - 20;
+      var y = _screenHeight - 20;
       dc.drawLine(_xHalf - hPixelWidth / 2.0f, y, _xHalf + hPixelWidth / 2.0f, y);
       dc.drawText(_xHalf, y - 30, Graphics.FONT_XTINY, hFoundName, Graphics.TEXT_JUSTIFY_CENTER);
     }
@@ -713,7 +782,7 @@ class BreadcrumbRenderer {
       var vFoundName = ELEVATION_SCALE_NAMES[vDistanceM];
 
       var x = _xHalf + DESIRED_SCALE_PIXEL_WIDTH/ 2.0f;
-      var y = _screenSize - 20 - 5 - vPixelWidth / 2.0f;
+      var y = _screenHeight - 20 - 5 - vPixelWidth / 2.0f;
       dc.drawLine(x , y - vPixelWidth / 2.0f, x, y + vPixelWidth / 2.0f);
       dc.drawText(x + 5, y - 15, Graphics.FONT_XTINY, vFoundName, Graphics.TEXT_JUSTIFY_LEFT);
       // var vectorFont = Graphics.getVectorFont(
@@ -766,7 +835,7 @@ class BreadcrumbRenderer {
 
   function getElevationScaleRaw(distance as Float, elevationChange as Float, startAt as Float) as [Float, Float, Float] {
     // clip to a a square (since we cannot see the edges of the circle)
-    var totalXDistance = _screenSize - 2 * _xElevationStart;
+    var totalXDistance = _screenWidth - 2 * _xElevationStart;
     var totalYDistance = _yElevationHeight;
 
     if (distance == 0 && elevationChange == 0)

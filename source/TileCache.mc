@@ -90,7 +90,7 @@ class Tile {
     }
 }
 
-class WebTileRequestHandler extends WebHandler {
+class JsonWebTileRequestHandler extends JsonWebHandler {
     var _tileCache as TileCache;
     var _tileKey as TileKey;
     
@@ -99,89 +99,17 @@ class WebTileRequestHandler extends WebHandler {
         tileKey as TileKey
     )
     {
-        WebHandler.initialize();
+        JsonWebHandler.initialize();
         _tileCache = tileCache;
         _tileKey = tileKey;
     }
 
-    function handle(responseCode as Number, data as Dictionary or String or Iterator or WatchUi.BitmapResource or Graphics.BitmapReference or Null) as Void
+    function handle(responseCode as Number, data as Dictionary or String or Iterator or Null) as Void
     {
         if (responseCode != 200)
         {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
             System.println("failed with: " + responseCode);
-            return;
-        }
-
-        if (data instanceof WatchUi.BitmapResource || data instanceof Graphics.BitmapReference)
-        {
-            var settings = getApp()._breadcrumbContext.settings();
-            // we have to downsample the tile, not recomendedd, as this mean we will have to request the same tile multiple times (cant save big tiles around anywhere)
-            // also means we have to use scratch space to draw the tile and downsample it
-            
-            if (data.getWidth() != settings.tileSize || data.getHeight() != settings.tileSize)
-            {
-                // dangerous large bitmap could cause oom, buts its the only way to upscale the image and then slice it
-                // we cannot downscale because we would be slicing a pixel in half
-                // I guess we could just figure out which pixels to double up on?
-                // anyone using an external tile server should be setting thier tileSize to 256, but perhaps some devices will run out of memory?
-                // if users are using a smaller size it should be a multiple of 256.
-                // if its not, we will stretch the image then downsize, if its already a multiple we will use the image as is (optimal)
-                var maxDim = maxN(data.getWidth(), data.getHeight()); // should be equal (every time server i know of is 256*256), but who knows
-                var pixelsPerTile = maxDim / settings.smallTilesPerBigTile.toFloat();
-                var sourceBitmap = data;
-                if (Math.ceil(pixelsPerTile) != pixelsPerTile)
-                {
-                    // we have an aloying situation - stretch the image
-                    var scaleUpSize = settings.smallTilesPerBigTile * settings.tileSize;
-                    var upscaledBitmap = newBitmap(scaleUpSize, null);
-                    var upscaledBitmapDc = upscaledBitmap.getDc();
-                    upscaledBitmapDc.drawScaledBitmap(0, 0, scaleUpSize, scaleUpSize, sourceBitmap);
-                    System.println("scaled up to: " + upscaledBitmap.getWidth() + " " + upscaledBitmap.getHeight());
-                    System.println("from: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
-                    sourceBitmap = upscaledBitmap; // resume what we were doing as if it was always the larger bitmap
-                }
-
-                var croppedSection = newBitmap(settings.tileSize, null);
-                var croppedSectionDc = croppedSection.getDc();
-                var xOffset = _tileKey.x % settings.smallTilesPerBigTile;
-                var yOffset = _tileKey.y % settings.smallTilesPerBigTile;
-                System.println("tile: " + _tileKey);
-                System.println("croppedSection: " + croppedSection.getWidth() + " " + croppedSection.getHeight());
-                System.println("source: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
-                System.println("drawing from: " + xOffset * settings.tileSize + " " + yOffset * settings.tileSize);
-                croppedSectionDc.drawBitmap2(
-                    0,
-                    0,
-                    sourceBitmap,
-                    {
-                        // if this results in hitting the edge of the bitmap nothing is drawn
-                        // so even though x=192 with width=64 should be drawn it is not
-                        // it results in an empty image
-                        // ie. it should be 0-64, 65-128, 128-192, 192-256 ie. half-open range [begin, end)
-                        // but it look like they are using closed ranges?
-                        // see Webrequest issues around Communications.makeImageRequest( and packing format
-                        // the simulator also does the weird becaviour as listed above only first tile crop works
-                        // it is good to note that i can only get this to work on the physical device, which makes it a real pain to test
-                        // tried again with PNG, that did work at least once, and it broke like the simulator does
-                        // in essence - use 256 as a user setting or this just wont work
-                        // one of the first 12 tiles actually renderred - similar to the simulator
-                        // must be something wrong with getting the bitmap from, or because its a reference? calling get() seems to be no different.
-                        :bitmapX => xOffset * settings.tileSize,
-                        :bitmapY => yOffset * settings.tileSize,
-                        :bitmapWidth => settings.tileSize,
-                        :bitmapHeight => settings.tileSize,
-                        // :filterMode => Graphics.FILTER_MODE_BILINEAR,
-                        // :dithering => Communications.IMAGE_DITHERING_NONE,
-                    }
-                );
-
-                data = croppedSection;
-            }
-
-            var tile = new Tile();
-            tile.setBitmap(data);
-            _tileCache.addTile(_tileKey, tile);
             return;
         }
 
@@ -209,6 +137,105 @@ class WebTileRequestHandler extends WebHandler {
         }
 
         tile.setBitmap(bitmap);
+        _tileCache.addTile(_tileKey, tile);
+    }
+}
+
+class ImageWebTileRequestHandler extends ImageWebHandler {
+    var _tileCache as TileCache;
+    var _tileKey as TileKey;
+    
+    function initialize(
+        tileCache as TileCache,
+        tileKey as TileKey
+    )
+    {
+        ImageWebHandler.initialize();
+        _tileCache = tileCache;
+        _tileKey = tileKey;
+    }
+
+    function handle(responseCode as Number, data as WatchUi.BitmapResource or Graphics.BitmapReference or Null) as Void
+    {
+        if (responseCode != 200)
+        {
+            // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
+            System.println("failed with: " + responseCode);
+            return;
+        }
+
+        if (data == null)
+        {
+            System.println("wrong data type not image");
+            return;
+        }
+
+        var settings = getApp()._breadcrumbContext.settings();
+        // we have to downsample the tile, not recomendedd, as this mean we will have to request the same tile multiple times (cant save big tiles around anywhere)
+        // also means we have to use scratch space to draw the tile and downsample it
+        
+        if (data.getWidth() != settings.tileSize || data.getHeight() != settings.tileSize)
+        {
+            // dangerous large bitmap could cause oom, buts its the only way to upscale the image and then slice it
+            // we cannot downscale because we would be slicing a pixel in half
+            // I guess we could just figure out which pixels to double up on?
+            // anyone using an external tile server should be setting thier tileSize to 256, but perhaps some devices will run out of memory?
+            // if users are using a smaller size it should be a multiple of 256.
+            // if its not, we will stretch the image then downsize, if its already a multiple we will use the image as is (optimal)
+            var maxDim = maxN(data.getWidth(), data.getHeight()); // should be equal (every time server i know of is 256*256), but who knows
+            var pixelsPerTile = maxDim / settings.smallTilesPerBigTile.toFloat();
+            var sourceBitmap = data;
+            if (Math.ceil(pixelsPerTile) != pixelsPerTile)
+            {
+                // we have an aloying situation - stretch the image
+                var scaleUpSize = settings.smallTilesPerBigTile * settings.tileSize;
+                var upscaledBitmap = newBitmap(scaleUpSize, scaleUpSize, null);
+                var upscaledBitmapDc = upscaledBitmap.getDc();
+                upscaledBitmapDc.drawScaledBitmap(0, 0, scaleUpSize, scaleUpSize, sourceBitmap);
+                // System.println("scaled up to: " + upscaledBitmap.getWidth() + " " + upscaledBitmap.getHeight());
+                // System.println("from: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
+                sourceBitmap = upscaledBitmap; // resume what we were doing as if it was always the larger bitmap
+            }
+
+            var croppedSection = newBitmap(settings.tileSize, settings.tileSize, null);
+            var croppedSectionDc = croppedSection.getDc();
+            var xOffset = _tileKey.x % settings.smallTilesPerBigTile;
+            var yOffset = _tileKey.y % settings.smallTilesPerBigTile;
+            // System.println("tile: " + _tileKey);
+            // System.println("croppedSection: " + croppedSection.getWidth() + " " + croppedSection.getHeight());
+            // System.println("source: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
+            // System.println("drawing from: " + xOffset * settings.tileSize + " " + yOffset * settings.tileSize);
+            croppedSectionDc.drawBitmap2(
+                0,
+                0,
+                sourceBitmap,
+                {
+                    // if this results in hitting the edge of the bitmap nothing is drawn
+                    // so even though x=192 with width=64 should be drawn it is not
+                    // it results in an empty image
+                    // ie. it should be 0-64, 65-128, 128-192, 192-256 ie. half-open range [begin, end)
+                    // but it look like they are using closed ranges?
+                    // see Webrequest issues around Communications.makeImageRequest( and packing format
+                    // the simulator also does the weird becaviour as listed above only first tile crop works
+                    // it is good to note that i can only get this to work on the physical device, which makes it a real pain to test
+                    // tried again with PNG, that did work at least once, and it broke like the simulator does
+                    // in essence - use 256 as a user setting or this just wont work
+                    // one of the first 12 tiles actually renderred - similar to the simulator
+                    // must be something wrong with getting the bitmap from, or because its a reference? calling get() seems to be no different.
+                    :bitmapX => xOffset * settings.tileSize,
+                    :bitmapY => yOffset * settings.tileSize,
+                    :bitmapWidth => settings.tileSize,
+                    :bitmapHeight => settings.tileSize,
+                    // :filterMode => Graphics.FILTER_MODE_BILINEAR,
+                    // :dithering => Communications.IMAGE_DITHERING_NONE,
+                }
+            );
+
+            data = croppedSection;
+        }
+
+        var tile = new Tile();
+        tile.setBitmap(data);
         _tileCache.addTile(_tileKey, tile);
     }
 }
@@ -356,7 +383,7 @@ class TileCache {
                         tileKey.z.toString()
                     ),
                     {},
-                    new WebTileRequestHandler(me, tileKey)
+                    new ImageWebTileRequestHandler(me, tileKey)
                 )
             );
             return;
@@ -372,7 +399,7 @@ class TileCache {
                     "z" => tileKey.z,
                     "tileSize" => getApp()._breadcrumbContext.settings().tileSize,
                 },
-                new WebTileRequestHandler(me, tileKey)
+                new JsonWebTileRequestHandler(me, tileKey)
             )
         );
     }
@@ -463,7 +490,7 @@ class TileCache {
 
         // todo check if setting the pallet actually reduces memory
         var tileSize = _settings.tileSize;
-        var localBitmap = newBitmap(tileSize, _palette);
+        var localBitmap = newBitmap(tileSize, tileSize, _palette);
         var localDc = localBitmap.getDc();
         var it = 0;
         for (var i=0; i<tileSize; ++i)

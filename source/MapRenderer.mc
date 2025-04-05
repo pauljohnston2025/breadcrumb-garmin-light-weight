@@ -7,7 +7,8 @@ class MapRenderer {
     // single dim array might be better performance? 
     // Could do multidim array to make calling code slightly easier
     // todo: get screen size and factor in some amount of padding
-    var _screenSize as Float = 360f;
+    var _screenWidth as Float = 360f;
+    var _screenHeight as Float = 360f;
     var _tileCache as TileCache;
     var _settings as Settings;
     var earthsCircumference as Float = 40075016.686f;
@@ -22,7 +23,7 @@ class MapRenderer {
     }
 
     // Desired resolution (meters per pixel)
-    function calculateTileLevel(desiredResolution as Float) as Number {
+    function calculateTileLevel(desiredResolution as Float) as Float {
         // Tile width in meters at zoom level 0
         // var tileWidthAtZoom0 = earthsCircumference;
 
@@ -33,7 +34,7 @@ class MapRenderer {
         var tileLevel = Math.ln(resolutionAtZoom0 / desiredResolution) / Math.ln(2);
 
         // Round to the nearest integer zoom level
-        return Math.round(tileLevel);
+        return tileLevel.toFloat();
     }
 
     function renderMap(
@@ -62,16 +63,20 @@ class MapRenderer {
         
         // 2 to 15 see https://opentopomap.org/#map=2/-43.2/305.9
         var desiredResolution = 1 / currentScale;
-        var z = calculateTileLevel(desiredResolution);
+        var z = Math.round(calculateTileLevel(desiredResolution)).toNumber();
         z = minN(maxN(z, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
 
         var tileWidthM = (earthsCircumference / Math.pow(2, z)) / _settings.smallTilesPerBigTile;
-        var screenWidthM = _screenSize / currentScale;
+        // var minScreenDim = minF(_screenWidth, _screenHeight);
+        // var minScreenDimM = minScreenDim / currentScale;
+        var screenWidthM = _screenWidth / currentScale;
+        var screenHeightM = _screenHeight / currentScale;
         
         // where the screen corner starts
         var halfScreenWidthM = screenWidthM / 2f;
+        var halfScreenHeightM = screenHeightM / 2f;
         var screenLeftM = centerPosition.x - halfScreenWidthM;
-        var screenTopM = centerPosition.y + halfScreenWidthM;
+        var screenTopM = centerPosition.y + halfScreenHeightM;
 
         // find which tile we are closest to
         var firstTileX = ((screenLeftM + originShift) / tileWidthM).toNumber();
@@ -88,9 +93,11 @@ class MapRenderer {
         var firstTileLeftM = firstTileX * tileWidthM - originShift;
         var firstTileTopM = originShift - firstTileY * tileWidthM;
 
-        var screenToTileMRatio = screenWidthM / tileWidthM;
-        var screenToTilePixelRatio = _screenSize / _settings.tileSize;
-        var scaleFactor = screenToTilePixelRatio / screenToTileMRatio; // we need to stretch or shrink the tiles by this much
+        // var screenToTilePixelRatio = minScreenDim / _settings.tileSize;
+        // var screenToTileMRatio = minScreenDimM / tileWidthM;
+        // var scaleFactor = screenToTilePixelRatio / screenToTileMRatio; // we need to stretch or shrink the tiles by this much
+        // simplification of above calculation
+        var scaleFactor = (currentScale * tileWidthM)/ _settings.tileSize;
         // eg. tile = 10m screen = 10m tile = 256pixel screen = 360pixel scaleFactor = 1.4 each tile pixel needs to become 1.4 sceen pixels
         // eg. 2
         //     tile = 20m screen = 10m tile = 256pixel screen = 360pixel scaleFactor = 2.8 we only want to render half the tile, so we only have half the pixels
@@ -109,8 +116,8 @@ class MapRenderer {
         var offsetX = Math.round(((firstTileLeftM - screenLeftM) * currentScale));
         var offsetY = Math.round((screenTopM - firstTileTopM) * currentScale);
 
-        var tileCountX = Math.ceil((-offsetX + _screenSize) / scalePixelSize);
-        var tileCountY = Math.ceil((-offsetY + _screenSize) / scalePixelSize);
+        var tileCountX = Math.ceil((-offsetX + _screenWidth) / scalePixelSize);
+        var tileCountY = Math.ceil((-offsetY + _screenHeight) / scalePixelSize);
         for (var x=0 ; x<tileCountX; ++x)
         {
             for (var y=0 ; y<tileCountY; ++y)
@@ -127,27 +134,20 @@ class MapRenderer {
                 // cant rotate individual tiles as you can see the seams between tiles
                 // one large one then rotate looks much better, and is possibly faster
                 // we must scale as the tile we picked is only close to the resolution we need
-                if (scratchPadDc has :drawScaledBitmap) {
-                    scratchPadDc.drawScaledBitmap(offsetX + x * scalePixelSize, offsetY + y * scalePixelSize, scalePixelSize, scalePixelSize, tileFromCache.bitmap);
-                }
-                else {
-                    // todo: lock scales on these devices to map tile sizes (so we can render without scaling)
-                    // scratchPadDc.drawBitmap(offsetX + x * scalePixelSize, offsetY + y * scalePixelSize, scalePixelSize, scalePixelSize, tileFromCache.bitmap);
-                    // eg. vivoactive 5
-                    scratchPadDc.drawBitmap(offsetX + x * _settings.tileSize, offsetY + y * _settings.tileSize, tileFromCache.bitmap);
-                }
+                $.drawScaledBitmapHelper(scratchPadDc, offsetX + x * scalePixelSize, offsetY + y * scalePixelSize, scalePixelSize, scalePixelSize, tileFromCache.bitmap);
             }
         }
 
         
-        var xyOffset = _screenSize / 2.0f;
+        var xOffset = _screenWidth / 2.0f;
+        var yOffset = _screenHeight / 2.0f;
         
         var transform = new AffineTransform();
         if (_settings.enableRotation)
         {
-            transform.translate(xyOffset, xyOffset); // move to center
+            transform.translate(xOffset, yOffset); // move to center
             transform.rotate(-rotationRad); // rotate
-            transform.translate(-xyOffset, -xyOffset); // move back to position
+            transform.translate(-xOffset, -yOffset); // move back to position
         }
 
         dc.drawBitmap2(
@@ -164,11 +164,6 @@ class MapRenderer {
                 :transform => transform
             }
         );
-
-        if (!(scratchPadDc has :drawScaledBitmap)) {
-            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
-            dc.drawText(0, _screenSize / 2, Graphics.FONT_XTINY, " full support comming soon", Graphics.TEXT_JUSTIFY_LEFT);
-        }
     }
 }
 

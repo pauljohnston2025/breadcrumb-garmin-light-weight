@@ -50,7 +50,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   // Set the label of the data field here.
   function initialize(breadcrumbContext as BreadcrumbContext) {
     _breadcrumbContext = breadcrumbContext;
-    _scratchPadBitmap = newBitmap(_breadcrumbContext.trackRenderer()._screenSize.toNumber(), null);
+    _scratchPadBitmap = newBitmap(360, 360, null);
     DataField.initialize();
     settings = _breadcrumbContext.settings();
   }
@@ -59,12 +59,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // for now we render everything in the onUpdate view, and assume only 1 data
     // screen
     var textDim = dc.getTextDimensions("1234", Graphics.FONT_XTINY);
-    _breadcrumbContext.mapRenderer()._screenSize = dc.getWidth() * 1.0f;
+    _breadcrumbContext.mapRenderer()._screenWidth = dc.getWidth() * 1.0f;
+    _breadcrumbContext.mapRenderer()._screenHeight = dc.getHeight() * 1.0f;
     _breadcrumbContext.trackRenderer().setScreenSize(
       dc.getWidth() * 1.0f,
+      dc.getHeight() * 1.0f,
       textDim[0] * 1.0f
     );
-    _scratchPadBitmap = newBitmap(_breadcrumbContext.trackRenderer()._screenSize.toNumber(), null);
+    _scratchPadBitmap = newBitmap(dc.getWidth(),  dc.getHeight(), null);
   }
 
   function onWorkoutStarted() as Void {
@@ -151,6 +153,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   function onUpdate(dc as Dc) as Void {
     renderMain(dc);
 
+    // move based on the last scale we drew
+    var renderer = _breadcrumbContext.trackRenderer();
+    var scale = renderer._currentScale;
+    // move half way across the screen
+    settings.setMapMoveDistance((renderer._minScreenDim / 2.0) / scale);
+
     if (_breadcrumbContext.settings().uiMode == UI_MODE_SHOW_ALL)
     {
       _breadcrumbContext.trackRenderer().renderUi(dc);
@@ -216,8 +224,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       var centerPoint = calcCenterPointForBoundingBox(outerBoundingBox);
       if (routes.size() != 0) {
         var _center = center(centerPoint);
-        mapRenderer.renderMap(dc, _scratchPadBitmap, _center, renderer.rotationRadians(), renderer._currentScale);
         renderer.updateCurrentScale(outerBoundingBox);
+        mapRenderer.renderMap(dc, _scratchPadBitmap, _center, renderer.rotationRadians(), renderer._currentScale);
         for (var i = 0; i < routes.size(); ++i) {
           if (!settings.routeEnabled(i))
           {
@@ -319,8 +327,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
       centerPoint = center(centerPoint);
 
-      mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians(), renderer._currentScale);
       renderer.updateCurrentScale(outerBoundingBox);
+      mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians(), renderer._currentScale);
       for (var i = 0; i < routes.size(); ++i) {
         if (!settings.routeEnabled(i))
         {
@@ -365,8 +373,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     var centerPoint = center(lastPoint);
 
-    mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians(),  renderer._currentScale);
     renderer.updateCurrentScale(outerBoundingBox);
+    mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians(),  renderer._currentScale);
 
     if (routes.size() != 0) {
       for (var i = 0; i < routes.size(); ++i) {
@@ -390,7 +398,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // it is actually pretty nice info, best guess on string sizes down the screen
     var fieldCount = 7;
     var y = 30;
-    var spacing = (_breadcrumbContext.trackRenderer()._screenSize - y) / fieldCount;
+    var spacing = (dc.getHeight() - y).toFloat() / fieldCount;
     var x = _breadcrumbContext.trackRenderer()._xHalf;
     dc.drawText(x, y, Graphics.FONT_XTINY, "pending web: " + _breadcrumbContext.webRequestHandler().pendingCount(), Graphics.TEXT_JUSTIFY_CENTER);
     y+=spacing;

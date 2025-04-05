@@ -99,7 +99,7 @@ class Settings {
         Application.Properties.setValue("uiMode", uiMode);
     }
     
-    function setFixedPosition(lat as Float or Null, long as Float or Null) as Void {
+    function setFixedPosition(lat as Float or Null, long as Float or Null, clearRequests as Boolean) as Void {
         // System.println("moving to: " + lat + " " + long);
         // be very careful about putting null into properties, it breaks everything
         if (lat == null || !(lat instanceof Float))
@@ -122,7 +122,10 @@ class Settings {
             fixedLatitude = null;
             fixedLongitude = null;
             fixedPosition = null;
-            clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
+            if (clearRequests)
+            {
+                clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
+            }
             return;
         }
 
@@ -130,7 +133,10 @@ class Settings {
         setPositionIfNotSet();
         // var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y);
         // System.println("round trip conversion result: " + latlong);
-        clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
+        if (clearRequests)
+        {
+            clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
+        }
     }
     
     function setZoomAtPaceMode(_zoomAtPaceMode as Number) as Void {
@@ -156,11 +162,11 @@ class Settings {
     }
 
     function setFixedLatitude(value as Float) as Void {
-        setFixedPosition(value, fixedLongitude);
+        setFixedPosition(value, fixedLongitude, true);
     }
     
     function setFixedLongitude(value as Float) as Void {
-        setFixedPosition(fixedLatitude, value);
+        setFixedPosition(fixedLatitude, value, true);
     }
 
     function setMaxPendingWebRequests(value as Number) as Void {
@@ -482,6 +488,11 @@ class Settings {
 
         setRoutesEnabled(true);
     }
+
+    function setMapMoveDistance(value as Float) as Void
+    {
+        mapMoveDistanceM = value;
+    }
     
     function setScale(_scale as Float or Null) as Void {
         scale = _scale;
@@ -489,12 +500,10 @@ class Settings {
         if (scale == null)
         {
             Application.Properties.setValue("scale", 0);
-            mapMoveDistanceM = metersAroundUser.toFloat();
             clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
             return;
         }
 
-        mapMoveDistanceM = metersAroundUser.toFloat(); // todo: caculate this off scale
         Application.Properties.setValue("scale", scale);
         clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
     }
@@ -507,7 +516,7 @@ class Settings {
         var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y + mapMoveDistanceM);
         if (latlong != null)
         {
-            setFixedPosition(latlong[0], latlong[1]);
+            setFixedPosition(latlong[0], latlong[1], true);
         }
     }
 
@@ -517,7 +526,7 @@ class Settings {
         var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y - mapMoveDistanceM);
         if (latlong != null)
         {
-            setFixedPosition(latlong[0], latlong[1]);
+            setFixedPosition(latlong[0], latlong[1], true);
         }
     }
 
@@ -527,7 +536,7 @@ class Settings {
         var latlong = RectangularPoint.xyToLatLon(fixedPosition.x - mapMoveDistanceM, fixedPosition.y);
         if (latlong != null)
         {
-            setFixedPosition(latlong[0], latlong[1]);
+            setFixedPosition(latlong[0], latlong[1], true);
         }
     }
 
@@ -537,7 +546,7 @@ class Settings {
         var latlong = RectangularPoint.xyToLatLon(fixedPosition.x + mapMoveDistanceM, fixedPosition.y);
         if (latlong != null)
         {
-            setFixedPosition(latlong[0], latlong[1]);
+            setFixedPosition(latlong[0], latlong[1], true);
         }
     }
 
@@ -1088,7 +1097,7 @@ class Settings {
         fixedPosition = null;
         fixedLatitude = parseOptionalFloat("fixedLatitude", fixedLatitude);
         fixedLongitude = parseOptionalFloat("fixedLongitude", fixedLongitude);
-        setFixedPosition(fixedLatitude, fixedLongitude);
+        setFixedPosition(fixedLatitude, fixedLongitude, false);
         tileUrl = parseString("tileUrl", tileUrl);
         routes = getArraySchema(
             "routes", 
