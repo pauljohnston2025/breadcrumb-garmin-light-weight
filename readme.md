@@ -102,7 +102,7 @@ Open Topo Map:
 Terain: https://a.tile.opentopomap.org/{z}/{x}/{y}.png  
 
 OpenStreetMap:  
-Standard: http://tile.openstreetmap.org/{z}/{x}/{y}.png  
+Standard: https://tile.openstreetmap.org/{z}/{x}/{y}.png  
 
 Google:  
 Hybrid: https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}  

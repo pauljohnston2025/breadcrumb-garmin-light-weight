@@ -194,6 +194,46 @@ class BreadcrumbRenderer {
                 Graphics.TEXT_JUSTIFY_CENTER);
   }
 
+  function renderLineFromLastPointToRoute(dc as Dc, lastPoint as RectangularPoint, offTrackPoint as RectangularPoint) as Void
+  {
+    if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE)
+    {
+        // its very cofusing seeing the routes disappear when scrolling
+        // and it makes sense to want to sroll around the route too
+        return;
+    }
+    
+    var lastPointUnrotatedX =
+        (lastPoint.x - lastRenderedCenter.x) * _currentScale;
+    var lastPointUnrotatedY =
+        (lastPoint.y - lastRenderedCenter.y) * _currentScale;
+
+    var lastPointRotatedX = _xHalf + lastPointUnrotatedX;
+    var lastPointRotatedY = _yHalf - lastPointUnrotatedY;
+    if (settings.enableRotation)
+    {
+      lastPointRotatedX = _xHalf + _rotateCos * lastPointUnrotatedX - _rotateSin * lastPointUnrotatedY;
+      lastPointRotatedY = _yHalf - (_rotateSin * lastPointUnrotatedX + _rotateCos * lastPointUnrotatedY);
+    }
+    
+    var offTrackPointUnrotatedX =
+        (offTrackPoint.x - lastRenderedCenter.x) * _currentScale;
+    var offTrackPointUnrotatedY =
+        (offTrackPoint.y - lastRenderedCenter.y) * _currentScale;
+
+    var offTrackPointRotatedX = _xHalf + offTrackPointUnrotatedX;
+    var offTrackPointRotatedY = _yHalf - offTrackPointUnrotatedY;
+    if (settings.enableRotation)
+    {
+      offTrackPointRotatedX = _xHalf + _rotateCos * offTrackPointUnrotatedX - _rotateSin * offTrackPointUnrotatedY;
+      offTrackPointRotatedY = _yHalf - (_rotateSin * offTrackPointUnrotatedX + _rotateCos * offTrackPointUnrotatedY);
+    }
+
+    dc.setPenWidth(4);
+    dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
+    dc.drawLine(lastPointRotatedX, lastPointRotatedY, offTrackPointRotatedX, offTrackPointRotatedY);
+  }
+
   function renderUser(
     dc as Dc, 
     centerPosition as RectangularPoint,
@@ -293,6 +333,19 @@ class BreadcrumbRenderer {
           lastYRotated = _yHalf - (rotateSinLocal * firstXScaledAtCenter +
                             rotateCosLocal * firstYScaledAtCenter);
         }
+
+        // if (settings.showPoints)
+        // {
+        //   // circles are expensive, maybe better to draw squares? possibly have 'point type' instead
+        //   // all these should be in thried own methods, whats more expensive, if check and multiple setColor calls
+        //   // or clculating the rotations twice
+        //   // once we move to render with scratchpad should be fster to itterate twice
+        //   // migth want to save the scaled points array for both calcs though
+        //   // this is realy only fome to debug though
+        //   dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK); // point colour
+        //   dc.drawCircle(lastXRotated, lastYRotated, 3);
+        //   dc.setColor(colour, Graphics.COLOR_BLACK); // restore colour
+        // }
       for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
         var nextX = coordinatesRaw[i];
         var nextY = coordinatesRaw[i + 1];
@@ -314,6 +367,18 @@ class BreadcrumbRenderer {
 
         lastXRotated = nextXRotated;
         lastYRotated = nextYRotated;
+        // if (settings.showPoints)
+        // {
+        //   // circles are expensive, maybe better to draw squares? possibly have 'point type' instead
+        //   // all these should be in thried own methods, whats more expensive, if check and multiple setColor calls
+        //   // or clculating the rotations twice
+        //   // once we move to render with scratchpad should be fster to itterate twice
+        //   // migth want to save the scaled points array for both clacs though
+        //   // this is realy only fome to debug though
+        //   dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK); // point colour
+        //   dc.drawCircle(lastXRotated, lastYRotated, 3);
+        //   dc.setColor(colour, Graphics.COLOR_BLACK); // restore colour
+        // }
       }
 
       if (settings.displayRouteNames)

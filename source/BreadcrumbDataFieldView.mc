@@ -16,9 +16,11 @@ class OffTrackAlert extends WatchUi.DataFieldAlert {
     if (Attention has :vibrate)
     {
       var vibeData = [
-        new Attention.VibeProfile(25, 1000),
-        new Attention.VibeProfile(50, 1000),
-        new Attention.VibeProfile(100, 2000)
+        new Attention.VibeProfile(100, 500),
+        new Attention.VibeProfile(0, 150),
+        new Attention.VibeProfile(100, 500),
+        new Attention.VibeProfile(0, 150),
+        new Attention.VibeProfile(100, 500),
       ];
       Attention.vibrate(vibeData);
     }
@@ -39,6 +41,7 @@ class OffTrackAlert extends WatchUi.DataFieldAlert {
 // note: this only allows taps, cannot handle swipes/holds etc. (need to test on
 // real device)
 class BreadcrumbDataFieldView extends WatchUi.DataField {
+  var offTrackPoint as RectangularPoint or Null = null;
   var _breadcrumbContext as BreadcrumbContext;
   var _speedMPS as Float = 0.0;  // start at no speed
   var _scratchPadBitmap as BufferedBitmap;
@@ -108,12 +111,16 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     var newPoint = _breadcrumbContext.track().pointFromActivityInfo(info);
     if (newPoint != null)
     {
-      _breadcrumbContext.track().onActivityInfo(newPoint);
-      if (settings.enableOffTrackAlerts)
+      if (_breadcrumbContext.track().onActivityInfo(newPoint))
       {
-        handleOffTrackAlerts(newPoint);
+        var lastPoint = _breadcrumbContext.track().lastPoint();
+        if (lastPoint != null && (settings.enableOffTrackAlerts || settings.drawLineToClosestPoint))
+        {
+          handleOffTrackAlerts(lastPoint);
+        }
       }
     }
+
     _breadcrumbContext.trackRenderer().onActivityInfo(info);
     
     var currentSpeed = info.currentSpeed;
@@ -136,14 +143,26 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       var route = _breadcrumbContext.routes()[i];
       if (route.storageIndex == onlyEnabledRouteId)
       {
-        if (route.checkOffTrack(newPoint, settings.offTrackAlertsDistanceM))
+        var offTrackInfo = route.checkOffTrack(newPoint, settings.offTrackAlertsDistanceM);
+        if (!offTrackInfo.onTrack)
         {
-          try {
-            showAlert(new OffTrackAlert());
-            lastOffTrackAlertSent = epoch;
-          } catch (e) {
-            // not sure there is a way to check that we can display or not, so just catch errors
+          if (settings.drawLineToClosestPoint)
+          {
+              offTrackPoint = offTrackInfo.pointWeLeftTrack;
           }
+
+          if (settings.enableOffTrackAlerts)
+          {
+              try {
+                showAlert(new OffTrackAlert());
+                lastOffTrackAlertSent = epoch;
+              } catch (e) {
+                // not sure there is a way to check that we can display or not, so just catch errors
+              }
+          }
+        }
+        else {
+          offTrackPoint = null;
         }
         break;
       }
@@ -157,11 +176,25 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     var renderer = _breadcrumbContext.trackRenderer();
     var scale = renderer._currentScale;
     // move half way across the screen
-    settings.setMapMoveDistance((renderer._minScreenDim / 2.0) / scale);
+    if (scale != 0)
+    {
+      settings.setMapMoveDistance((renderer._minScreenDim / 2.0) / scale);
+    }
 
     if (_breadcrumbContext.settings().uiMode == UI_MODE_SHOW_ALL)
     {
       _breadcrumbContext.trackRenderer().renderUi(dc);
+    }
+
+    // only ever not null if feature enabled
+    if (offTrackPoint != null)
+    {
+      var lastPoint = _breadcrumbContext.track().lastPoint();
+      if (lastPoint != null)
+      {
+        // points need to be scaled and rotated :(
+        _breadcrumbContext.trackRenderer().renderLineFromLastPointToRoute(dc, lastPoint, offTrackPoint);
+      }
     }
   }
 
@@ -392,6 +425,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   }
 
   function renderDebug(dc as Dc) as Void {
+    var epoch = Time.now().value();
     dc.setColor(settings.debugColour, Graphics.COLOR_BLACK);
     dc.clear();
     // its only a debug menu that should probbaly be optimised out in release, hard code to venu2s screen coordinates
@@ -405,6 +439,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     var combined = "last web res: " + _breadcrumbContext.webRequestHandler().lastResult() + 
                    "  tiles: " + _breadcrumbContext.tileCache().tileCount();
     dc.drawText(x, y, Graphics.FONT_XTINY, combined, Graphics.TEXT_JUSTIFY_CENTER);
+    y+=spacing;
+    dc.drawText(x, y, Graphics.FONT_XTINY, "last alert: " + (epoch - lastOffTrackAlertSent) + "s", Graphics.TEXT_JUSTIFY_CENTER);
     y+=spacing;
     // could do as a ratio for a single field
     dc.drawText(x, y, Graphics.FONT_XTINY, "hits: " + _breadcrumbContext.tileCache().hits(), Graphics.TEXT_JUSTIFY_CENTER);

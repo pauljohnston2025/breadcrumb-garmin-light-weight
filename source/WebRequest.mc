@@ -228,6 +228,17 @@ class WebRequestHandler
                     // so we must use PACKING_FORMAT_PNG if they really want a slow response and smaller tiles cache
                     // so tried it again, ang PNG did the same colour issue as JPG/YUV :( AHHHHHHHHHHHH
                     :packingFormat => requiresScaling ? Communications.PACKING_FORMAT_PNG : Communications.PACKING_FORMAT_DEFAULT
+                        // from android code
+                        // val osName = "Garmin"
+                        // val osVersion = Build.VERSION.RELEASE ?: "Unknown"
+                        // val deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}"
+                        // required by openstreetmaps, not sure how to get this to work
+                        // https://operations.osmfoundation.org/policies/tiles/
+                        // https://help.openstreetmap.org/questions/29938/in-my-app-problem-downloading-maptile-000-http-response-http11-403-forbidden
+                        // header("User-Agent", "Breadcrumb/1.0 ($osName $osVersion $deviceModel)")
+                        // but unfortunetly the makeImageRequest does not support headers 
+                        // https://forums.garmin.com/developer/connect-iq/f/discussion/303994/makeimagerequest-additional-headers-and-svgs
+                        // so no openstreet maps for us :(
                 }, // options
                 // see https://forums.garmin.com/developer/connect-iq/f/discussion/2289/documentation-clarification-object-method-and-lang-method
                 callback

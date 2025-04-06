@@ -21,13 +21,26 @@ const DELAY_COMPUTE_COUNT = 5;
 function BOUNDING_BOX_DEFAULT() as [Float, Float, Float, Float] {return [FLOAT_MAX, FLOAT_MAX, FLOAT_MIN, FLOAT_MIN];}
 function BOUNDING_BOX_CENTER_DEFAULT() as RectangularPoint {return new RectangularPoint(0.0f, 0.0f, 0.0f);}
 
+class OffTrackInfo {
+  var onTrack as Boolean;
+  var pointWeLeftTrack as RectangularPoint;
+  function initialize(onTrack as Boolean, pointWeLeftTrack as RectangularPoint)
+  {
+    me.onTrack = onTrack;
+    me.pointWeLeftTrack = pointWeLeftTrack;
+  }
+}
+
 class BreadcrumbTrack {
   // unscaled cordinates in
   // not sure if its more performant to have these as one array or 2
   // suspect 1 would result in faster itteration when drawing
   // shall store them as poit classes for now, and can convert to using just
   // arrays
-  var lastClosePoint as Number or Null;
+  var lastClosePointIndex as Number or Null;
+  // gets updated when track data is loaded, set to first point on track
+  // also gets updated wehnever we calculate off track
+  var lastClosePoint as RectangularPoint = new RectangularPoint(0f, 0f, 0f); 
   var epoch as Number = 0;
   // storageIndex is the id of the route (-1 is the in progress track)
   var storageIndex as Number = 0;
@@ -147,6 +160,7 @@ class BreadcrumbTrack {
       if (track.coordinates.size() % ARRAY_POINT_SIZE != 0) {
         return null;
       }
+      track.setInitialLastClosePoint();
       return track;
     } catch (e) {
       return null;
@@ -173,6 +187,7 @@ class BreadcrumbTrack {
     if (lastPoint == null)
     {
       addPointRaw(newPoint, 0f);
+      setInitialLastClosePoint();
       return;
     }
 
@@ -271,7 +286,7 @@ class BreadcrumbTrack {
     inRestartMode = true;
   }
 
-  function handlePointAddStartup(newPoint as RectangularPoint) as Void
+  function handlePointAddStartup(newPoint as RectangularPoint) as Boolean
   {
     // genreal p-lan of this function is
     // add data to both startup array and raw array (so we can start drawing points immediately, without the need for patching both arrays together)
@@ -286,7 +301,7 @@ class BreadcrumbTrack {
       seenStartupPoints = 1;
       possibleBadPointsAdded = 1;
       addPointRaw(newPoint, 0f);
-      return;
+      return true;
     }
 
     var stabilityCheckDistance = lastStartupPoint.distanceTo(newPoint);
@@ -294,7 +309,7 @@ class BreadcrumbTrack {
     {
       // point too close, no need to add, but its still a good point
       seenStartupPoints++;
-      return;
+      return false;
     }
 
     if (stabilityCheckDistance > STABILITY_MAX_DISTANCE_M)
@@ -304,7 +319,7 @@ class BreadcrumbTrack {
         coordinates.removeLastCountPoints(possibleBadPointsAdded);
         possibleBadPointsAdded = 0;
         updatePointDataFromAllPoints();
-        return;
+        return false;
     }
 
     // we are stable, see if we can break out of startup
@@ -319,6 +334,8 @@ class BreadcrumbTrack {
       seenStartupPoints = 0;
       possibleBadPointsAdded = 0;
     }
+
+    return true;
   }
 
   function pointFromActivityInfo(activityInfo as Activity.Info) as RectangularPoint or Null {
@@ -349,46 +366,111 @@ class BreadcrumbTrack {
     return RectangularPoint.latLon2xy(lat, lon, altitude);
   }
 
-  function checkOffTrack(checkPoint as RectangularPoint, distanceM as Number) as Boolean {
-    var endSecondScanAt = coordinates.pointSize();
-    if (lastClosePoint != null) {
-      endSecondScanAt = lastClosePoint < endSecondScanAt ? lastClosePoint : endSecondScanAt;
-      for (var i = lastClosePoint; i < coordinates.pointSize(); ++i) {
-        var point = coordinates.getPoint(i);
-        var distance = point.distanceTo(checkPoint);
-        if (distance < distanceM)
+  function setInitialLastClosePoint() as Void
+  {
+    var point = coordinates.getPoint(0);
+    if (point != null)
+    {
+      lastClosePoint = point;
+    }
+  }
+
+  function calculateDistancePointToSegment(
+          pointP as RectangularPoint,
+          segmentA as RectangularPoint,
+          segmentB as RectangularPoint
+      ) as [Float, RectangularPoint] {
+
+      var segmentLengthSq = segmentA.distanceTo(segmentB);
+      segmentLengthSq = segmentLengthSq * segmentLengthSq;
+
+      if (segmentLengthSq == 0.0) { // Points A and B are the same
+          return [pointP.distanceTo(segmentA), pointP];
+      }
+
+      // --- Simplified Vector Math ---
+      // Vector V = B - A
+      var vx = segmentB.x - segmentA.x; // Example if x, y are accessible
+      var vy = segmentB.y - segmentA.y; // Example
+
+      // Vector W = P - A
+      var wx = pointP.x - segmentA.x; // Example
+      var wy = pointP.y - segmentA.y; // Example
+
+      // Dot product W . V
+      var dotWV = wx * vx + wy * vy;
+
+      // Calculate t = (W . V) / |V|^2
+      var t = dotWV / segmentLengthSq;
+
+      // Clamp t to the range [0, 1]
+      var clampedT = maxF(0.0, minF(1.0, t)); // Use appropriate Math functions
+
+      // Calculate closest point on segment: Closest = A + clampedT * V
+      var closestX = segmentA.x + clampedT * vx;
+      var closestY = segmentA.y + clampedT * vy;
+
+      // Create a temporary point object for the closest point on the segment
+      var closestPointOnSegment = new RectangularPoint(closestX, closestY, 0f);
+
+      // Calculate the final distance
+      return [pointP.distanceTo(closestPointOnSegment), closestPointOnSegment];
+  }
+
+  function checkOffTrack(checkPoint as RectangularPoint, distanceM as Number) as OffTrackInfo {
+    // the big annying thing with off track alerts is that routes do not have evenly spaced points
+    // if the route goes in a straight line, there is only 2 points, these can be frther than the alert distance
+    // larger routes also have further spaced apart points (since we are limited to 500ish points per route to be able to transfer them from phone)
+    // this means we could be ontrack, but between 2 points
+    // this makes the calculation significantly harder :(, since we have to draw a line between each set of points and see if the user is 
+    // within some limit of that line
+    var endSecondScanAt = coordinates.pointSize() - 1;
+    if (lastClosePointIndex != null) {
+      endSecondScanAt = (lastClosePointIndex < (coordinates.pointSize() - 1)) ? lastClosePointIndex : (coordinates.pointSize() - 1);
+      // note: this algoriithm will likely fail if the user is doing the track in the oposite direction
+      // but we resort to scanning all the points below anyway
+      for (var i = lastClosePointIndex; i < coordinates.pointSize() - 1; ++i) {
+        var p1 = coordinates.getPoint(i); // p1 can never be null, its always withing size (unless a slice happens in parallel somehow?)
+        var p2 = coordinates.getPoint(i + 1); // p2 can never be null (we stop at 1 less than the end of the array), its always withing size (unless a slice happens in parallel somehow?)
+
+        var distToSegmentAndSegPoint = calculateDistancePointToSegment(checkPoint, p1, p2);
+        if (distToSegmentAndSegPoint[0] < distanceM)
         {
-          lastClosePoint = i;
-          return false;
+          lastClosePointIndex = i;
+          lastClosePoint = distToSegmentAndSegPoint[1];
+          return new OffTrackInfo(true, lastClosePoint);
         }
       }
 
-      lastClosePoint = null; // we have to search the start of the range now
+      lastClosePointIndex = null; // we have to search the start of the range now
     }
 
-    // System.println("lastClosePoint: " + lastClosePoint);
+    // System.println("lastClosePointIndex: " + lastClosePointIndex);
     
     for (var i = 0; i < endSecondScanAt; ++i) {
-      var point = coordinates.getPoint(i);
-      var distance = point.distanceTo(checkPoint);
-      if (distance < distanceM)
+      var p1 = coordinates.getPoint(i); // p1 can never be null, its always withing size (unless a slice happens in parallel somehow?)
+      var p2 = coordinates.getPoint(i + 1); // p2 should not be null, we sanitized it at the top fof the function to end at -1 from the size
+
+      var distToSegmentAndSegPoint = calculateDistancePointToSegment(checkPoint, p1, p2);
+      var point = coordinates.getPoint(i); 
+      if (distToSegmentAndSegPoint[0] < distanceM)
       {
-        lastClosePoint = i;
-        return false;
+        lastClosePointIndex = i;
+        lastClosePoint = distToSegmentAndSegPoint[1];
+        return new OffTrackInfo(true, lastClosePoint);
       }
     }
-    return true;
+    return new OffTrackInfo(false, lastClosePoint);
   }
 
-  function onActivityInfo(newPoint as RectangularPoint) as Void {
+  // returns true if a new point was added to the track
+  function onActivityInfo(newPoint as RectangularPoint) as Boolean {
     // todo only call this when a point is added (some points are skipped on smaller distances)
     // _breadcrumbContext.mapRenderer().loadMapTilesForPosition(newPoint, _breadcrumbContext.trackRenderer()._currentScale);
     
-    
     if (inRestartMode)
     {
-      handlePointAddStartup(newPoint);
-      return;
+      return handlePointAddStartup(newPoint);
     }
     
     var lastPoint = lastPoint();
@@ -396,22 +478,23 @@ class BreadcrumbTrack {
     {
       // startup mode should have set at least one point, revert to startup mode, something has gone wrong
       onStartResume();
-      return;
+      return false;
     }
 
     var distance = lastPoint.distanceTo(newPoint);
     if (distance < MIN_DISTANCE_M)
     {
       // point too close, so we can skip it
-      return;
+      return false;
     }
 
     if (distance > STABILITY_MAX_DISTANCE_M)
     {
       // it's too far away, and likely a glitch
-      return;
+      return false;
     }
 
     addPointRaw(newPoint, distance);
+    return true;
   }
 }

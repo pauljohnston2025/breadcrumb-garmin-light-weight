@@ -32,6 +32,8 @@ class Settings {
     // so math.ceil should be used what figuring out how many meters a tile is.
     // eg. maybe we cannot do 128 but we can do 120 (this would limit the number of tiles, but the resolution would be slightly off)
     var tileSize as Number = 64;
+    // website says: Worldwide, Zoom to 17. (Zoom limited to 15 on website opentopomap.org)
+    // real world test showed 17 produced errors (maybe you need to be authed to get this?)
     var tileLayerMax as Number = 15;
     var tileLayerMin as Number = 2;
     // there is both a memory limit to the number of tiles we can store, as well as a storage limit
@@ -74,13 +76,23 @@ class Settings {
     var displayRouteNames as Boolean = true;
     var normalModeColour as Number = Graphics.COLOR_BLUE;
     var uiColour as Number = Graphics.COLOR_DK_GRAY;
-    var debugColour as Number = Graphics.COLOR_WHITE;
+    var debugColour as Number = 0xFEFFFFFF; // white, but colour_white results in FFFFFFFF (-1) when we parse it and that is fully transparent
     var routeMax as Number = 5;
 
     // note this only works if a single track is enabled (multiple tracks would always error)
     var enableOffTrackAlerts as Boolean = true;
     var offTrackAlertsDistanceM as Number = 20;
     var offTrackAlertsMaxReportIntervalS as Number = 60;
+
+    var drawLineToClosestPoint as Boolean = true;
+    // this is a painn to implement in a way that does not effect performance
+    // either we 
+    // check the setting seach loop iteration and change the colour to and from the point colour
+    // have another whole method that rescales the route and draw points (only one setColor call)
+    // save around the scaled point array (slow to add scaled points to array if we do not have this feature on, also bad for memory saving a temp copy of the route)
+    // have a unique code path for each combination of settings (duplicate code, but alomost no perf hit if setting is off)
+    // seems like a pretty bad feature, only really used for debugging - so not implementing for now
+    // var showPoints as Boolean = true;
     
     // calculated whenever others change
     var smallTilesPerBigTile as Number = Math.ceil(256f/tileSize).toNumber();

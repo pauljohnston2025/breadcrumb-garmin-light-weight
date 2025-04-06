@@ -45,7 +45,7 @@ class BreadcrumbContext {
   function trackRenderer() as BreadcrumbRenderer { return _breadcrumbRenderer; }
   function mapRenderer() as MapRenderer { return _mapRenderer; }
   function track() as BreadcrumbTrack { return _track; }
-  function routes() as Array<BreadcrumbTrack> or Null { return _routes; }
+  function routes() as Array<BreadcrumbTrack> { return _routes; }
   function newRoute(name as String) as BreadcrumbTrack or Null {
     // we could maybe just not load the route if they are not enabled?
     // but they are pushing a new route from the app for this to happen
