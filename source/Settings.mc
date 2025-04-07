@@ -93,24 +93,30 @@ class Settings {
     // have a unique code path for each combination of settings (duplicate code, but alomost no perf hit if setting is off)
     // seems like a pretty bad feature, only really used for debugging - so not implementing for now
     // var showPoints as Boolean = true;
-    
-    // calculated whenever others change
-    var smallTilesPerBigTile as Number = Math.ceil(256f/tileSize).toNumber();
-    var fixedPosition as RectangularPoint or Null = null;
-    // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
-    var mapMoveDistanceM as Float = metersAroundUser * 1f;
-    var onlyRouteEnabledId as Number or Null = null;
+
+    // derived settings values (could be moved into cached values class)
+    var onlyRouteEnabledId as Number or Null;
     
     function setMode(_mode as Number) as Void {
         mode = _mode;
-        Application.Properties.setValue("mode", mode);
+        setValue("mode", mode);
     }
     
     function setUiMode(_uiMode as Number) as Void {
         uiMode = _uiMode;
-        Application.Properties.setValue("uiMode", uiMode);
+        setValue("uiMode", uiMode);
     }
     
+    function setFixedPositionRaw(lat as Float, long as Float) as Void {
+        // hack method so that cached values can update the settings without reloading itself
+        // its guaranteed to only be when moving around, and will never go to null
+        fixedLatitude = lat;
+        fixedLongitude = long;
+        Application.Properties.setValue("fixedLatitude", lat);
+        Application.Properties.setValue("fixedLongitude", long);
+        clearPendingWebRequests();
+    }
+
     function setFixedPosition(lat as Float or Null, long as Float or Null, clearRequests as Boolean) as Void {
         // System.println("moving to: " + lat + " " + long);
         // be very careful about putting null into properties, it breaks everything
@@ -124,25 +130,25 @@ class Settings {
         }
         fixedLatitude = lat;
         fixedLongitude = long;
-        Application.Properties.setValue("fixedLatitude", lat);
-        Application.Properties.setValue("fixedLongitude", long);
+        setValue("fixedLatitude", lat);
+        setValue("fixedLongitude", long);
 
         var latIsBasicallyNull = fixedLatitude == null || fixedLatitude == 0;
         var longIsBasicallyNull = fixedLongitude == null || fixedLongitude == 0;
-        if (latIsBasicallyNull && longIsBasicallyNull)
+        if (latIsBasicallyNull || longIsBasicallyNull)
         {
             fixedLatitude = null;
             fixedLongitude = null;
-            fixedPosition = null;
             if (clearRequests)
             {
                 clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
             }
+            updateCachedValues();
             return;
         }
 
-        // ensure any remaing nulls are removed and gets us a fixedPosition
-        setPositionIfNotSet();
+        // we should have a lat and a long at this point
+        // updateCachedValues(); already called by the above sets
         // var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y);
         // System.println("round trip conversion result: " + latlong);
         if (clearRequests)
@@ -150,27 +156,33 @@ class Settings {
             clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
         }
     }
+
+    function setValue(key as String, value) as Void
+    {
+        Application.Properties.setValue(key, value);
+        updateCachedValues();
+    }
     
     function setZoomAtPaceMode(_zoomAtPaceMode as Number) as Void {
         zoomAtPaceMode = _zoomAtPaceMode;
-        Application.Properties.setValue("zoomAtPaceMode", zoomAtPaceMode);
+        setValue("zoomAtPaceMode", zoomAtPaceMode);
     }
     
     function setTileUrl(_tileUrl as String) as Void {
         tileUrl = _tileUrl;
-        Application.Properties.setValue("tileUrl", tileUrl);
+        setValue("tileUrl", tileUrl);
         clearPendingWebRequests();
         clearTileCache();
     }
     
     function setZoomAtPaceSpeedMPS(mps as Float) as Void {
         zoomAtPaceSpeedMPS = mps;
-        Application.Properties.setValue("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
+        setValue("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
     }
     
     function setMetersAroundUser(value as Number) as Void {
         metersAroundUser = value;
-        Application.Properties.setValue("metersAroundUser", metersAroundUser);
+        setValue("metersAroundUser", metersAroundUser);
     }
 
     function setFixedLatitude(value as Float) as Void {
@@ -183,56 +195,56 @@ class Settings {
 
     function setMaxPendingWebRequests(value as Number) as Void {
         maxPendingWebRequests = value;
-        Application.Properties.setValue("maxPendingWebRequests", maxPendingWebRequests);
+        setValue("maxPendingWebRequests", maxPendingWebRequests);
     }
     
     function setTileSize(value as Number) as Void {
         tileSize = value;
-        Application.Properties.setValue("tileSize", tileSize);
+        setValue("tileSize", tileSize);
         clearPendingWebRequests();
         clearTileCache();
     }
     
     function setTileLayerMax(value as Number) as Void {
         tileLayerMax = value;
-        Application.Properties.setValue("tileLayerMax", tileLayerMax);
+        setValue("tileLayerMax", tileLayerMax);
     }
     
     function setTileLayerMin(value as Number) as Void {
         tileLayerMin = value;
-        Application.Properties.setValue("tileLayerMin", tileLayerMin);
+        setValue("tileLayerMin", tileLayerMin);
     }
     
     function setDisableMapsFailureCount(value as Number) as Void {
         disableMapsFailureCount = value;
-        Application.Properties.setValue("disableMapsFailureCount", disableMapsFailureCount);
+        setValue("disableMapsFailureCount", disableMapsFailureCount);
     }
     
     function setOffTrackAlertsDistanceM(value as Number) as Void {
         offTrackAlertsDistanceM = value;
-        Application.Properties.setValue("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
+        setValue("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
     }
     
     function setOffTrackAlertsMaxReportIntervalS(value as Number) as Void {
         offTrackAlertsMaxReportIntervalS = value;
-        Application.Properties.setValue("offTrackAlertsMaxReportIntervalS", offTrackAlertsMaxReportIntervalS);
+        setValue("offTrackAlertsMaxReportIntervalS", offTrackAlertsMaxReportIntervalS);
     }
     
     function setRouteMax(value as Number) as Void {
         routeMax = value;
-        Application.Properties.setValue("routeMax", routeMax);
+        setValue("routeMax", routeMax);
     }
     
     function setTileCacheSize(value as Number) as Void {
         tileCacheSize = value;
-        Application.Properties.setValue("tileCacheSize", tileCacheSize);
+        setValue("tileCacheSize", tileCacheSize);
         clearPendingWebRequests();
         clearTileCache();
     }
     
     function setMapEnabled(_mapEnabled as Boolean) as Void {
         mapEnabled = _mapEnabled;
-        Application.Properties.setValue("mapEnabled", mapEnabled);
+        setValue("mapEnabled", mapEnabled);
 
         if (!mapEnabled)
         {
@@ -252,22 +264,22 @@ class Settings {
     
     function setDisplayRouteNames(_displayRouteNames as Boolean) as Void {
         displayRouteNames = _displayRouteNames;
-        Application.Properties.setValue("displayRouteNames", displayRouteNames);
+        setValue("displayRouteNames", displayRouteNames);
     }
     
     function setEnableOffTrackAlerts(_enableOffTrackAlerts as Boolean) as Void {
         enableOffTrackAlerts = _enableOffTrackAlerts;
-        Application.Properties.setValue("enableOffTrackAlerts", enableOffTrackAlerts);
+        setValue("enableOffTrackAlerts", enableOffTrackAlerts);
     }
     
     function setEnableRotation(_enableRotation as Boolean) as Void {
         enableRotation = _enableRotation;
-        Application.Properties.setValue("enableRotation", enableRotation);
+        setValue("enableRotation", enableRotation);
     }
     
     function setRoutesEnabled(_routesEnabled as Boolean) as Void {
         routesEnabled = _routesEnabled;
-        Application.Properties.setValue("routesEnabled", routesEnabled);
+        setValue("routesEnabled", routesEnabled);
     }
 
     function routeColour(routeId as Number) as Number
@@ -412,38 +424,38 @@ class Settings {
     function saveRoutes() as Void
     {
         var toSave = routesToSave();
-        Application.Properties.setValue("routes", toSave);
+        setValue("routes", toSave);
         updateOnlyEnabledRoute();
     }
     
     function setTrackColour(value as Number) as Void {
         trackColour = value;
-        Application.Properties.setValue("trackColour", trackColour.format("%X"));
+        setValue("trackColour", trackColour.format("%X"));
     }
     
     function setUserColour(value as Number) as Void {
         userColour = value;
-        Application.Properties.setValue("userColour", userColour.format("%X"));
+        setValue("userColour", userColour.format("%X"));
     }
     
     function setNormalModeColour(value as Number) as Void {
         normalModeColour = value;
-        Application.Properties.setValue("normalModeColour", normalModeColour.format("%X"));
+        setValue("normalModeColour", normalModeColour.format("%X"));
     }
     
     function setDebugColour(value as Number) as Void {
         debugColour = value;
-        Application.Properties.setValue("debugColour", debugColour.format("%X"));
+        setValue("debugColour", debugColour.format("%X"));
     }
     
     function setUiColour(value as Number) as Void {
         uiColour = value;
-        Application.Properties.setValue("uiColour", uiColour.format("%X"));
+        setValue("uiColour", uiColour.format("%X"));
     }
     
     function setElevationColour(value as Number) as Void {
         elevationColour = value;
-        Application.Properties.setValue("elevationColour", elevationColour.format("%X"));
+        setValue("elevationColour", elevationColour.format("%X"));
     }
 
     function toggleMapEnabled() as Void 
@@ -500,96 +512,19 @@ class Settings {
 
         setRoutesEnabled(true);
     }
-
-    function setMapMoveDistance(value as Float) as Void
-    {
-        mapMoveDistanceM = value;
-    }
     
     function setScale(_scale as Float or Null) as Void {
         scale = _scale;
         // be very careful about putting null into properties, it breaks everything
         if (scale == null)
         {
-            Application.Properties.setValue("scale", 0);
+            setValue("scale", 0);
             clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
             return;
         }
 
-        Application.Properties.setValue("scale", scale);
+        setValue("scale", scale);
         clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
-    }
-
-    // todo: make all of these take into acount the sceen rotation, and move in the direction the screen is pointing
-    // for now just moving NSEW as if there was no screen rotation (N is up)
-    function moveFixedPositionUp() as Void
-    {
-        setPositionIfNotSet();
-        var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y + mapMoveDistanceM);
-        if (latlong != null)
-        {
-            setFixedPosition(latlong[0], latlong[1], true);
-        }
-    }
-
-    function moveFixedPositionDown() as Void
-    {
-        setPositionIfNotSet();
-        var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y - mapMoveDistanceM);
-        if (latlong != null)
-        {
-            setFixedPosition(latlong[0], latlong[1], true);
-        }
-    }
-
-    function moveFixedPositionLeft() as Void
-    {
-        setPositionIfNotSet();
-        var latlong = RectangularPoint.xyToLatLon(fixedPosition.x - mapMoveDistanceM, fixedPosition.y);
-        if (latlong != null)
-        {
-            setFixedPosition(latlong[0], latlong[1], true);
-        }
-    }
-
-    function moveFixedPositionRight() as Void
-    {
-        setPositionIfNotSet();
-        var latlong = RectangularPoint.xyToLatLon(fixedPosition.x + mapMoveDistanceM, fixedPosition.y);
-        if (latlong != null)
-        {
-            setFixedPosition(latlong[0], latlong[1], true);
-        }
-    }
-
-    // note: this does not save the position just sets it
-    function setPositionIfNotSet() as Void
-    {
-        var lastRenderedLatLongCenter = null;
-        // context might not be set yet
-        var context = getApp()._breadcrumbContext;
-        if (context != null and context instanceof BreadcrumbContext && context has :_breadcrumbRenderer && context._breadcrumbRenderer != null && context._breadcrumbRenderer instanceof BreadcrumbRenderer)
-        {
-            if (context._breadcrumbRenderer.lastRenderedCenter != null)
-            {
-                lastRenderedLatLongCenter = RectangularPoint.xyToLatLon(
-                    context._breadcrumbRenderer.lastRenderedCenter.x, 
-                    context._breadcrumbRenderer.lastRenderedCenter.y
-                );
-            }
-        }
-        
-        if (fixedLatitude == null)
-        {
-            fixedLatitude = lastRenderedLatLongCenter == null ? 0f : lastRenderedLatLongCenter[0];
-        }
-
-        if (fixedLongitude == null)
-        {
-            fixedLongitude = lastRenderedLatLongCenter == null ? 0f : lastRenderedLatLongCenter[1];;
-        }
-        fixedPosition = RectangularPoint.latLon2xy(fixedLatitude, fixedLongitude, 0f);
-        // System.println("new fixed pos: " + fixedPosition);
     }
 
     function nextMode() as Void
@@ -658,6 +593,18 @@ class Settings {
         if (context != null and context instanceof BreadcrumbContext && context has :_webRequestHandler && context._webRequestHandler != null && context._webRequestHandler instanceof WebRequestHandler)
         {
             context._webRequestHandler.clearValues();
+        }
+    }
+    
+    function updateCachedValues() as Void {
+        // symbol not found if the loadSettings method is called before we set tile cache
+        // should n ot happen unless onsettingschange is called before initalise finishes
+        // it alwasys has the symbol, but it might not be initalised yet
+        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
+        var context = getApp()._breadcrumbContext;
+        if (context != null and context instanceof BreadcrumbContext && context has :_cachedValues && context._cachedValues != null && context._cachedValues instanceof CachedValues)
+        {
+            context._cachedValues.recalculateAll();
         }
     }
     
@@ -945,7 +892,7 @@ class Settings {
     {
         System.println("Resetting settings to default values");
         // clear the flag first thing in case of crash we do not want to try clearing over and over
-        Application.Properties.setValue("resetDefaults", false);
+        setValue("resetDefaults", false);
 
         // note: this pulls the defaults from whatever we have at the top of the filem these may differ from the defaults in properties.xml
         var defaultSettings = new Settings();
@@ -990,6 +937,7 @@ class Settings {
         clearContextRoutes();
         // load all the settings we just wrote
         loadSettings();
+        updateCachedValues();
     }
 
     function asDict() as Dictionary
@@ -1042,7 +990,7 @@ class Settings {
             var value = settings[key];
             // for now just blindly trust the users
             // we do reload which sanitizes, but they could break garmins settings page with unexpected types
-            Application.Properties.setValue(key, value);
+            setValue(key, value);
         }
         onSettingsChanged();
     }
@@ -1054,7 +1002,7 @@ class Settings {
         var haveDoneFirstLoadSetup = Application.Properties.getValue("haveDoneFirstLoadSetup");
         if (!haveDoneFirstLoadSetup)
         {
-            Application.Properties.setValue("haveDoneFirstLoadSetup", true);
+            setValue("haveDoneFirstLoadSetup", true);
             resetDefaults(); // pulls from our defaults
         }
 
@@ -1078,8 +1026,7 @@ class Settings {
         {
             tileSize = 256;
         }
-        smallTilesPerBigTile = Math.ceil(256f/tileSize).toNumber();
-
+        
         tileCacheSize = parseNumber("tileCacheSize", tileCacheSize);
         mode = parseNumber("mode", mode);
         mapEnabled = parseBool("mapEnabled", mapEnabled);
@@ -1106,7 +1053,6 @@ class Settings {
         zoomAtPaceSpeedMPS = parseFloat("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
         uiMode = parseNumber("uiMode", uiMode);
 
-        fixedPosition = null;
         fixedLatitude = parseOptionalFloat("fixedLatitude", fixedLatitude);
         fixedLongitude = parseOptionalFloat("fixedLongitude", fixedLongitude);
         setFixedPosition(fixedLatitude, fixedLongitude, false);
@@ -1192,6 +1138,7 @@ class Settings {
         var oldTileCacheSize = tileCacheSize;
         var oldMapEnabled = mapEnabled;
         loadSettings();
+        updateCachedValues();
         // route settins do not work because garmins setting spage cannot edit them
         // when any property is modified, so we have to explain to users not to touch the settings, but we cannot because it looks 
         // like garmmins settings are not rendering desciptions anymore :(

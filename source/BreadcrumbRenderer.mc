@@ -16,6 +16,7 @@ class BreadcrumbRenderer {
   var _clearRouteProgress as Number = 0;
   var lastRenderedCenter as RectangularPoint or Null;
   var settings as Settings;
+  var _cachedValues as CachedValues;
 
   // units in meters (float/int) to label
   var SCALE_NAMES as Dictionary = {
@@ -61,8 +62,11 @@ class BreadcrumbRenderer {
   var _rotateCos = Math.cos(_rotationRad);
   var _rotateSin = Math.sin(_rotationRad);
 
-  function initialize(settings as Settings) {
+  function initialize(
+    settings as Settings,
+    cachedValues as CachedValues) {
     self.settings = settings;
+    _cachedValues = cachedValues;
     setScreenSize(360.0f, 360.0f, 50f); // start with known good size of the venu2s
   }
 
@@ -202,7 +206,7 @@ class BreadcrumbRenderer {
         // and it makes sense to want to sroll around the route too
         return;
     }
-    
+
     var lastPointUnrotatedX =
         (lastPoint.x - lastRenderedCenter.x) * _currentScale;
     var lastPointUnrotatedY =
@@ -508,7 +512,7 @@ class BreadcrumbRenderer {
     var scaleFromEdge = 75; // guestimate
 
     // always show 'return to user' icon
-    if (settings.fixedPosition != null) {
+    if (_cachedValues.fixedPosition != null) {
       // x marks the spot
       dc.drawText(returnToUserX, returnToUserY, Graphics.FONT_XTINY, "X", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     } else {
@@ -517,7 +521,7 @@ class BreadcrumbRenderer {
     }
 
     // always show location
-    if (settings.fixedPosition != null && settings.fixedLatitude != null && settings.fixedLongitude != null) {
+    if (_cachedValues.fixedPosition != null && settings.fixedLatitude != null && settings.fixedLongitude != null) {
       var txt = settings.fixedLatitude.format("%.3f") + ", " + settings.fixedLongitude.format("%.3f");
       dc.drawText(_xHalf, _screenHeight - scaleFromEdge, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_CENTER);
     }

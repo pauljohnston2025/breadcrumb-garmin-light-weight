@@ -26,6 +26,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
     var y = coords[1];
     var renderer = _breadcrumbContext.trackRenderer();
     var settings = _breadcrumbContext.settings();
+    var cachedValues = _breadcrumbContext.cachedValues();
 
     if (settings.uiMode == UI_MODE_NONE)
     {
@@ -83,7 +84,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
     else if (y < hitboxSize) {
       if (settings.mode == MODE_MAP_MOVE)
       {
-        settings.moveFixedPositionUp();
+        cachedValues.moveFixedPositionUp();
         return true;
       }
       // top of screen
@@ -93,7 +94,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
       // bottom of screen
       if (settings.mode == MODE_MAP_MOVE)
       {
-        settings.moveFixedPositionDown();
+        cachedValues.moveFixedPositionDown();
         return true;
       }
       renderer.decScale();
@@ -103,7 +104,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
       // right of screen
       if (settings.mode == MODE_MAP_MOVE)
       {
-        settings.moveFixedPositionRight();
+        cachedValues.moveFixedPositionRight();
         return true;
       }
       renderer.resetScale();
@@ -113,7 +114,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
       // left of screen
       if (settings.mode == MODE_MAP_MOVE)
       {
-        settings.moveFixedPositionLeft();
+        cachedValues.moveFixedPositionLeft();
         return true;
       }
       settings.toggleZoomAtPace();

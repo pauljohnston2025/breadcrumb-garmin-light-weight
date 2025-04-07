@@ -67,6 +67,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
   function initialize() {
     AppBase.initialize();
     _breadcrumbContext = new BreadcrumbContext();
+    _breadcrumbContext.cachedValues().recalculateAll();
     _view = new BreadcrumbDataFieldView(_breadcrumbContext);
   }
 
@@ -135,6 +136,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
           }
 
           route.writeToDisk(ROUTE_KEY);
+          _breadcrumbContext.cachedValues().recalculateAll();
           return;
         }
 

@@ -171,6 +171,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         }
 
         var settings = getApp()._breadcrumbContext.settings();
+        var cachedValues = getApp()._breadcrumbContext.cachedValues();
         // we have to downsample the tile, not recomendedd, as this mean we will have to request the same tile multiple times (cant save big tiles around anywhere)
         // also means we have to use scratch space to draw the tile and downsample it
         
@@ -183,12 +184,12 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             // if users are using a smaller size it should be a multiple of 256.
             // if its not, we will stretch the image then downsize, if its already a multiple we will use the image as is (optimal)
             var maxDim = maxN(data.getWidth(), data.getHeight()); // should be equal (every time server i know of is 256*256), but who knows
-            var pixelsPerTile = maxDim / settings.smallTilesPerBigTile.toFloat();
+            var pixelsPerTile = maxDim / cachedValues.smallTilesPerBigTile.toFloat();
             var sourceBitmap = data;
             if (Math.ceil(pixelsPerTile) != pixelsPerTile)
             {
                 // we have an aloying situation - stretch the image
-                var scaleUpSize = settings.smallTilesPerBigTile * settings.tileSize;
+                var scaleUpSize = cachedValues.smallTilesPerBigTile * settings.tileSize;
                 var upscaledBitmap = newBitmap(scaleUpSize, scaleUpSize, null);
                 var upscaledBitmapDc = upscaledBitmap.getDc();
                 upscaledBitmapDc.drawScaledBitmap(0, 0, scaleUpSize, scaleUpSize, sourceBitmap);
@@ -199,8 +200,8 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 
             var croppedSection = newBitmap(settings.tileSize, settings.tileSize, null);
             var croppedSectionDc = croppedSection.getDc();
-            var xOffset = _tileKey.x % settings.smallTilesPerBigTile;
-            var yOffset = _tileKey.y % settings.smallTilesPerBigTile;
+            var xOffset = _tileKey.x % cachedValues.smallTilesPerBigTile;
+            var yOffset = _tileKey.y % cachedValues.smallTilesPerBigTile;
             // System.println("tile: " + _tileKey);
             // System.println("croppedSection: " + croppedSection.getWidth() + " " + croppedSection.getHeight());
             // System.println("source: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
@@ -245,15 +246,18 @@ class TileCache {
     var _webRequestHandler as WebRequestHandler;
     var _palette as Array<Number>;
     var _settings as Settings;
+    var _cachedValues as CachedValues;
     var _hits as Number = 0;
     var _misses as Number = 0;
 
     function initialize(
         webRequestHandler as WebRequestHandler,
-        settings as Settings
+        settings as Settings,
+        cachedValues as CachedValues
     ) 
     {
         _settings = settings;
+        _cachedValues = cachedValues;
         _webRequestHandler = webRequestHandler;
         _internalCache = {};
 
@@ -368,8 +372,8 @@ class TileCache {
 
         if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL))
         {
-            var x = tileKey.x / _settings.smallTilesPerBigTile;
-            var y = tileKey.y / _settings.smallTilesPerBigTile;
+            var x = tileKey.x / _cachedValues.smallTilesPerBigTile;
+            var y = tileKey.y / _cachedValues.smallTilesPerBigTile;
             _webRequestHandler.add(
                 new ImageRequest(
                     "tileimage" + tileKey, // the hash is for the small tile request, not the big one (they will send the same phiscial request out, but again use 256 tilSize if your using external sources)

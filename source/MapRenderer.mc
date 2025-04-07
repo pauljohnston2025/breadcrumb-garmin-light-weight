@@ -11,15 +11,18 @@ class MapRenderer {
     var _screenHeight as Float = 360f;
     var _tileCache as TileCache;
     var _settings as Settings;
+    var _cachedValues as CachedValues;
     var earthsCircumference as Float = 40075016.686f;
     var originShift as Float = earthsCircumference / 2.0; // Half circumference of Earth
     
     function initialize(
         tileCache as TileCache,
-        settings as Settings) {
+        settings as Settings,
+        cachedValues as CachedValues) {
         // todo persist to storage and load from storage in init
         _tileCache = tileCache;
         _settings = settings;
+        _cachedValues = cachedValues;
     }
 
     // Desired resolution (meters per pixel)
@@ -66,7 +69,7 @@ class MapRenderer {
         var z = Math.round(calculateTileLevel(desiredResolution)).toNumber();
         z = minN(maxN(z, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
 
-        var tileWidthM = (earthsCircumference / Math.pow(2, z)) / _settings.smallTilesPerBigTile;
+        var tileWidthM = (earthsCircumference / Math.pow(2, z)) / _cachedValues.smallTilesPerBigTile;
         // var minScreenDim = minF(_screenWidth, _screenHeight);
         // var minScreenDimM = minScreenDim / currentScale;
         var screenWidthM = _screenWidth / currentScale;

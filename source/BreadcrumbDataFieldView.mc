@@ -46,6 +46,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   var _speedMPS as Float = 0.0;  // start at no speed
   var _scratchPadBitmap as BufferedBitmap;
   var settings as Settings;
+  var _cachedValues as CachedValues;
   var wasLastZoomedAtPace as Boolean = false;
   var lastOffTrackAlertSent = 0;
   // var _renderCounter = 0;
@@ -56,9 +57,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     _scratchPadBitmap = newBitmap(360, 360, null);
     DataField.initialize();
     settings = _breadcrumbContext.settings();
+    _cachedValues = _breadcrumbContext.cachedValues();
   }
 
+// see onUpdate explaqination for when each is called
   function onLayout(dc as Dc) as Void {
+    // logD("onLayout");
     // for now we render everything in the onUpdate view, and assume only 1 data
     // screen
     var textDim = dc.getTextDimensions("1234", Graphics.FONT_XTINY);
@@ -80,7 +84,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     _breadcrumbContext.track().onStartResume();
   }
   
+  // see onUpdate explaqination for when each is called
   function compute(info as Activity.Info) as Void {
+    // logD("compute");
     
 
     // temp hack for debugging (since it seems altitude does not work when playing activity data from gpx file)
@@ -169,7 +175,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
   }
 
+  // did some testing on real device
+  // looks like when we are not on the data page onUpdate is not called, but compute is (as expected)
+  // when we are on the data page and it is visible, onUpdate can be called many more times then compute (not just once a second)
+  // in some other cases onUpdate is called interleaved with onCompute once a second each (think this might be when its the active screen but not currently renderring)
+  // so we need to do all or heavy scaling code in compute, and make onUpdate just handle drawing, and possibly rotation (pre storing rotation could be slow/hard)
   function onUpdate(dc as Dc) as Void {
+    // logD("onUpdate");
     renderMain(dc);
 
     // move based on the last scale we drew
@@ -178,7 +190,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // move half way across the screen
     if (scale != 0)
     {
-      settings.setMapMoveDistance((renderer._minScreenDim / 2.0) / scale);
+      _cachedValues.setMapMoveDistance((renderer._minScreenDim / 2.0) / scale);
     }
 
     if (_breadcrumbContext.settings().uiMode == UI_MODE_SHOW_ALL)
@@ -200,9 +212,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
   function center(point as RectangularPoint) as RectangularPoint
   {
-      if (settings.fixedPosition != null)
+      if (_cachedValues.fixedPosition != null)
       {
-        return settings.fixedPosition;
+        return _cachedValues.fixedPosition;
       }
 
       return point;

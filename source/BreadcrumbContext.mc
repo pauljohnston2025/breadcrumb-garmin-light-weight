@@ -5,6 +5,7 @@ import Toybox.Application;
 
 class BreadcrumbContext {
   var _settings as Settings;
+  var _cachedValues as CachedValues;
   var _breadcrumbRenderer as BreadcrumbRenderer;
   var _routes as Array<BreadcrumbTrack>;
   var _track as BreadcrumbTrack;
@@ -16,10 +17,11 @@ class BreadcrumbContext {
   function initialize() {
     _settings = new Settings();
     _settings.loadSettings();
-
+    _cachedValues = new CachedValues(_settings);
+    
     _routes = [];
     _track = new BreadcrumbTrack(-1, "");
-    _breadcrumbRenderer = new BreadcrumbRenderer(_settings);
+    _breadcrumbRenderer = new BreadcrumbRenderer(_settings, _cachedValues);
 
     for (var i = 0; i < _settings.routeMax; ++i) {
       var route = BreadcrumbTrack.readFromDisk(ROUTE_KEY, i);
@@ -35,11 +37,12 @@ class BreadcrumbContext {
     }
 
     _webRequestHandler = new WebRequestHandler(_settings);
-    _tileCache = new TileCache(_webRequestHandler, _settings);
-    _mapRenderer = new MapRenderer(_tileCache, _settings);
+    _tileCache = new TileCache(_webRequestHandler, _settings, _cachedValues);
+    _mapRenderer = new MapRenderer(_tileCache, _settings, _cachedValues);
   }
 
   function settings() as Settings { return _settings; }
+  function cachedValues() as CachedValues { return _cachedValues; }
   function webRequestHandler() as WebRequestHandler { return _webRequestHandler; }
   function tileCache() as TileCache { return _tileCache; }
   function trackRenderer() as BreadcrumbRenderer { return _breadcrumbRenderer; }
