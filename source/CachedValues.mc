@@ -33,6 +33,8 @@ class CachedValues {
     var rotationRad as Float = 0.0;  // heading in radians
     var rotateCos as Float = -1f;
     var rotateSin as Float = -1f;
+    var currentSpeed as Float = -1f;
+    var currentlyZoomingAroundUser as Boolean = false;
 
     // updated whenever onlayout changes (audit usages, these should not need to be floats, but sometimes are used to do float math)
     var screenWidth as Float = -1f;
@@ -63,11 +65,59 @@ class CachedValues {
         mapMoveDistanceM = _settings.metersAroundUser.toFloat();
     }
 
-    function recalculateBoundingBox(outerBoundingBox as [Float, Float, Float, Float]) as Void
+    function calcOuterBoundingBoxFromTrackAndRoutes(routes as Array<BreadcrumbTrack>, trackBoundingBox as [Float, Float, Float, Float] or Null) as [Float, Float, Float, Float]
     {
+        // we need to make a new object, otherwise we will modify the one thats passed in
+        var outerBoundingBox = BOUNDING_BOX_DEFAULT();
+        if (trackBoundingBox != null)
+        {
+            outerBoundingBox[0] = trackBoundingBox[0];
+            outerBoundingBox[1] = trackBoundingBox[1];
+            outerBoundingBox[2] = trackBoundingBox[2];
+            outerBoundingBox[3] = trackBoundingBox[3];
+        }
+
+        for (var i = 0; i < routes.size(); ++i) {
+        if (!_settings.routeEnabled(i))
+        {
+            continue;
+        }
+        var route = routes[i];
+            outerBoundingBox[0] = minF(route.boundingBox[0], outerBoundingBox[0]);
+            outerBoundingBox[1] = minF(route.boundingBox[1], outerBoundingBox[1]);
+            outerBoundingBox[2] = maxF(route.boundingBox[2], outerBoundingBox[2]);
+            outerBoundingBox[3] = maxF(route.boundingBox[3], outerBoundingBox[3]);
+        }
+
+        return outerBoundingBox;
+    }
+
+    function updateBoundingBox() as Void
+    {
+        if (currentlyZoomingAroundUser)
+        {
+            var renderDistanceM = _settings.metersAroundUser;
+            var lastPoint = getApp()._breadcrumbContext.track().lastPoint();
+            if (lastPoint != null)
+            {
+                outerBoundingBox = [
+                    lastPoint.x - renderDistanceM,
+                    lastPoint.y - renderDistanceM,
+                    lastPoint.x + renderDistanceM,
+                    lastPoint.y + renderDistanceM,
+                ];
+                updateCurrentScale(outerBoundingBox);
+                calcCenterPointForBoundingBox(outerBoundingBox);
+                return;
+            }
+        }
+
         // todo only do this when needed 
         // grab tracks/routes/speed etc and recalculate
-        self.outerBoundingBox = outerBoundingBox;
+        outerBoundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
+            getApp()._breadcrumbContext.routes(), 
+            getApp()._breadcrumbContext.track().boundingBox
+        );
         updateCurrentScale(outerBoundingBox);
         calcCenterPointForBoundingBox(outerBoundingBox);
     }
@@ -152,6 +202,29 @@ class CachedValues {
             rotateCos = Math.cos(rotationRad);
             rotateSin = Math.sin(rotationRad);
         }
+        var _currentSpeed = activityInfo.currentSpeed;
+        if (_currentSpeed != null) {
+            currentSpeed = _currentSpeed;
+        }
+
+        // we are either in 2 cases
+        // if we are moving at some pace check the mode we are in to determine if we
+        // zoom in or out
+        // or we are not at speed, so invert logic (this allows us to zoom in when
+        // stopped, and zoom out when running) mostly useful for cheking close route
+        // whilst stopped but also allows quick zoom in before setting manual zoom
+        // (rather than having to manually zoom in from the outer level) once zoomed
+        // in we lock onto the user position anyway
+        var weShouldZoomAroundUser = 
+            _settings.scale != null ||
+            (currentSpeed > _settings.zoomAtPaceSpeedMPS && _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_PACE) || 
+            (currentSpeed <= _settings.zoomAtPaceSpeedMPS && _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_STOPPED);
+        if (currentlyZoomingAroundUser != weShouldZoomAroundUser)
+        {
+            currentlyZoomingAroundUser = weShouldZoomAroundUser;
+            updateBoundingBox();
+            _settings.clearPendingWebRequests();
+        }
     }
 
     function setScreenSize(width as Number, height as Number) as Void
@@ -225,7 +298,14 @@ class CachedValues {
     }
 
     function updateCurrentScale(outerBoundingBox as[Float, Float, Float, Float]) as Void {
+        var oldScale = currentScale;
         currentScale = calculateScale(outerBoundingBox);
+        if (oldScale != currentScale)
+        {
+            // todo change the scale on all the routes and tracks (the breadcrumb tracks will soon be in "pixels" rather than "meters")
+            // this should significantly improve render times
+        }
+
         if (_settings.mapEnabled)
         {
             updateMapData();
@@ -239,6 +319,7 @@ class CachedValues {
 
     function recalculateAll() as Void
     {
+        System.println("recalculating all cached values from settings/routes change");
         smallTilesPerBigTile = Math.ceil(256f/_settings.tileSize).toNumber();
         if (_settings.fixedLatitude == null || _settings.fixedLongitude == null)
         {
@@ -247,7 +328,7 @@ class CachedValues {
         else {
             fixedPosition = RectangularPoint.latLon2xy(_settings.fixedLatitude, _settings.fixedLongitude, 0f); 
         }
-        recalculateBoundingBox(outerBoundingBox); // updates map data and scale too
+        updateBoundingBox(); // updates map data and scale too
     }
 
     // Desired resolution (meters per pixel)

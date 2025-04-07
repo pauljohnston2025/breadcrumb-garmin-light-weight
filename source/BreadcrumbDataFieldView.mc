@@ -43,11 +43,9 @@ class OffTrackAlert extends WatchUi.DataFieldAlert {
 class BreadcrumbDataFieldView extends WatchUi.DataField {
   var offTrackPoint as RectangularPoint or Null = null;
   var _breadcrumbContext as BreadcrumbContext;
-  var _speedMPS as Float = 0.0;  // start at no speed
   var _scratchPadBitmap as BufferedBitmap;
   var settings as Settings;
   var _cachedValues as CachedValues;
-  var wasLastZoomedAtPace as Boolean = false;
   var lastOffTrackAlertSent = 0;
   // var _renderCounter = 0;
 
@@ -80,8 +78,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   // see onUpdate explaqination for when each is called
   function compute(info as Activity.Info) as Void {
     // logD("compute");
-
-    _cachedValues.onActivityInfo(info);
     // temp hack for debugging (since it seems altitude does not work when playing activity data from gpx file)
     // var route = _breadcrumbContext.route();
     // if (route != null)
@@ -93,7 +89,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     //   }
     // }
 
-  // this is here due to stack overflow bug when requests trigger the next request
+    // store rotations and speed every time
+    _cachedValues.onActivityInfo(info);
+
+    // this is here due to stack overflow bug when requests trigger the next request
     while(_breadcrumbContext.webRequestHandler().startNextIfWeCan())
     {
 
@@ -112,17 +111,16 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     {
       if (_breadcrumbContext.track().onActivityInfo(newPoint))
       {
+        // todo: PERF only update this if the new point added changed the bounding box
+        // its pretty good atm though, only recalculates once every few seconds, and only 
+        // if a point is added
+        _cachedValues.updateBoundingBox(); 
         var lastPoint = _breadcrumbContext.track().lastPoint();
         if (lastPoint != null && (settings.enableOffTrackAlerts || settings.drawLineToClosestPoint))
         {
           handleOffTrackAlerts(lastPoint);
         }
       }
-    }
-    
-    var currentSpeed = info.currentSpeed;
-    if (currentSpeed != null) {
-      _speedMPS = currentSpeed;
     }
   }
 
@@ -235,152 +233,23 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     var routes = _breadcrumbContext.routes();
     var track = _breadcrumbContext.track();
 
-    var lastPoint = track.lastPoint();
-    if (lastPoint == null) {
-      // edge case on startup when we have not got any readings yet (also when
-      // viewing in settings) just render the route if we have one
-      var outerBoundingBox = calcOuterBoundingBox(routes, null);
-      if (routes.size() != 0) {
-        mapRenderer.renderMap(dc, _scratchPadBitmap);
-        for (var i = 0; i < routes.size(); ++i) {
-          if (!settings.routeEnabled(i))
-          {
-              continue;
-          }
-          var route = routes[i];
-          renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex));
-        }
-        renderer.renderCurrentScale(dc);
-      }
-
-      return;
-    }
-
-    // if we are moving at some pace check the mode we are in to determine if we
-    // zoom in or out
-    if (_speedMPS > settings.zoomAtPaceSpeedMPS) {
-      if (settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_PACE) {
-        renderCloseAroundCurrentPosition(dc, mapRenderer, renderer, lastPoint, routes, track);
-        return;
-      }
-
-      renderZoomedOut(dc, mapRenderer, renderer, lastPoint, routes, track);
-      return;
-    }
-
-    // we are not at speed, so invert logic (this allows us to zoom in when
-    // stopped, and zoom out when running) mostly useful for cheking close route
-    // whilst stopped but also allows quick zoom in before setting manual zoom
-    // (rather than having to manually zoom in from the outer level) once zoomed
-    // in we lock onto the user position anyway
-    if (settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_PACE) {
-      renderZoomedOut(dc, mapRenderer, renderer, lastPoint, routes, track);
-      return;
-    }
-
-    renderCloseAroundCurrentPosition(dc, mapRenderer, renderer, lastPoint, routes, track);
-  }
-
-  function calcOuterBoundingBox(routes as Array<BreadcrumbTrack>, trackBoundingBox as [Float, Float, Float, Float] or Null) as [Float, Float, Float, Float]
-  {
-    // we need to make a new object, otherwise we will modify the one thats passed in
-    var outerBoundingBox = BOUNDING_BOX_DEFAULT();
-    if (trackBoundingBox != null)
-    {
-      outerBoundingBox[0] = trackBoundingBox[0];
-      outerBoundingBox[1] = trackBoundingBox[1];
-      outerBoundingBox[2] = trackBoundingBox[2];
-      outerBoundingBox[3] = trackBoundingBox[3];
-    }
-
+    mapRenderer.renderMap(dc, _scratchPadBitmap);
     for (var i = 0; i < routes.size(); ++i) {
       if (!settings.routeEnabled(i))
       {
           continue;
       }
       var route = routes[i];
-      outerBoundingBox[0] = minF(route.boundingBox[0], outerBoundingBox[0]);
-      outerBoundingBox[1] = minF(route.boundingBox[1], outerBoundingBox[1]);
-      outerBoundingBox[2] = maxF(route.boundingBox[2], outerBoundingBox[2]);
-      outerBoundingBox[3] = maxF(route.boundingBox[3], outerBoundingBox[3]);
+      renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex));
     }
-
-    _cachedValues.recalculateBoundingBox(outerBoundingBox);
-    return outerBoundingBox;
-  }
-
-  function renderZoomedOut(
-      dc as Dc, 
-      mapRenderer as MapRenderer,
-      renderer as BreadcrumbRenderer, 
-      lastPoint as RectangularPoint,
-      routes as Array<BreadcrumbTrack>, 
-      track as BreadcrumbTrack) as Void {
-
-      checkLastRenderType(false);
-    // when the scale is locked, we need to be where the user is, otherwise we
-    // could see a blank part of the map, when we are zoomed in and have no
-    // context
-    var useUserLocation = _breadcrumbContext.settings().scale != null;
-
-    // we are in 'full render mode', so do the entire extent
-    if (routes.size() != 0) {
-      // render the whole track and route if we stop
-      var outerBoundingBox = calcOuterBoundingBox(routes, track.boundingBox);
-
-      mapRenderer.renderMap(dc, _scratchPadBitmap);
-      for (var i = 0; i < routes.size(); ++i) {
-        if (!settings.routeEnabled(i))
-        {
-            continue;
-        }
-        var route = routes[i];
-        renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex));
-      }
-      renderer.renderTrack(dc, track, _breadcrumbContext.settings().trackColour);
-      renderer.renderUser(dc, lastPoint);
-      renderer.renderCurrentScale(dc);
-      return;
-    }
-
-    renderer.renderUser(dc, lastPoint);
-    renderer.renderTrack(dc, track, _breadcrumbContext.settings().trackColour);
     renderer.renderCurrentScale(dc);
-  }
 
-  function renderCloseAroundCurrentPosition(
-      dc as Dc, 
-      mapRenderer as MapRenderer,
-      renderer as BreadcrumbRenderer, 
-      lastPoint as RectangularPoint,
-      routes as Array<BreadcrumbTrack>, 
-      track as BreadcrumbTrack) as Void {
-    var renderDistanceM = _breadcrumbContext.settings().metersAroundUser;
-    var outerBoundingBox = [
-      lastPoint.x - renderDistanceM,
-      lastPoint.y - renderDistanceM,
-      lastPoint.x + renderDistanceM,
-      lastPoint.y + renderDistanceM,
-    ];
-
-    _cachedValues.recalculateBoundingBox(outerBoundingBox);
-    checkLastRenderType(true);
-
-    mapRenderer.renderMap(dc, _scratchPadBitmap);
-
-    if (routes.size() != 0) {
-      for (var i = 0; i < routes.size(); ++i) {
-        if (!settings.routeEnabled(i))
-        {
-            continue;
-        }
-        var route = routes[i];
-        renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex));
-      }
-    }
     renderer.renderTrack(dc, track, settings.trackColour);
-    renderer.renderUser(dc, lastPoint);
-    renderer.renderCurrentScale(dc);
+
+    var lastPoint = track.lastPoint();
+    if (lastPoint != null) {
+      renderer.renderUser(dc, lastPoint);
+    }
   }
 
   function renderDebug(dc as Dc) as Void {
@@ -434,15 +303,5 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       }
     }
     renderer.renderTrackElevation(dc, track, settings.trackColour, hScale, vScale, startAt);
-  }
-
-  function checkLastRenderType(current as Boolean) as Void
-  {
-    // we change from zoomed in to zoomed out, cl;ear the tile requests so we can queu more up immediately
-    if (wasLastZoomedAtPace != current)
-    {
-      settings.clearPendingWebRequests();
-    }
-    wasLastZoomedAtPace = current;
   }
 }
