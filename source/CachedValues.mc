@@ -23,8 +23,8 @@ class CachedValues {
     var fixedPosition as RectangularPoint or Null;
     
     // updated whenever we change zoom level (speed changes, zoom at pace mode etc.)
-    var outerBoundingBox as [Float, Float, Float, Float] = BOUNDING_BOX_DEFAULT();
-    var centerPosition as RectangularPoint = new RectangularPoint(0f, 0f, 0f);
+    var outerBoundingBox as [Float, Float, Float, Float] = BOUNDING_BOX_DEFAULT(); // not scaled - raw meters
+    var centerPosition as RectangularPoint = new RectangularPoint(0f, 0f, 0f); // scaled to pixels
     var currentScale as Float = 0.0; // pixels per meter so <pixel count> / _currentScale = meters  or  meters * _currentScale = pixels
     // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
     var mapMoveDistanceM as Float;
@@ -71,22 +71,22 @@ class CachedValues {
         var outerBoundingBox = BOUNDING_BOX_DEFAULT();
         if (trackBoundingBox != null)
         {
-            outerBoundingBox[0] = trackBoundingBox[0];
-            outerBoundingBox[1] = trackBoundingBox[1];
-            outerBoundingBox[2] = trackBoundingBox[2];
-            outerBoundingBox[3] = trackBoundingBox[3];
+            outerBoundingBox[0] = trackBoundingBox[0] / currentScale;
+            outerBoundingBox[1] = trackBoundingBox[1] / currentScale;
+            outerBoundingBox[2] = trackBoundingBox[2] / currentScale;
+            outerBoundingBox[3] = trackBoundingBox[3] / currentScale;
         }
 
         for (var i = 0; i < routes.size(); ++i) {
-        if (!_settings.routeEnabled(i))
-        {
-            continue;
-        }
-        var route = routes[i];
-            outerBoundingBox[0] = minF(route.boundingBox[0], outerBoundingBox[0]);
-            outerBoundingBox[1] = minF(route.boundingBox[1], outerBoundingBox[1]);
-            outerBoundingBox[2] = maxF(route.boundingBox[2], outerBoundingBox[2]);
-            outerBoundingBox[3] = maxF(route.boundingBox[3], outerBoundingBox[3]);
+            if (!_settings.routeEnabled(i))
+            {
+                continue;
+            }
+            var route = routes[i];
+            outerBoundingBox[0] = minF(route.boundingBox[0] / currentScale, outerBoundingBox[0]);
+            outerBoundingBox[1] = minF(route.boundingBox[1] / currentScale, outerBoundingBox[1]);
+            outerBoundingBox[2] = maxF(route.boundingBox[2] / currentScale, outerBoundingBox[2]);
+            outerBoundingBox[3] = maxF(route.boundingBox[3] / currentScale, outerBoundingBox[3]);
         }
 
         return outerBoundingBox;
@@ -94,6 +94,13 @@ class CachedValues {
 
     function updateBoundingBox() as Void
     {
+        if (currentScale == 0f)
+        {
+            outerBoundingBox = BOUNDING_BOX_DEFAULT();
+            calcCenterPointForBoundingBox(outerBoundingBox); // must be done before scale calc, as it causes rescale
+            updateCurrentScale(outerBoundingBox);
+        }
+
         if (currentlyZoomingAroundUser)
         {
             var renderDistanceM = _settings.metersAroundUser;
@@ -101,25 +108,23 @@ class CachedValues {
             if (lastPoint != null)
             {
                 outerBoundingBox = [
-                    lastPoint.x - renderDistanceM,
-                    lastPoint.y - renderDistanceM,
-                    lastPoint.x + renderDistanceM,
-                    lastPoint.y + renderDistanceM,
+                    lastPoint.x / currentScale - renderDistanceM,
+                    lastPoint.y / currentScale - renderDistanceM,
+                    lastPoint.x / currentScale + renderDistanceM,
+                    lastPoint.y / currentScale + renderDistanceM,
                 ];
+                calcCenterPointForBoundingBox(outerBoundingBox); // must be done before scale calc, as it causes rescale
                 updateCurrentScale(outerBoundingBox);
-                calcCenterPointForBoundingBox(outerBoundingBox);
                 return;
             }
         }
 
-        // todo only do this when needed 
-        // grab tracks/routes/speed etc and recalculate
         outerBoundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
             getApp()._breadcrumbContext.routes(), 
-            getApp()._breadcrumbContext.track().boundingBox
+            getApp()._breadcrumbContext.track().lastPoint == null ? null : getApp()._breadcrumbContext.track().boundingBox
         );
+        calcCenterPointForBoundingBox(outerBoundingBox); // must be done before scale calc, as it causes rescale
         updateCurrentScale(outerBoundingBox);
-        calcCenterPointForBoundingBox(outerBoundingBox);
     }
 
     // needs to be called whenever the screen moves to a new bounding box
@@ -131,6 +136,8 @@ class CachedValues {
             // we do not have a scale calculated yet
             return;
         }
+
+        var centerPositionRaw = centerPosition.rescale(1/currentScale);
 
         // 2 to 15 see https://opentopomap.org/#map=2/-43.2/305.9
         var desiredResolution = 1 / currentScale;
@@ -146,8 +153,8 @@ class CachedValues {
         // where the screen corner starts
         var halfScreenWidthM = screenWidthM / 2f;
         var halfScreenHeightM = screenHeightM / 2f;
-        var screenLeftM = centerPosition.x - halfScreenWidthM;
-        var screenTopM = centerPosition.y + halfScreenHeightM;
+        var screenLeftM = centerPositionRaw.x - halfScreenWidthM;
+        var screenTopM = centerPositionRaw.y + halfScreenHeightM;
 
         // find which tile we are closest to
         firstTileX = ((screenLeftM + originShift) / tileWidthM).toNumber();
@@ -300,10 +307,33 @@ class CachedValues {
     function updateCurrentScale(outerBoundingBox as[Float, Float, Float, Float]) as Void {
         var oldScale = currentScale;
         currentScale = calculateScale(outerBoundingBox);
-        if (oldScale != currentScale)
+        var newScale = currentScale;
+        if (oldScale != newScale)
         {
-            // todo change the scale on all the routes and tracks (the breadcrumb tracks will soon be in "pixels" rather than "meters")
-            // this should significantly improve render times
+            var routes = getApp()._breadcrumbContext.routes();
+            for (var i = 0; i < routes.size(); ++i) {
+                var route = routes[i];
+                route.rescale(currentScale);
+            }
+            getApp()._breadcrumbContext.track().rescale(currentScale);
+            if (getApp()._view != null)
+            {
+                getApp()._view.rescale(currentScale);
+            }
+
+            if (newScale == 0f)
+            {
+                return; // dont allow silly scales
+            }
+
+            var scaleFactor = newScale;
+            if (oldScale != null && oldScale != 0)
+            {
+                // adjsut by old scale
+                scaleFactor = newScale / oldScale;
+            }
+
+            centerPosition = centerPosition.rescale(scaleFactor); // the amount of things we are rescaling is insane and also hard to keep track of them all
         }
 
         if (_settings.mapEnabled)
@@ -406,7 +436,7 @@ class CachedValues {
 
         if (fixedPosition != null)
         {
-            centerPosition = fixedPosition;
+            centerPosition = fixedPosition.rescale(currentScale);
             return;
         }
 
@@ -414,7 +444,7 @@ class CachedValues {
             boundingBox[0] + (boundingBox[2] - boundingBox[0]) / 2.0,
             boundingBox[1] + (boundingBox[3] - boundingBox[1]) / 2.0,
             0.0f
-        );
+        ).rescale(currentScale);
     }
 
     function setPositionIfNotSet() as Void

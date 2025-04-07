@@ -93,26 +93,26 @@ class BreadcrumbRenderer {
                 Graphics.TEXT_JUSTIFY_CENTER);
   }
 
+  // points should already be scaled
   function renderLineFromLastPointToRoute(dc as Dc, lastPoint as RectangularPoint, offTrackPoint as RectangularPoint) as Void
   {
     if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE)
     {
-        // its very cofusing seeing the routes disappear when scrolling
+        // its very confusing seeing the routes disappear when scrolling
         // and it makes sense to want to sroll around the route too
         return;
     }
 
     var centerPosition = _cachedValues.centerPosition; // local lookup faster
-    var currentScale = _cachedValues.currentScale; // local lookup faster
     var rotateCos = _cachedValues.rotateCos; // local lookup faster
     var rotateSin = _cachedValues.rotateSin; // local lookup faster
     var xHalf = _cachedValues.xHalf; // local lookup faster
     var yHalf = _cachedValues.yHalf; // local lookup faster
 
     var lastPointUnrotatedX =
-        (lastPoint.x - centerPosition.x) * currentScale;
+        (lastPoint.x - centerPosition.x) ;
     var lastPointUnrotatedY =
-        (lastPoint.y - centerPosition.y) * currentScale;
+        (lastPoint.y - centerPosition.y);
 
     var lastPointRotatedX = xHalf + lastPointUnrotatedX;
     var lastPointRotatedY = yHalf - lastPointUnrotatedY;
@@ -123,9 +123,9 @@ class BreadcrumbRenderer {
     }
     
     var offTrackPointUnrotatedX =
-        (offTrackPoint.x - centerPosition.x) * currentScale;
+        (offTrackPoint.x - centerPosition.x);
     var offTrackPointUnrotatedY =
-        (offTrackPoint.y - centerPosition.y) * currentScale;
+        (offTrackPoint.y - centerPosition.y);
 
     var offTrackPointRotatedX = xHalf + offTrackPointUnrotatedX;
     var offTrackPointRotatedY = yHalf - offTrackPointUnrotatedY;
@@ -140,21 +140,21 @@ class BreadcrumbRenderer {
     dc.drawLine(lastPointRotatedX, lastPointRotatedY, offTrackPointRotatedX, offTrackPointRotatedY);
   }
 
+  // last location should already be scaled
   function renderUser(
     dc as Dc, 
     usersLastLocation as RectangularPoint
   ) as Void {
     var centerPosition = _cachedValues.centerPosition; // local lookup faster
-    var currentScale = _cachedValues.currentScale; // local lookup faster
     var rotateCos = _cachedValues.rotateCos; // local lookup faster
     var rotateSin = _cachedValues.rotateSin; // local lookup faster
     var xHalf = _cachedValues.xHalf; // local lookup faster
     var yHalf = _cachedValues.yHalf; // local lookup faster
 
     var userPosUnrotatedX =
-        (usersLastLocation.x - centerPosition.x) * currentScale;
+        (usersLastLocation.x - centerPosition.x);
     var userPosUnrotatedY =
-        (usersLastLocation.y - centerPosition.y) * currentScale;
+        (usersLastLocation.y - centerPosition.y);
 
     var userPosRotatedX = xHalf + userPosUnrotatedX;
     var userPosRotatedY = yHalf - userPosUnrotatedY;
@@ -209,7 +209,6 @@ class BreadcrumbRenderer {
                        colour as Graphics.ColorType) as Void {
 
     var centerPosition = _cachedValues.centerPosition; // local lookup faster
-    var currentScale = _cachedValues.currentScale; // local lookup faster
     var rotateCos = _cachedValues.rotateCos; // local lookup faster
     var rotateSin = _cachedValues.rotateSin; // local lookup faster
     var xHalf = _cachedValues.xHalf; // local lookup faster
@@ -232,9 +231,9 @@ class BreadcrumbRenderer {
     // but we draw from the raw points
     if (size >= ARRAY_POINT_SIZE * 2) {
       var firstXScaledAtCenter =
-          (coordinatesRaw[0] - centerPosition.x) * currentScale;
+          (coordinatesRaw[0] - centerPosition.x);
       var firstYScaledAtCenter =
-          (coordinatesRaw[1] - centerPosition.y) * currentScale;
+          (coordinatesRaw[1] - centerPosition.y);
         var lastXRotated = xHalf + firstXScaledAtCenter;
         var lastYRotated = yHalf - firstYScaledAtCenter;
         if (settings.enableRotation)
@@ -261,8 +260,8 @@ class BreadcrumbRenderer {
         var nextX = coordinatesRaw[i];
         var nextY = coordinatesRaw[i + 1];
 
-        var nextXScaledAtCenter = (nextX - centerPosition.x) * currentScale;
-        var nextYScaledAtCenter = (nextY - centerPosition.y) * currentScale;
+        var nextXScaledAtCenter = (nextX - centerPosition.x);
+        var nextYScaledAtCenter = (nextY - centerPosition.y);
 
         var nextXRotated = xHalf + nextXScaledAtCenter;
         var nextYRotated = yHalf - nextYScaledAtCenter;
@@ -292,6 +291,7 @@ class BreadcrumbRenderer {
         // }
       }
 
+      var currentScale = _cachedValues.currentScale;
       if (settings.displayRouteNames)
       {
         var xScaledAtCenter = (breadcrumb.boundingBoxCenter.x - centerPosition.x) * currentScale;

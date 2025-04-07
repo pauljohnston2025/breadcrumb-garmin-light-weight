@@ -41,6 +41,12 @@ class RectangularPoint {
     return "RectangularPoint(" + x + " " + y + " " + altitude + ")";
   }
 
+  function rescale(scaleFactor as Float) as RectangularPoint
+  {
+    // unsafe to call with nulls or 0, checks should be made in parent
+    return new RectangularPoint(x * scaleFactor, y * scaleFactor, altitude);
+  }
+
   // inverse of https://gis.stackexchange.com/a/387677
   // Converting lat, lon (epsg:4326) into EPSG:3857
   static function latLon2xy(lat as Float, lon as Float,
@@ -86,6 +92,16 @@ class PointArray {
   // {
   //   return _internalArrayBuffer[i];
   // }
+
+  function rescale(scaleFactor as Float) as Void
+  {
+    // unsafe to call with nulls or 0, checks should be made in parent
+    // size is guaranteed to be a multiple of ARRAY_POINT_SIZE
+    for (var i = 0; i < _internalArrayBuffer.size(); i += ARRAY_POINT_SIZE) {
+        _internalArrayBuffer[i] = _internalArrayBuffer[i] * scaleFactor;
+        _internalArrayBuffer[i + 1] = _internalArrayBuffer[i + 1] * scaleFactor;
+    }
+  }
 
   function add(point as RectangularPoint) as Void
   {

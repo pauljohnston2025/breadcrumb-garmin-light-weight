@@ -84,7 +84,20 @@ class Settings {
     var offTrackAlertsDistanceM as Number = 20;
     var offTrackAlertsMaxReportIntervalS as Number = 60;
 
+    // todo make configurable
     var drawLineToClosestPoint as Boolean = true;
+    
+    // todo impl support
+
+    // scratrchpad used for rotations, but it also means we have a large bitmap stored around
+    // I will also use that bitmap for re-renders though, and just do rotations every render rather than re-drawing all the tracks/tiles again 
+    var drawUseScratchPad as Boolean = true;
+    // how many seconds should we wait before even considerring the next point
+    // changes in speed/angle/zoom are not effected by this number. Though maybe they should be?
+    var recalculateItervalS as Number = 5;
+    // pre seed tiles on either side of the viewable area
+    var tileCachePadding as Number = 0;
+
     // this is a painn to implement in a way that does not effect performance
     // either we 
     // check the setting seach loop iteration and change the colour to and from the point colour

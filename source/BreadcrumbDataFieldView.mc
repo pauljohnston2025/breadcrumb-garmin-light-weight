@@ -47,6 +47,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   var settings as Settings;
   var _cachedValues as CachedValues;
   var lastOffTrackAlertSent = 0;
+  var currentScaleOfoffTrackPoint as Float or Null = null;
   // var _renderCounter = 0;
 
   // Set the label of the data field here.
@@ -56,6 +57,28 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     DataField.initialize();
     settings = _breadcrumbContext.settings();
     _cachedValues = _breadcrumbContext.cachedValues();
+  }
+
+  function rescale(newScale as Float) as Void
+  {
+      if (newScale == 0f)
+      {
+        return; // dont allow silly scales
+      }
+
+      var scaleFactor = newScale;
+      if (currentScaleOfoffTrackPoint != null && currentScaleOfoffTrackPoint != 0)
+      {
+        // adjsut by old scale
+        scaleFactor = newScale / currentScaleOfoffTrackPoint;
+      }
+
+      if (offTrackPoint != null)
+      {
+        offTrackPoint = offTrackPoint.rescale(scaleFactor);
+      }
+
+      currentScaleOfoffTrackPoint = newScale;
   }
 
 // see onUpdate explaqination for when each is called
@@ -124,6 +147,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
   }
 
+  // new point is already pre scaled
   function handleOffTrackAlerts(newPoint as RectangularPoint) as Void
   {
     var epoch = Time.now().value();
@@ -138,11 +162,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       var route = _breadcrumbContext.routes()[i];
       if (route.storageIndex == onlyEnabledRouteId)
       {
-        var offTrackInfo = route.checkOffTrack(newPoint, settings.offTrackAlertsDistanceM);
+        var offTrackInfo = route.checkOffTrack(newPoint, settings.offTrackAlertsDistanceM * _cachedValues.currentScale);
         if (!offTrackInfo.onTrack)
         {
           if (settings.drawLineToClosestPoint)
           {
+              currentScaleOfoffTrackPoint = route.currentScale; // all tracks and routes really have to have the same scale, or the calculcation of distance will be wrong
               offTrackPoint = offTrackInfo.pointWeLeftTrack;
           }
 

@@ -23,6 +23,7 @@ function BOUNDING_BOX_CENTER_DEFAULT() as RectangularPoint {return new Rectangul
 
 class OffTrackInfo {
   var onTrack as Boolean;
+  //  pointWeLeftTrack is already scaled to pixels
   var pointWeLeftTrack as RectangularPoint;
   function initialize(onTrack as Boolean, pointWeLeftTrack as RectangularPoint)
   {
@@ -32,30 +33,31 @@ class OffTrackInfo {
 }
 
 class BreadcrumbTrack {
-  // unscaled cordinates in
-  // not sure if its more performant to have these as one array or 2
-  // suspect 1 would result in faster itteration when drawing
-  // shall store them as poit classes for now, and can convert to using just
-  // arrays
+  // current scale for any of the data that is scaled (coordinates are prescaled since scale changes are rare - but renders occur alot)
+  // nullmeans the coordinates are raw poits, eg. for new routes that have not been scaled yet
+  // scaled coordinates will be marked with // SCALED - anything that uses them needs to take scale into account
+  var currentScale as Float or Null = null; 
   var lastClosePointIndex as Number or Null;
   // gets updated when track data is loaded, set to first point on track
   // also gets updated wehnever we calculate off track
-  var lastClosePoint as RectangularPoint = new RectangularPoint(0f, 0f, 0f); 
+  var lastClosePoint as RectangularPoint = new RectangularPoint(0f, 0f, 0f); // SCALED (note: altitude is currently unscaled)
   var epoch as Number = 0;
   // storageIndex is the id of the route (-1 is the in progress track)
   var storageIndex as Number = 0;
   var name as String;
-  var coordinates as PointArray = new PointArray();
+  var coordinates as PointArray = new PointArray(); // SCALED (note: altitude is currently unscaled)
   var seenStartupPoints as Number = 0;
   var possibleBadPointsAdded as Number = 0;
   var inRestartMode as Boolean = true;
   var _computeCounter as Number = 0;
+  var minDistanceMScaled as Float = MIN_DISTANCE_M.toFloat(); // SCALED
+  var maxDistanceMScaled as Float = STABILITY_MAX_DISTANCE_M.toFloat(); // SCALED
 
-  var boundingBox as [Float, Float, Float, Float] = BOUNDING_BOX_DEFAULT();
-  var boundingBoxCenter as RectangularPoint = BOUNDING_BOX_CENTER_DEFAULT();
-  var distanceTotal as Decimal = 0f;
-  var elevationMin as Float = FLOAT_MAX;
-  var elevationMax as Float = FLOAT_MIN;
+  var boundingBox as [Float, Float, Float, Float] = BOUNDING_BOX_DEFAULT(); // SCALED -- since the points are used to generate it on failure
+  var boundingBoxCenter as RectangularPoint = BOUNDING_BOX_CENTER_DEFAULT(); // SCALED -- since the points are used to generate it on failure
+  var distanceTotal as Decimal = 0f;  // SCALED -- since the points are used to generate it on failure
+  var elevationMin as Float = FLOAT_MAX; // UNSCALED
+  var elevationMax as Float = FLOAT_MIN; // UNSCALED
   var _neverStarted as Boolean;
 
   function initialize(
@@ -69,6 +71,33 @@ class BreadcrumbTrack {
     self.name = name;
   }
 
+  function rescale(newScale as Float) as Void
+  {
+      if (newScale == 0f)
+      {
+        return; // dont allow silly scales
+      }
+
+      var scaleFactor = newScale;
+      if (currentScale != null && currentScale != 0)
+      {
+        // adjsut by old scale
+        scaleFactor = newScale / currentScale;
+      }
+
+      boundingBox[0] = boundingBox[0] * scaleFactor;
+      boundingBox[1] = boundingBox[1] * scaleFactor;
+      boundingBox[2] = boundingBox[2] * scaleFactor;
+      boundingBox[3] = boundingBox[3] * scaleFactor;
+      distanceTotal = distanceTotal * scaleFactor;
+      boundingBoxCenter = boundingBoxCenter.rescale(scaleFactor);
+      coordinates.rescale(scaleFactor);
+      minDistanceMScaled = minDistanceMScaled * scaleFactor;
+      maxDistanceMScaled = maxDistanceMScaled * scaleFactor;
+      currentScale = newScale;
+  }
+
+  // writeToDisk should always be in raw meters coordinates // UNSCALED
   function writeToDisk(key as String) as Void {
     key = key + storageIndex;
     Storage.setValue(key + "bb", boundingBox);
@@ -193,7 +222,7 @@ class BreadcrumbTrack {
 
     var distance = lastPoint.distanceTo(newPoint);
 
-    if (distance < MIN_DISTANCE_M)
+    if (distance < minDistanceMScaled)
     {
       // no need to add points closer than this
       return;
@@ -202,6 +231,7 @@ class BreadcrumbTrack {
     addPointRaw(newPoint, distance);
   }
 
+  // new point should be in scale already
   function addPointRaw(newPoint as RectangularPoint, distance as Float) as Void {
     distanceTotal += distance;
     coordinates.add(newPoint);
@@ -305,14 +335,14 @@ class BreadcrumbTrack {
     }
 
     var stabilityCheckDistance = lastStartupPoint.distanceTo(newPoint);
-    if (stabilityCheckDistance < MIN_DISTANCE_M)
+    if (stabilityCheckDistance < minDistanceMScaled)
     {
       // point too close, no need to add, but its still a good point
       seenStartupPoints++;
       return false;
     }
 
-    if (stabilityCheckDistance > STABILITY_MAX_DISTANCE_M)
+    if (stabilityCheckDistance > maxDistanceMScaled)
     {
         // we are unstable, remove all points
         seenStartupPoints = 0;
@@ -417,7 +447,8 @@ class BreadcrumbTrack {
       return [pointP.distanceTo(closestPointOnSegment), closestPointOnSegment];
   }
 
-  function checkOffTrack(checkPoint as RectangularPoint, distanceM as Number) as OffTrackInfo {
+  // checkpoint should already be scaled, as should distanceCheck
+  function checkOffTrack(checkPoint as RectangularPoint, distanceCheck as Float) as OffTrackInfo {
     // the big annying thing with off track alerts is that routes do not have evenly spaced points
     // if the route goes in a straight line, there is only 2 points, these can be frther than the alert distance
     // larger routes also have further spaced apart points (since we are limited to 500ish points per route to be able to transfer them from phone)
@@ -434,7 +465,7 @@ class BreadcrumbTrack {
         var p2 = coordinates.getPoint(i + 1); // p2 can never be null (we stop at 1 less than the end of the array), its always withing size (unless a slice happens in parallel somehow?)
 
         var distToSegmentAndSegPoint = calculateDistancePointToSegment(checkPoint, p1, p2);
-        if (distToSegmentAndSegPoint[0] < distanceM)
+        if (distToSegmentAndSegPoint[0] < distanceCheck)
         {
           lastClosePointIndex = i;
           lastClosePoint = distToSegmentAndSegPoint[1];
@@ -452,7 +483,7 @@ class BreadcrumbTrack {
       var p2 = coordinates.getPoint(i + 1); // p2 should not be null, we sanitized it at the top fof the function to end at -1 from the size
 
       var distToSegmentAndSegPoint = calculateDistancePointToSegment(checkPoint, p1, p2);
-      if (distToSegmentAndSegPoint[0] < distanceM)
+      if (distToSegmentAndSegPoint[0] < distanceCheck)
       {
         lastClosePointIndex = i;
         lastClosePoint = distToSegmentAndSegPoint[1];
@@ -466,6 +497,11 @@ class BreadcrumbTrack {
   function onActivityInfo(newPoint as RectangularPoint) as Boolean {
     // todo only call this when a point is added (some points are skipped on smaller distances)
     // _breadcrumbContext.mapRenderer().loadMapTilesForPosition(newPoint, _breadcrumbContext.trackRenderer()._currentScale);
+
+    if (currentScale != null && currentScale != 0f)
+    {
+      newPoint = newPoint.rescale(currentScale);
+    }
     
     if (inRestartMode)
     {
@@ -481,13 +517,13 @@ class BreadcrumbTrack {
     }
 
     var distance = lastPoint.distanceTo(newPoint);
-    if (distance < MIN_DISTANCE_M)
+    if (distance < minDistanceMScaled)
     {
       // point too close, so we can skip it
       return false;
     }
 
-    if (distance > STABILITY_MAX_DISTANCE_M)
+    if (distance > maxDistanceMScaled)
     {
       // it's too far away, and likely a glitch
       return false;
