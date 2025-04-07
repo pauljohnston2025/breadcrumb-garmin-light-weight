@@ -137,7 +137,7 @@ class CachedValues {
         var z = Math.round(calculateTileLevel(desiredResolution)).toNumber();
         tileZ = minN(maxN(z, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
 
-        var tileWidthM = (earthsCircumference / Math.pow(2, z)) / smallTilesPerBigTile;
+        var tileWidthM = (earthsCircumference / Math.pow(2, tileZ)) / smallTilesPerBigTile;
         // var minScreenDim = minF(_screenWidth, _screenHeight);
         // var minScreenDimM = minScreenDim / currentScale;
         var screenWidthM = screenWidth / currentScale;
@@ -181,7 +181,7 @@ class CachedValues {
         // how many pixels on the screen the tile should take up this can be smaller or larger than the actual tile, 
         // depending on if we scale up or down
         // find the closest pixel size
-        tileScalePixelSize = Math.round(_settings.tileSize * scaleFactor);
+        tileScalePixelSize = Math.round(_settings.tileSize * scaleFactor).toNumber();
 
         // find the closest pixel size
         tileOffsetX = Math.round(((firstTileLeftM - screenLeftM) * currentScale)).toNumber();
