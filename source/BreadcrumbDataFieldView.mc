@@ -63,16 +63,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 // see onUpdate explaqination for when each is called
   function onLayout(dc as Dc) as Void {
     // logD("onLayout");
-    // for now we render everything in the onUpdate view, and assume only 1 data
-    // screen
+    _cachedValues.setScreenSize(dc.getWidth(),  dc.getHeight());
     var textDim = dc.getTextDimensions("1234", Graphics.FONT_XTINY);
-    _breadcrumbContext.mapRenderer()._screenWidth = dc.getWidth() * 1.0f;
-    _breadcrumbContext.mapRenderer()._screenHeight = dc.getHeight() * 1.0f;
-    _breadcrumbContext.trackRenderer().setScreenSize(
-      dc.getWidth() * 1.0f,
-      dc.getHeight() * 1.0f,
-      textDim[0] * 1.0f
-    );
+    _breadcrumbContext.trackRenderer().setElevationAndUiData(textDim[0] * 1.0f);
     _scratchPadBitmap = newBitmap(dc.getWidth(),  dc.getHeight(), null);
   }
 
@@ -87,8 +80,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   // see onUpdate explaqination for when each is called
   function compute(info as Activity.Info) as Void {
     // logD("compute");
-    
 
+    _cachedValues.onActivityInfo(info);
     // temp hack for debugging (since it seems altitude does not work when playing activity data from gpx file)
     // var route = _breadcrumbContext.route();
     // if (route != null)
@@ -126,8 +119,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
       }
     }
-
-    _breadcrumbContext.trackRenderer().onActivityInfo(info);
     
     var currentSpeed = info.currentSpeed;
     if (currentSpeed != null) {
@@ -186,13 +177,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     // move based on the last scale we drew
     var renderer = _breadcrumbContext.trackRenderer();
-    var scale = renderer._currentScale;
-    // move half way across the screen
-    if (scale != 0)
-    {
-      _cachedValues.setMapMoveDistance((renderer._minScreenDim / 2.0) / scale);
-    }
-
     if (_breadcrumbContext.settings().uiMode == UI_MODE_SHOW_ALL)
     {
       _breadcrumbContext.trackRenderer().renderUi(dc);
@@ -208,16 +192,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         _breadcrumbContext.trackRenderer().renderLineFromLastPointToRoute(dc, lastPoint, offTrackPoint);
       }
     }
-  }
-
-  function center(point as RectangularPoint) as RectangularPoint
-  {
-      if (_cachedValues.fixedPosition != null)
-      {
-        return _cachedValues.fixedPosition;
-      }
-
-      return point;
   }
 
   function renderMain(dc as Dc) as Void {
@@ -266,18 +240,15 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       // edge case on startup when we have not got any readings yet (also when
       // viewing in settings) just render the route if we have one
       var outerBoundingBox = calcOuterBoundingBox(routes, null);
-      var centerPoint = calcCenterPointForBoundingBox(outerBoundingBox);
       if (routes.size() != 0) {
-        var _center = center(centerPoint);
-        renderer.updateCurrentScale(outerBoundingBox);
-        mapRenderer.renderMap(dc, _scratchPadBitmap, _center, renderer.rotationRadians(), renderer._currentScale);
+        mapRenderer.renderMap(dc, _scratchPadBitmap);
         for (var i = 0; i < routes.size(); ++i) {
           if (!settings.routeEnabled(i))
           {
               continue;
           }
           var route = routes[i];
-          renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex), _center);
+          renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex));
         }
         renderer.renderCurrentScale(dc);
       }
@@ -334,16 +305,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       outerBoundingBox[3] = maxF(route.boundingBox[3], outerBoundingBox[3]);
     }
 
+    _cachedValues.recalculateBoundingBox(outerBoundingBox);
     return outerBoundingBox;
-  }
-
-  function calcCenterPointForBoundingBox(boundingBox as [Float, Float, Float, Float]) as RectangularPoint
-  {
-      return new RectangularPoint(
-          boundingBox[0] + (boundingBox[2] - boundingBox[0]) / 2.0,
-          boundingBox[1] + (boundingBox[3] - boundingBox[1]) / 2.0,
-          0.0f
-      );
   }
 
   function renderZoomedOut(
@@ -364,48 +327,34 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     if (routes.size() != 0) {
       // render the whole track and route if we stop
       var outerBoundingBox = calcOuterBoundingBox(routes, track.boundingBox);
-      var centerPoint = calcCenterPointForBoundingBox(outerBoundingBox);
 
-      if (useUserLocation) {
-          centerPoint = lastPoint;
-      }
-
-      centerPoint = center(centerPoint);
-
-      renderer.updateCurrentScale(outerBoundingBox);
-      mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians(), renderer._currentScale);
+      mapRenderer.renderMap(dc, _scratchPadBitmap);
       for (var i = 0; i < routes.size(); ++i) {
         if (!settings.routeEnabled(i))
         {
             continue;
         }
         var route = routes[i];
-        renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex), centerPoint);
+        renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex));
       }
-      renderer.renderTrack(dc, track, _breadcrumbContext.settings().trackColour, centerPoint);
-      renderer.renderUser(dc, centerPoint, lastPoint);
+      renderer.renderTrack(dc, track, _breadcrumbContext.settings().trackColour);
+      renderer.renderUser(dc, lastPoint);
       renderer.renderCurrentScale(dc);
       return;
     }
 
-    var centerPoint = track.boundingBoxCenter;
-    if (useUserLocation) {
-      centerPoint = lastPoint;
-    }
-
-    centerPoint = center(centerPoint);
-
-    renderer.updateCurrentScale(track.boundingBox);
-    renderer.renderUser(dc, centerPoint, lastPoint);
-    renderer.renderTrack(dc, track, _breadcrumbContext.settings().trackColour, centerPoint);
+    renderer.renderUser(dc, lastPoint);
+    renderer.renderTrack(dc, track, _breadcrumbContext.settings().trackColour);
     renderer.renderCurrentScale(dc);
   }
 
   function renderCloseAroundCurrentPosition(
       dc as Dc, 
       mapRenderer as MapRenderer,
-      renderer as BreadcrumbRenderer, lastPoint as RectangularPoint,
-      routes as Array<BreadcrumbTrack>, track as BreadcrumbTrack) as Void {
+      renderer as BreadcrumbRenderer, 
+      lastPoint as RectangularPoint,
+      routes as Array<BreadcrumbTrack>, 
+      track as BreadcrumbTrack) as Void {
     var renderDistanceM = _breadcrumbContext.settings().metersAroundUser;
     var outerBoundingBox = [
       lastPoint.x - renderDistanceM,
@@ -414,12 +363,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       lastPoint.y + renderDistanceM,
     ];
 
+    _cachedValues.recalculateBoundingBox(outerBoundingBox);
     checkLastRenderType(true);
 
-    var centerPoint = center(lastPoint);
-
-    renderer.updateCurrentScale(outerBoundingBox);
-    mapRenderer.renderMap(dc, _scratchPadBitmap, centerPoint, renderer.rotationRadians(),  renderer._currentScale);
+    mapRenderer.renderMap(dc, _scratchPadBitmap);
 
     if (routes.size() != 0) {
       for (var i = 0; i < routes.size(); ++i) {
@@ -428,11 +375,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             continue;
         }
         var route = routes[i];
-        renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex), centerPoint);
+        renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex));
       }
     }
-    renderer.renderTrack(dc, track, settings.trackColour, centerPoint);
-    renderer.renderUser(dc, centerPoint, lastPoint);
+    renderer.renderTrack(dc, track, settings.trackColour);
+    renderer.renderUser(dc, lastPoint);
     renderer.renderCurrentScale(dc);
   }
 
@@ -445,7 +392,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     var fieldCount = 7;
     var y = 30;
     var spacing = (dc.getHeight() - y).toFloat() / fieldCount;
-    var x = _breadcrumbContext.trackRenderer()._xHalf;
+    var x = _cachedValues.xHalf;
     dc.drawText(x, y, Graphics.FONT_XTINY, "pending web: " + _breadcrumbContext.webRequestHandler().pendingCount(), Graphics.TEXT_JUSTIFY_CENTER);
     y+=spacing;
     var combined = "last web res: " + _breadcrumbContext.webRequestHandler().lastResult() + 

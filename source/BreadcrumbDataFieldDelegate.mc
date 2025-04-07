@@ -90,7 +90,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
       // top of screen
       renderer.incScale();
       return true;
-    } else if(y > renderer._screenHeight - hitboxSize) {
+    } else if(y > cachedValues.screenHeight - hitboxSize) {
       // bottom of screen
       if (settings.mode == MODE_MAP_MOVE)
       {
@@ -100,7 +100,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
       renderer.decScale();
       return true;
     }
-    else if(x > renderer._screenWidth - hitboxSize) {
+    else if(x > cachedValues.screenWidth - hitboxSize) {
       // right of screen
       if (settings.mode == MODE_MAP_MOVE)
       {

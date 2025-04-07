@@ -367,7 +367,10 @@ class TileCache {
         {
             return;
         }
+        startSeedTile(tileKey);
+    }
 
+    private function startSeedTile(tileKey as TileKey) as Void {
         // System.println("starting load tile: " + x + " " + y + " " + z);
 
         if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL))
@@ -432,6 +435,17 @@ class TileCache {
         // System.println("cache miss: " + x  + " " + y + " " + z);
         // System.println("have tiles: " + _internalCache.keys());
         _misses++;
+        return null;
+    }
+    
+    function getOrSeedTile(tileKey as TileKey) as Tile or Null {
+        var tile = getTile(tileKey);
+        if (tile != null)
+        {
+            return tile;
+        }
+
+        startSeedTile(tileKey);
         return null;
     }
     

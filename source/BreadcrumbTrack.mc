@@ -452,7 +452,6 @@ class BreadcrumbTrack {
       var p2 = coordinates.getPoint(i + 1); // p2 should not be null, we sanitized it at the top fof the function to end at -1 from the size
 
       var distToSegmentAndSegPoint = calculateDistancePointToSegment(checkPoint, p1, p2);
-      var point = coordinates.getPoint(i); 
       if (distToSegmentAndSegPoint[0] < distanceM)
       {
         lastClosePointIndex = i;

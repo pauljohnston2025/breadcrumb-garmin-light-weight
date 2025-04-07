@@ -2,14 +2,57 @@ import Toybox.Application;
 import Toybox.Lang;
 import Toybox.Graphics;
 import Toybox.System;
+import Toybox.Activity;
 
+// https://developer.garmin.com/connect-iq/reference-guides/monkey-c-reference/
+// Monkey C is a message-passed language. When a function is called, the virtual machine searches a hierarchy at runtime in the following order to find the function:
+// Instance members of the class
+// Members of the superclass
+// Static members of the class
+// Members of the parent module, and the parent modules up to the global namespace
+// Members of the superclass’s parent module up to the global namespace
 class CachedValues {
     private var _settings as Settings;
 
+    // cache some important maths to make everything faster
+    // things set to -1 are updated on the first layout/calcualte call
+
+    // updated when settings change
     var smallTilesPerBigTile as Number;
+    // updated when user manually pans around screen
     var fixedPosition as RectangularPoint or Null;
+    
+    // updated whenever we change zoom level (speed changes, zoom at pace mode etc.)
+    var outerBoundingBox as [Float, Float, Float, Float] = BOUNDING_BOX_DEFAULT();
+    var centerPosition as RectangularPoint = new RectangularPoint(0f, 0f, 0f);
+    var currentScale as Float = 0.0; // pixels per meter so <pixel count> / _currentScale = meters  or  meters * _currentScale = pixels
     // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
     var mapMoveDistanceM as Float;
+
+    // updated whenever we get new activity data with a new heading
+    var rotationRad as Float = 0.0;  // heading in radians
+    var rotateCos as Float = -1f;
+    var rotateSin as Float = -1f;
+
+    // updated whenever onlayout changes (audit usages, these should not need to be floats, but sometimes are used to do float math)
+    var screenWidth as Float = -1f;
+    var screenHeight as Float = -1f;
+    var minScreenDim as Float = -1f;
+    var xHalf as Float = -1f;
+    var yHalf as Float = -1f;
+
+    // map related fields updated whenever scale changes
+    var mapDataCanBeUsed as Boolean = false;
+    var earthsCircumference as Float = 40075016.686f;
+    var originShift as Float = earthsCircumference / 2.0; // Half circumference of Earth
+    var tileZ as Number = -1;
+    var tileScalePixelSize as Number = -1;
+    var tileOffsetX as Number = -1;
+    var tileOffsetY as Number = -1;
+    var tileCountX as Number = -1;
+    var tileCountY as Number = -1;
+    var firstTileX as Number = -1;
+    var firstTileY as Number = -1;
 
     function initialize(settings as Settings)
     {
@@ -18,6 +61,180 @@ class CachedValues {
         fixedPosition = null;
         // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
         mapMoveDistanceM = _settings.metersAroundUser.toFloat();
+    }
+
+    function recalculateBoundingBox(outerBoundingBox as [Float, Float, Float, Float]) as Void
+    {
+        // todo only do this when needed 
+        // grab tracks/routes/speed etc and recalculate
+        self.outerBoundingBox = outerBoundingBox;
+        updateCurrentScale(outerBoundingBox);
+        calcCenterPointForBoundingBox(outerBoundingBox);
+    }
+
+    // needs to be called whenever the screen moves to a new bounding box
+    function updateMapData()
+    {
+        if (currentScale == 0f)
+        {
+            // do not divide by zero my good friends
+            // we do not have a scale calculated yet
+            return;
+        }
+
+        // 2 to 15 see https://opentopomap.org/#map=2/-43.2/305.9
+        var desiredResolution = 1 / currentScale;
+        var z = Math.round(calculateTileLevel(desiredResolution)).toNumber();
+        tileZ = minN(maxN(z, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
+
+        var tileWidthM = (earthsCircumference / Math.pow(2, z)) / smallTilesPerBigTile;
+        // var minScreenDim = minF(_screenWidth, _screenHeight);
+        // var minScreenDimM = minScreenDim / currentScale;
+        var screenWidthM = screenWidth / currentScale;
+        var screenHeightM = screenHeight / currentScale;
+        
+        // where the screen corner starts
+        var halfScreenWidthM = screenWidthM / 2f;
+        var halfScreenHeightM = screenHeightM / 2f;
+        var screenLeftM = centerPosition.x - halfScreenWidthM;
+        var screenTopM = centerPosition.y + halfScreenHeightM;
+
+        // find which tile we are closest to
+        firstTileX = ((screenLeftM + originShift) / tileWidthM).toNumber();
+        firstTileY = ((originShift - screenTopM) / tileWidthM).toNumber();
+
+        // remember, lat/long is a different coordinate system (the lower we are the more negative we are)
+        //  x calculations are the same - more left = more negative
+        //  tile inside graph
+        // 90
+        //    | 0,0 1,0   tile 
+        //    | 0,1 1,1
+        //    |____________________
+        //  -180,-90              180
+        var firstTileLeftM = firstTileX * tileWidthM - originShift;
+        var firstTileTopM = originShift - firstTileY * tileWidthM;
+
+        // var screenToTilePixelRatio = minScreenDim / _settings.tileSize;
+        // var screenToTileMRatio = minScreenDimM / tileWidthM;
+        // var scaleFactor = screenToTilePixelRatio / screenToTileMRatio; // we need to stretch or shrink the tiles by this much
+        // simplification of above calculation
+        var scaleFactor = (currentScale * tileWidthM)/ _settings.tileSize;
+        // eg. tile = 10m screen = 10m tile = 256pixel screen = 360pixel scaleFactor = 1.4 each tile pixel needs to become 1.4 sceen pixels
+        // eg. 2
+        //     tile = 20m screen = 10m tile = 256pixel screen = 360pixel scaleFactor = 2.8 we only want to render half the tile, so we only have half the pixels
+        //     screenToTileMRatio = 0.5 screenToTilePixelRatio = 1.4 
+        // eg. 3
+        //     tile = 10m screen = 20m tile = 256pixel screen = 360pixel scaleFactor = 0.7 we need 2 tiles, each tile pixel needs to be squashed into screen pixels
+        //     screenToTileMRatio = 2 screenToTilePixelRatio = 1.4 
+        // 
+
+        // how many pixels on the screen the tile should take up this can be smaller or larger than the actual tile, 
+        // depending on if we scale up or down
+        // find the closest pixel size
+        tileScalePixelSize = Math.round(_settings.tileSize * scaleFactor);
+
+        // find the closest pixel size
+        tileOffsetX = Math.round(((firstTileLeftM - screenLeftM) * currentScale)).toNumber();
+        tileOffsetY = Math.round((screenTopM - firstTileTopM) * currentScale).toNumber();
+
+        tileCountX = Math.ceil((-tileOffsetX + screenWidth) / tileScalePixelSize).toNumber();
+        tileCountY = Math.ceil((-tileOffsetY + screenHeight) / tileScalePixelSize).toNumber();
+        mapDataCanBeUsed = true;
+    }
+
+    function onActivityInfo(activityInfo as Activity.Info) as Void {
+        // System.println(
+        //     "store heading, current speed etc. so we can know how to render the "
+        //     + "map");
+        var currentHeading = activityInfo.currentHeading;
+        if (currentHeading != null) {
+            rotationRad = currentHeading;
+            rotateCos = Math.cos(rotationRad);
+            rotateSin = Math.sin(rotationRad);
+        }
+    }
+
+    function setScreenSize(width as Number, height as Number) as Void
+    {
+        screenWidth = width.toFloat();
+        screenHeight = height.toFloat();
+        minScreenDim = minF(screenWidth, screenHeight);
+        xHalf = width / 2.0f;
+        yHalf = height / 2.0f;    
+    }
+
+    (:scaledbitmap)
+    function calculateScale(
+        outerBoundingBox as[Float, Float, Float, Float]) as Float {
+        return calculateScaleStandard(outerBoundingBox);
+    }
+
+    // todo inline
+    function calculateScaleStandard(
+        outerBoundingBox as[Float, Float, Float, Float]) as Float {
+        var scale = _settings.scale;
+        if (scale != null) {
+            return scale;
+        }
+
+        var xDistanceM = outerBoundingBox[2] - outerBoundingBox[0];
+        var yDistanceM = outerBoundingBox[3] - outerBoundingBox[1];
+
+        var maxDistanceM = maxF(xDistanceM, yDistanceM);
+
+        if (maxDistanceM == 0)
+        {
+            // show 1m of space to avaoid division by 0
+            maxDistanceM = 1;
+        }
+        // we want the whole map to be show on the screen, we have 360 pixels on the
+        // venu 2s
+        // but this would only work for sqaures, so 0.75 fudge factor for circle
+        // watch face
+        return minScreenDim / maxDistanceM * 0.75;
+    }
+
+
+    (:noscaledbitmap)
+    function calculateScale(
+        outerBoundingBox as[Float, Float, Float, Float]) as Float {
+        // note: this can come from user intervention, and settings the sclae overload, we will get a close as we can
+        var perfectScale = calculateScaleStandard(outerBoundingBox);
+        
+        if (settings.mapEnabled)
+        {
+            // only allow map tile scale levels so that we can render the tiles without any gaps, and at the correct size
+            // todo cache these calcs, it is for the slower devices after all
+            var desiredResolution = 1 / perfectScale;
+            var z = Math.floor(calculateTileLevel(desiredResolution)).toNumber();
+            z = minN(maxN(z, settings.tileLayerMin), settings.tileLayerMax); // cap to our limits
+            
+            // we want these ratios to be the same
+            // var minScreenDimM = _minScreenDim / currentScale;
+            // var screenToTileMRatio = minScreenDimM / tileWidthM;
+            // var screenToTilePixelRatio = minScreenDim / _settings.tileSize;
+            var tileWidthM = (getApp()._breadcrumbContext.mapRenderer().earthsCircumference / Math.pow(2, z)) / settings.smallTilesPerBigTile;
+            //  var screenToTilePixelRatio = _minScreenDim / settings.tileSize;
+            
+            // note: this gets as close as it can to the zoom level, some route clipping might occur
+            // we have to go to the largertile sizes so that we can see the whole route
+            return settings.tileSize / tileWidthM;
+        }
+
+        return perfectScale;
+    }
+
+    function updateCurrentScale(outerBoundingBox as[Float, Float, Float, Float]) as Void {
+        currentScale = calculateScale(outerBoundingBox);
+        if (_settings.mapEnabled)
+        {
+            updateMapData();
+        }
+        // move half way across the screen
+        if (currentScale != 0f)
+        {
+            mapMoveDistanceM = ((minScreenDim / 2.0) / currentScale);
+        }
     }
 
     function recalculateAll() as Void
@@ -30,11 +247,22 @@ class CachedValues {
         else {
             fixedPosition = RectangularPoint.latLon2xy(_settings.fixedLatitude, _settings.fixedLongitude, 0f); 
         }
+        recalculateBoundingBox(outerBoundingBox); // updates map data and scale too
     }
 
-    function setMapMoveDistance(value as Float) as Void
-    {
-        mapMoveDistanceM = value;
+    // Desired resolution (meters per pixel)
+    function calculateTileLevel(desiredResolution as Float) as Float {
+        // Tile width in meters at zoom level 0
+        // var tileWidthAtZoom0 = earthsCircumference;
+
+        // Pixel resolution (meters per pixel) at zoom level 0
+        var resolutionAtZoom0 = earthsCircumference / 256f; // big tile coordinates
+
+        // Calculate the tile level (Z)
+        var tileLevel = Math.ln(resolutionAtZoom0 / desiredResolution) / Math.ln(2);
+
+        // Round to the nearest integer zoom level
+        return tileLevel.toFloat();
     }
 
     // todo: make all of these take into acount the sceen rotation, and move in the direction the screen is pointing
@@ -79,22 +307,42 @@ class CachedValues {
         }
     }
 
-    // note: this does not save the position just sets it
+    function calcCenterPointForBoundingBox(boundingBox as [Float, Float, Float, Float]) as Void
+    {
+        // when the scale is locked, we need to be where the user is, otherwise we
+        // could see a blank part of the map, when we are zoomed in and have no
+        // context
+        if (_settings.scale != null)
+        {
+            // the hacks begin
+            var lastPoint = getApp()._breadcrumbContext.track().lastPoint();
+            if (lastPoint != null)
+            {
+                centerPosition = lastPoint;
+                return;
+            }
+        }
+
+        if (fixedPosition != null)
+        {
+            centerPosition = fixedPosition;
+            return;
+        }
+
+        centerPosition = new RectangularPoint(
+            boundingBox[0] + (boundingBox[2] - boundingBox[0]) / 2.0,
+            boundingBox[1] + (boundingBox[3] - boundingBox[1]) / 2.0,
+            0.0f
+        );
+    }
+
     function setPositionIfNotSet() as Void
     {
         var lastRenderedLatLongCenter = null;
-        // context might not be set yet
-        var context = getApp()._breadcrumbContext;
-        if (context != null and context instanceof BreadcrumbContext && context has :_breadcrumbRenderer && context._breadcrumbRenderer != null && context._breadcrumbRenderer instanceof BreadcrumbRenderer)
-        {
-            if (context._breadcrumbRenderer.lastRenderedCenter != null)
-            {
-                lastRenderedLatLongCenter = RectangularPoint.xyToLatLon(
-                    context._breadcrumbRenderer.lastRenderedCenter.x, 
-                    context._breadcrumbRenderer.lastRenderedCenter.y
-                );
-            }
-        }
+        lastRenderedLatLongCenter = RectangularPoint.xyToLatLon(
+            centerPosition.x, 
+            centerPosition.y
+        );
         
         var fixedLatitude = _settings.fixedLatitude;
         var fixedLongitude = _settings.fixedLongitude;
