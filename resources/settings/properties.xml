@@ -2,6 +2,7 @@
     <!-- https://developer.garmin.com/connect-iq/core-topics/properties-and-app-settings/ -->
 	<property id="mode" type="number">0</property>
 	<property id="uiMode" type="number">0</property>
+	<property id="renderMode" type="number">0</property>
 
 	<property id="zoomAtPaceMode" type="number">0</property>
 	<property id="scale" type="float">0</property>

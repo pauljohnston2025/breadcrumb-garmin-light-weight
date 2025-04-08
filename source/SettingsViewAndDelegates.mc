@@ -253,6 +253,23 @@ class SettingsMain extends Rez.Menus.SettingsMain {
         safeSetSubLabel(me, :settingsMainModeUiMode, uiModeString);
         var scaleString = settings.scale == null ? "Auto" : settings.scale.format("%.5f");
         safeSetSubLabel(me, :settingsMainScale, scaleString);
+        var renderModeString = "";
+        switch(settings.renderMode)
+        {
+            case RENDER_MODE_BUFFERED_ROTATING:
+                renderModeString = Rez.Strings.renderModeBufferedRotating;
+                break;
+            case RENDER_MODE_UNBUFFERED_ROTATING:
+                renderModeString = Rez.Strings.renderModeUnbufferedRotating;
+                break;
+            case RENDER_MODE_BUFFERED_NO_ROTATION:
+                renderModeString = Rez.Strings.renderModeBufferedNoRotating;
+                break;
+            case RENDER_MODE_UNBUFFERED_NO_ROTATION:
+                renderModeString = Rez.Strings.renderModeNoBufferedNoRotating;
+                break;
+        }
+        safeSetSubLabel(me, :settingsMainRenderMode, renderModeString);
     }
 }
 
@@ -519,6 +536,8 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(new $.Rez.Menus.SettingsUiMode(), new $.SettingsUiModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainScale) {
             startPicker(new SettingsFloatPicker(settings.method(:setScale)), view);
+        } else if (itemId == :settingsMainRenderMode) {
+            WatchUi.pushView(new $.Rez.Menus.SettingsRenderMode(), new $.SettingsRenderModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainZoomAtPace) {
             var view = new $.SettingsZoomAtPace();
             WatchUi.pushView(view, new $.SettingsZoomAtPaceDelegate(view), WatchUi.SLIDE_IMMEDIATE);
@@ -675,6 +694,30 @@ class SettingsUiModeDelegate extends WatchUi.Menu2InputDelegate {
             settings.setUiMode(UI_MODE_HIDDEN);
         } else if (itemId == :settingsUiModeNone) {
             settings.setUiMode(UI_MODE_NONE);
+        }
+
+        parent.rerender();
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+    }
+}
+
+class SettingsRenderModeDelegate extends WatchUi.Menu2InputDelegate {
+    var parent as SettingsMain;
+    function initialize(parent as SettingsMain) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.parent = parent;
+    }
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var itemId = item.getId();
+        if (itemId == :settingsRenderModeBufferedRotating) {
+            settings.setRenderMode(RENDER_MODE_BUFFERED_ROTATING);
+        } else if (itemId == :settingsRenderModeUnbufferedRotating) {
+            settings.setRenderMode(RENDER_MODE_UNBUFFERED_ROTATING);
+        } else if (itemId == :settingsRenderModeBufferedNoRotating) {
+            settings.setRenderMode(RENDER_MODE_BUFFERED_NO_ROTATION);
+        } else if (itemId == :settingsRenderModeNoBufferedNoRotating) {
+            settings.setRenderMode(RENDER_MODE_UNBUFFERED_NO_ROTATION);
         }
 
         parent.rerender();

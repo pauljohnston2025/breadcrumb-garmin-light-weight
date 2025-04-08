@@ -24,8 +24,13 @@
         <settingConfig type="numeric" min="0" max="10"/>
     </setting>
 
-    <setting propertyKey="@Properties.enableRotation" title="@Strings.enableRotationTitle">
-        <settingConfig type="boolean"/>
+    <setting propertyKey="@Properties.renderMode" title="@Strings.renderModeTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.renderModeBufferedRotating</listEntry>
+            <listEntry value="1">@Strings.renderModeUnbufferedRotating</listEntry>
+            <listEntry value="2">@Strings.renderModeBufferedNoRotating</listEntry>
+            <listEntry value="3">@Strings.renderModeNoBufferedNoRotating</listEntry>
+        </settingConfig>
     </setting>
     
     <group id="zoomAtPace" title="@Strings.zoomAtPaceTitle" description="@Strings.zoomAtPaceDescription">

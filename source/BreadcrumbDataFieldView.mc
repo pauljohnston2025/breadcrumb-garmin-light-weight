@@ -196,6 +196,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   // in some other cases onUpdate is called interleaved with onCompute once a second each (think this might be when its the active screen but not currently renderring)
   // so we need to do all or heavy scaling code in compute, and make onUpdate just handle drawing, and possibly rotation (pre storing rotation could be slow/hard)
   function onUpdate(dc as Dc) as Void {
+
+      dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+      dc.clear();
+      
       // logD("onUpdate");
       var renderer = _breadcrumbContext.trackRenderer();
       if (renderer.renderClearTrackUi(dc))
@@ -275,9 +279,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       // _renderCounter = 0;
       // looks like view must do a render (not doing a render causes flashes), perhaps we can store our rendered state to a buffer to load from?
 
-      dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-      dc.clear();
-
       var routes = _breadcrumbContext.routes();
       var track = _breadcrumbContext.track();
 
@@ -325,7 +326,18 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       {
           var mapRenderer = _breadcrumbContext.mapRenderer();
           var renderer = _breadcrumbContext.trackRenderer();
-          // todo manually rotate everything including maps
+          dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+          dc.clear();
+          mapRenderer.renderMap(dc);
+          for (var i = 0; i < routes.size(); ++i) {
+              if (!settings.routeEnabled(i))
+              {
+                  continue;
+              }
+              var route = routes[i];
+              renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex));
+          }
+          renderer.renderTrack(dc, track, settings.trackColour);
           return;
       }
 

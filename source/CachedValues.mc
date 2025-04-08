@@ -488,8 +488,8 @@ class CachedValues {
     {
         var lastRenderedLatLongCenter = null;
         lastRenderedLatLongCenter = RectangularPoint.xyToLatLon(
-            centerPosition.x, 
-            centerPosition.y
+            centerPosition.x * currentScale, 
+            centerPosition.y * currentScale
         );
         
         var fixedLatitude = _settings.fixedLatitude;

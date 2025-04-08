@@ -129,6 +129,11 @@ class Settings {
         setValue("uiMode", uiMode);
     }
     
+    function setRenderMode(_renderMode as Number) as Void {
+        renderMode = _renderMode;
+        setValue("renderMode", renderMode);
+    }
+    
     function setFixedPositionRaw(lat as Float, long as Float) as Void {
         // hack method so that cached values can update the settings without reloading itself
         // its guaranteed to only be when moving around, and will never go to null
@@ -917,6 +922,7 @@ class Settings {
         setZoomAtPaceMode(defaultSettings.zoomAtPaceMode);
         setZoomAtPaceSpeedMPS(defaultSettings.zoomAtPaceSpeedMPS);
         setUiMode(defaultSettings.uiMode);
+        setRenderMode(defaultSettings.renderMode);
         setFixedLatitude(defaultSettings.fixedLatitude);
         setFixedLongitude(defaultSettings.fixedLongitude);
         setTileUrl(defaultSettings.tileUrl);
@@ -967,6 +973,7 @@ class Settings {
             "zoomAtPaceMode" => zoomAtPaceMode,
             "zoomAtPaceSpeedMPS" => zoomAtPaceSpeedMPS,
             "uiMode" => uiMode,
+            "renderMode" => renderMode,
             "fixedLatitude" => fixedLatitude == null ? 0f : fixedLatitude,
             "fixedLongitude" => fixedLongitude == null ? 0f : fixedLongitude,
             "tileUrl" => tileUrl,
@@ -1055,6 +1062,7 @@ class Settings {
         zoomAtPaceMode = parseNumber("zoomAtPaceMode", zoomAtPaceMode);
         zoomAtPaceSpeedMPS = parseFloat("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
         uiMode = parseNumber("uiMode", uiMode);
+        renderMode = parseNumber("renderMode", renderMode);
 
         fixedLatitude = parseOptionalFloat("fixedLatitude", fixedLatitude);
         fixedLongitude = parseOptionalFloat("fixedLongitude", fixedLongitude);

@@ -291,91 +291,55 @@ class BreadcrumbRenderer {
   function renderTrack(dc as Dc, breadcrumb as BreadcrumbTrack,
                        colour as Graphics.ColorType) as Void {
 
-    // var centerPosition = _cachedValues.centerPosition; // local lookup faster
-    // var rotateCos = _cachedValues.rotateCos; // local lookup faster
-    // var rotateSin = _cachedValues.rotateSin; // local lookup faster
-    // var xHalf = _cachedValues.xHalf; // local lookup faster
-    // var yHalf = _cachedValues.yHalf; // local lookup faster
+    var centerPosition = _cachedValues.centerPosition; // local lookup faster
+    var rotateCos = _cachedValues.rotateCos; // local lookup faster
+    var rotateSin = _cachedValues.rotateSin; // local lookup faster
+    var xHalf = _cachedValues.xHalf; // local lookup faster
+    var yHalf = _cachedValues.yHalf; // local lookup faster
 
-    // if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE)
-    // {
-    //     // its very cofusing seeing the routes disappear when scrolling
-    //     // and it makes sense to want to sroll around the route too
-    //     return;
-    // }
+    if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE)
+    {
+        // its very cofusing seeing the routes disappear when scrolling
+        // and it makes sense to want to sroll around the route too
+        return;
+    }
 
-    // dc.setColor(colour, Graphics.COLOR_BLACK);
-    // dc.setPenWidth(4);
+    dc.setColor(colour, Graphics.COLOR_BLACK);
+    dc.setPenWidth(4);
 
-    // var size = breadcrumb.coordinates.size();
-    // var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
+    var size = breadcrumb.coordinates.size();
+    var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
 
-    // // note: size is using the overload of points array (the reduced pointarray size)
-    // // but we draw from the raw points
-    // if (size >= ARRAY_POINT_SIZE * 2) {
-    //   var firstXScaledAtCenter =
-    //       (coordinatesRaw[0] - centerPosition.x);
-    //   var firstYScaledAtCenter =
-    //       (coordinatesRaw[1] - centerPosition.y);
-    //     var lastXRotated = xHalf + firstXScaledAtCenter;
-    //     var lastYRotated = yHalf - firstYScaledAtCenter;
-    //     if (settings.enableRotation)
-    //     {
-    //       lastXRotated = xHalf + rotateCos * firstXScaledAtCenter -
-    //                         rotateSin * firstYScaledAtCenter;
-    //       lastYRotated = yHalf - (rotateSin * firstXScaledAtCenter +
-    //                         rotateCos * firstYScaledAtCenter);
-    //     }
+    // note: size is using the overload of points array (the reduced pointarray size)
+    // but we draw from the raw points
+    if (size >= ARRAY_POINT_SIZE * 2) {
+      var firstXScaledAtCenter =
+          (coordinatesRaw[0] - centerPosition.x);
+      var firstYScaledAtCenter =
+          (coordinatesRaw[1] - centerPosition.y);
+      var lastXRotated = xHalf + rotateCos * firstXScaledAtCenter -
+                          rotateSin * firstYScaledAtCenter;
+      var lastYRotated = yHalf - (rotateSin * firstXScaledAtCenter +
+                          rotateCos * firstYScaledAtCenter);
 
-    //     // if (settings.showPoints)
-    //     // {
-    //     //   // circles are expensive, maybe better to draw squares? possibly have 'point type' instead
-    //     //   // all these should be in thried own methods, whats more expensive, if check and multiple setColor calls
-    //     //   // or clculating the rotations twice
-    //     //   // once we move to render with scratchpad should be fster to itterate twice
-    //     //   // migth want to save the scaled points array for both calcs though
-    //     //   // this is realy only fome to debug though
-    //     //   dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK); // point colour
-    //     //   dc.drawCircle(lastXRotated, lastYRotated, 3);
-    //     //   dc.setColor(colour, Graphics.COLOR_BLACK); // restore colour
-    //     // }
-    //   for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
-    //     var nextX = coordinatesRaw[i];
-    //     var nextY = coordinatesRaw[i + 1];
+      for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
+        var nextX = coordinatesRaw[i];
+        var nextY = coordinatesRaw[i + 1];
 
-    //     var nextXScaledAtCenter = (nextX - centerPosition.x);
-    //     var nextYScaledAtCenter = (nextY - centerPosition.y);
+        var nextXScaledAtCenter = (nextX - centerPosition.x);
+        var nextYScaledAtCenter = (nextY - centerPosition.y);
 
-    //     var nextXRotated = xHalf + nextXScaledAtCenter;
-    //     var nextYRotated = yHalf - nextYScaledAtCenter;
-    //     if (settings.enableRotation)
-    //     {
-    //       nextXRotated = xHalf + rotateCos * nextXScaledAtCenter -
-    //                        rotateSin * nextYScaledAtCenter;
-    //       nextYRotated = yHalf - (rotateSin * nextXScaledAtCenter +
-    //                        rotateCos * nextYScaledAtCenter);
-    //     }
+        var nextXRotated = xHalf + rotateCos * nextXScaledAtCenter -
+                          rotateSin * nextYScaledAtCenter;
+        var nextYRotated = yHalf - (rotateSin * nextXScaledAtCenter +
+                          rotateCos * nextYScaledAtCenter);
 
-    //     dc.drawLine(lastXRotated, lastYRotated, nextXRotated, nextYRotated);
+        dc.drawLine(lastXRotated, lastYRotated, nextXRotated, nextYRotated);
 
-    //     lastXRotated = nextXRotated;
-    //     lastYRotated = nextYRotated;
-    //     // if (settings.showPoints)
-    //     // {
-    //     //   // circles are expensive, maybe better to draw squares? possibly have 'point type' instead
-    //     //   // all these should be in thried own methods, whats more expensive, if check and multiple setColor calls
-    //     //   // or clculating the rotations twice
-    //     //   // once we move to render with scratchpad should be fster to itterate twice
-    //     //   // migth want to save the scaled points array for both clacs though
-    //     //   // this is realy only fome to debug though
-    //     //   dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK); // point colour
-    //     //   dc.drawCircle(lastXRotated, lastYRotated, 3);
-    //     //   dc.setColor(colour, Graphics.COLOR_BLACK); // restore colour
-    //     // }
-    //   }
-
-    // dc.drawText(0, yHalf + 50, Graphics.FONT_XTINY, "Head: " + _rotationRad,
-    //             Graphics.TEXT_JUSTIFY_LEFT);
+        lastXRotated = nextXRotated;
+        lastYRotated = nextYRotated;
+      }
+    }
   }
 
   function renderClearTrackUi(dc as Dc) as Boolean {
@@ -433,6 +397,7 @@ class BreadcrumbRenderer {
     dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
     dc.setPenWidth(1);
 
+    var currentScale = _cachedValues.currentScale; // local lookup faster
     var centerPosition = _cachedValues.centerPosition; // local lookup faster
     var screenHeight = _cachedValues.screenHeight; // local lookup faster
     var xHalf = _cachedValues.xHalf; // local lookup faster
@@ -507,7 +472,7 @@ class BreadcrumbRenderer {
       dc.drawText(xHalf, screenHeight - scaleFromEdge, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_CENTER);
     }
     else if (centerPosition != null) {
-      var latLong = RectangularPoint.xyToLatLon(centerPosition.x, centerPosition.y);
+      var latLong = RectangularPoint.xyToLatLon(centerPosition.x * currentScale, centerPosition.y * currentScale);
       if (latLong != null)
       {
         var txt = latLong[0].format("%.3f") + ", " + latLong[1].format("%.3f");
