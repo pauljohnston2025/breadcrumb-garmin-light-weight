@@ -96,6 +96,8 @@ class BreadcrumbRenderer {
   // points should already be scaled
   function renderLineFromLastPointToRoute(dc as Dc, lastPoint as RectangularPoint, offTrackPoint as RectangularPoint) as Void
   {
+    // todo make this use the buffered rendering mode
+    // its only when off track, so not a huge issue
     if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE)
     {
         // its very confusing seeing the routes disappear when scrolling
@@ -116,7 +118,7 @@ class BreadcrumbRenderer {
 
     var lastPointRotatedX = xHalf + lastPointUnrotatedX;
     var lastPointRotatedY = yHalf - lastPointUnrotatedY;
-    if (settings.enableRotation)
+    if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING || settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING)
     {
       lastPointRotatedX = xHalf + rotateCos * lastPointUnrotatedX - rotateSin * lastPointUnrotatedY;
       lastPointRotatedY = yHalf - (rotateSin * lastPointUnrotatedX + rotateCos * lastPointUnrotatedY);
@@ -129,7 +131,7 @@ class BreadcrumbRenderer {
 
     var offTrackPointRotatedX = xHalf + offTrackPointUnrotatedX;
     var offTrackPointRotatedY = yHalf - offTrackPointUnrotatedY;
-    if (settings.enableRotation)
+    if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING || settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING)
     {
       offTrackPointRotatedX = xHalf + rotateCos * offTrackPointUnrotatedX - rotateSin * offTrackPointUnrotatedY;
       offTrackPointRotatedY = yHalf - (rotateSin * offTrackPointUnrotatedX + rotateCos * offTrackPointUnrotatedY);
@@ -158,7 +160,7 @@ class BreadcrumbRenderer {
 
     var userPosRotatedX = xHalf + userPosUnrotatedX;
     var userPosRotatedY = yHalf - userPosUnrotatedY;
-    if (settings.enableRotation)
+    if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING || settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING)
     {
       userPosRotatedX = xHalf + rotateCos * userPosUnrotatedX - rotateSin * userPosUnrotatedY;
       userPosRotatedY = yHalf - (rotateSin * userPosUnrotatedX + rotateCos * userPosUnrotatedY);
@@ -178,7 +180,7 @@ class BreadcrumbRenderer {
     var triangleCenterX = userPosRotatedX;
     var triangleCenterY = userPosRotatedY;
 
-    if (!settings.enableRotation)
+    if (settings.renderMode != RENDER_MODE_BUFFERED_ROTATING && settings.renderMode != RENDER_MODE_UNBUFFERED_ROTATING)
     {
       // todo: load user arrow from bitmap and draw rotated instead
       // we normally rotate the track, but we now need to rotate the user
@@ -205,12 +207,12 @@ class BreadcrumbRenderer {
     dc.drawLine(triangleLeftX, triangleLeftY, triangleTopX, triangleTopY);
   }
 
-  function renderTrack(dc as Dc, breadcrumb as BreadcrumbTrack,
-                       colour as Graphics.ColorType) as Void {
-
+  
+  function renderTrackUnrotated(
+      dc as Dc, 
+      breadcrumb as BreadcrumbTrack,
+      colour as Graphics.ColorType) as Void {
     var centerPosition = _cachedValues.centerPosition; // local lookup faster
-    var rotateCos = _cachedValues.rotateCos; // local lookup faster
-    var rotateSin = _cachedValues.rotateSin; // local lookup faster
     var xHalf = _cachedValues.xHalf; // local lookup faster
     var yHalf = _cachedValues.yHalf; // local lookup faster
 
@@ -230,20 +232,12 @@ class BreadcrumbRenderer {
     // note: size is using the overload of points array (the reduced pointarray size)
     // but we draw from the raw points
     if (size >= ARRAY_POINT_SIZE * 2) {
-      var firstXScaledAtCenter =
-          (coordinatesRaw[0] - centerPosition.x);
-      var firstYScaledAtCenter =
-          (coordinatesRaw[1] - centerPosition.y);
-        var lastXRotated = xHalf + firstXScaledAtCenter;
-        var lastYRotated = yHalf - firstYScaledAtCenter;
-        if (settings.enableRotation)
-        {
-          lastXRotated = xHalf + rotateCos * firstXScaledAtCenter -
-                            rotateSin * firstYScaledAtCenter;
-          lastYRotated = yHalf - (rotateSin * firstXScaledAtCenter +
-                            rotateCos * firstYScaledAtCenter);
-        }
-
+        var firstXScaledAtCenter =
+            (coordinatesRaw[0] - centerPosition.x);
+        var firstYScaledAtCenter =
+            (coordinatesRaw[1] - centerPosition.y);
+        var lastX = xHalf + firstXScaledAtCenter;
+        var lastY = yHalf - firstYScaledAtCenter;
         // if (settings.showPoints)
         // {
         //   // circles are expensive, maybe better to draw squares? possibly have 'point type' instead
@@ -256,57 +250,129 @@ class BreadcrumbRenderer {
         //   dc.drawCircle(lastXRotated, lastYRotated, 3);
         //   dc.setColor(colour, Graphics.COLOR_BLACK); // restore colour
         // }
-      for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
-        var nextX = coordinatesRaw[i];
-        var nextY = coordinatesRaw[i + 1];
+        for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
+            var nextX = coordinatesRaw[i];
+            var nextY = coordinatesRaw[i + 1];
 
-        var nextXScaledAtCenter = (nextX - centerPosition.x);
-        var nextYScaledAtCenter = (nextY - centerPosition.y);
+            var nextXScaledAtCenter = (nextX - centerPosition.x);
+            var nextYScaledAtCenter = (nextY - centerPosition.y);
 
-        var nextXRotated = xHalf + nextXScaledAtCenter;
-        var nextYRotated = yHalf - nextYScaledAtCenter;
-        if (settings.enableRotation)
-        {
-          nextXRotated = xHalf + rotateCos * nextXScaledAtCenter -
-                           rotateSin * nextYScaledAtCenter;
-          nextYRotated = yHalf - (rotateSin * nextXScaledAtCenter +
-                           rotateCos * nextYScaledAtCenter);
+            var nextXScaled = xHalf + nextXScaledAtCenter;
+            var nextYScaled = yHalf - nextYScaledAtCenter;
+            
+            dc.drawLine(lastX, lastY, nextXScaled, nextYScaled);
+
+            lastX = nextXScaled;
+            lastY = nextYScaled;
         }
-
-        dc.drawLine(lastXRotated, lastYRotated, nextXRotated, nextYRotated);
-
-        lastXRotated = nextXRotated;
-        lastYRotated = nextYRotated;
-        // if (settings.showPoints)
-        // {
-        //   // circles are expensive, maybe better to draw squares? possibly have 'point type' instead
-        //   // all these should be in thried own methods, whats more expensive, if check and multiple setColor calls
-        //   // or clculating the rotations twice
-        //   // once we move to render with scratchpad should be fster to itterate twice
-        //   // migth want to save the scaled points array for both clacs though
-        //   // this is realy only fome to debug though
-        //   dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK); // point colour
-        //   dc.drawCircle(lastXRotated, lastYRotated, 3);
-        //   dc.setColor(colour, Graphics.COLOR_BLACK); // restore colour
-        // }
-      }
-
-      if (settings.displayRouteNames)
-      {
-        var xScaledAtCenter = (breadcrumb.boundingBoxCenter.x - centerPosition.x);
-        var yScaledAtCenter = (breadcrumb.boundingBoxCenter.y - centerPosition.y);
-
-        var xRotated = xHalf + xScaledAtCenter;
-        var yRotated = yHalf - yScaledAtCenter;
-        if (settings.enableRotation)
-        {
-          xRotated = xHalf + rotateCos * xScaledAtCenter - rotateSin * yScaledAtCenter;
-          yRotated = yHalf - (rotateSin * xScaledAtCenter + rotateCos * yScaledAtCenter);
-        }
-
-        dc.drawText(xRotated, yRotated, Graphics.FONT_XTINY, settings.routeName(breadcrumb.storageIndex), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-      }
     }
+  }
+
+  function renderTrackName(
+      dc as Dc, 
+      breadcrumb as BreadcrumbTrack,
+      colour as Graphics.ColorType) as Void {
+
+      dc.setColor(colour, Graphics.COLOR_BLACK);
+      dc.setPenWidth(4);
+      var centerPosition = _cachedValues.centerPosition; // local lookup faster
+      var xHalf = _cachedValues.xHalf; // local lookup faster
+      var yHalf = _cachedValues.yHalf; // local lookup faster
+
+      var xScaledAtCenter = (breadcrumb.boundingBoxCenter.x - centerPosition.x);
+      var yScaledAtCenter = (breadcrumb.boundingBoxCenter.y - centerPosition.y);
+
+      var x = xHalf + xScaledAtCenter;
+      var y = yHalf - yScaledAtCenter;
+
+      dc.drawText(x, y, Graphics.FONT_XTINY, settings.routeName(breadcrumb.storageIndex), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+  }
+
+  function renderTrack(dc as Dc, breadcrumb as BreadcrumbTrack,
+                       colour as Graphics.ColorType) as Void {
+
+    // var centerPosition = _cachedValues.centerPosition; // local lookup faster
+    // var rotateCos = _cachedValues.rotateCos; // local lookup faster
+    // var rotateSin = _cachedValues.rotateSin; // local lookup faster
+    // var xHalf = _cachedValues.xHalf; // local lookup faster
+    // var yHalf = _cachedValues.yHalf; // local lookup faster
+
+    // if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE)
+    // {
+    //     // its very cofusing seeing the routes disappear when scrolling
+    //     // and it makes sense to want to sroll around the route too
+    //     return;
+    // }
+
+    // dc.setColor(colour, Graphics.COLOR_BLACK);
+    // dc.setPenWidth(4);
+
+    // var size = breadcrumb.coordinates.size();
+    // var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
+
+    // // note: size is using the overload of points array (the reduced pointarray size)
+    // // but we draw from the raw points
+    // if (size >= ARRAY_POINT_SIZE * 2) {
+    //   var firstXScaledAtCenter =
+    //       (coordinatesRaw[0] - centerPosition.x);
+    //   var firstYScaledAtCenter =
+    //       (coordinatesRaw[1] - centerPosition.y);
+    //     var lastXRotated = xHalf + firstXScaledAtCenter;
+    //     var lastYRotated = yHalf - firstYScaledAtCenter;
+    //     if (settings.enableRotation)
+    //     {
+    //       lastXRotated = xHalf + rotateCos * firstXScaledAtCenter -
+    //                         rotateSin * firstYScaledAtCenter;
+    //       lastYRotated = yHalf - (rotateSin * firstXScaledAtCenter +
+    //                         rotateCos * firstYScaledAtCenter);
+    //     }
+
+    //     // if (settings.showPoints)
+    //     // {
+    //     //   // circles are expensive, maybe better to draw squares? possibly have 'point type' instead
+    //     //   // all these should be in thried own methods, whats more expensive, if check and multiple setColor calls
+    //     //   // or clculating the rotations twice
+    //     //   // once we move to render with scratchpad should be fster to itterate twice
+    //     //   // migth want to save the scaled points array for both calcs though
+    //     //   // this is realy only fome to debug though
+    //     //   dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK); // point colour
+    //     //   dc.drawCircle(lastXRotated, lastYRotated, 3);
+    //     //   dc.setColor(colour, Graphics.COLOR_BLACK); // restore colour
+    //     // }
+    //   for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
+    //     var nextX = coordinatesRaw[i];
+    //     var nextY = coordinatesRaw[i + 1];
+
+    //     var nextXScaledAtCenter = (nextX - centerPosition.x);
+    //     var nextYScaledAtCenter = (nextY - centerPosition.y);
+
+    //     var nextXRotated = xHalf + nextXScaledAtCenter;
+    //     var nextYRotated = yHalf - nextYScaledAtCenter;
+    //     if (settings.enableRotation)
+    //     {
+    //       nextXRotated = xHalf + rotateCos * nextXScaledAtCenter -
+    //                        rotateSin * nextYScaledAtCenter;
+    //       nextYRotated = yHalf - (rotateSin * nextXScaledAtCenter +
+    //                        rotateCos * nextYScaledAtCenter);
+    //     }
+
+    //     dc.drawLine(lastXRotated, lastYRotated, nextXRotated, nextYRotated);
+
+    //     lastXRotated = nextXRotated;
+    //     lastYRotated = nextYRotated;
+    //     // if (settings.showPoints)
+    //     // {
+    //     //   // circles are expensive, maybe better to draw squares? possibly have 'point type' instead
+    //     //   // all these should be in thried own methods, whats more expensive, if check and multiple setColor calls
+    //     //   // or clculating the rotations twice
+    //     //   // once we move to render with scratchpad should be fster to itterate twice
+    //     //   // migth want to save the scaled points array for both clacs though
+    //     //   // this is realy only fome to debug though
+    //     //   dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK); // point colour
+    //     //   dc.drawCircle(lastXRotated, lastYRotated, 3);
+    //     //   dc.setColor(colour, Graphics.COLOR_BLACK); // restore colour
+    //     // }
+    //   }
 
     // dc.drawText(0, yHalf + 50, Graphics.FONT_XTINY, "Head: " + _rotationRad,
     //             Graphics.TEXT_JUSTIFY_LEFT);

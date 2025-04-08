@@ -82,7 +82,6 @@ class Settings {
     var routes as Array<Dictionary> = [];
     var routesEnabled as Boolean = true;
     var disableMapsFailureCount as Number = 200; // 0 for unlimited
-    var enableRotation as Boolean = true;
     var displayRouteNames as Boolean = true;
     var normalModeColour as Number = Graphics.COLOR_BLUE;
     var uiColour as Number = Graphics.COLOR_DK_GRAY;
@@ -101,7 +100,7 @@ class Settings {
 
     // scratrchpad used for rotations, but it also means we have a large bitmap stored around
     // I will also use that bitmap for re-renders though, and just do rotations every render rather than re-drawing all the tracks/tiles again 
-    var drawUseScratchPad as Boolean = true;
+    var renderMode as Number = RENDER_MODE_BUFFERED_ROTATING;
     // how many seconds should we wait before even considerring the next point
     // changes in speed/angle/zoom are not effected by this number. Though maybe they should be?
     var recalculateItervalS as Number = 5;
@@ -294,12 +293,7 @@ class Settings {
         enableOffTrackAlerts = _enableOffTrackAlerts;
         setValue("enableOffTrackAlerts", enableOffTrackAlerts);
     }
-    
-    function setEnableRotation(_enableRotation as Boolean) as Void {
-        enableRotation = _enableRotation;
-        setValue("enableRotation", enableRotation);
-    }
-    
+        
     function setRoutesEnabled(_routesEnabled as Boolean) as Void {
         routesEnabled = _routesEnabled;
         setValue("routesEnabled", routesEnabled);
@@ -513,18 +507,7 @@ class Settings {
 
         setEnableOffTrackAlerts(true);
     }
-    
-    function toggleEnableRotation() as Void 
-    {
-        if (enableRotation)
-        {
-            setEnableRotation(false);
-            return;
-        }
-
-        setEnableRotation(true);
-    }
-    
+        
     function toggleRoutesEnabled() as Void 
     {
         if (routesEnabled)
@@ -942,7 +925,6 @@ class Settings {
         setRoutesEnabled(defaultSettings.routesEnabled);
         setDisplayRouteNames(defaultSettings.displayRouteNames);
         setDisableMapsFailureCount(defaultSettings.disableMapsFailureCount);
-        setEnableRotation(defaultSettings.enableRotation);
         setEnableOffTrackAlerts(defaultSettings.enableOffTrackAlerts);
         setOffTrackAlertsDistanceM(defaultSettings.offTrackAlertsDistanceM);
         setOffTrackAlertsMaxReportIntervalS(defaultSettings.offTrackAlertsMaxReportIntervalS);
@@ -992,7 +974,6 @@ class Settings {
             "routesEnabled" => routesEnabled,
             "displayRouteNames" => displayRouteNames,
             "disableMapsFailureCount" => disableMapsFailureCount,
-            "enableRotation" => enableRotation,
             "enableOffTrackAlerts" => enableOffTrackAlerts,
             "offTrackAlertsDistanceM" => offTrackAlertsDistanceM,
             "offTrackAlertsMaxReportIntervalS" => offTrackAlertsMaxReportIntervalS,
@@ -1056,7 +1037,6 @@ class Settings {
         setMapEnabled(mapEnabled); // prompt for app to open if needed
         displayRouteNames = parseBool("displayRouteNames", displayRouteNames);
         enableOffTrackAlerts = parseBool("enableOffTrackAlerts", enableOffTrackAlerts);
-        enableRotation = parseBool("enableRotation", enableRotation);
         routesEnabled = parseBool("routesEnabled", routesEnabled);
         trackColour = parseColour("trackColour", trackColour);
         elevationColour = parseColour("elevationColour", elevationColour);

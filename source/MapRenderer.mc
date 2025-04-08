@@ -21,9 +21,7 @@ class MapRenderer {
         _cachedValues = cachedValues;
     }
 
-    function renderMap(
-        dc as Dc,
-        scratchPad as BufferedBitmap) as Void
+    function renderMapUnrotated(dc as Dc) as Void
     {
         var cachedValues = _cachedValues; // local lookup faster
         if (!_cachedValues.mapDataCanBeUsed)
@@ -38,10 +36,9 @@ class MapRenderer {
             return;
         }
 
-        var scratchPadDc = scratchPad.getDc();
         // for debug its purple so we can see any issues, otherwise it should be black
-        scratchPadDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-        scratchPadDc.clear();
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.clear();
 
         var tileScalePixelSize = cachedValues.tileScalePixelSize; // local lookup faster
         var tileOffsetX = cachedValues.tileOffsetX; // local lookup faster
@@ -67,36 +64,9 @@ class MapRenderer {
                 // cant rotate individual tiles as you can see the seams between tiles
                 // one large one then rotate looks much better, and is possibly faster
                 // we must scale as the tile we picked is only close to the resolution we need
-                $.drawScaledBitmapHelper(scratchPadDc, tileOffsetX + x * tileScalePixelSize, tileOffsetY + y * tileScalePixelSize, tileScalePixelSize, tileScalePixelSize, tileFromCache.bitmap);
+                $.drawScaledBitmapHelper(dc, tileOffsetX + x * tileScalePixelSize, tileOffsetY + y * tileScalePixelSize, tileScalePixelSize, tileScalePixelSize, tileFromCache.bitmap);
             }
         }
-
-        
-        var xOffset = cachedValues.xHalf;
-        var yOffset = cachedValues.yHalf;
-        
-        var transform = new AffineTransform();
-        if (_settings.enableRotation)
-        {
-            transform.translate(xOffset, yOffset); // move to center
-            transform.rotate(-cachedValues.rotationRad); // rotate
-            transform.translate(-xOffset, -yOffset); // move back to position
-        }
-
-        dc.drawBitmap2(
-            0,
-            0,
-            scratchPad,
-            {
-                // :bitmapX =>
-                // :bitmapY =>
-                // :bitmapWidth =>
-                // :bitmapHeight =>
-                // :tintColor =>
-                // :filterMode =>
-                :transform => transform
-            }
-        );
     }
 }
 

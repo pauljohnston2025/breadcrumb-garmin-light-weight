@@ -48,7 +48,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   var _cachedValues as CachedValues;
   var lastOffTrackAlertSent = 0;
   var _computeCounter as Number = 0;
-  // var _renderCounter = 0;
+  var _lastFullRenderTime as Number = 0;
+  var _lastFullRenderScale as Float = 0f;
+  var FULL_RENDER_INTERVAL_S as Number = 5;
 
   // Set the label of the data field here.
   function initialize(breadcrumbContext as BreadcrumbContext) {
@@ -194,86 +196,163 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   // in some other cases onUpdate is called interleaved with onCompute once a second each (think this might be when its the active screen but not currently renderring)
   // so we need to do all or heavy scaling code in compute, and make onUpdate just handle drawing, and possibly rotation (pre storing rotation could be slow/hard)
   function onUpdate(dc as Dc) as Void {
-    // logD("onUpdate");
-    renderMain(dc);
+      // logD("onUpdate");
+      var renderer = _breadcrumbContext.trackRenderer();
+      if (renderer.renderClearTrackUi(dc))
+      {
+        return;
+      }
 
-    // move based on the last scale we drew
-    var renderer = _breadcrumbContext.trackRenderer();
-    if (_breadcrumbContext.settings().uiMode == UI_MODE_SHOW_ALL)
-    {
-      _breadcrumbContext.trackRenderer().renderUi(dc);
-    }
+      // mode should be wtored here, but is needed for renderring the ui
+      // should structure this way better, but oh well (renderer per mode etc.)
+      if (settings.mode == MODE_ELEVATION)
+      {
+        renderElevation(dc);
+        if (_breadcrumbContext.settings().uiMode == UI_MODE_SHOW_ALL)
+        {
+            renderer.renderUi(dc);
+        }
+        return;
+      } else if (settings.mode == MODE_DEBUG)
+      {
+        renderDebug(dc);
+        if (_breadcrumbContext.settings().uiMode == UI_MODE_SHOW_ALL)
+        {
+            renderer.renderUi(dc);
+        }
+        return;
+      }
 
-    // only ever not null if feature enabled
-    if (offTrackPoint != null)
-    {
+      renderMain(dc);
+
+      var routes = _breadcrumbContext.routes();
+
+      if (settings.displayRouteNames)
+      {
+          for (var i = 0; i < routes.size(); ++i) {
+              if (!settings.routeEnabled(i))
+              {
+                  continue;
+              }
+              var route = routes[i];
+              renderer.renderTrackName(dc, route, settings.routeColour(route.storageIndex));
+          }
+      }
+
+      renderer.renderCurrentScale(dc);
+
       var lastPoint = _breadcrumbContext.track().lastPoint();
       if (lastPoint != null)
       {
-        // points need to be scaled and rotated :(
-        _breadcrumbContext.trackRenderer().renderLineFromLastPointToRoute(dc, lastPoint, offTrackPoint);
+          renderer.renderUser(dc, lastPoint);
+
+          // only ever not null if feature enabled
+          if (offTrackPoint != null) {
+              // points need to be scaled and rotated :(
+              renderer.renderLineFromLastPointToRoute(dc, lastPoint, offTrackPoint);
+          }
       }
-    }
+      
+      // move based on the last scale we drew
+      if (_breadcrumbContext.settings().uiMode == UI_MODE_SHOW_ALL)
+      {
+          renderer.renderUi(dc);
+      }
   }
 
   function renderMain(dc as Dc) as Void {
+      // _renderCounter++;
+      // // slow down the calls to onUpdate as its a heavy operation, we will only render every second time (effectively 2 seconds)
+      // // this should save some battery, and hopefully the screen stays as the old renderred value
+      // // this will mean that we will need to wait this long for the inital render too
+      // // perhaps we could base it on speed or 'user is looking at watch'
+      // // and have a touch override?
+      // if (_renderCounter != 2) {
+      //   View.onUpdate(dc);
+      //   return;
+      // }
 
-    // _renderCounter++;
-    // // slow down the calls to onUpdate as its a heavy operation, we will only render every second time (effectively 2 seconds)
-    // // this should save some battery, and hopefully the screen stays as the old renderred value
-    // // this will mean that we will need to wait this long for the inital render too
-    // // perhaps we could base it on speed or 'user is looking at watch'
-    // // and have a touch override?
-    // if (_renderCounter != 2) {
-    //   View.onUpdate(dc);
-    //   return;
-    // }
+      // _renderCounter = 0;
+      // looks like view must do a render (not doing a render causes flashes), perhaps we can store our rendered state to a buffer to load from?
 
-    // _renderCounter = 0;
-    // looks like view must do a render (not doing a render causes flashes), perhaps we can store our rendered state to a buffer to load from?
+      dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+      dc.clear();
 
-    dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-    dc.clear();
+      var routes = _breadcrumbContext.routes();
+      var track = _breadcrumbContext.track();
 
-    var renderer = _breadcrumbContext.trackRenderer();
-    var mapRenderer = _breadcrumbContext.mapRenderer();
-    if (renderer.renderClearTrackUi(dc))
-    {
-      return;
-    }
-
-    // mode should be wtored here, but is needed for renderring the ui
-    // should structure this way better, but oh well (renderer per mode etc.)
-    if (settings.mode == MODE_ELEVATION)
-    {
-       renderElevation(dc);
-       return;
-    } else if (settings.mode == MODE_DEBUG)
-    {
-       renderDebug(dc);
-       return;
-    }
-
-    var routes = _breadcrumbContext.routes();
-    var track = _breadcrumbContext.track();
-
-    mapRenderer.renderMap(dc, _scratchPadBitmap);
-    for (var i = 0; i < routes.size(); ++i) {
-      if (!settings.routeEnabled(i))
+      if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING || settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION)
       {
-          continue;
+        // only render once to buffer then back off for a bit
+        // need to force rerender on scale change
+        var epoch = Time.now().value();
+        if (epoch - _lastFullRenderTime > settings.recalculateItervalS || _lastFullRenderScale != _cachedValues.currentScale)
+        {
+            // FULL_RENDER_INTERVAL_S is only to take into accout user moving (which we are also backing off)
+            // if they stop and scale changes we will redraw immediately
+            // if they rotate we will draw rotations stright away
+            _lastFullRenderTime = epoch;
+            _lastFullRenderScale = _cachedValues.currentScale;
+            var scratchPadBitmapDc = _scratchPadBitmap.getDc();
+            rederUnrotated(scratchPadBitmapDc, routes, track);
+        }
+
+        if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING)
+        {
+            dc.drawBitmap2(
+                0,
+                0,
+                _scratchPadBitmap,
+                {
+                    // :bitmapX =>
+                    // :bitmapY =>
+                    // :bitmapWidth =>
+                    // :bitmapHeight =>
+                    // :tintColor =>
+                    // :filterMode =>
+                    :transform => _cachedValues.rotationMatrix
+                }
+            );
+        }
+        else {
+            dc.drawBitmap(0, 0, _scratchPadBitmap);
+        }
+          
+        return;
       }
-      var route = routes[i];
-      renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex));
-    }
-    renderer.renderCurrentScale(dc);
 
-    renderer.renderTrack(dc, track, settings.trackColour);
+      if (settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING)
+      {
+          var mapRenderer = _breadcrumbContext.mapRenderer();
+          var renderer = _breadcrumbContext.trackRenderer();
+          // todo manually rotate everything including maps
+          return;
+      }
 
-    var lastPoint = track.lastPoint();
-    if (lastPoint != null) {
-      renderer.renderUser(dc, lastPoint);
-    }
+      // RENDER_MODE_UNBUFFERED_NO_ROTATION
+      rederUnrotated(dc, routes, track);
+  }
+
+  function rederUnrotated(
+    dc as Dc, 
+    routes as Array<BreadcrumbTrack>, 
+    track as BreadcrumbTrack) as Void
+  {
+      var renderer = _breadcrumbContext.trackRenderer();
+      var mapRenderer = _breadcrumbContext.mapRenderer();
+
+      dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+      dc.clear();
+      mapRenderer.renderMapUnrotated(dc);
+      for (var i = 0; i < routes.size(); ++i) {
+          if (!settings.routeEnabled(i))
+          {
+              continue;
+          }
+          var route = routes[i];
+          renderer.renderTrackUnrotated(dc, route, settings.routeColour(route.storageIndex));
+      }
+      renderer.renderTrackUnrotated(dc, track, settings.trackColour);
   }
 
   function renderDebug(dc as Dc) as Void {

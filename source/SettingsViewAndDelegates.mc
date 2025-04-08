@@ -251,7 +251,6 @@ class SettingsMain extends Rez.Menus.SettingsMain {
                 break;
         }
         safeSetSubLabel(me, :settingsMainModeUiMode, uiModeString);
-        safeSetToggle(me, :settingsMainEnableRotation, settings.enableRotation);
         var scaleString = settings.scale == null ? "Auto" : settings.scale.format("%.5f");
         safeSetSubLabel(me, :settingsMainScale, scaleString);
     }
@@ -518,9 +517,6 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(new $.Rez.Menus.SettingsMode(), new $.SettingsModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainModeUiMode) {
             WatchUi.pushView(new $.Rez.Menus.SettingsUiMode(), new $.SettingsUiModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
-        } else if (itemId == :settingsMainEnableRotation) {
-            settings.toggleEnableRotation();
-            view.rerender();
         } else if (itemId == :settingsMainScale) {
             startPicker(new SettingsFloatPicker(settings.method(:setScale)), view);
         } else if (itemId == :settingsMainZoomAtPace) {

@@ -42,6 +42,7 @@ class CachedValues {
     var minScreenDim as Float = minF(screenWidth, screenHeight);
     var xHalf as Float = screenWidth / 2f;
     var yHalf as Float = screenHeight / 2f;
+    var rotationMatrix as AffineTransform = new AffineTransform();
 
     // map related fields updated whenever scale changes
     var mapDataCanBeUsed as Boolean = false;
@@ -213,6 +214,8 @@ class CachedValues {
             currentSpeed = _currentSpeed;
         }
 
+        updateRotationMatrix();
+
         // we are either in 2 cases
         // if we are moving at some pace check the mode we are in to determine if we
         // zoom in or out
@@ -241,7 +244,17 @@ class CachedValues {
         minScreenDim = minF(screenWidth, screenHeight);
         xHalf = width / 2.0f;
         yHalf = height / 2.0f;    
+          
+        updateRotationMatrix();
         updateScale();
+    }
+
+    function updateRotationMatrix() as Void
+    {
+        rotationMatrix = new AffineTransform();
+        rotationMatrix.translate(xHalf, yHalf); // move to center
+        rotationMatrix.rotate(-rotationRad); // rotate
+        rotationMatrix.translate(-xHalf, -yHalf); // move back to position
     }
 
     (:scaledbitmap)
@@ -311,6 +324,11 @@ class CachedValues {
     }
         
     function updateCurrentScale(newScale as Float) as Void {
+        if (_settings.scale != null)
+        {
+            newScale = _settings.scale;
+        }
+
         var oldScale = currentScale;
         currentScale = newScale;
         if (oldScale != newScale)
