@@ -47,7 +47,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   var settings as Settings;
   var _cachedValues as CachedValues;
   var lastOffTrackAlertSent = 0;
-  var currentScaleOfoffTrackPoint as Float or Null = null;
+  var _computeCounter as Number = 0;
   // var _renderCounter = 0;
 
   // Set the label of the data field here.
@@ -59,26 +59,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     _cachedValues = _breadcrumbContext.cachedValues();
   }
 
-  function rescale(newScale as Float) as Void
+  function rescale(scaleFactor as Float) as Void
   {
-      if (newScale == 0f)
-      {
-        return; // dont allow silly scales
-      }
-
-      var scaleFactor = newScale;
-      if (currentScaleOfoffTrackPoint != null && currentScaleOfoffTrackPoint != 0)
-      {
-        // adjsut by old scale
-        scaleFactor = newScale / currentScaleOfoffTrackPoint;
-      }
-
       if (offTrackPoint != null)
       {
         offTrackPoint = offTrackPoint.rescale(scaleFactor);
       }
-
-      currentScaleOfoffTrackPoint = newScale;
   }
 
 // see onUpdate explaqination for when each is called
@@ -121,6 +107,16 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     }
 
+    // System.println("computing data field");
+    _computeCounter++;
+    // slow down the calls to onActivityInfo as its a heavy operation checking
+    // the distance we don't really need data much faster than this anyway
+    if (_computeCounter != settings.recalculateItervalS) {
+      return;
+    }
+
+    _computeCounter = 0;
+
     var settings = _breadcrumbContext.settings();
     var disableMapsFailureCount = settings.disableMapsFailureCount;
     if (disableMapsFailureCount != 0 && _breadcrumbContext.webRequestHandler().errorCount() > disableMapsFailureCount)
@@ -132,12 +128,16 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     var newPoint = _breadcrumbContext.track().pointFromActivityInfo(info);
     if (newPoint != null)
     {
+      if (_cachedValues.currentScale != 0f)
+      {
+        newPoint = newPoint.rescale(_cachedValues.currentScale);
+      }
       if (_breadcrumbContext.track().onActivityInfo(newPoint))
       {
         // todo: PERF only update this if the new point added changed the bounding box
         // its pretty good atm though, only recalculates once every few seconds, and only 
         // if a point is added
-        _cachedValues.updateBoundingBox(); 
+        _cachedValues.updateScale(); 
         var lastPoint = _breadcrumbContext.track().lastPoint();
         if (lastPoint != null && (settings.enableOffTrackAlerts || settings.drawLineToClosestPoint))
         {
@@ -167,7 +167,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         {
           if (settings.drawLineToClosestPoint)
           {
-              currentScaleOfoffTrackPoint = route.currentScale; // all tracks and routes really have to have the same scale, or the calculcation of distance will be wrong
               offTrackPoint = offTrackInfo.pointWeLeftTrack;
           }
 

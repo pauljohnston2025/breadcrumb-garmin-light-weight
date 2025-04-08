@@ -23,7 +23,6 @@ class CachedValues {
     var fixedPosition as RectangularPoint or Null;
     
     // updated whenever we change zoom level (speed changes, zoom at pace mode etc.)
-    var outerBoundingBox as [Float, Float, Float, Float] = BOUNDING_BOX_DEFAULT(); // not scaled - raw meters
     var centerPosition as RectangularPoint = new RectangularPoint(0f, 0f, 0f); // scaled to pixels
     var currentScale as Float = 0.0; // pixels per meter so <pixel count> / _currentScale = meters  or  meters * _currentScale = pixels
     // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
@@ -37,11 +36,12 @@ class CachedValues {
     var currentlyZoomingAroundUser as Boolean = false;
 
     // updated whenever onlayout changes (audit usages, these should not need to be floats, but sometimes are used to do float math)
-    var screenWidth as Float = -1f;
-    var screenHeight as Float = -1f;
-    var minScreenDim as Float = -1f;
-    var xHalf as Float = -1f;
-    var yHalf as Float = -1f;
+    // default to full screen guess
+    var screenWidth as Float = System.getDeviceSettings().screenWidth.toFloat();
+    var screenHeight as Float = System.getDeviceSettings().screenHeight.toFloat();
+    var minScreenDim as Float = minF(screenWidth, screenHeight);
+    var xHalf as Float = screenWidth / 2f;
+    var yHalf as Float = screenHeight / 2f;
 
     // map related fields updated whenever scale changes
     var mapDataCanBeUsed as Boolean = false;
@@ -67,14 +67,20 @@ class CachedValues {
 
     function calcOuterBoundingBoxFromTrackAndRoutes(routes as Array<BreadcrumbTrack>, trackBoundingBox as [Float, Float, Float, Float] or Null) as [Float, Float, Float, Float]
     {
+        var scaleDivisor = currentScale;
+        if (currentScale == 0f)
+        {
+            scaleDivisor = 1; // use raw coordinates
+        }
+
         // we need to make a new object, otherwise we will modify the one thats passed in
         var outerBoundingBox = BOUNDING_BOX_DEFAULT();
         if (trackBoundingBox != null)
         {
-            outerBoundingBox[0] = trackBoundingBox[0] / currentScale;
-            outerBoundingBox[1] = trackBoundingBox[1] / currentScale;
-            outerBoundingBox[2] = trackBoundingBox[2] / currentScale;
-            outerBoundingBox[3] = trackBoundingBox[3] / currentScale;
+            outerBoundingBox[0] = trackBoundingBox[0] / scaleDivisor;
+            outerBoundingBox[1] = trackBoundingBox[1] / scaleDivisor;
+            outerBoundingBox[2] = trackBoundingBox[2] / scaleDivisor;
+            outerBoundingBox[3] = trackBoundingBox[3] / scaleDivisor;
         }
 
         for (var i = 0; i < routes.size(); ++i) {
@@ -83,48 +89,41 @@ class CachedValues {
                 continue;
             }
             var route = routes[i];
-            outerBoundingBox[0] = minF(route.boundingBox[0] / currentScale, outerBoundingBox[0]);
-            outerBoundingBox[1] = minF(route.boundingBox[1] / currentScale, outerBoundingBox[1]);
-            outerBoundingBox[2] = maxF(route.boundingBox[2] / currentScale, outerBoundingBox[2]);
-            outerBoundingBox[3] = maxF(route.boundingBox[3] / currentScale, outerBoundingBox[3]);
+            outerBoundingBox[0] = minF(route.boundingBox[0] / scaleDivisor, outerBoundingBox[0]);
+            outerBoundingBox[1] = minF(route.boundingBox[1] / scaleDivisor, outerBoundingBox[1]);
+            outerBoundingBox[2] = maxF(route.boundingBox[2] / scaleDivisor, outerBoundingBox[2]);
+            outerBoundingBox[3] = maxF(route.boundingBox[3] / scaleDivisor, outerBoundingBox[3]);
         }
 
         return outerBoundingBox;
     }
 
-    function updateBoundingBox() as Void
+    function updateScale() as Void
     {
-        if (currentScale == 0f)
-        {
-            outerBoundingBox = BOUNDING_BOX_DEFAULT();
-            calcCenterPointForBoundingBox(outerBoundingBox); // must be done before scale calc, as it causes rescale
-            updateCurrentScale(outerBoundingBox);
-        }
-
         if (currentlyZoomingAroundUser)
         {
             var renderDistanceM = _settings.metersAroundUser;
-            var lastPoint = getApp()._breadcrumbContext.track().lastPoint();
-            if (lastPoint != null)
+            if (!calcCenterPoint())
             {
-                outerBoundingBox = [
-                    lastPoint.x / currentScale - renderDistanceM,
-                    lastPoint.y / currentScale - renderDistanceM,
-                    lastPoint.x / currentScale + renderDistanceM,
-                    lastPoint.y / currentScale + renderDistanceM,
-                ];
-                calcCenterPointForBoundingBox(outerBoundingBox); // must be done before scale calc, as it causes rescale
-                updateCurrentScale(outerBoundingBox);
-                return;
+                var lastPoint = getApp()._breadcrumbContext.track().lastPoint();
+                if (lastPoint != null)
+                {
+                    centerPosition = lastPoint;
+                    updateCurrentScale(minScreenDim / renderDistanceM * 0.75);
+                    return;
+                }                
             }
+
+            updateCurrentScale(minScreenDim / renderDistanceM * 0.75);
+            return;
         }
 
-        outerBoundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
+        var boundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
             getApp()._breadcrumbContext.routes(), 
-            getApp()._breadcrumbContext.track().lastPoint == null ? null : getApp()._breadcrumbContext.track().boundingBox
+            getApp()._breadcrumbContext.track().lastPoint() == null ? null : getApp()._breadcrumbContext.track().boundingBox
         );
-        calcCenterPointForBoundingBox(outerBoundingBox); // must be done before scale calc, as it causes rescale
-        updateCurrentScale(outerBoundingBox);
+        calcCenterPointForBoundingBox(boundingBox);
+        updateCurrentScaleFromBoundingBox(boundingBox);
     }
 
     // needs to be called whenever the screen moves to a new bounding box
@@ -225,11 +224,12 @@ class CachedValues {
         var weShouldZoomAroundUser = 
             _settings.scale != null ||
             (currentSpeed > _settings.zoomAtPaceSpeedMPS && _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_PACE) || 
-            (currentSpeed <= _settings.zoomAtPaceSpeedMPS && _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_STOPPED);
+            (currentSpeed <= _settings.zoomAtPaceSpeedMPS && _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_STOPPED) ||
+            _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_ALWAYS_ZOOM;
         if (currentlyZoomingAroundUser != weShouldZoomAroundUser)
         {
             currentlyZoomingAroundUser = weShouldZoomAroundUser;
-            updateBoundingBox();
+            updateScale();
             _settings.clearPendingWebRequests();
         }
     }
@@ -241,6 +241,7 @@ class CachedValues {
         minScreenDim = minF(screenWidth, screenHeight);
         xHalf = width / 2.0f;
         yHalf = height / 2.0f;    
+        updateScale();
     }
 
     (:scaledbitmap)
@@ -267,6 +268,7 @@ class CachedValues {
             // show 1m of space to avaoid division by 0
             maxDistanceM = 1;
         }
+
         // we want the whole map to be show on the screen, we have 360 pixels on the
         // venu 2s
         // but this would only work for sqaures, so 0.75 fudge factor for circle
@@ -304,23 +306,15 @@ class CachedValues {
         return perfectScale;
     }
 
-    function updateCurrentScale(outerBoundingBox as[Float, Float, Float, Float]) as Void {
+    function updateCurrentScaleFromBoundingBox(outerBoundingBox as[Float, Float, Float, Float]) as Void {
+        updateCurrentScale(calculateScale(outerBoundingBox));
+    }
+        
+    function updateCurrentScale(newScale as Float) as Void {
         var oldScale = currentScale;
-        currentScale = calculateScale(outerBoundingBox);
-        var newScale = currentScale;
+        currentScale = newScale;
         if (oldScale != newScale)
         {
-            var routes = getApp()._breadcrumbContext.routes();
-            for (var i = 0; i < routes.size(); ++i) {
-                var route = routes[i];
-                route.rescale(currentScale);
-            }
-            getApp()._breadcrumbContext.track().rescale(currentScale);
-            if (getApp()._view != null)
-            {
-                getApp()._view.rescale(currentScale);
-            }
-
             if (newScale == 0f)
             {
                 return; // dont allow silly scales
@@ -333,6 +327,16 @@ class CachedValues {
                 scaleFactor = newScale / oldScale;
             }
 
+            var routes = getApp()._breadcrumbContext.routes();
+            for (var i = 0; i < routes.size(); ++i) {
+                var route = routes[i];
+                route.rescale(scaleFactor);
+            }
+            getApp()._breadcrumbContext.track().rescale(scaleFactor);
+            if (getApp()._view != null)
+            {
+                getApp()._view.rescale(scaleFactor);
+            }
             centerPosition = centerPosition.rescale(scaleFactor); // the amount of things we are rescaling is insane and also hard to keep track of them all
         }
 
@@ -358,7 +362,7 @@ class CachedValues {
         else {
             fixedPosition = RectangularPoint.latLon2xy(_settings.fixedLatitude, _settings.fixedLongitude, 0f); 
         }
-        updateBoundingBox(); // updates map data and scale too
+        updateScale(); // updates map data too
     }
 
     // Desired resolution (meters per pixel)
@@ -418,7 +422,7 @@ class CachedValues {
         }
     }
 
-    function calcCenterPointForBoundingBox(boundingBox as [Float, Float, Float, Float]) as Void
+    function calcCenterPoint() as Boolean
     {
         // when the scale is locked, we need to be where the user is, otherwise we
         // could see a blank part of the map, when we are zoomed in and have no
@@ -430,13 +434,23 @@ class CachedValues {
             if (lastPoint != null)
             {
                 centerPosition = lastPoint;
-                return;
+                return true;
             }
         }
 
         if (fixedPosition != null)
         {
             centerPosition = fixedPosition.rescale(currentScale);
+            return true;
+        }
+
+        return false;
+    }
+
+    function calcCenterPointForBoundingBox(boundingBox as [Float, Float, Float, Float]) as Void
+    {
+        if (calcCenterPoint())
+        {
             return;
         }
 
@@ -444,7 +458,12 @@ class CachedValues {
             boundingBox[0] + (boundingBox[2] - boundingBox[0]) / 2.0,
             boundingBox[1] + (boundingBox[3] - boundingBox[1]) / 2.0,
             0.0f
-        ).rescale(currentScale);
+        );
+
+        if (currentScale != 0f)
+        {
+            centerPosition = centerPosition.rescale(currentScale);
+        }
     }
 
     function setPositionIfNotSet() as Void

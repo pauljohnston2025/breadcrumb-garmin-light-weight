@@ -136,6 +136,11 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
           }
 
           route.writeToDisk(ROUTE_KEY);
+          var currentScale = _breadcrumbContext.cachedValues().currentScale;
+          if (currentScale != 0f)
+          {
+            route.rescale(currentScale);
+          }
           _breadcrumbContext.cachedValues().recalculateAll();
           return;
         }

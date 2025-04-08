@@ -117,7 +117,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
         cachedValues.moveFixedPositionLeft();
         return true;
       }
-      settings.toggleZoomAtPace();
+      settings.nextZoomAtPaceMode();
       return true;
     }
     

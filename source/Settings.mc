@@ -14,6 +14,8 @@ enum /*Mode*/ {
 enum /*ZoomMode*/ {
   ZOOM_AT_PACE_MODE_PACE,
   ZOOM_AT_PACE_MODE_STOPPED,
+  ZOOM_AT_PACE_MODE_NEVER_ZOOM,
+  ZOOM_AT_PACE_MODE_ALWAYS_ZOOM,
   ZOOM_AT_PACE_MODE_MAX,
 }
 
@@ -22,6 +24,14 @@ enum /*UiMode*/ {
   UI_MODE_HIDDEN, // ui still active, but is hidden
   UI_MODE_NONE, // no accessible ui (touch events disabled)
   UI_MODE_MAX
+}
+
+enum /*RenderMode*/ {
+  RENDER_MODE_BUFFERED_ROTATING,
+  RENDER_MODE_UNBUFFERED_ROTATING,
+  RENDER_MODE_BUFFERED_NO_ROTATION,
+  RENDER_MODE_UNBUFFERED_NO_ROTATION,
+  RENDER_MODE_MAX,
 }
 
 const COMPANION_APP_TILE_URL = "http://127.0.0.1:8080";
@@ -558,7 +568,7 @@ class Settings {
         setMode(mode);
     }
 
-    function toggleZoomAtPace() as Void { 
+    function nextZoomAtPaceMode() as Void { 
         if (mode != MODE_NORMAL)
         {
             return;

@@ -291,11 +291,10 @@ class BreadcrumbRenderer {
         // }
       }
 
-      var currentScale = _cachedValues.currentScale;
       if (settings.displayRouteNames)
       {
-        var xScaledAtCenter = (breadcrumb.boundingBoxCenter.x - centerPosition.x) * currentScale;
-        var yScaledAtCenter = (breadcrumb.boundingBoxCenter.y - centerPosition.y) * currentScale;
+        var xScaledAtCenter = (breadcrumb.boundingBoxCenter.x - centerPosition.x);
+        var yScaledAtCenter = (breadcrumb.boundingBoxCenter.y - centerPosition.y);
 
         var xRotated = xHalf + xScaledAtCenter;
         var yRotated = yHalf - yScaledAtCenter;
@@ -487,6 +486,16 @@ class BreadcrumbRenderer {
     {
       // zoom view
       fvText = "S";
+    }
+    if (settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_ALWAYS_ZOOM)
+    {
+      // zoom view
+      fvText = "A";
+    }
+    if (settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_NEVER_ZOOM)
+    {
+      // zoom view
+      fvText = "N";
     }
     dc.drawText(lineFromEdge, yHalf, Graphics.FONT_XTINY, fvText,
                 Graphics.TEXT_JUSTIFY_LEFT);
@@ -800,7 +809,7 @@ class BreadcrumbRenderer {
       // drawAngledText and drawRadialText not available :(
     }
 
-    dc.drawText(xHalf, 20, Graphics.FONT_XTINY, distanceM.format("%.0f") + "m", Graphics.TEXT_JUSTIFY_CENTER);
+    dc.drawText(xHalf, 20, Graphics.FONT_XTINY, (distanceM * _cachedValues.currentScale).format("%.0f") + "m", Graphics.TEXT_JUSTIFY_CENTER);
   }
 
   function getElevationScale(track as BreadcrumbTrack, routes as Array<BreadcrumbTrack>) as [Float, Float, Float] {

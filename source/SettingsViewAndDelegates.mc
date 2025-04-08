@@ -275,6 +275,12 @@ class SettingsZoomAtPace extends Rez.Menus.SettingsZoomAtPace {
             case ZOOM_AT_PACE_MODE_STOPPED:
                 modeString = Rez.Strings.zoomAtPaceModeStopped;
                 break;
+            case ZOOM_AT_PACE_MODE_NEVER_ZOOM:
+                modeString = Rez.Strings.zoomAtPaceModeNever;
+                break;
+            case ZOOM_AT_PACE_MODE_ALWAYS_ZOOM:
+                modeString = Rez.Strings.zoomAtPaceModeAlways;
+                break;
         }
         safeSetSubLabel(me, :settingsZoomAtPaceMode, modeString);
         safeSetSubLabel(me, :settingsZoomAtPaceUserMeters, settings.metersAroundUser.toString() + "m");
@@ -779,6 +785,10 @@ class SettingsZoomAtPaceModeDelegate extends WatchUi.Menu2InputDelegate {
             settings.setZoomAtPaceMode(ZOOM_AT_PACE_MODE_PACE);
         } else if (itemId == :settingsZoomAtPaceModeStopped) {
             settings.setZoomAtPaceMode(ZOOM_AT_PACE_MODE_STOPPED);
+        } else if (itemId == :settingsZoomAtPaceModeNever) {
+            settings.setZoomAtPaceMode(ZOOM_AT_PACE_MODE_NEVER_ZOOM);
+        } else if (itemId == :settingsZoomAtPaceModeAlways) {
+            settings.setZoomAtPaceMode(ZOOM_AT_PACE_MODE_ALWAYS_ZOOM);
         }
 
         parent.rerender();

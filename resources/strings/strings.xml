@@ -52,6 +52,8 @@
     <string id="zoomAtPaceModeTitle">Mode</string>
     <string id="zoomAtPaceModePace">Zoom When Moving</string>
     <string id="zoomAtPaceModeStopped">Zoom When Stopped</string>
+    <string id="zoomAtPaceModeNever">Never Zoom</string>
+    <string id="zoomAtPaceModeAlways">Always Zoom</string>
     <string id="zoomAtPaceSpeedMPS">Speed (m/s)</string>
     <string id="zoomAtPaceSpeedMPSPrompt">1.0</string>
     <string id="uiModeTitle">UI Mode</string>

@@ -23,6 +23,7 @@ class BreadcrumbContext {
     _track = new BreadcrumbTrack(-1, "");
     _breadcrumbRenderer = new BreadcrumbRenderer(_settings, _cachedValues);
 
+    // routes loaded from storage will be rescalrescaled on the first calculate in cached values
     for (var i = 0; i < _settings.routeMax; ++i) {
       var route = BreadcrumbTrack.readFromDisk(ROUTE_KEY, i);
       if (route != null) {
