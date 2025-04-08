@@ -93,11 +93,8 @@ class Settings {
     var offTrackAlertsDistanceM as Number = 20;
     var offTrackAlertsMaxReportIntervalS as Number = 60;
 
-    // todo make configurable
     var drawLineToClosestPoint as Boolean = true;
     
-    // todo impl support
-
     // scratrchpad used for rotations, but it also means we have a large bitmap stored around
     // I will also use that bitmap for re-renders though, and just do rotations every render rather than re-drawing all the tracks/tiles again 
     var renderMode as Number = RENDER_MODE_BUFFERED_ROTATING;
@@ -269,6 +266,16 @@ class Settings {
         clearTileCache();
     }
     
+    function setTileCachePadding(value as Number) as Void {
+        tileCachePadding = value;
+        setValue("tileCachePadding", tileCachePadding);
+    }
+    
+    function setRecalculateItervalS(value as Number) as Void {
+        recalculateItervalS = value;
+        setValue("recalculateItervalS", recalculateItervalS);
+    }
+    
     function setMapEnabled(_mapEnabled as Boolean) as Void {
         mapEnabled = _mapEnabled;
         setValue("mapEnabled", mapEnabled);
@@ -287,6 +294,11 @@ class Settings {
         {
           Communications.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
         }
+    }
+    
+    function setDrawLineToClosestPoint(value as Boolean) as Void {
+        drawLineToClosestPoint = value;
+        setValue("drawLineToClosestPoint", drawLineToClosestPoint);
     }
     
     function setDisplayRouteNames(_displayRouteNames as Boolean) as Void {
@@ -489,6 +501,17 @@ class Settings {
         }
 
         setMapEnabled(true);
+    }
+    
+    function toggleDrawLineToClosestPoint() as Void 
+    {
+        if (drawLineToClosestPoint)
+        {
+            setDrawLineToClosestPoint(false);
+            return;
+        }
+
+        setDrawLineToClosestPoint(true);
     }
     
     function toggleDisplayRouteNames() as Void 
@@ -911,8 +934,11 @@ class Settings {
         setTileLayerMax(defaultSettings.tileLayerMax);
         setTileLayerMin(defaultSettings.tileLayerMin);
         setTileCacheSize(defaultSettings.tileCacheSize);
+        setTileCachePadding(defaultSettings.tileCachePadding);
+        setRecalculateItervalS(defaultSettings.recalculateItervalS);
         setMode(defaultSettings.mode);
         setMapEnabled(defaultSettings.mapEnabled);
+        setDrawLineToClosestPoint(defaultSettings.drawLineToClosestPoint);
         setTrackColour(defaultSettings.trackColour);
         setElevationColour(defaultSettings.elevationColour);
         setUserColour(defaultSettings.userColour);
@@ -962,8 +988,11 @@ class Settings {
             "tileLayerMax" => tileLayerMax,
             "tileLayerMin" => tileLayerMin,
             "tileCacheSize" => tileCacheSize,
+            "tileCachePadding" => tileCachePadding,
+            "recalculateItervalS" => recalculateItervalS,
             "mode" => mode,
             "mapEnabled" => mapEnabled,
+            "drawLineToClosestPoint" => drawLineToClosestPoint,
             "trackColour" => trackColour.format("%X"),
             "elevationColour" => elevationColour.format("%X"),
             "userColour" => userColour.format("%X"),
@@ -1039,9 +1068,12 @@ class Settings {
         }
         
         tileCacheSize = parseNumber("tileCacheSize", tileCacheSize);
+        tileCachePadding = parseNumber("tileCachePadding", tileCachePadding);
+        recalculateItervalS = parseNumber("recalculateItervalS", recalculateItervalS);
         mode = parseNumber("mode", mode);
         mapEnabled = parseBool("mapEnabled", mapEnabled);
         setMapEnabled(mapEnabled); // prompt for app to open if needed
+        drawLineToClosestPoint = parseBool("drawLineToClosestPoint", drawLineToClosestPoint);
         displayRouteNames = parseBool("displayRouteNames", displayRouteNames);
         enableOffTrackAlerts = parseBool("enableOffTrackAlerts", enableOffTrackAlerts);
         routesEnabled = parseBool("routesEnabled", routesEnabled);

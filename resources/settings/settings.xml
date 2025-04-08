@@ -23,6 +23,10 @@
     <setting propertyKey="@Properties.scale" title="@Strings.scale" prompt="@Strings.scalePrompt">
         <settingConfig type="numeric" min="0" max="10"/>
     </setting>
+    
+    <setting propertyKey="@Properties.recalculateItervalS" title="@Strings.recalculateItervalSTitle" prompt="@Strings.recalculateItervalSPrompt">
+        <settingConfig type="numeric" min="0"/>
+    </setting>
 
     <setting propertyKey="@Properties.renderMode" title="@Strings.renderModeTitle">
         <settingConfig type="list">
@@ -75,6 +79,10 @@
         <setting propertyKey="@Properties.tileCacheSize" title="@Strings.tileCacheSizeTitle" prompt="@Strings.tileCacheSizePrompt">
             <settingConfig type="numeric" min="0"/>
         </setting>
+
+        <setting propertyKey="@Properties.tileCachePadding" title="@Strings.tileCachePaddingTitle" prompt="@Strings.tileCachePaddingPrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
         
         <setting propertyKey="@Properties.maxPendingWebRequests" title="@Strings.maxPendingWebRequests" prompt="@Strings.maxPendingWebRequestsPrompt">
             <settingConfig type="numeric" min="0" max="100"/>
@@ -93,13 +101,16 @@
         </setting>
     </group>
 
+    <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle" prompt="@Strings.offTrackAlertsDistanceMPrompt">
+        <settingConfig type="numeric" min="0"/>
+    </setting>
+    <setting propertyKey="@Properties.drawLineToClosestPoint" title="@Strings.drawLineToClosestPointTitle">
+        <settingConfig type="boolean"/>
+    </setting>
     <setting propertyKey="@Properties.enableOffTrackAlerts" title="@Strings.enableOffTrackAlertsTitle">
         <settingConfig type="boolean"/>
     </setting>
     <group id="offTrackAlertsGroup" title="@Strings.offTrackAlertsGroupTitle" description="@Strings.enableOffTrackAlertsDescription" enableIfTrue="@Properties.enableOffTrackAlerts">
-        <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle" prompt="@Strings.offTrackAlertsDistanceMPrompt">
-            <settingConfig type="numeric" min="0"/>
-        </setting>
         <setting propertyKey="@Properties.offTrackAlertsMaxReportIntervalS" title="@Strings.offTrackAlertsMaxReportIntervalSTitle" prompt="@Strings.offTrackAlertsMaxReportIntervalSPrompt">
             <settingConfig type="numeric" min="0"/>
         </setting>

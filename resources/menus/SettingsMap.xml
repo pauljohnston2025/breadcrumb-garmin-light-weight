@@ -5,6 +5,7 @@
     <menu-item id="settingsMapTileLayerMax" label="@Strings.tileLayerMaxTitle"/>
     <menu-item id="settingsMapTileLayerMin" label="@Strings.tileLayerMinTitle"/>
     <menu-item id="settingsMapTileCacheSize" label="@Strings.tileCacheSizeTitle"/>
+    <menu-item id="settingsMapTileCachePadding" label="@Strings.tileCachePaddingTitle"/>
     <menu-item id="settingsMapMaxPendingWebRequests" label="@Strings.maxPendingWebRequests"/>
     <menu-item id="settingsMapDisableMapsFailureCount" label="@Strings.disableMapsFailureCountTitleShort"/>
     <menu-item id="settingsMapFixedLatitude" label="@Strings.fixedLatitude"/>

@@ -2,6 +2,7 @@
     <menu-item id="settingsMainMode" label="@Strings.modeTitle"/>
     <menu-item id="settingsMainModeUiMode" label="@Strings.uiModeTitle"/>
     <menu-item id="settingsMainScale" label="@Strings.scaleLabel"/>
+    <menu-item id="settingsMainRecalculateItervalS" label="@Strings.recalculateItervalSTitle"/>
     <menu-item id="settingsMainRenderMode" label="@Strings.renderModeTitle"/>
     <menu-item id="settingsMainZoomAtPace" label="@Strings.zoomAtPaceTitle"/>
     <menu-item id="settingsMainRoutes" label="@Strings.routesTitle"/>

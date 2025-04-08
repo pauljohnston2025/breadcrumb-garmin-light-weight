@@ -253,6 +253,7 @@ class SettingsMain extends Rez.Menus.SettingsMain {
         safeSetSubLabel(me, :settingsMainModeUiMode, uiModeString);
         var scaleString = settings.scale == null ? "Auto" : settings.scale.format("%.5f");
         safeSetSubLabel(me, :settingsMainScale, scaleString);
+        safeSetSubLabel(me, :settingsMainRecalculateItervalS, settings.recalculateItervalS.toString());
         var renderModeString = "";
         switch(settings.renderMode)
         {
@@ -319,6 +320,7 @@ class SettingsMap extends Rez.Menus.SettingsMap {
         safeSetSubLabel(me, :settingsMapTileLayerMax, settings.tileLayerMax.toString());
         safeSetSubLabel(me, :settingsMapTileLayerMin, settings.tileLayerMin.toString());
         safeSetSubLabel(me, :settingsMapTileCacheSize, settings.tileCacheSize.toString());
+        safeSetSubLabel(me, :settingsMapTileCachePadding, settings.tileCachePadding.toString());
         safeSetSubLabel(me, :settingsMapMaxPendingWebRequests, settings.maxPendingWebRequests.toString());
         safeSetSubLabel(me, :settingsMapDisableMapsFailureCount, settings.disableMapsFailureCount.toString());
         var latString = settings.fixedLatitude == null ? "Disabled" : settings.fixedLatitude.format("%.5f");
@@ -349,6 +351,7 @@ class SettingsAlerts extends Rez.Menus.SettingsAlerts {
     function rerender() as Void
     {
         var settings = getApp()._breadcrumbContext.settings();
+        safeSetToggle(me, :settingsAlertsDrawLineToClosestPoint, settings.drawLineToClosestPoint);
         safeSetToggle(me, :settingsAlertsEnabled, true);
         safeSetSubLabel(me, :settingsAlertsOffTrackDistanceM, settings.offTrackAlertsDistanceM.toString());
         safeSetSubLabel(me, :settingsAlertsOffTrackAlertsMaxReportIntervalS, settings.offTrackAlertsMaxReportIntervalS.toString());
@@ -363,6 +366,9 @@ class SettingsAlertsDisabled extends Rez.Menus.SettingsAlertsDisabled {
 
     function rerender() as Void
     {
+        var settings = getApp()._breadcrumbContext.settings();
+        safeSetToggle(me, :settingsAlertsDrawLineToClosestPoint, settings.drawLineToClosestPoint);
+        safeSetSubLabel(me, :settingsAlertsOffTrackDistanceM, settings.offTrackAlertsDistanceM.toString());
         safeSetToggle(me, :settingsAlertsEnabled, false);
     }
 }
@@ -536,6 +542,8 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(new $.Rez.Menus.SettingsUiMode(), new $.SettingsUiModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainScale) {
             startPicker(new SettingsFloatPicker(settings.method(:setScale)), view);
+        } else if (itemId == :settingsMainRecalculateItervalS) {
+            startPicker(new SettingsFloatPicker(settings.method(:setRecalculateItervalS)), view);
         } else if (itemId == :settingsMainRenderMode) {
             WatchUi.pushView(new $.Rez.Menus.SettingsRenderMode(), new $.SettingsRenderModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainZoomAtPace) {
@@ -860,7 +868,9 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(new SettingsNumberPicker(settings.method(:setTileLayerMin)), view);
         } else if (itemId == :settingsMapTileCacheSize) {
             startPicker(new SettingsNumberPicker(settings.method(:setTileCacheSize)), view);
-        } else if (itemId == :settingsMapMaxPendingWebRequests) {
+        } else if (itemId == :settingsMapTileCachePadding) {
+            startPicker(new SettingsNumberPicker(settings.method(:setTileCachePadding)), view);
+        }else if (itemId == :settingsMapMaxPendingWebRequests) {
             startPicker(new SettingsNumberPicker(settings.method(:setMaxPendingWebRequests)), view);
         } else if (itemId == :settingsMapDisableMapsFailureCount) {
             startPicker(new SettingsNumberPicker(settings.method(:setDisableMapsFailureCount)), view);
@@ -899,7 +909,10 @@ class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
     public function onSelect(item as WatchUi.MenuItem) as Void {
         var settings = getApp()._breadcrumbContext.settings();
         var itemId = item.getId();
-        if (itemId == :settingsAlertsEnabled) {
+        if (itemId == :settingsAlertsDrawLineToClosestPoint) {
+            settings.toggleDrawLineToClosestPoint();
+            view.rerender();
+        } else if (itemId == :settingsAlertsEnabled) {
             settings.setEnableOffTrackAlerts(false);
             var view = new SettingsAlertsDisabled();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
@@ -921,11 +934,16 @@ class SettingsAlertsDisabledDelegate extends WatchUi.Menu2InputDelegate {
     public function onSelect(item as WatchUi.MenuItem) as Void {
         var settings = getApp()._breadcrumbContext.settings();
         var itemId = item.getId();
-        if (itemId == :settingsAlertsEnabled) {
+        if (itemId == :settingsAlertsDrawLineToClosestPoint) {
+            settings.toggleDrawLineToClosestPoint();
+            view.rerender();
+        } else if (itemId == :settingsAlertsEnabled) {
             settings.setEnableOffTrackAlerts(true);
             var view = new SettingsAlerts();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
             WatchUi.pushView(view, new $.SettingsAlertsDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsAlertsOffTrackDistanceM) {
+            startPicker(new SettingsNumberPicker(settings.method(:setOffTrackAlertsDistanceM)), view);
         }
     }
 }

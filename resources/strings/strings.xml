@@ -25,13 +25,15 @@
     <string id="normalModeColour">Normal Mode Colour</string>
     <string id="displayRouteNamesTitle">Display Route Names</string>
     <string id="enableRotationTitle">Enable Rotation</string>
-    <string id="offTrackAlertsDistanceMTitle">Alert Distance (m)</string>
+    <string id="offTrackAlertsDistanceMTitle">Off Track Distance (m)</string>
     <string id="offTrackAlertsDistanceMPrompt"></string>
     <string id="offTrackAlertsMaxReportIntervalSTitle">Max Report Interval (s)</string>
     <string id="offTrackAlertsMaxReportIntervalSPrompt"></string>
     <string id="offTrackAlertsGroupTitle">Off Track Alert Settings</string>
     <string id="enableOffTrackAlerts"></string>
     <string id="enableOffTrackAlertsTitle">Off Track Alerts</string>
+    <string id="drawLineToClosestPointTitle">Draw Line To Last Point</string>
+    <string id="drawLineToClosestPointPrompt"></string>
     <string id="enableOffTrackAlertsDescription"></string>
     <string id="disableMapsFailureCountTitle">Disable Maps After X Failures (0 for unlimited failures)</string>
     <string id="disableMapsFailureCountTitleShort">Disable After Failures</string>
@@ -70,6 +72,10 @@
     <string id="fixedLatitudePrompt">0 - disabled, -90 to 90</string>
     <string id="fixedLongitude">Fixed Latitude</string>
     <string id="fixedLongitudePrompt">0 - disabled, -180 to 180</string>
+    <string id="recalculateItervalSTitle">Compute interval (s)</string>
+    <string id="recalculateItervalSPrompt"></string>
+    <string id="tileCachePaddingTitle">Tile cache padding (tiles)</string>
+    <string id="tileCachePaddingPrompt"></string>
 
     <string id="coloursTitle">Colours</string>
     <string id="coloursDescription"></string>
