@@ -102,6 +102,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     // store rotations and speed every time
     _cachedValues.onActivityInfo(info);
+    // perf only seed tiles when we need to (zoom level changes or user moves)
+    _breadcrumbContext.mapRenderer().seedTiles(); // could possibly be moved into cached values when map data changes - though map data may not change but we nuked the pending web requests - safer here
 
     // this is here due to stack overflow bug when requests trigger the next request
     while(_breadcrumbContext.webRequestHandler().startNextIfWeCan())
@@ -171,6 +173,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
           {
               offTrackPoint = offTrackInfo.pointWeLeftTrack;
           }
+          else {
+              offTrackPoint = null; // might have been set in the past and we now diabled the setting
+          }
 
           if (settings.enableOffTrackAlerts)
           {
@@ -199,7 +204,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
       dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
       dc.clear();
-      
+
       // logD("onUpdate");
       var renderer = _breadcrumbContext.trackRenderer();
       if (renderer.renderClearTrackUi(dc))
