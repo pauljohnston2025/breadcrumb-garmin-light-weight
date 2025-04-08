@@ -43,7 +43,7 @@ class OffTrackAlert extends WatchUi.DataFieldAlert {
 class BreadcrumbDataFieldView extends WatchUi.DataField {
   var offTrackPoint as RectangularPoint or Null = null;
   var _breadcrumbContext as BreadcrumbContext;
-  var _scratchPadBitmap as BufferedBitmap;
+  var _scratchPadBitmap as BufferedBitmap or Null;
   var settings as Settings;
   var _cachedValues as CachedValues;
   var lastOffTrackAlertSent = 0;
@@ -55,7 +55,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   // Set the label of the data field here.
   function initialize(breadcrumbContext as BreadcrumbContext) {
     _breadcrumbContext = breadcrumbContext;
-    _scratchPadBitmap = newBitmap(360, 360, null);
+    _scratchPadBitmap = null;
     DataField.initialize();
     settings = _breadcrumbContext.settings();
     _cachedValues = _breadcrumbContext.cachedValues();
@@ -75,7 +75,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     _cachedValues.setScreenSize(dc.getWidth(),  dc.getHeight());
     var textDim = dc.getTextDimensions("1234", Graphics.FONT_XTINY);
     _breadcrumbContext.trackRenderer().setElevationAndUiData(textDim[0] * 1.0f);
-    _scratchPadBitmap = newBitmap(dc.getWidth(),  dc.getHeight(), null);
   }
 
   function onWorkoutStarted() as Void {
@@ -201,6 +200,20 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
   // in some other cases onUpdate is called interleaved with onCompute once a second each (think this might be when its the active screen but not currently renderring)
   // so we need to do all or heavy scaling code in compute, and make onUpdate just handle drawing, and possibly rotation (pre storing rotation could be slow/hard)
   function onUpdate(dc as Dc) as Void {
+    if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING || settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION)
+    {
+      // make sure we are at the correct size (settings/layout change at any point)
+      // could optimise this to be done in cached values rather than every render
+      var width = _cachedValues.screenWidth.toNumber();
+      var height = _cachedValues.screenHeight.toNumber();
+      if (_scratchPadBitmap == null || _scratchPadBitmap.getWidth() != width || _scratchPadBitmap.getHeight() != height )
+      {
+          _scratchPadBitmap = newBitmap(width, height, null);
+      }
+    }
+    else {
+      _scratchPadBitmap = null; // settigns have disabled it - clean up after ourselves on next render
+    }
 
       dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
       dc.clear();

@@ -132,6 +132,11 @@ class MapRenderer {
         var tileZ = cachedValues.tileZ; // local lookup faster
 
         // we need to scale it down first, then draw the scaled tile rotated to the larger dc
+        // this does not work at high zooms, the tile size gets too big
+        // and possibly defeats teh point of 'unbuffered rotations'
+        // since at really close zooms we ned to stretch to tile to at least the screens size 
+        // which we could have just used the scratchpad buffered renderrring
+        // think in this mode zoom needs to be restricted so we always have multiple tiles accross the screen
         var bitmap = newBitmap(tileScalePixelSize, tileScalePixelSize, null);
         var bitmapDc = bitmap.getDc();
         
