@@ -30,9 +30,10 @@ Maps:
 Choose these values wisely. Too big = crash, too small = crash or slow performance. 
 
 Tile Url: Should be 'http://127.0.0.1:8080' for companion app or template eg. 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png'. 
-Tile Size: Tile size should be a multiple of 256 for best results. The tile size in pixels loaded from the companion app or other source. Should be 256 if using a template. There are known issues with settings it smaller (performance baing a big one), but it does work on some devices.
+Tile Size: Tile size should be a multiple of 256 for best results. The tile size in pixels loaded from the companion app or other source. Should be 256 if using a template. There are known issues with setting it smaller (performance being a big one), but it does work on some devices.
 Tile Layer Max: The maximum tile layer that can be fetched.
 Tile Layer Min: The maximum tile layer that can be fetched.
+Tile Cache Padding: The maximum tiles to grab around the user 0 means no more than the screen size. 1 will give you one extra layer of tiles as a buffer (so they are pre loaded when we move into that area)
 Tile Cache Size: The number of tiles to store locally in memory.
 Max Pending Web Requests: The macx number of tile fetch requests we can have quued ready to be sent.
 Disable Maps After X Failures: Maps wil be auto matically disabled if this many tile fetch requests fail. 0 - unlimited
@@ -41,8 +42,12 @@ Fixed Longitude: The longitude to render (must also set latitude)
 
 Set both latitude and longitude to 0 to disable fixed position and use the current location.
 
-Colours: Should be set to a vali hex code AARRGGBB not all are required eg. FF00 will render as green
+Best Guess for map settings:
+Tile Cache Size if using zoom at pace: 2*<Tile Cache Size without zoom at pace>
+Tile Cache Size if NOT using zoom at pace: ((2 * ceil(<screen size>/<tile size>)) + 2 * <tile cache padding>)^2 
+Max Pending Web Requests: Tile Cache Size
 
+Colours: Should be set to a valid hex code AARRGGBB not all are required eg. FF00 will render as green
 
 Target User: Hikers, backpackers, cyclists, trail runners, and outdoor enthusiasts seeking a flexible navigation tool for their Garmin watches. Especially valuable for users with Garmin devices that do not have built-in map support. Suitable for both on- and off-grid exploration, with customizable maps and route following capabilities.
 
@@ -101,8 +106,9 @@ For online routing, the tile server url can be set to something like:
 Open Topo Map:  
 Terain: https://a.tile.opentopomap.org/{z}/{x}/{y}.png  
 
-OpenStreetMap:  
-Standard: https://tile.openstreetmap.org/{z}/{x}/{y}.png  
+OpenStreetMap will not work as a templated tile server on the watch because makeImageRequest does not allow headers to be sent. OpenStreetMap requires that the User-Agent header be sent or it will respond with 403. Use the tile server hosted on the companion app if you wish to use OpenStreetMap.   
+~~OpenStreetMap:~~  
+~~Standard: https://tile.openstreetmap.org/{z}/{x}/{y}.png~~
 
 Google:  
 Hybrid: https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}  

@@ -278,6 +278,29 @@ class BreadcrumbRenderer {
       var centerPosition = _cachedValues.centerPosition; // local lookup faster
       var xHalf = _cachedValues.xHalf; // local lookup faster
       var yHalf = _cachedValues.yHalf; // local lookup faster
+      var rotateCos = _cachedValues.rotateCos; // local lookup faster
+      var rotateSin = _cachedValues.rotateSin; // local lookup faster
+
+      var xScaledAtCenter = (breadcrumb.boundingBoxCenter.x - centerPosition.x);
+      var yScaledAtCenter = (breadcrumb.boundingBoxCenter.y - centerPosition.y);
+
+      var x = xHalf + rotateCos * xScaledAtCenter -
+                          rotateSin * yScaledAtCenter;
+      var y = yHalf - (rotateSin * xScaledAtCenter +
+                          rotateCos * yScaledAtCenter);
+      dc.drawText(x, y, Graphics.FONT_XTINY, settings.routeName(breadcrumb.storageIndex), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+  }
+  
+  function renderTrackNameUnrotated(
+      dc as Dc, 
+      breadcrumb as BreadcrumbTrack,
+      colour as Graphics.ColorType) as Void {
+
+      dc.setColor(colour, Graphics.COLOR_BLACK);
+      dc.setPenWidth(4);
+      var centerPosition = _cachedValues.centerPosition; // local lookup faster
+      var xHalf = _cachedValues.xHalf; // local lookup faster
+      var yHalf = _cachedValues.yHalf; // local lookup faster
 
       var xScaledAtCenter = (breadcrumb.boundingBoxCenter.x - centerPosition.x);
       var yScaledAtCenter = (breadcrumb.boundingBoxCenter.y - centerPosition.y);
@@ -753,7 +776,8 @@ class BreadcrumbRenderer {
     hScale as Float, 
     vScale as Float,
     startAt as Float,
-    distanceM as Float
+    distanceM as Float,
+    elevationText as String
   ) as Void {
     var xHalf = _cachedValues.xHalf; // local lookup faster
     var yHalf = _cachedValues.yHalf; // local lookup faster
@@ -840,7 +864,9 @@ class BreadcrumbRenderer {
       // drawAngledText and drawRadialText not available :(
     }
 
-    dc.drawText(xHalf, 20, Graphics.FONT_XTINY, (distanceM * _cachedValues.currentScale).format("%.0f") + "m", Graphics.TEXT_JUSTIFY_CENTER);
+    var text = "dist: " + (distanceM * _cachedValues.currentScale).format("%.0f") + "m\n" + 
+               "elev: " + elevationText;
+    dc.drawText(xHalf, 20, Graphics.FONT_XTINY, text, Graphics.TEXT_JUSTIFY_CENTER);
   }
 
   function getElevationScale(track as BreadcrumbTrack, routes as Array<BreadcrumbTrack>) as [Float, Float, Float] {

@@ -129,6 +129,7 @@ class Settings {
     function setRenderMode(_renderMode as Number) as Void {
         renderMode = _renderMode;
         setValue("renderMode", renderMode);
+        updateScratchPadBitmap();
     }
     
     function setFixedPositionRaw(lat as Float, long as Float) as Void {
@@ -630,6 +631,18 @@ class Settings {
         }
     }
     
+    function updateScratchPadBitmap() as Void {
+        // symbol not found if the loadSettings method is called before we set tile cache
+        // should n ot happen unless onsettingschange is called before initalise finishes
+        // it alwasys has the symbol, but it might not be initalised yet
+        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
+        var app = getApp();
+        if (app != null && app has :_view && app._view != null && app._view instanceof BreadcrumbDataFieldView)
+        {
+            app._view.updateScratchPadBitmap();
+        }
+    }
+    
     function updateCachedValues() as Void {
         // symbol not found if the loadSettings method is called before we set tile cache
         // should n ot happen unless onsettingschange is called before initalise finishes
@@ -896,8 +909,12 @@ class Settings {
                 return defaultValue;
             }
 
+            // The dict we get is memory mapped, do not use it directly - need to create a copy so we can change the colour type from string to int
+            // If we use it directly the storage value gets overwritten 
+            var result = [];
             for (var i = 0; i < value.size(); ++i) {
                 var entry = value[i];
+                var entryOut = {};
                 if (!(entry instanceof Dictionary))
                 {
                     return defaultValue;
@@ -911,11 +928,12 @@ class Settings {
                         return defaultValue;
                     }
 
-                    entry[thisKey] = thisParser.invoke(key + "." + i + "." + thisKey, entry[thisKey]);
+                    entryOut[thisKey] = thisParser.invoke(key + "." + i + "." + thisKey, entry[thisKey]);
                 }
+                result.add(entryOut);
             }
 
-            return value;
+            return result;
         } catch (e) {
             System.println("Error parsing array: " + key + " " + value);
         }
@@ -1182,6 +1200,7 @@ class Settings {
         var oldMapEnabled = mapEnabled;
         loadSettings();
         updateCachedValues();
+        updateScratchPadBitmap();
         // route settins do not work because garmins setting spage cannot edit them
         // when any property is modified, so we have to explain to users not to touch the settings, but we cannot because it looks 
         // like garmmins settings are not rendering desciptions anymore :(

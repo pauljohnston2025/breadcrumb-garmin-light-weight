@@ -75,6 +75,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     _cachedValues.setScreenSize(dc.getWidth(),  dc.getHeight());
     var textDim = dc.getTextDimensions("1234", Graphics.FONT_XTINY);
     _breadcrumbContext.trackRenderer().setElevationAndUiData(textDim[0] * 1.0f);
+    updateScratchPadBitmap();
   }
 
   function onWorkoutStarted() as Void {
@@ -194,12 +195,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
   }
 
-  // did some testing on real device
-  // looks like when we are not on the data page onUpdate is not called, but compute is (as expected)
-  // when we are on the data page and it is visible, onUpdate can be called many more times then compute (not just once a second)
-  // in some other cases onUpdate is called interleaved with onCompute once a second each (think this might be when its the active screen but not currently renderring)
-  // so we need to do all or heavy scaling code in compute, and make onUpdate just handle drawing, and possibly rotation (pre storing rotation could be slow/hard)
-  function onUpdate(dc as Dc) as Void {
+  function updateScratchPadBitmap() as Void
+  {
     if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING || settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION)
     {
       // make sure we are at the correct size (settings/layout change at any point)
@@ -214,7 +211,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     else {
       _scratchPadBitmap = null; // settigns have disabled it - clean up after ourselves on next render
     }
+  }
 
+  // did some testing on real device
+  // looks like when we are not on the data page onUpdate is not called, but compute is (as expected)
+  // when we are on the data page and it is visible, onUpdate can be called many more times then compute (not just once a second)
+  // in some other cases onUpdate is called interleaved with onCompute once a second each (think this might be when its the active screen but not currently renderring)
+  // so we need to do all or heavy scaling code in compute, and make onUpdate just handle drawing, and possibly rotation (pre storing rotation could be slow/hard)
+  function onUpdate(dc as Dc) as Void {
       dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
       dc.clear();
 
@@ -257,7 +261,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                   continue;
               }
               var route = routes[i];
-              renderer.renderTrackName(dc, route, settings.routeColour(route.storageIndex));
+              if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING || settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING)
+              {
+                renderer.renderTrackName(dc, route, settings.routeColour(route.storageIndex));
+              }
+              else 
+              {
+                renderer.renderTrackNameUnrotated(dc, route, settings.routeColour(route.storageIndex));
+              }
           }
       }
 
@@ -424,7 +435,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     var vScale = elevationScale[1];
     var startAt = elevationScale[2];
 
-    renderer.renderElevationChart(dc, hScale, vScale, startAt, track.distanceTotal);
+    var elevationText = track.lastPoint() == null ? "" : track.lastPoint().altitude.format("%.0f") + "m";
+    renderer.renderElevationChart(dc, hScale, vScale, startAt, track.distanceTotal, elevationText);
     if (routes.size() != 0) {
       for (var i = 0; i < routes.size(); ++i) {
         if (!settings.routeEnabled(i))
