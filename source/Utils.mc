@@ -145,7 +145,25 @@ function drawScaledBitmapHelper(dc as Dc, x as Numeric, y as Numeric, width as N
 (:noscaledbitmap)
 function drawScaledBitmapHelper(dc as Dc, x as Numeric, y as Numeric, width as Numeric, height as Numeric, bitmap as BitmapType) as Void
 {
-  dc.drawBitmap(x, y, bitmap);
+  // is there any reason not to move this into main code and just use AffineTransform every time - even for devices that support drawScaledBitmap?
+  // I assume one has a performance benifit over the other?
+  // need to test which is better (or if there is any noticible difference)
+  // todo cache this transform so we do nto need to recreate every time
+  var tileScaleFactor = getApp()._breadcrumbContext.cachedValues().tileScaleFactor;
+  var scaleMatrix = new AffineTransform();
+  scaleMatrix.scale(tileScaleFactor, tileScaleFactor); // scale
+
+  dc.drawBitmap2(
+      x,
+      y,
+      bitmap,
+      {
+          :transform => scaleMatrix,
+          // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
+          :filterMode => Graphics.FILTER_MODE_BILINEAR,
+
+      }
+  );
 }
 
 function padStart(str as String?, targetLength as Number, padChar as Char) as String {
