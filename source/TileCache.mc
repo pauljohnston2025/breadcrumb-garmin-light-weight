@@ -508,7 +508,7 @@ class TileCache {
 
         // todo check if setting the pallet actually reduces memory
         var tileSize = _settings.tileSize;
-        var localBitmap = newBitmap(tileSize, tileSize, _palette);
+        var localBitmap = newBitmap(tileSize, tileSize, null);
         var localDc = localBitmap.getDc();
         var it = 0;
         for (var i=0; i<tileSize; ++i)

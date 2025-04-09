@@ -49,6 +49,7 @@ class CachedValues {
     var earthsCircumference as Float = 40075016.686f;
     var originShift as Float = earthsCircumference / 2.0; // Half circumference of Earth
     var tileZ as Number = -1;
+    var tileScaleFactor as Float = -1f;
     var tileScalePixelSize as Number = -1;
     var tileOffsetX as Number = -1;
     var tileOffsetY as Number = -1;
@@ -110,12 +111,12 @@ class CachedValues {
                 if (lastPoint != null)
                 {
                     centerPosition = lastPoint;
-                    updateCurrentScale(minScreenDim / renderDistanceM * 0.75);
+                    updateCurrentScale(calculateScale(renderDistanceM.toFloat()));
                     return;
                 }                
             }
 
-            updateCurrentScale(minScreenDim / renderDistanceM * 0.75);
+            updateCurrentScale(calculateScale(renderDistanceM.toFloat()));
             return;
         }
 
@@ -175,7 +176,7 @@ class CachedValues {
         // var screenToTileMRatio = minScreenDimM / tileWidthM;
         // var scaleFactor = screenToTilePixelRatio / screenToTileMRatio; // we need to stretch or shrink the tiles by this much
         // simplification of above calculation
-        var scaleFactor = (currentScale * tileWidthM)/ _settings.tileSize;
+        tileScaleFactor = (currentScale * tileWidthM)/ _settings.tileSize;
         // eg. tile = 10m screen = 10m tile = 256pixel screen = 360pixel scaleFactor = 1.4 each tile pixel needs to become 1.4 sceen pixels
         // eg. 2
         //     tile = 20m screen = 10m tile = 256pixel screen = 360pixel scaleFactor = 2.8 we only want to render half the tile, so we only have half the pixels
@@ -188,7 +189,7 @@ class CachedValues {
         // how many pixels on the screen the tile should take up this can be smaller or larger than the actual tile, 
         // depending on if we scale up or down
         // find the closest pixel size
-        tileScalePixelSize = Math.round(_settings.tileSize * scaleFactor).toNumber();
+        tileScalePixelSize = Math.round(_settings.tileSize * tileScaleFactor).toNumber();
 
         // find the closest pixel size
         tileOffsetX = Math.round(((firstTileLeftM - screenLeftM) * currentScale)).toNumber();
@@ -258,28 +259,15 @@ class CachedValues {
     }
 
     (:scaledbitmap)
-    function calculateScale(
-        outerBoundingBox as[Float, Float, Float, Float]) as Float {
-        return calculateScaleStandard(outerBoundingBox);
+    function calculateScale(maxDistanceM as Float) as Float {
+        return calculateScaleStandard(maxDistanceM);
     }
 
     // todo inline
-    function calculateScaleStandard(
-        outerBoundingBox as[Float, Float, Float, Float]) as Float {
+    function calculateScaleStandard(maxDistanceM as Float) as Float {
         var scale = _settings.scale;
         if (scale != null) {
             return scale;
-        }
-
-        var xDistanceM = outerBoundingBox[2] - outerBoundingBox[0];
-        var yDistanceM = outerBoundingBox[3] - outerBoundingBox[1];
-
-        var maxDistanceM = maxF(xDistanceM, yDistanceM);
-
-        if (maxDistanceM == 0)
-        {
-            // show 1m of space to avaoid division by 0
-            maxDistanceM = 1;
         }
 
         // we want the whole map to be show on the screen, we have 360 pixels on the
@@ -291,10 +279,9 @@ class CachedValues {
 
 
     (:noscaledbitmap)
-    function calculateScale(
-        outerBoundingBox as[Float, Float, Float, Float]) as Float {
+    function calculateScale(maxDistanceM as Float) as Float {
         // note: this can come from user intervention, and settings the sclae overload, we will get a close as we can
-        var perfectScale = calculateScaleStandard(outerBoundingBox);
+        var perfectScale = calculateScaleStandard(maxDistanceM);
         
         if (settings.mapEnabled)
         {
@@ -320,15 +307,21 @@ class CachedValues {
     }
 
     function updateCurrentScaleFromBoundingBox(outerBoundingBox as[Float, Float, Float, Float]) as Void {
-        updateCurrentScale(calculateScale(outerBoundingBox));
+        var xDistanceM = outerBoundingBox[2] - outerBoundingBox[0];
+        var yDistanceM = outerBoundingBox[3] - outerBoundingBox[1];
+
+        var maxDistanceM = maxF(xDistanceM, yDistanceM);
+
+        if (maxDistanceM == 0)
+        {
+            // show 1m of space to avaoid division by 0
+            maxDistanceM = 1;
+        }
+
+        updateCurrentScale(calculateScale(maxDistanceM));
     }
         
     function updateCurrentScale(newScale as Float) as Void {
-        if (_settings.scale != null)
-        {
-            newScale = _settings.scale;
-        }
-
         var oldScale = currentScale;
         currentScale = newScale;
         if (oldScale != newScale)

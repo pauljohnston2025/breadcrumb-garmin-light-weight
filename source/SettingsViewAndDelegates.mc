@@ -543,7 +543,7 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
         } else if (itemId == :settingsMainScale) {
             startPicker(new SettingsFloatPicker(settings.method(:setScale)), view);
         } else if (itemId == :settingsMainRecalculateItervalS) {
-            startPicker(new SettingsFloatPicker(settings.method(:setRecalculateItervalS)), view);
+            startPicker(new SettingsNumberPicker(settings.method(:setRecalculateItervalS)), view);
         } else if (itemId == :settingsMainRenderMode) {
             WatchUi.pushView(new $.Rez.Menus.SettingsRenderMode(), new $.SettingsRenderModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainZoomAtPace) {

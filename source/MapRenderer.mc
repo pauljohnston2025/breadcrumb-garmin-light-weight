@@ -123,6 +123,7 @@ class MapRenderer {
         dc.clear();
 
         var tileScalePixelSize = cachedValues.tileScalePixelSize; // local lookup faster
+        var tileScaleFactor = cachedValues.tileScaleFactor; // local lookup faster
         var tileOffsetX = cachedValues.tileOffsetX; // local lookup faster
         var tileOffsetY = cachedValues.tileOffsetY; // local lookup faster
         var tileCountX = cachedValues.tileCountX; // local lookup faster
@@ -131,15 +132,6 @@ class MapRenderer {
         var firstTileY = cachedValues.firstTileY; // local lookup faster
         var tileZ = cachedValues.tileZ; // local lookup faster
 
-        // we need to scale it down first, then draw the scaled tile rotated to the larger dc
-        // this does not work at high zooms, the tile size gets too big
-        // and possibly defeats teh point of 'unbuffered rotations'
-        // since at really close zooms we ned to stretch to tile to at least the screens size 
-        // which we could have just used the scratchpad buffered renderrring
-        // think in this mode zoom needs to be restricted so we always have multiple tiles accross the screen
-        var bitmap = newBitmap(tileScalePixelSize, tileScalePixelSize, null);
-        var bitmapDc = bitmap.getDc();
-        
         for (var x=0 ; x<tileCountX; ++x)
         {
             for (var y=0 ; y<tileCountY; ++y)
@@ -155,28 +147,31 @@ class MapRenderer {
                 // cant rotate individual tiles as you can see the seams between tiles
                 // one large one then rotate looks much better, and is possibly faster
                 // we must scale as the tile we picked is only close to the resolution we need
-                $.drawScaledBitmapHelper(bitmapDc, 0, 0, tileScalePixelSize, tileScalePixelSize, tileFromCache.bitmap);
                 var xPos = (tileOffsetX + x * tileScalePixelSize).toFloat();
                 var yPos = (tileOffsetY + y * tileScalePixelSize).toFloat();
-                var halfTile = tileScalePixelSize / 2f;
-                var xTranslate = cachedValues.xHalf - (xPos + halfTile);
-                var yTranslate = cachedValues.yHalf - (yPos + halfTile);
+                var xTranslate = cachedValues.xHalf - xPos;
+                var yTranslate = cachedValues.yHalf - yPos;
                 var rotationMatrix = new AffineTransform();
+                // Apply transformations in REVERSE order of visual effect:
                 rotationMatrix.translate(xTranslate, yTranslate); // move to center
                 rotationMatrix.rotate(-cachedValues.rotationRad); // rotate
                 rotationMatrix.translate(-xTranslate, -yTranslate); // move back to position
+                rotationMatrix.scale(tileScaleFactor, tileScaleFactor); // scale
+
                 dc.drawBitmap2(
                     xPos,
                     yPos,
-                    bitmap,
+                    tileFromCache.bitmap,
                     {
                         // :bitmapX =>
                         // :bitmapY =>
                         // :bitmapWidth =>
                         // :bitmapHeight =>
                         // :tintColor =>
-                        // :filterMode =>
-                        :transform => rotationMatrix
+                        :transform => rotationMatrix,
+                        // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
+                        :filterMode => Graphics.FILTER_MODE_BILINEAR,
+
                     }
                 );
             }
