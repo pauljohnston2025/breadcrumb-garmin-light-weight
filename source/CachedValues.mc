@@ -100,7 +100,21 @@ class CachedValues {
         return outerBoundingBox;
     }
 
-    function updateScale() as Void
+    function updateScaleCenterAndMap() as Void
+    {
+        updateScaleAndCenter();
+        if (_settings.mapEnabled)
+        {
+            updateMapData();
+        }
+        // move half way across the screen
+        if (currentScale != 0f)
+        {
+            mapMoveDistanceM = ((minScreenDim / 2.0) / currentScale);
+        }
+    }
+
+    function updateScaleAndCenter() as Void
     {
         if (currentlyZoomingAroundUser)
         {
@@ -233,7 +247,7 @@ class CachedValues {
         if (currentlyZoomingAroundUser != weShouldZoomAroundUser)
         {
             currentlyZoomingAroundUser = weShouldZoomAroundUser;
-            updateScale();
+            updateScaleCenterAndMap();
             _settings.clearPendingWebRequests();
         }
     }
@@ -247,7 +261,7 @@ class CachedValues {
         yHalf = height / 2.0f;    
           
         updateRotationMatrix();
-        updateScale();
+        updateScaleCenterAndMap();
     }
 
     function updateRotationMatrix() as Void
@@ -322,44 +336,38 @@ class CachedValues {
     }
         
     function updateCurrentScale(newScale as Float) as Void {
-        var oldScale = currentScale;
+        if (abs(currentScale - newScale) < 0.000001)
+        {
+            // ignore any minor scale changes, esp if the scale is the same but float == does not work
+            return;
+        }
+
+        if (newScale == 0f)
+        {
+            return; // dont allow silly scales
+        }
+
+        var scaleFactor = newScale;
+        if (currentScale != null && currentScale != 0f)
+        {
+            // adjsut by old scale
+            scaleFactor = newScale / currentScale;
+        }
+
+        var routes = getApp()._breadcrumbContext.routes();
+        for (var i = 0; i < routes.size(); ++i) {
+            var route = routes[i];
+            route.rescale(scaleFactor);
+        }
+        getApp()._breadcrumbContext.track().rescale(scaleFactor);
+        if (getApp()._view != null)
+        {
+            getApp()._view.rescale(scaleFactor);
+        }
+        centerPosition = centerPosition.rescale(scaleFactor); // the amount of things we are rescaling is insane and also hard to keep track of them all
+
+
         currentScale = newScale;
-        if (oldScale != newScale)
-        {
-            if (newScale == 0f)
-            {
-                return; // dont allow silly scales
-            }
-
-            var scaleFactor = newScale;
-            if (oldScale != null && oldScale != 0)
-            {
-                // adjsut by old scale
-                scaleFactor = newScale / oldScale;
-            }
-
-            var routes = getApp()._breadcrumbContext.routes();
-            for (var i = 0; i < routes.size(); ++i) {
-                var route = routes[i];
-                route.rescale(scaleFactor);
-            }
-            getApp()._breadcrumbContext.track().rescale(scaleFactor);
-            if (getApp()._view != null)
-            {
-                getApp()._view.rescale(scaleFactor);
-            }
-            centerPosition = centerPosition.rescale(scaleFactor); // the amount of things we are rescaling is insane and also hard to keep track of them all
-        }
-
-        if (_settings.mapEnabled)
-        {
-            updateMapData();
-        }
-        // move half way across the screen
-        if (currentScale != 0f)
-        {
-            mapMoveDistanceM = ((minScreenDim / 2.0) / currentScale);
-        }
     }
 
     function recalculateAll() as Void
@@ -373,7 +381,7 @@ class CachedValues {
         else {
             fixedPosition = RectangularPoint.latLon2xy(_settings.fixedLatitude, _settings.fixedLongitude, 0f); 
         }
-        updateScale(); // updates map data too
+        updateScaleCenterAndMap();
     }
 
     // Desired resolution (meters per pixel)

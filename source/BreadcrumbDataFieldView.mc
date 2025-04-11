@@ -102,9 +102,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     // store rotations and speed every time
     _cachedValues.onActivityInfo(info);
-    // perf only seed tiles when we need to (zoom level changes or user moves)
-    _breadcrumbContext.mapRenderer().seedTiles(); // could possibly be moved into cached values when map data changes - though map data may not change but we nuked the pending web requests - safer here
-
     // this is here due to stack overflow bug when requests trigger the next request
     while(_breadcrumbContext.webRequestHandler().startNextIfWeCan())
     {
@@ -118,6 +115,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     if (_computeCounter != settings.recalculateItervalS) {
       return;
     }
+
+    // perf only seed tiles when we need to (zoom level changes or user moves)
+    _breadcrumbContext.mapRenderer().seedTiles(); // could possibly be moved into cached values when map data changes - though map data may not change but we nuked the pending web requests - safer here
 
     _computeCounter = 0;
 
@@ -141,7 +141,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         // todo: PERF only update this if the new point added changed the bounding box
         // its pretty good atm though, only recalculates once every few seconds, and only 
         // if a point is added
-        _cachedValues.updateScale(); 
+        _cachedValues.updateScaleCenterAndMap(); 
         var lastPoint = _breadcrumbContext.track().lastPoint();
         if (lastPoint != null && (settings.enableOffTrackAlerts || settings.drawLineToClosestPoint))
         {
@@ -193,6 +193,15 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         break;
       }
     }
+  }
+
+  function onSettingsChanged() as Void
+  {
+    // they could have turned off off track alerts, changed the distance of anything, so let it all recalculate
+    lastOffTrackAlertSent = 0;
+    offTrackPoint = null;
+    // render mode could have changed
+    updateScratchPadBitmap();
   }
 
   function updateScratchPadBitmap() as Void

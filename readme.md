@@ -46,6 +46,8 @@ Best Guess for map settings:
 Tile Cache Size if using zoom at pace: 2*<Tile Cache Size without zoom at pace>
 Tile Cache Size if NOT using zoom at pace: ((2 * ceil(<screen size>/<tile size>)) + 2 * <tile cache padding>)^2 
 Max Pending Web Requests: Tile Cache Size
+eg. on venu2s is scale is set to `0.075` it uses approximetely 10*10 tiles to fill the screen, this means the tile cache would need to be set to at least 100 (at 64 you can see the tiles loading and unloading)
+The math above is worst case, if you pick a better fixed scale or `Meters Around User` then the tile cache size can be significantly reduced (by at least half). Layer min/max could also be used to specify a fixed layer and further reduce the need for tiless in memory (since we can zoom in and make a single tile cover the screen). All these settings are here so users can configure their own memory requirements for the best battery life and stability. Suggest settings the scale to one that you like, and then reducing the tile cache size untill black aras appear to find the limit.
 
 Colours: Should be set to a valid hex code AARRGGBB not all are required eg. FF00 will render as green
 

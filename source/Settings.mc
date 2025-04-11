@@ -129,7 +129,7 @@ class Settings {
     function setRenderMode(_renderMode as Number) as Void {
         renderMode = _renderMode;
         setValue("renderMode", renderMode);
-        updateScratchPadBitmap();
+        updateViewSettings();
     }
     
     function setFixedPositionRaw(lat as Float, long as Float) as Void {
@@ -248,11 +248,13 @@ class Settings {
     function setOffTrackAlertsDistanceM(value as Number) as Void {
         offTrackAlertsDistanceM = value;
         setValue("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
+        updateViewSettings();
     }
     
     function setOffTrackAlertsMaxReportIntervalS(value as Number) as Void {
         offTrackAlertsMaxReportIntervalS = value;
         setValue("offTrackAlertsMaxReportIntervalS", offTrackAlertsMaxReportIntervalS);
+        updateViewSettings();
     }
     
     function setRouteMax(value as Number) as Void {
@@ -300,6 +302,7 @@ class Settings {
     function setDrawLineToClosestPoint(value as Boolean) as Void {
         drawLineToClosestPoint = value;
         setValue("drawLineToClosestPoint", drawLineToClosestPoint);
+        updateViewSettings();
     }
     
     function setDisplayRouteNames(_displayRouteNames as Boolean) as Void {
@@ -310,6 +313,7 @@ class Settings {
     function setEnableOffTrackAlerts(_enableOffTrackAlerts as Boolean) as Void {
         enableOffTrackAlerts = _enableOffTrackAlerts;
         setValue("enableOffTrackAlerts", enableOffTrackAlerts);
+        updateViewSettings();
     }
         
     function setRoutesEnabled(_routesEnabled as Boolean) as Void {
@@ -631,7 +635,7 @@ class Settings {
         }
     }
     
-    function updateScratchPadBitmap() as Void {
+    function updateViewSettings() as Void {
         // symbol not found if the loadSettings method is called before we set tile cache
         // should n ot happen unless onsettingschange is called before initalise finishes
         // it alwasys has the symbol, but it might not be initalised yet
@@ -639,7 +643,7 @@ class Settings {
         var app = getApp();
         if (app != null && app has :_view && app._view != null && app._view instanceof BreadcrumbDataFieldView)
         {
-            app._view.updateScratchPadBitmap();
+            app._view.onSettingsChanged();
         }
     }
     
@@ -1200,7 +1204,7 @@ class Settings {
         var oldMapEnabled = mapEnabled;
         loadSettings();
         updateCachedValues();
-        updateScratchPadBitmap();
+        updateViewSettings();
         // route settins do not work because garmins setting spage cannot edit them
         // when any property is modified, so we have to explain to users not to touch the settings, but we cannot because it looks 
         // like garmmins settings are not rendering desciptions anymore :(
