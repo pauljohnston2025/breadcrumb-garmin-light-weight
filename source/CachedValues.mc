@@ -20,7 +20,7 @@ class CachedValues {
     // updated when settings change
     var smallTilesPerBigTile as Number;
     // updated when user manually pans around screen
-    var fixedPosition as RectangularPoint or Null;
+    var fixedPosition as RectangularPoint or Null; // NOT SCALED - raw meters
     
     // updated whenever we change zoom level (speed changes, zoom at pace mode etc.)
     var centerPosition as RectangularPoint = new RectangularPoint(0f, 0f, 0f); // scaled to pixels
@@ -364,8 +364,11 @@ class CachedValues {
         {
             getApp()._view.rescale(scaleFactor);
         }
-        centerPosition = centerPosition.rescale(scaleFactor); // the amount of things we are rescaling is insane and also hard to keep track of them all
-
+        centerPosition = centerPosition.rescale(scaleFactor);
+        if (fixedPosition != null)
+        {
+            fixedPosition = fixedPosition.rescale(scaleFactor);
+        }
 
         currentScale = newScale;
     }
@@ -374,14 +377,23 @@ class CachedValues {
     {
         System.println("recalculating all cached values from settings/routes change");
         smallTilesPerBigTile = Math.ceil(256f/_settings.tileSize).toNumber();
+        updateFixedPositionFromSettings();
+        updateScaleCenterAndMap();
+    }
+
+    function updateFixedPositionFromSettings() as Void
+    {
         if (_settings.fixedLatitude == null || _settings.fixedLongitude == null)
         {
             fixedPosition = null;
         }
         else {
             fixedPosition = RectangularPoint.latLon2xy(_settings.fixedLatitude, _settings.fixedLongitude, 0f); 
+            if (fixedPosition != null && currentScale != 0f)
+            {
+                fixedPosition = fixedPosition.rescale(currentScale);
+            }
         }
-        updateScaleCenterAndMap();
     }
 
     // Desired resolution (meters per pixel)
@@ -399,46 +411,61 @@ class CachedValues {
         return tileLevel.toFloat();
     }
 
+    function xyToLatLonWithScale(x as Float, y as Float, xAdd as Float, yAdd as Float) as [Float, Float] or Null
+    {
+        if (currentScale != 0f)
+        {
+            return RectangularPoint.xyToLatLon(fixedPosition.x / currentScale + xAdd, fixedPosition.y / currentScale + yAdd);
+        }
+
+        return RectangularPoint.xyToLatLon(fixedPosition.x + xAdd, fixedPosition.y + yAdd);
+    }
+
     // todo: make all of these take into acount the sceen rotation, and move in the direction the screen is pointing
     // for now just moving NSEW as if there was no screen rotation (N is up)
     function moveFixedPositionUp() as Void
     {
         setPositionIfNotSet();
-        var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y + mapMoveDistanceM);
+        var latlong = xyToLatLonWithScale(fixedPosition.x, fixedPosition.y, 0f, mapMoveDistanceM);
         if (latlong != null)
         {
             _settings.setFixedPositionRaw(latlong[0], latlong[1]);
         }
+        updateFixedPositionFromSettings();
+        updateScaleCenterAndMap();
     }
 
     function moveFixedPositionDown() as Void
     {
         setPositionIfNotSet();
-        var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y - mapMoveDistanceM);
+        var latlong = xyToLatLonWithScale(fixedPosition.x, fixedPosition.y, 0f,  -mapMoveDistanceM);
         if (latlong != null)
         {
             _settings.setFixedPositionRaw(latlong[0], latlong[1]);
         }
+        updateFixedPositionFromSettings();
     }
 
     function moveFixedPositionLeft() as Void
     {
         setPositionIfNotSet();
-        var latlong = RectangularPoint.xyToLatLon(fixedPosition.x - mapMoveDistanceM, fixedPosition.y);
+        var latlong = xyToLatLonWithScale(fixedPosition.x, fixedPosition.y,  -mapMoveDistanceM, 0f);
         if (latlong != null)
         {
             _settings.setFixedPositionRaw(latlong[0], latlong[1]);
         }
+        updateFixedPositionFromSettings();
     }
 
     function moveFixedPositionRight() as Void
     {
         setPositionIfNotSet();
-        var latlong = RectangularPoint.xyToLatLon(fixedPosition.x + mapMoveDistanceM, fixedPosition.y);
+        var latlong = xyToLatLonWithScale(fixedPosition.x, fixedPosition.y, mapMoveDistanceM, 0f);
         if (latlong != null)
         {
             _settings.setFixedPositionRaw(latlong[0], latlong[1]);
         }
+        updateFixedPositionFromSettings();
     }
 
     function calcCenterPoint() as Boolean
@@ -459,7 +486,7 @@ class CachedValues {
 
         if (fixedPosition != null)
         {
-            centerPosition = fixedPosition.rescale(currentScale);
+            centerPosition = fixedPosition;
             return true;
         }
 
@@ -487,10 +514,16 @@ class CachedValues {
 
     function setPositionIfNotSet() as Void
     {
+        var divisor = currentScale;
+        if (divisor == 0f)
+        {
+            divisor = 1f;
+        }
+
         var lastRenderedLatLongCenter = null;
         lastRenderedLatLongCenter = RectangularPoint.xyToLatLon(
-            centerPosition.x * currentScale, 
-            centerPosition.y * currentScale
+            centerPosition.x / divisor, 
+            centerPosition.y / divisor
         );
         
         var fixedLatitude = _settings.fixedLatitude;
@@ -505,6 +538,10 @@ class CachedValues {
             fixedLongitude = lastRenderedLatLongCenter == null ? 0f : lastRenderedLatLongCenter[1];;
         }
         fixedPosition = RectangularPoint.latLon2xy(fixedLatitude, fixedLongitude, 0f);
+        if (fixedPosition != null && currentScale != 0f)
+        {
+            fixedPosition = fixedPosition.rescale(currentScale);
+        }
         // System.println("new fixed pos: " + fixedPosition);
     }
 }
