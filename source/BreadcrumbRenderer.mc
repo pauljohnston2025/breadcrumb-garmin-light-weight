@@ -495,7 +495,7 @@ class BreadcrumbRenderer {
       dc.drawText(xHalf, screenHeight - scaleFromEdge, Graphics.FONT_XTINY, txt, Graphics.TEXT_JUSTIFY_CENTER);
     }
     else if (currentScale != 0f) {
-      var latLong = RectangularPoint.xyToLatLon(centerPosition.x * currentScale, centerPosition.y * currentScale);
+      var latLong = RectangularPoint.xyToLatLon(centerPosition.x / currentScale, centerPosition.y / currentScale);
       if (latLong != null)
       {
         var txt = latLong[0].format("%.3f") + ", " + latLong[1].format("%.3f");

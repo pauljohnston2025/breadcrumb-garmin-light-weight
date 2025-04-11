@@ -206,6 +206,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
   function updateScratchPadBitmap() as Void
   {
+    _scratchPadBitmap = null; // null out the old one first, otherwise we have 2 bit bitmaps allocated at the same time
+    // assuming garbage collection will run immediately, or when trying to allocate the next it will clean up the old one
     if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING || settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION)
     {
       // make sure we are at the correct size (settings/layout change at any point)
@@ -368,11 +370,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
           dc.clear();
           mapRenderer.renderMap(dc);
           for (var i = 0; i < routes.size(); ++i) {
-              if (!settings.routeEnabled(i))
+              var route = routes[i];
+              if (!settings.routeEnabled(route.storageIndex))
               {
                   continue;
               }
-              var route = routes[i];
               renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex));
           }
           renderer.renderTrack(dc, track, settings.trackColour);
