@@ -581,9 +581,19 @@ class CachedValues {
         if (scale == null)
         {
             _settings.clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
+            updateScaleCenterAndMap();
+            if (getApp()._view != null)
+            {
+                getApp()._view.onMapMove();
+            }
             return;
         }
 
         _settings.clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
+        updateScaleCenterAndMap();
+        if (getApp()._view != null)
+        {
+            getApp()._view.onMapMove();
+        }
     }
 }
