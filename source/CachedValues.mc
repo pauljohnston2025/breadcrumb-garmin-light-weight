@@ -250,6 +250,10 @@ class CachedValues {
             currentlyZoomingAroundUser = weShouldZoomAroundUser;
             updateScaleCenterAndMap();
             _settings.clearPendingWebRequests();
+            if (getApp()._view != null)
+            {
+                getApp()._view.resetRenderTime();
+            }
         }
     }
 
@@ -429,7 +433,7 @@ class CachedValues {
         updateScaleCenterAndMap();
         if (getApp()._view != null)
         {
-            getApp()._view.onMapMove();
+            getApp()._view.resetRenderTime();
         }
     }
 
@@ -445,7 +449,7 @@ class CachedValues {
         updateScaleCenterAndMap();
         if (getApp()._view != null)
         {
-            getApp()._view.onMapMove();
+            getApp()._view.resetRenderTime();
         }
     }
 
@@ -461,7 +465,7 @@ class CachedValues {
         updateScaleCenterAndMap();
         if (getApp()._view != null)
         {
-            getApp()._view.onMapMove();
+            getApp()._view.resetRenderTime();
         }
     }
 
@@ -477,26 +481,12 @@ class CachedValues {
         updateScaleCenterAndMap();
         if (getApp()._view != null)
         {
-            getApp()._view.onMapMove();
+            getApp()._view.resetRenderTime();
         }
     }
 
     function calcCenterPoint() as Boolean
     {
-        // when the scale is locked, we need to be where the user is, otherwise we
-        // could see a blank part of the map, when we are zoomed in and have no
-        // context
-        if (scale != null)
-        {
-            // the hacks begin
-            var lastPoint = getApp()._breadcrumbContext.track().lastPoint();
-            if (lastPoint != null)
-            {
-                centerPosition = lastPoint;
-                return true;
-            }
-        }
-
         if (fixedPosition != null)
         {
             if (currentScale == 0f)
@@ -509,6 +499,20 @@ class CachedValues {
             }
             
             return true;
+        }
+        
+        // when the scale is locked, we need to be where the user is, otherwise we
+        // could see a blank part of the map, when we are zoomed in and have no
+        // context
+        if (scale != null)
+        {
+            // the hacks begin
+            var lastPoint = getApp()._breadcrumbContext.track().lastPoint();
+            if (lastPoint != null)
+            {
+                centerPosition = lastPoint;
+                return true;
+            }
         }
 
         return false;
@@ -584,7 +588,7 @@ class CachedValues {
             updateScaleCenterAndMap();
             if (getApp()._view != null)
             {
-                getApp()._view.onMapMove();
+                getApp()._view.resetRenderTime();
             }
             return;
         }
@@ -593,7 +597,7 @@ class CachedValues {
         updateScaleCenterAndMap();
         if (getApp()._view != null)
         {
-            getApp()._view.onMapMove();
+            getApp()._view.resetRenderTime();
         }
     }
 }

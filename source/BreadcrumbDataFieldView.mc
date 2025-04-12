@@ -204,7 +204,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     updateScratchPadBitmap();
   }
 
-  function onMapMove() as Void
+  function resetRenderTime() as Void
   {
     _lastFullRenderTime = 0; // map panning needs to redraw map immediately
   }
@@ -288,8 +288,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
           }
       }
 
-      renderer.renderCurrentScale(dc);
-
       var lastPoint = _breadcrumbContext.track().lastPoint();
       if (lastPoint != null)
       {
@@ -307,6 +305,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       {
           renderer.renderUi(dc);
       }
+
+      renderer.renderCurrentScale(dc);
   }
 
   function renderMain(dc as Dc) as Void {
@@ -434,6 +434,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // dc.drawText(x, y, Graphics.FONT_XTINY, "last buff render: " + (epoch - _lastFullRenderTime) + "s", Graphics.TEXT_JUSTIFY_CENTER);
     // y+=spacing;
     // could do as a ratio for a single field
+    // auto
+    if (_cachedValues.scale != null) {
+      dc.drawText(x, y, Graphics.FONT_XTINY, "Scale: " + _cachedValues.scale.format("%.2f"), Graphics.TEXT_JUSTIFY_CENTER);
+    } 
+    else {
+      dc.drawText(x, y, Graphics.FONT_XTINY, "Scale: Auto", Graphics.TEXT_JUSTIFY_CENTER);
+    }
+    y+=spacing;
     dc.drawText(x, y, Graphics.FONT_XTINY, "hits: " + _breadcrumbContext.tileCache().hits(), Graphics.TEXT_JUSTIFY_CENTER);
     y+=spacing;
     dc.drawText(x, y, Graphics.FONT_XTINY, "misses: " + _breadcrumbContext.tileCache().misses(), Graphics.TEXT_JUSTIFY_CENTER);

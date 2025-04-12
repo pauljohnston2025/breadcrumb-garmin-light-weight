@@ -15,6 +15,11 @@ class BreadcrumbRenderer {
   var _clearRouteProgress as Number = 0;
   var settings as Settings;
   var _cachedValues as CachedValues;
+  var _crosshair as BitmapResource;
+  var _leftArrow as BitmapResource;
+  var _rightArrow as BitmapResource;
+  var _upArrow as BitmapResource;
+  var _downArrow as BitmapResource;
 
   // units in meters (float/int) to label
   var SCALE_NAMES as Dictionary = {
@@ -46,6 +51,11 @@ class BreadcrumbRenderer {
     cachedValues as CachedValues) {
     self.settings = settings;
     _cachedValues = cachedValues;
+    _crosshair = WatchUi.loadResource(Rez.Drawables.Crosshair);
+    _leftArrow = WatchUi.loadResource(Rez.Drawables.LeftArrow);
+    _rightArrow = WatchUi.loadResource(Rez.Drawables.RightArrow);
+    _upArrow = WatchUi.loadResource(Rez.Drawables.UpArrow);
+    _downArrow = WatchUi.loadResource(Rez.Drawables.DownArrow);
   }
 
   function getScaleSize() as [Number, Number] {
@@ -422,6 +432,7 @@ class BreadcrumbRenderer {
 
     var currentScale = _cachedValues.currentScale; // local lookup faster
     var centerPosition = _cachedValues.centerPosition; // local lookup faster
+    var screenWidth = _cachedValues.screenWidth; // local lookup faster
     var screenHeight = _cachedValues.screenHeight; // local lookup faster
     var xHalf = _cachedValues.xHalf; // local lookup faster
     var yHalf = _cachedValues.yHalf; // local lookup faster
@@ -453,10 +464,7 @@ class BreadcrumbRenderer {
     }
 
     // clear routes
-    if (settings.mode != MODE_MAP_MOVE)
-    {
-        dc.drawText(clearRouteX, clearRouteY, Graphics.FONT_XTINY, "C", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-    }
+    dc.drawText(clearRouteX, clearRouteY, Graphics.FONT_XTINY, "C", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     
     if (settings.mode == MODE_ELEVATION)
     {
@@ -480,14 +488,16 @@ class BreadcrumbRenderer {
     var textHeight = 15; // guestimate
     var scaleFromEdge = 75; // guestimate
 
-    // always show 'return to user' icon
-    if (_cachedValues.fixedPosition != null) {
-      // x marks the spot
-      dc.drawText(returnToUserX, returnToUserY, Graphics.FONT_XTINY, "X", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-    } else {
-      // user on the move
-      dc.drawText(returnToUserX, returnToUserY, Graphics.FONT_XTINY, "U", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-    }
+    if (_cachedValues.fixedPosition != null || _cachedValues.scale != null) {
+      dc.drawBitmap2(
+          returnToUserX - _crosshair.getWidth() / 2, 
+          returnToUserY - _crosshair.getHeight() / 2,
+          _crosshair,
+          {
+              :tintColor => settings.uiColour
+          }
+      );
+    } 
 
     // always show location
     if (_cachedValues.fixedPosition != null && settings.fixedLatitude != null && settings.fixedLongitude != null) {
@@ -505,10 +515,38 @@ class BreadcrumbRenderer {
 
     if (settings.mode == MODE_MAP_MOVE)
     {
-      dc.drawText(xHalf, lineFromEdge, Graphics.FONT_XTINY, "^", Graphics.TEXT_JUSTIFY_CENTER);
-      dc.drawText(xHalf, dc.getHeight() - (lineFromEdge + textHeight), Graphics.FONT_XTINY, "V", Graphics.TEXT_JUSTIFY_CENTER);
-      dc.drawText(lineFromEdge, yHalf, Graphics.FONT_XTINY, "<", Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-      dc.drawText(dc.getWidth() - lineFromEdge, yHalf, Graphics.FONT_XTINY, ">", Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
+      dc.drawBitmap2(
+          0, 
+          yHalf - _leftArrow.getHeight() / 2,
+          _leftArrow,
+          {
+              :tintColor => settings.uiColour
+          }
+      );
+      dc.drawBitmap2(
+          screenWidth - _rightArrow.getWidth(), 
+          yHalf - _rightArrow.getHeight() / 2,
+          _rightArrow,
+          {
+              :tintColor => settings.uiColour
+          }
+      );
+      dc.drawBitmap2(
+          xHalf - _upArrow.getWidth() / 2, 
+          0,
+          _upArrow,
+          {
+              :tintColor => settings.uiColour
+          }
+      );
+      dc.drawBitmap2(
+          xHalf - _downArrow.getWidth() / 2, 
+          screenHeight - _downArrow.getHeight(),
+          _downArrow,
+          {
+              :tintColor => settings.uiColour
+          }
+      );
       return;
     }
 
@@ -522,15 +560,7 @@ class BreadcrumbRenderer {
     dc.drawLine(xHalf - halfLineLength, dc.getHeight() - lineFromEdge,
                 xHalf + halfLineLength, dc.getHeight() - lineFromEdge);
 
-    // auto
-    if (_cachedValues.scale != null) {
-      dc.drawText(dc.getWidth() - lineFromEdge, yHalf, Graphics.FONT_XTINY,
-                  "S: " + _cachedValues.scale.format("%.2f"), Graphics.TEXT_JUSTIFY_RIGHT);
-    } else {
-      dc.drawText(dc.getWidth() - lineFromEdge, yHalf, Graphics.FONT_XTINY,
-                  "A", Graphics.TEXT_JUSTIFY_RIGHT);
-    }
-
+    
     // M - default, moving is zoomed view, stopped if full view
     // S - stopped is zoomed view, moving is entire view
     var fvText = "M";
@@ -627,7 +657,7 @@ class BreadcrumbRenderer {
     var xHalf = _cachedValues.xHalf; // local lookup faster
     var yHalf = _cachedValues.yHalf; // local lookup faster
 
-    if (settings.mode != MODE_NORMAL && settings.mode != MODE_ELEVATION)
+    if (settings.mode != MODE_NORMAL && settings.mode != MODE_ELEVATION && settings.mode != MODE_MAP_MOVE)
     {
         return false; // debug and map move do not clear routes
     }
