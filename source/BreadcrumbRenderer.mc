@@ -523,9 +523,9 @@ class BreadcrumbRenderer {
                 xHalf + halfLineLength, dc.getHeight() - lineFromEdge);
 
     // auto
-    if (settings.scale != null) {
+    if (_cachedValues.scale != null) {
       dc.drawText(dc.getWidth() - lineFromEdge, yHalf, Graphics.FONT_XTINY,
-                  "S: " + settings.scale.format("%.2f"), Graphics.TEXT_JUSTIFY_RIGHT);
+                  "S: " + _cachedValues.scale.format("%.2f"), Graphics.TEXT_JUSTIFY_RIGHT);
     } else {
       dc.drawText(dc.getWidth() - lineFromEdge, yHalf, Graphics.FONT_XTINY,
                   "A", Graphics.TEXT_JUSTIFY_RIGHT);
@@ -584,7 +584,7 @@ class BreadcrumbRenderer {
           var nextDistanceM = keys[nextScaleIndex] as Float;
           // -2 since we need some fudge factor to make sure we are very close to desired length, but not past it
           var desiredScale = (DESIRED_SCALE_PIXEL_WIDTH - 2) / nextDistanceM;
-          var toInc = (desiredScale - settings.scale );
+          var toInc = (desiredScale - _cachedValues.scale );
           return toInc;
       }
     }
@@ -598,10 +598,10 @@ class BreadcrumbRenderer {
       return;
     }
 
-    if (settings.scale == null) {
-      settings.setScale(_cachedValues.currentScale);
+    if (_cachedValues.scale == null) {
+      _cachedValues.setScale(_cachedValues.currentScale);
     }
-    settings.setScale(settings.scale + getDecIncAmount(1));
+    _cachedValues.setScale(_cachedValues.scale + getDecIncAmount(1));
   }
 
   function decScale() as Void {
@@ -610,15 +610,15 @@ class BreadcrumbRenderer {
       return;
     }
 
-    if (settings.scale == null) {
-      settings.setScale(_cachedValues.currentScale);
+    if (_cachedValues.scale == null) {
+      _cachedValues.setScale(_cachedValues.currentScale);
     }
-    settings.setScale(settings.scale + getDecIncAmount(-1));
+    _cachedValues.setScale(_cachedValues.scale + getDecIncAmount(-1));
 
     // prevent negative values
     // may need to go to lower scales to display larger maps (maybe like 0.05?)
-    if (settings.scale < MIN_SCALE) {
-      settings.scale = MIN_SCALE;
+    if (_cachedValues.scale < MIN_SCALE) {
+      _cachedValues.scale = MIN_SCALE;
     }
   }
 
@@ -681,7 +681,7 @@ class BreadcrumbRenderer {
     {
       return;
     }
-    settings.setScale(null);
+    _cachedValues.setScale(null);
   }
   
   // todo move most of these into a ui class

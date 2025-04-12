@@ -5,7 +5,6 @@
 	<property id="renderMode" type="number">0</property>
 
 	<property id="zoomAtPaceMode" type="number">0</property>
-	<property id="scale" type="float">0</property>
 	<property id="recalculateItervalS" type="number">5</property>
 	<property id="metersAroundUser" type="number">100</property>
 	<property id="zoomAtPaceSpeedMPS" type="float">1.0</property>

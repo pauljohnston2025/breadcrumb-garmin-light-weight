@@ -20,10 +20,6 @@
         </settingConfig>
     </setting>
 
-    <setting propertyKey="@Properties.scale" title="@Strings.scale" prompt="@Strings.scalePrompt">
-        <settingConfig type="numeric" min="0" max="10"/>
-    </setting>
-    
     <setting propertyKey="@Properties.recalculateItervalS" title="@Strings.recalculateItervalSTitle" prompt="@Strings.recalculateItervalSPrompt">
         <settingConfig type="numeric" min="0"/>
     </setting>

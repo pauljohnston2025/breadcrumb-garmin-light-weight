@@ -21,6 +21,7 @@ class CachedValues {
     var smallTilesPerBigTile as Number;
     // updated when user manually pans around screen
     var fixedPosition as RectangularPoint or Null; // NOT SCALED - raw meters
+    var scale as Float or Null = null; // fixed map scale, when manually zooming or panning around map
     
     // updated whenever we change zoom level (speed changes, zoom at pace mode etc.)
     var centerPosition as RectangularPoint = new RectangularPoint(0f, 0f, 0f); // scaled to pixels
@@ -30,11 +31,11 @@ class CachedValues {
 
     // updated whenever we get new activity data with a new heading
     var rotationRad as Float = 0.0;  // heading in radians
-    var rotateCos as Float = -1f;
-    var rotateSin as Float = -1f;
+    var rotateCos as Float = Math.cos(rotationRad);
+    var rotateSin as Float = Math.sin(rotationRad);
     var currentSpeed as Float = -1f;
     var currentlyZoomingAroundUser as Boolean = false;
-
+    
     // updated whenever onlayout changes (audit usages, these should not need to be floats, but sometimes are used to do float math)
     // default to full screen guess
     var screenWidth as Float = System.getDeviceSettings().screenWidth.toFloat();
@@ -240,7 +241,7 @@ class CachedValues {
         // (rather than having to manually zoom in from the outer level) once zoomed
         // in we lock onto the user position anyway
         var weShouldZoomAroundUser = 
-            _settings.scale != null ||
+            scale != null ||
             (currentSpeed > _settings.zoomAtPaceSpeedMPS && _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_PACE) || 
             (currentSpeed <= _settings.zoomAtPaceSpeedMPS && _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_STOPPED) ||
             _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_ALWAYS_ZOOM;
@@ -279,7 +280,6 @@ class CachedValues {
 
     // todo inline
     function calculateScaleStandard(maxDistanceM as Float) as Float {
-        var scale = _settings.scale;
         if (scale != null) {
             return scale;
         }
@@ -365,10 +365,6 @@ class CachedValues {
             getApp()._view.rescale(scaleFactor);
         }
         centerPosition = centerPosition.rescale(scaleFactor);
-        if (fixedPosition != null)
-        {
-            fixedPosition = fixedPosition.rescale(scaleFactor);
-        }
 
         currentScale = newScale;
     }
@@ -383,16 +379,15 @@ class CachedValues {
 
     function updateFixedPositionFromSettings() as Void
     {
-        if (_settings.fixedLatitude == null || _settings.fixedLongitude == null)
+        var fixedLatitude = _settings.fixedLatitude;
+        var fixedLongitude = _settings.fixedLongitude;
+        if (fixedLatitude == null || fixedLongitude == null)
         {
             fixedPosition = null;
         }
-        else {
-            fixedPosition = RectangularPoint.latLon2xy(_settings.fixedLatitude, _settings.fixedLongitude, 0f); 
-            if (fixedPosition != null && currentScale != 0f)
-            {
-                fixedPosition = fixedPosition.rescale(currentScale);
-            }
+        else 
+        {
+            fixedPosition = RectangularPoint.latLon2xy(fixedLatitude, fixedLongitude, 0f); 
         }
     }
 
@@ -411,22 +406,21 @@ class CachedValues {
         return tileLevel.toFloat();
     }
 
-    function xyToLatLonWithScale(x as Float, y as Float, xAdd as Float, yAdd as Float) as [Float, Float] or Null
+    function moveLatLong(xMoveUnrotated as Float, yMoveUnrotated as Float, xMoveRotated as Float, yMoveRotated as Float) as [Float, Float] or Null
     {
-        if (currentScale != 0f)
+        if (_settings.renderMode == RENDER_MODE_UNBUFFERED_NO_ROTATION || _settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION)
         {
-            return RectangularPoint.xyToLatLon(fixedPosition.x / currentScale + xAdd, fixedPosition.y / currentScale + yAdd);
+            return RectangularPoint.xyToLatLon(fixedPosition.x + xMoveUnrotated, fixedPosition.y + yMoveUnrotated);
         }
 
-        return RectangularPoint.xyToLatLon(fixedPosition.x + xAdd, fixedPosition.y + yAdd);
+        return RectangularPoint.xyToLatLon(fixedPosition.x + xMoveRotated, fixedPosition.y + yMoveRotated);
     }
 
-    // todo: make all of these take into acount the sceen rotation, and move in the direction the screen is pointing
-    // for now just moving NSEW as if there was no screen rotation (N is up)
     function moveFixedPositionUp() as Void
     {
-        setPositionIfNotSet();
-        var latlong = xyToLatLonWithScale(fixedPosition.x, fixedPosition.y, 0f, mapMoveDistanceM);
+        setPositionAndScaleIfNotSet();
+        
+        var latlong = moveLatLong(0f, mapMoveDistanceM, rotateSin * mapMoveDistanceM, rotateCos * mapMoveDistanceM);
         if (latlong != null)
         {
             _settings.setFixedPositionRaw(latlong[0], latlong[1]);
@@ -437,35 +431,38 @@ class CachedValues {
 
     function moveFixedPositionDown() as Void
     {
-        setPositionIfNotSet();
-        var latlong = xyToLatLonWithScale(fixedPosition.x, fixedPosition.y, 0f,  -mapMoveDistanceM);
+        setPositionAndScaleIfNotSet();
+        var latlong = moveLatLong(0f, -mapMoveDistanceM, -rotateSin * mapMoveDistanceM, -rotateCos * mapMoveDistanceM);
         if (latlong != null)
         {
             _settings.setFixedPositionRaw(latlong[0], latlong[1]);
         }
         updateFixedPositionFromSettings();
+        updateScaleCenterAndMap();
     }
 
     function moveFixedPositionLeft() as Void
     {
-        setPositionIfNotSet();
-        var latlong = xyToLatLonWithScale(fixedPosition.x, fixedPosition.y,  -mapMoveDistanceM, 0f);
+        setPositionAndScaleIfNotSet();
+        var latlong = moveLatLong(-mapMoveDistanceM, 0f, -rotateCos * mapMoveDistanceM, rotateSin * mapMoveDistanceM);
         if (latlong != null)
         {
             _settings.setFixedPositionRaw(latlong[0], latlong[1]);
         }
         updateFixedPositionFromSettings();
+        updateScaleCenterAndMap();
     }
 
     function moveFixedPositionRight() as Void
     {
-        setPositionIfNotSet();
-        var latlong = xyToLatLonWithScale(fixedPosition.x, fixedPosition.y, mapMoveDistanceM, 0f);
+        setPositionAndScaleIfNotSet();
+        var latlong = moveLatLong(mapMoveDistanceM, 0f, rotateCos * mapMoveDistanceM, -rotateSin * mapMoveDistanceM);
         if (latlong != null)
         {
             _settings.setFixedPositionRaw(latlong[0], latlong[1]);
         }
         updateFixedPositionFromSettings();
+        updateScaleCenterAndMap();
     }
 
     function calcCenterPoint() as Boolean
@@ -473,7 +470,7 @@ class CachedValues {
         // when the scale is locked, we need to be where the user is, otherwise we
         // could see a blank part of the map, when we are zoomed in and have no
         // context
-        if (_settings.scale != null)
+        if (scale != null)
         {
             // the hacks begin
             var lastPoint = getApp()._breadcrumbContext.track().lastPoint();
@@ -486,7 +483,15 @@ class CachedValues {
 
         if (fixedPosition != null)
         {
-            centerPosition = fixedPosition;
+            if (currentScale == 0f)
+            {
+                centerPosition = fixedPosition;
+            }
+            else 
+            {
+                centerPosition = fixedPosition.rescale(currentScale);
+            }
+            
             return true;
         }
 
@@ -512,11 +517,24 @@ class CachedValues {
         }
     }
 
-    function setPositionIfNotSet() as Void
+    function setPositionAndScaleIfNotSet() as Void
     {
+        // we need to set a fixed scale so that a user moving does not change the zoom level randomly whilst they are viewing a map and panning
+        if (scale == null)
+        {
+            var scaleToSet = currentScale;
+            if (currentScale == 0f)
+            {
+                scaleToSet = calculateScale(_settings.metersAroundUser.toFloat());
+            }
+            setScale(scaleToSet);
+        }
+
         var divisor = currentScale;
         if (divisor == 0f)
         {
+            // we should always have a current scale at this point, since we manually set scale
+            System.println("Warning: current scale was somehow not set");
             divisor = 1f;
         }
 
@@ -538,10 +556,18 @@ class CachedValues {
             fixedLongitude = lastRenderedLatLongCenter == null ? 0f : lastRenderedLatLongCenter[1];;
         }
         fixedPosition = RectangularPoint.latLon2xy(fixedLatitude, fixedLongitude, 0f);
-        if (fixedPosition != null && currentScale != 0f)
-        {
-            fixedPosition = fixedPosition.rescale(currentScale);
-        }
         // System.println("new fixed pos: " + fixedPosition);
+    }
+
+    function setScale(_scale as Float or Null) as Void {
+        scale = _scale;
+        // be very careful about putting null into properties, it breaks everything
+        if (scale == null)
+        {
+            _settings.clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
+            return;
+        }
+
+        _settings.clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
     }
 }

@@ -251,8 +251,6 @@ class SettingsMain extends Rez.Menus.SettingsMain {
                 break;
         }
         safeSetSubLabel(me, :settingsMainModeUiMode, uiModeString);
-        var scaleString = settings.scale == null ? "Auto" : settings.scale.format("%.5f");
-        safeSetSubLabel(me, :settingsMainScale, scaleString);
         safeSetSubLabel(me, :settingsMainRecalculateItervalS, settings.recalculateItervalS.toString());
         var renderModeString = "";
         switch(settings.renderMode)
@@ -540,8 +538,6 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(new $.Rez.Menus.SettingsMode(), new $.SettingsModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainModeUiMode) {
             WatchUi.pushView(new $.Rez.Menus.SettingsUiMode(), new $.SettingsUiModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
-        } else if (itemId == :settingsMainScale) {
-            startPicker(new SettingsFloatPicker(settings.method(:setScale)), view);
         } else if (itemId == :settingsMainRecalculateItervalS) {
             startPicker(new SettingsNumberPicker(settings.method(:setRecalculateItervalS)), view);
         } else if (itemId == :settingsMainRenderMode) {

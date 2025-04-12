@@ -62,9 +62,7 @@ class Settings {
     var userColour as Number = Graphics.COLOR_ORANGE;
     // this should probably be the same as tileCacheSize? since there is no point hadving 20 outstanding if we can only store 10 of them
     var maxPendingWebRequests as Number = 100;
-    var scale as Float or Null = null;
-    // note: this renders around the users position, but may result in a
-    // different zoom level `scale` is set
+    // Renders around the users position
     var metersAroundUser as Number = 100;
     var zoomAtPaceMode as Number = ZOOM_AT_PACE_MODE_PACE;
     var zoomAtPaceSpeedMPS as Float = 1.0; // meters per second
@@ -104,13 +102,9 @@ class Settings {
     // pre seed tiles on either side of the viewable area
     var tileCachePadding as Number = 0;
 
-    // this is a painn to implement in a way that does not effect performance
-    // either we 
-    // check the setting seach loop iteration and change the colour to and from the point colour
-    // have another whole method that rescales the route and draw points (only one setColor call)
-    // save around the scaled point array (slow to add scaled points to array if we do not have this feature on, also bad for memory saving a temp copy of the route)
-    // have a unique code path for each combination of settings (duplicate code, but alomost no perf hit if setting is off)
-    // seems like a pretty bad feature, only really used for debugging - so not implementing for now
+    // feature is not too hard to implement now, as all track points are pre-scaled
+    // however I do not think its a needed feture for end users, mostly for debugging
+    // still have to do it as a second pass over the points array so colours can be set
     // var showPoints as Boolean = true;
 
     // derived settings values (could be moved into cached values class)
@@ -551,20 +545,6 @@ class Settings {
 
         setRoutesEnabled(true);
     }
-    
-    function setScale(_scale as Float or Null) as Void {
-        scale = _scale;
-        // be very careful about putting null into properties, it breaks everything
-        if (scale == null)
-        {
-            setValue("scale", 0);
-            clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
-            return;
-        }
-
-        setValue("scale", scale);
-        clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
-    }
 
     function nextMode() as Void
     {
@@ -965,7 +945,6 @@ class Settings {
         setElevationColour(defaultSettings.elevationColour);
         setUserColour(defaultSettings.userColour);
         setMaxPendingWebRequests(defaultSettings.maxPendingWebRequests);
-        setScale(defaultSettings.scale);
         setMetersAroundUser(defaultSettings.metersAroundUser);
         setZoomAtPaceMode(defaultSettings.zoomAtPaceMode);
         setZoomAtPaceSpeedMPS(defaultSettings.zoomAtPaceSpeedMPS);
@@ -1019,7 +998,6 @@ class Settings {
             "elevationColour" => elevationColour.format("%X"),
             "userColour" => userColour.format("%X"),
             "maxPendingWebRequests" => maxPendingWebRequests,
-            "scale" => scale == null ? 0f : scale,
             "metersAroundUser" => metersAroundUser,
             "zoomAtPaceMode" => zoomAtPaceMode,
             "zoomAtPaceSpeedMPS" => zoomAtPaceSpeedMPS,
@@ -1107,11 +1085,6 @@ class Settings {
         uiColour = parseColour("uiColour", uiColour);
         debugColour = parseColour("debugColour", debugColour);
         maxPendingWebRequests = parseNumber("maxPendingWebRequests", maxPendingWebRequests);
-        scale = parseOptionalFloat("scale", scale);
-        if (scale == 0)
-        {
-            scale = null;
-        }
         metersAroundUser = parseNumber("metersAroundUser", metersAroundUser);
         zoomAtPaceMode = parseNumber("zoomAtPaceMode", zoomAtPaceMode);
         zoomAtPaceSpeedMPS = parseFloat("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
@@ -1137,8 +1110,8 @@ class Settings {
 
         // testing coordinates (piper-comanche-wreck)
         // setFixedPosition(-27.297773, 152.753883);
-        // // setScale(0.39); // zoomed out a bit
-        // setScale(1.96); // really close
+        // // cachedValues.setScale(0.39); // zoomed out a bit
+        // cachedValues.setScale(1.96); // really close
     }
 
     function updateOnlyEnabledRoute() as Void

@@ -67,6 +67,10 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
       // return to users location
       // bottom left
       settings.setFixedPosition(null, null, true);
+      // reset scale to user tracking mode (we auto set it when enterring move mode so we do not get weird zooms when we are panning)
+      // there is a chance the user already had a custom scale set (by pressing the +/- zoom  buttons on the track page)
+      // but we will just clear it when they click 'go back to user', and it will now be whatever is in the 'zoom at pace' settings
+      renderer.resetScale(); 
       return true;
     } else if (  y > renderer.mapEnabledY - halfHitboxSize 
        && y < renderer.mapEnabledY + halfHitboxSize  
