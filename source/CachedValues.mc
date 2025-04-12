@@ -427,6 +427,10 @@ class CachedValues {
         }
         updateFixedPositionFromSettings();
         updateScaleCenterAndMap();
+        if (getApp()._view != null)
+        {
+            getApp()._view.onMapMove();
+        }
     }
 
     function moveFixedPositionDown() as Void
@@ -439,6 +443,10 @@ class CachedValues {
         }
         updateFixedPositionFromSettings();
         updateScaleCenterAndMap();
+        if (getApp()._view != null)
+        {
+            getApp()._view.onMapMove();
+        }
     }
 
     function moveFixedPositionLeft() as Void
@@ -451,6 +459,10 @@ class CachedValues {
         }
         updateFixedPositionFromSettings();
         updateScaleCenterAndMap();
+        if (getApp()._view != null)
+        {
+            getApp()._view.onMapMove();
+        }
     }
 
     function moveFixedPositionRight() as Void
@@ -463,6 +475,10 @@ class CachedValues {
         }
         updateFixedPositionFromSettings();
         updateScaleCenterAndMap();
+        if (getApp()._view != null)
+        {
+            getApp()._view.onMapMove();
+        }
     }
 
     function calcCenterPoint() as Boolean

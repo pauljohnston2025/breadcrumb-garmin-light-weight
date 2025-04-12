@@ -677,7 +677,7 @@ class BreadcrumbRenderer {
   }
 
   function resetScale() as Void { 
-    if (settings.mode != MODE_NORMAL)
+    if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE)
     {
       return;
     }

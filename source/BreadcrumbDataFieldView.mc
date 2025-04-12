@@ -204,6 +204,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     updateScratchPadBitmap();
   }
 
+  function onMapMove() as Void
+  {
+    _lastFullRenderTime = 0; // map panning needs to redraw map immediately
+  }
+
   function updateScratchPadBitmap() as Void
   {
     _scratchPadBitmap = null; // null out the old one first, otherwise we have 2 bit bitmaps allocated at the same time
@@ -425,6 +430,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     y+=spacing;
     dc.drawText(x, y, Graphics.FONT_XTINY, "last alert: " + (epoch - lastOffTrackAlertSent) + "s", Graphics.TEXT_JUSTIFY_CENTER);
     y+=spacing;
+    // _lastFullRenderTime only updates when rendering the track (debug screen does not use it, so it just counts up whilst on the debug page)
+    // dc.drawText(x, y, Graphics.FONT_XTINY, "last buff render: " + (epoch - _lastFullRenderTime) + "s", Graphics.TEXT_JUSTIFY_CENTER);
+    // y+=spacing;
     // could do as a ratio for a single field
     dc.drawText(x, y, Graphics.FONT_XTINY, "hits: " + _breadcrumbContext.tileCache().hits(), Graphics.TEXT_JUSTIFY_CENTER);
     y+=spacing;
