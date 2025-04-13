@@ -4,6 +4,7 @@ import Toybox.WatchUi;
 import Toybox.PersistedContent;
 import Toybox.System;
 import Toybox.Communications;
+import Toybox.Application;
 
 class JsonWebHandler {
     // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
@@ -77,9 +78,7 @@ class WebRequestHandleWrapper {
         if (responseCode != 200 && webHandler._settings.tileUrl.equals(COMPANION_APP_TILE_URL))
         {
             // todo only send this on certain errors, and only probbaly only after some limit?
-            // this can fail if web requests are pending, 'Communications transmit queue full'
-            // so we will have to queue it up to the web server as 'high priority', or just have a transmit queue that is always high priority
-            Communications.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
+            webHandler.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
         }
 
         // got some stack overflows, as handle can be called inline if it knows it will fail (eg. BLE_CONNECTION_UNAVAILABLE)
@@ -105,12 +104,51 @@ class WebRequestHandleWrapper {
     }
 }
 
+
+class ConnectionListenerWrapper extends Communications.ConnectionListener
+{
+    var webHandler as WebRequestHandler;
+    var handler as Communications.ConnectionListener;
+    var alreadyDecedWebHandler = false;
+
+    function initialize(
+        _webHandler as WebRequestHandler,
+        _handler as Communications.ConnectionListener)
+    {
+        Communications.ConnectionListener.initialize();
+        webHandler = _webHandler;
+        handler = _handler;
+    }
+
+    function onComplete() {
+        decOutstanding();
+        handler.onComplete();
+    }
+
+    function onError() {
+        decOutstanding();
+        handler.onError();
+    }
+
+    function decOutstanding() as Void
+    {
+        if (alreadyDecedWebHandler)
+        {
+            return;
+        }
+
+        alreadyDecedWebHandler = true;
+        webHandler.decrementOutstanding();
+    }
+}
+
 class WebRequestHandler
 {
     // see https://forums.garmin.com/developer/connect-iq/f/discussion/209443/watchface-working-in-simulator-failing-webrequest-on-device-with-http-response--101
     // only 3 web requests are allowed in parallel, so we need to buffer them up and make new requests when we get responses
     // using 2 arrays so we get FIFO
     // also dictionary seemed to make the code 2X slower, think because we had to serch all the keys for a string several times
+    var pendingTransmit as Array<[Application.PersistableType, Dictionary or Null, Communications.ConnectionListener]> = [];
     var pending as Array<JsonRequest or ImageRequest> = [];
     var pendingHashes as Array<String> = [];
     var _outstandingCount as Number = 0;
@@ -127,6 +165,13 @@ class WebRequestHandler
     {
         pending = [];
         pendingHashes = [];
+    }
+
+    // Communications.trnsmit can fail if web requests are pending, 'Communications transmit queue full'
+    // so we will have to queue it up to the web server as 'high priority', or just have a transmit queue that is always high priority
+    function transmit(content as Application.PersistableType, options as Dictionary or Null, listener as Communications.ConnectionListener)
+    {
+        pendingTransmit.add([content, options, listener]);
     }
 
     function add(jsonOrImageReq as JsonRequest or ImageRequest) as Void 
@@ -168,7 +213,7 @@ class WebRequestHandler
 
     function startNextIfWeCan() as Boolean
     {
-        if (pending.size() == 0)
+        if (pending.size() == 0 && pendingTransmit.size() == 0)
         {
             return false;
         }
@@ -193,6 +238,15 @@ class WebRequestHandler
     function start() as Void 
     {
         ++_outstandingCount;
+        if (pendingTransmit.size() != 0)
+        {
+            // prioritize the  transmits ofver tile/web loads
+            var transmitEntry = pendingTransmit[0];
+            pendingTransmit.remove(transmitEntry);
+            Communications.transmit(transmitEntry[0], transmitEntry[1], new ConnectionListenerWrapper(me, transmitEntry[2]));
+            return;
+        }
+
         var jsonOrImageReq = pending[0];
         pending.remove(jsonOrImageReq);
         // trust that the keys are in the same order as the hash

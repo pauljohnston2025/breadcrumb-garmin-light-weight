@@ -20,19 +20,6 @@ enum ProtocolSend {
   PROTOCOL_SEND_SETTINGS = 1,
 }
 
-class VersionInfo extends Communications.ConnectionListener {
-    function initialize() {
-      Communications.ConnectionListener.initialize();
-    }
-    function onComplete() {
-        System.println("Version info message sent");
-    }
-
-    function onError() {
-        System.println("Version info message fail");
-    }
-}
-
 class CommStatus extends Communications.ConnectionListener {
     function initialize() {
       Communications.ConnectionListener.initialize();
@@ -201,7 +188,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         return;
       } else if (type == PROTOCOL_REQUEST_SETTINGS) {
         System.println("got send settings req: " + rawData);
-        Communications.transmit([PROTOCOL_SEND_SETTINGS, _breadcrumbContext.settings().asDict()], {}, new SettingsSent());
+        _breadcrumbContext.webRequestHandler().transmit([PROTOCOL_SEND_SETTINGS, _breadcrumbContext.settings().asDict()], {}, new SettingsSent());
         return;
       } else if (type == PROTOCOL_SAVE_SETTINGS) {
         System.println("got save settings req: " + rawData);

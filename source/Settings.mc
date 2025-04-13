@@ -2,6 +2,8 @@ import Toybox.Application;
 import Toybox.Lang;
 import Toybox.Graphics;
 import Toybox.System;
+import Toybox.Application;
+import Toybox.Communications;
 
 enum /*Mode*/ {
   MODE_NORMAL,
@@ -204,6 +206,12 @@ class Settings {
         setValue("tileUrl", tileUrl);
         clearPendingWebRequests();
         clearTileCache();
+
+        // prompts user to open the app
+        if (tileUrl.equals(COMPANION_APP_TILE_URL))
+        {
+          transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
+        }
     }
     
     function setZoomAtPaceSpeedMPS(mps as Float) as Void {
@@ -301,7 +309,7 @@ class Settings {
         // prompts user to open the app
         if (tileUrl.equals(COMPANION_APP_TILE_URL))
         {
-          Communications.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
+          transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
         }
     }
     
@@ -600,6 +608,18 @@ class Settings {
         if (context != null and context instanceof BreadcrumbContext && context has :_tileCache && context._tileCache != null && context._tileCache instanceof TileCache)
         {
             context._tileCache.clearValues();
+        }
+    }
+    
+    function transmit(content as Application.PersistableType, options as Dictionary or Null, listener as Communications.ConnectionListener) as Void {
+        // symbol not found if the loadSettings method is called before we set tile cache
+        // should n ot happen unless onsettingschange is called before initalise finishes
+        // it alwasys has the symbol, but it might not be initalised yet
+        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
+        var context = getApp()._breadcrumbContext;
+        if (context != null and context instanceof BreadcrumbContext && context has :_webRequestHandler && context._webRequestHandler != null && context._webRequestHandler instanceof WebRequestHandler)
+        {
+            context._webRequestHandler.transmit(content, options, listener);
         }
     }
     
