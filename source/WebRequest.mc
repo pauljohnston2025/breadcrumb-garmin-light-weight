@@ -333,6 +333,10 @@ class WebRequestHandler
     function pendingCount() as Number {
         return pending.size();
     }
+    
+    function pendingTransmitCount() as Number {
+        return pendingTransmit.size();
+    }
 
     function errorCount() as Number {
         return _errorCount;
