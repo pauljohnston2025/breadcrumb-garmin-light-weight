@@ -744,7 +744,12 @@ class Settings {
                 }
 
                 // calling tonumber breaks - because its out of range, but we need to set the alpha bits
-                var number = (long & 0xFFFFFFFFl).toNumber(); 
+                var number = (long & 0xFFFFFFFFl).toNumber();
+                if (number = 0xFFFFFFFF)
+                {
+                    // -1 is transparent and will not render
+                    number = 0xFEFFFFFF;
+                }
                 return number;
             }
 
