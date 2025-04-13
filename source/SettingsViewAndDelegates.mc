@@ -353,6 +353,17 @@ class SettingsAlerts extends Rez.Menus.SettingsAlerts {
         safeSetToggle(me, :settingsAlertsEnabled, true);
         safeSetSubLabel(me, :settingsAlertsOffTrackDistanceM, settings.offTrackAlertsDistanceM.toString());
         safeSetSubLabel(me, :settingsAlertsOffTrackAlertsMaxReportIntervalS, settings.offTrackAlertsMaxReportIntervalS.toString());
+        var alertTypeString = "";
+        switch(settings.alertType)
+        {
+            case ALERT_TYPE_TOAST:
+                alertTypeString = Rez.Strings.alertTypeToast;
+                break;
+            case ALERT_TYPE_ALERT:
+                alertTypeString = Rez.Strings.alertTypeAlert;
+                break;
+        }
+        safeSetSubLabel(me, :settingsAlertsAlertType, alertTypeString);
     }
 }
 
@@ -705,6 +716,26 @@ class SettingsUiModeDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
+class SettingsAlertTypeDelegate extends WatchUi.Menu2InputDelegate {
+    var parent as SettingsAlerts;
+    function initialize(parent as SettingsAlerts) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.parent = parent;
+    }
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var itemId = item.getId();
+        if (itemId == :settingsAlertTypeToast) {
+            settings.setAlertType(ALERT_TYPE_TOAST);
+        } else if (itemId == :settingsAlertTypeAlert) {
+            settings.setAlertType(ALERT_TYPE_ALERT);
+        }
+
+        parent.rerender();
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+    }
+}
+
 class SettingsRenderModeDelegate extends WatchUi.Menu2InputDelegate {
     var parent as SettingsMain;
     function initialize(parent as SettingsMain) {
@@ -917,6 +948,8 @@ class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(new SettingsNumberPicker(settings.method(:setOffTrackAlertsDistanceM)), view);
         } else if (itemId == :settingsAlertsOffTrackAlertsMaxReportIntervalS) {
             startPicker(new SettingsNumberPicker(settings.method(:setOffTrackAlertsMaxReportIntervalS)), view);
+        } else if (itemId == :settingsAlertsAlertType) {
+            WatchUi.pushView(new $.Rez.Menus.SettingsAlertType(), new $.SettingsAlertTypeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         }
     }
 }

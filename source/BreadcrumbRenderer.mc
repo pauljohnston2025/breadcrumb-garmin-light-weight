@@ -248,32 +248,15 @@ class BreadcrumbRenderer {
             (coordinatesRaw[1] - centerPosition.y);
         var lastX = xHalf + firstXScaledAtCenter;
         var lastY = yHalf - firstYScaledAtCenter;
-        // if (settings.showPoints)
-        // {
-        //   // circles are expensive, maybe better to draw squares? possibly have 'point type' instead
-        //   // all these should be in thried own methods, whats more expensive, if check and multiple setColor calls
-        //   // or clculating the rotations twice
-        //   // once we move to render with scratchpad should be fster to itterate twice
-        //   // migth want to save the scaled points array for both calcs though
-        //   // this is realy only fome to debug though
-        //   dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK); // point colour
-        //   dc.drawCircle(lastXRotated, lastYRotated, 3);
-        //   dc.setColor(colour, Graphics.COLOR_BLACK); // restore colour
-        // }
+
         for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
-            var nextX = coordinatesRaw[i];
-            var nextY = coordinatesRaw[i + 1];
-
-            var nextXScaledAtCenter = (nextX - centerPosition.x);
-            var nextYScaledAtCenter = (nextY - centerPosition.y);
-
-            var nextXScaled = xHalf + nextXScaledAtCenter;
-            var nextYScaled = yHalf - nextYScaledAtCenter;
+            var nextX = xHalf + (coordinatesRaw[i] - centerPosition.x);
+            var nextY = yHalf - (coordinatesRaw[i + 1] - centerPosition.y);
             
-            dc.drawLine(lastX, lastY, nextXScaled, nextYScaled);
+            dc.drawLine(lastX, lastY, nextX, nextY);
 
-            lastX = nextXScaled;
-            lastY = nextYScaled;
+            lastX = nextX;
+            lastY = nextY;
         }
     }
   }

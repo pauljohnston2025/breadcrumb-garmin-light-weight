@@ -13,18 +13,6 @@ class OffTrackAlert extends WatchUi.DataFieldAlert {
   }
 
   function onUpdate(dc as Dc) as Void {
-    if (Attention has :vibrate)
-    {
-      var vibeData = [
-        new Attention.VibeProfile(100, 500),
-        new Attention.VibeProfile(0, 150),
-        new Attention.VibeProfile(100, 500),
-        new Attention.VibeProfile(0, 150),
-        new Attention.VibeProfile(100, 500),
-      ];
-      Attention.vibrate(vibeData);
-    }
-
       var halfHeight = dc.getHeight()/2;
       dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);    
       dc.drawText(halfHeight, halfHeight, Graphics.FONT_SYSTEM_MEDIUM, "OFF TRACK", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
@@ -118,6 +106,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     // perf only seed tiles when we need to (zoom level changes or user moves)
     _breadcrumbContext.mapRenderer().seedTiles(); // could possibly be moved into cached values when map data changes - though map data may not change but we nuked the pending web requests - safer here
+    // or we have to do multiple seeds if pending web requests is low
 
     _computeCounter = 0;
 
@@ -161,6 +150,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
 
     var onlyEnabledRouteId = settings.getOnlyEnabledRouteId();
+    if (onlyEnabledRouteId == null)
+    {
+      return;
+    }
+    
     for (var i=0; i< _breadcrumbContext.routes().size(); ++i)
     {
       var route = _breadcrumbContext.routes()[i];
@@ -172,18 +166,45 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
           if (settings.drawLineToClosestPoint)
           {
               offTrackPoint = offTrackInfo.pointWeLeftTrack;
+              lastOffTrackAlertSent = epoch; // might only have settings.drawLineToClosestPoint settings on, do not run checkOffTrack code until timer elapsed
+              // perhaps we want to change this to lastOffTrackAlertChecked and move above, that way we do not run checkOffTrack on every data point
+              // it does mean they could be off track for quite some time though, and it would no longer alert as soon as you hit offTrackAlertsDistanceM
+              // better perf though
           }
           else {
-              offTrackPoint = null; // might have been set in the past and we now diabled the setting
+              offTrackPoint = null; // might have been set in the past and we now disabled the setting
           }
 
           if (settings.enableOffTrackAlerts)
           {
               try {
-                showAlert(new OffTrackAlert());
+                logD("trying to trigger alert");
+                if (settings.alertType == ALERT_TYPE_ALERT) {
+                  // allerts are really annoying bevcause users have to remember to enable them
+                  // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
+                  // this is why we default to toasts, the virration will still occur, and maybe should be a seperate setting?
+                  showAlert(new OffTrackAlert());
+                }
+                else {
+                  WatchUi.showToast("OFF TRACK", {});
+                }
+
+                if (Attention has :vibrate)
+                {
+                  var vibeData = [
+                    new Attention.VibeProfile(100, 500),
+                    new Attention.VibeProfile(0, 150),
+                    new Attention.VibeProfile(100, 500),
+                    new Attention.VibeProfile(0, 150),
+                    new Attention.VibeProfile(100, 500),
+                  ];
+                  Attention.vibrate(vibeData);
+                }
+                
                 lastOffTrackAlertSent = epoch;
               } catch (e) {
                 // not sure there is a way to check that we can display or not, so just catch errors
+                System.println("failed to show alert: " + e);
               }
           }
         }
@@ -211,8 +232,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
   function updateScratchPadBitmap() as Void
   {
-    _scratchPadBitmap = null; // null out the old one first, otherwise we have 2 bit bitmaps allocated at the same time
-    // assuming garbage collection will run immediately, or when trying to allocate the next it will clean up the old one
     if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING || settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION)
     {
       // make sure we are at the correct size (settings/layout change at any point)
@@ -221,6 +240,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       var height = _cachedValues.screenHeight.toNumber();
       if (_scratchPadBitmap == null || _scratchPadBitmap.getWidth() != width || _scratchPadBitmap.getHeight() != height )
       {
+          _scratchPadBitmap = null; // null out the old one first, otherwise we have 2 bit bitmaps allocated at the same time
+          // assuming garbage collection will run immediately, or when trying to allocate the next it will clean up the old one
           _scratchPadBitmap = newBitmap(width, height, null);
       }
     }

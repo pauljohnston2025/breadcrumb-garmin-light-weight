@@ -30,6 +30,9 @@
     <string id="offTrackAlertsMaxReportIntervalSTitle">Max Report Interval (s)</string>
     <string id="offTrackAlertsMaxReportIntervalSPrompt"></string>
     <string id="offTrackAlertsGroupTitle">Off Track Alert Settings</string>
+    <string id="alertTypeTitle">Alert Type</string>
+    <string id="alertTypeToast">Toast (notification)</string>
+    <string id="alertTypeAlert">Alerts (requires enable in garmin settings)</string>
     <string id="enableOffTrackAlerts"></string>
     <string id="enableOffTrackAlertsTitle">Off Track Alerts</string>
     <string id="drawLineToClosestPointTitle">Draw Line To Last Point</string>

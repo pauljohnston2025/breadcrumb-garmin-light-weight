@@ -6,7 +6,7 @@
 
 	<property id="zoomAtPaceMode" type="number">0</property>
 	<property id="recalculateItervalS" type="number">5</property>
-	<property id="metersAroundUser" type="number">100</property>
+	<property id="metersAroundUser" type="number">500</property>
 	<property id="zoomAtPaceSpeedMPS" type="float">1.0</property>
 	
 	<property id="mapEnabled" type="boolean">false</property>
@@ -29,6 +29,7 @@
 	<property id="fixedLatitude" type="float">0</property>
 	<property id="fixedLongitude" type="float">0</property>
 
+	<property id="alertType" type="number">0</property>
 	<property id="offTrackAlertsDistanceM" type="number">20</property>
 	<property id="offTrackAlertsMaxReportIntervalS" type="number">60</property>
 	<property id="disableMapsFailureCount" type="number">200</property>

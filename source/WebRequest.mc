@@ -77,6 +77,8 @@ class WebRequestHandleWrapper {
         if (responseCode != 200 && webHandler._settings.tileUrl.equals(COMPANION_APP_TILE_URL))
         {
             // todo only send this on certain errors, and only probbaly only after some limit?
+            // this can fail if web requests are pending, 'Communications transmit queue full'
+            // so we will have to queue it up to the web server as 'high priority', or just have a transmit queue that is always high priority
             Communications.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
         }
 

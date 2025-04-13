@@ -34,6 +34,12 @@ enum /*RenderMode*/ {
   RENDER_MODE_MAX,
 }
 
+enum /*RenderMode*/ {
+  ALERT_TYPE_TOAST,
+  ALERT_TYPE_ALERT,
+  ALERT_TYPE_MAX,
+}
+
 const COMPANION_APP_TILE_URL = "http://127.0.0.1:8080";
 
 class Settings {
@@ -63,7 +69,7 @@ class Settings {
     // this should probably be the same as tileCacheSize? since there is no point hadving 20 outstanding if we can only store 10 of them
     var maxPendingWebRequests as Number = 100;
     // Renders around the users position
-    var metersAroundUser as Number = 100;
+    var metersAroundUser as Number = 500; // keep this fairly high by default, too small and the map tiles start to go blury
     var zoomAtPaceMode as Number = ZOOM_AT_PACE_MODE_PACE;
     var zoomAtPaceSpeedMPS as Float = 1.0; // meters per second
     var uiMode as Number = UI_MODE_SHOW_ALL;
@@ -90,6 +96,7 @@ class Settings {
     var enableOffTrackAlerts as Boolean = true;
     var offTrackAlertsDistanceM as Number = 20;
     var offTrackAlertsMaxReportIntervalS as Number = 60;
+    var alertType as Number = ALERT_TYPE_TOAST;
 
     var drawLineToClosestPoint as Boolean = true;
     
@@ -118,6 +125,11 @@ class Settings {
     function setUiMode(_uiMode as Number) as Void {
         uiMode = _uiMode;
         setValue("uiMode", uiMode);
+    }
+    
+    function setAlertType(_alertType as Number) as Void {
+        alertType = _alertType;
+        setValue("alertType", alertType);
     }
     
     function setRenderMode(_renderMode as Number) as Void {
@@ -949,6 +961,7 @@ class Settings {
         setZoomAtPaceMode(defaultSettings.zoomAtPaceMode);
         setZoomAtPaceSpeedMPS(defaultSettings.zoomAtPaceSpeedMPS);
         setUiMode(defaultSettings.uiMode);
+        setAlertType(defaultSettings.alertType);
         setRenderMode(defaultSettings.renderMode);
         setFixedLatitude(defaultSettings.fixedLatitude);
         setFixedLongitude(defaultSettings.fixedLongitude);
@@ -1002,6 +1015,7 @@ class Settings {
             "zoomAtPaceMode" => zoomAtPaceMode,
             "zoomAtPaceSpeedMPS" => zoomAtPaceSpeedMPS,
             "uiMode" => uiMode,
+            "alertType" => alertType,
             "renderMode" => renderMode,
             "fixedLatitude" => fixedLatitude == null ? 0f : fixedLatitude,
             "fixedLongitude" => fixedLongitude == null ? 0f : fixedLongitude,
@@ -1089,6 +1103,7 @@ class Settings {
         zoomAtPaceMode = parseNumber("zoomAtPaceMode", zoomAtPaceMode);
         zoomAtPaceSpeedMPS = parseFloat("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
         uiMode = parseNumber("uiMode", uiMode);
+        alertType = parseNumber("alertType", alertType);
         renderMode = parseNumber("renderMode", renderMode);
 
         fixedLatitude = parseOptionalFloat("fixedLatitude", fixedLatitude);
@@ -1124,7 +1139,7 @@ class Settings {
             {
                 // we found the first enabled one
                 checkingOnlyRouteEnabledId = route["routeId"];
-                break;
+                continue;
             }
 
             if (route["enabled"] && checkingOnlyRouteEnabledId != null)

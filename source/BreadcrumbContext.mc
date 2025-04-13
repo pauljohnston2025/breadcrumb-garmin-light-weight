@@ -79,6 +79,7 @@ class BreadcrumbContext {
       }
       _routes.remove(oldestRoute);
       var route = new BreadcrumbTrack(oldestRoute.storageIndex, name);
+      _routes.add(route);
       _settings.ensureRouteId(oldestRoute.storageIndex);
       _settings.setRouteName(oldestRoute.storageIndex, route.name);
       _settings.setRouteEnabled(oldestRoute.storageIndex, true);

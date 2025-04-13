@@ -25,7 +25,8 @@ class TileKey {
     }
 
     function toString() as String {
-        return Lang.format("$1$-$2$-$3$", [x, y, z]);
+        // was getting charArrayToString called which takes 193us per call
+        return x.toString() + "-" + y + "-" + z;
     }
 
     function hashCode() as Number {
@@ -515,8 +516,7 @@ class TileCache {
         {
             for (var j=0; j<tileSize; ++j)
             {
-                var byteColour = arr[it] as Number;
-                var colour = _palette[byteColour & 0x3F];
+                var colour = _palette[arr[it] as Number & 0x3F];
                 it++;
                 localDc.setColor(colour, colour);
                 localDc.drawPoint(i, j);

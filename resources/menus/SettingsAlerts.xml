@@ -3,4 +3,5 @@
     <toggle-menu-item id="settingsAlertsDrawLineToClosestPoint" label="@Strings.drawLineToClosestPointTitle"/>
     <toggle-menu-item id="settingsAlertsEnabled" label="@Strings.enableOffTrackAlertsTitle"/>
     <menu-item id="settingsAlertsOffTrackAlertsMaxReportIntervalS" label="@Strings.offTrackAlertsMaxReportIntervalSTitle"/>
+    <menu-item id="settingsAlertsAlertType" label="@Strings.alertTypeTitle"/>
 </menu2>
