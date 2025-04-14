@@ -38,6 +38,15 @@ class BreadcrumbTrack {
   var lastClosePointIndex as Number or Null;
   // gets updated when track data is loaded, set to first point on track
   // also gets updated wehnever we calculate off track
+  // there is one odity with storing lastClosePoint, if the user gets closer to another section of the track we will keep
+  // telling them to go back to where they left the track. Acceptable, since the user should do their entire planned route. 
+  // If they rejoin the track at another point we pick up that they are on track correctly.
+  // Multi routes also makes this issue slightly more annoying, in a rare case where a user has left one route, and done another route, 
+  // when we get close to the first route (if we are still off track) it will snap to the last point they left the route, rather than the start.
+  // such a small edge case, that I only found in a random test setup, the performance benifits of caching the lastClosePoint 
+  // outweigh the chances users will run into this edge case. To solve it we have to process the whole route every time, 
+  // though we already do this in a multi route setup, we might parse off track alerts for all the other routes then get to the one we are on.
+  // single route use case is more common though, so we will optimise for that. in multi route we could store 'last route we were on'
   var lastClosePoint as RectangularPoint or Null = null; // SCALED (note: altitude is currently unscaled)
   var epoch as Number = 0;
   // storageIndex is the id of the route (-1 is the in progress track)
