@@ -165,7 +165,7 @@ The number of meters you need to be off track for an alert to be triggered or a 
 ### Draw Line To Last Point
 Draw a line back to the spot where you left the route (only works if a single route is enabled).
 ### Off Track Alerts
-Trigger an alert when you leave the track by `Off Track Distance` (only works if a single route is enabled).
+Trigger an alert when you leave the track by `Off Track Distance`.
 ### Off Track Alerts Max Report Interval
 How often, in seconds, an alert should fire. Alerts will continue firing until you return to the planned route.
 ### Off Track Alerts Alert Type
@@ -197,7 +197,7 @@ enabled:
 disabled:
 ![](images/settings/routenamesdisabled.png)
 ### Max Routes
-The maximum number of routes to store on the device, set to 1 if you want each new route loaded on the device to be the only one shown. Multiple routes are handy to add different parts of a course, or for multisport activities such as triathlons, each part of the course can be a separate colour. Do note though that off track alerts are currently disabled when multiple routes are enabled (since it is computationally intensive task). I may add multi route off track mode in the future.
+The maximum number of routes to store on the device, set to 1 if you want each new route loaded on the device to be the only one shown. Multiple routes are handy to add different parts of a course, or for multisport activities such as triathlons, each part of the course can be a separate colour.
 ### Per Route settings 
 Id - The id of the route - read only  
 Name - Defaults to the route name that was added, but can be modified to anything you desire.  

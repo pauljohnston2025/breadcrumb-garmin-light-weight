@@ -115,9 +115,6 @@ class Settings {
     // however I do not think its a needed feture for end users, mostly for debugging
     // still have to do it as a second pass over the points array so colours can be set
     // var showPoints as Boolean = true;
-
-    // derived settings values (could be moved into cached values class)
-    var onlyRouteEnabledId as Number or Null;
     
     function setMode(_mode as Number) as Void {
         mode = _mode;
@@ -447,11 +444,6 @@ class Settings {
         return null;
     }
     
-    function getOnlyEnabledRouteId() as Number or Null
-    {
-        return onlyRouteEnabledId;
-    }
-
     function clearRoutes() as Void {
         routes = [];
         saveRoutes();
@@ -478,7 +470,6 @@ class Settings {
     {
         var toSave = routesToSave();
         setValue("routes", toSave);
-        updateOnlyEnabledRoute();
     }
     
     function setTrackColour(value as Number) as Void {
@@ -745,7 +736,7 @@ class Settings {
 
                 // calling tonumber breaks - because its out of range, but we need to set the alpha bits
                 var number = (long & 0xFFFFFFFFl).toNumber();
-                if (number = 0xFFFFFFFF)
+                if (number == 0xFFFFFFFF)
                 {
                     // -1 is transparent and will not render
                     number = 0xFEFFFFFF;
@@ -1142,7 +1133,6 @@ class Settings {
             routes
         );
         System.println("parsed routes: " + routes);
-        updateOnlyEnabledRoute();
         disableMapsFailureCount = parseNumber("disableMapsFailureCount", disableMapsFailureCount);
         offTrackAlertsDistanceM = parseNumber("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
         offTrackAlertsMaxReportIntervalS = parseNumber("offTrackAlertsMaxReportIntervalS", offTrackAlertsMaxReportIntervalS);
@@ -1152,35 +1142,6 @@ class Settings {
         // setFixedPosition(-27.297773, 152.753883);
         // // cachedValues.setScale(0.39); // zoomed out a bit
         // cachedValues.setScale(1.96); // really close
-    }
-
-    function updateOnlyEnabledRoute() as Void
-    {
-        var checkingOnlyRouteEnabledId = null;
-        for (var i = 0; i < routes.size(); ++i) {
-            var route = routes[i];
-
-            if (route["enabled"] && checkingOnlyRouteEnabledId == null)
-            {
-                // we found the first enabled one
-                checkingOnlyRouteEnabledId = route["routeId"];
-                continue;
-            }
-
-            if (route["enabled"] && checkingOnlyRouteEnabledId != null)
-            {
-                // we found a second enabled one
-                checkingOnlyRouteEnabledId = null;
-                break;
-            }
-        }
-
-        if (checkingOnlyRouteEnabledId != null) {
-            onlyRouteEnabledId = checkingOnlyRouteEnabledId;
-        }
-        else {
-            onlyRouteEnabledId = null;
-        }
     }
 
     function emptyString(key as String, value) as String

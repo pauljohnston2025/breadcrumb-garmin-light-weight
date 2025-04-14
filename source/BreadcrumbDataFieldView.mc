@@ -29,7 +29,7 @@ class OffTrackAlert extends WatchUi.DataFieldAlert {
 // note: this only allows taps, cannot handle swipes/holds etc. (need to test on
 // real device)
 class BreadcrumbDataFieldView extends WatchUi.DataField {
-  var offTrackPoint as RectangularPoint or Null = null;
+  var offTrackInfo as OffTrackInfo = new OffTrackInfo(true, null);
   var _breadcrumbContext as BreadcrumbContext;
   var _scratchPadBitmap as BufferedBitmap or Null;
   var settings as Settings;
@@ -51,9 +51,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
   function rescale(scaleFactor as Float) as Void
   {
-      if (offTrackPoint != null)
+      if (offTrackInfo.pointWeLeftTrack != null)
       {
-        offTrackPoint = offTrackPoint.rescale(scaleFactor);
+        offTrackInfo.pointWeLeftTrack = offTrackInfo.pointWeLeftTrack.rescale(scaleFactor);
       }
   }
 
@@ -149,78 +149,72 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       return;
     }
 
-    var onlyEnabledRouteId = settings.getOnlyEnabledRouteId();
-    if (onlyEnabledRouteId == null)
-    {
-      return;
-    }
-
     for (var i=0; i< _breadcrumbContext.routes().size(); ++i)
     {
       var route = _breadcrumbContext.routes()[i];
-      if (route.storageIndex == onlyEnabledRouteId)
+      if (!settings.routeEnabled(route.storageIndex))
       {
-        var offTrackInfo = route.checkOffTrack(newPoint, settings.offTrackAlertsDistanceM * _cachedValues.currentScale);
-        if (!offTrackInfo.onTrack)
-        {
-          if (settings.drawLineToClosestPoint)
-          {
-              offTrackPoint = offTrackInfo.pointWeLeftTrack;
-              lastOffTrackAlertSent = epoch; // might only have settings.drawLineToClosestPoint settings on, do not run checkOffTrack code until timer elapsed
-              // perhaps we want to change this to lastOffTrackAlertChecked and move above, that way we do not run checkOffTrack on every data point
-              // it does mean they could be off track for quite some time though, and it would no longer alert as soon as you hit offTrackAlertsDistanceM
-              // better perf though
+          continue;
+      }
+      var routeOffTrackInfo = route.checkOffTrack(newPoint, settings.offTrackAlertsDistanceM * _cachedValues.currentScale);
+      if (offTrackInfo.pointWeLeftTrack == null || 
+          offTrackInfo.pointWeLeftTrack.distanceTo(newPoint) > routeOffTrackInfo.pointWeLeftTrack.distanceTo(newPoint))
+      {
+        offTrackInfo = routeOffTrackInfo;
+      }
+
+      if (routeOffTrackInfo.onTrack)
+      {
+        offTrackInfo = routeOffTrackInfo;
+        return;
+      }
+    }
+
+    offTrackInfo.onTrack = false; // use the last pointWeLeftTrack from when we were on track
+
+    // we are off track if we get there, time to fire alert
+    lastOffTrackAlertSent = epoch;
+
+    if (settings.enableOffTrackAlerts)
+    {
+        try {
+          logD("trying to trigger alert");
+          if (settings.alertType == ALERT_TYPE_ALERT) {
+            // allerts are really annoying bevcause users have to remember to enable them
+            // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
+            // this is why we default to toasts, the virration will still occur, and maybe should be a seperate setting?
+            showAlert(new OffTrackAlert());
           }
           else {
-              offTrackPoint = null; // might have been set in the past and we now disabled the setting
+            WatchUi.showToast("OFF TRACK", {});
           }
 
-          if (settings.enableOffTrackAlerts)
+          if (Attention has :vibrate)
           {
-              try {
-                logD("trying to trigger alert");
-                if (settings.alertType == ALERT_TYPE_ALERT) {
-                  // allerts are really annoying bevcause users have to remember to enable them
-                  // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
-                  // this is why we default to toasts, the virration will still occur, and maybe should be a seperate setting?
-                  showAlert(new OffTrackAlert());
-                }
-                else {
-                  WatchUi.showToast("OFF TRACK", {});
-                }
-
-                if (Attention has :vibrate)
-                {
-                  var vibeData = [
-                    new Attention.VibeProfile(100, 500),
-                    new Attention.VibeProfile(0, 150),
-                    new Attention.VibeProfile(100, 500),
-                    new Attention.VibeProfile(0, 150),
-                    new Attention.VibeProfile(100, 500),
-                  ];
-                  Attention.vibrate(vibeData);
-                }
-                
-                lastOffTrackAlertSent = epoch;
-              } catch (e) {
-                // not sure there is a way to check that we can display or not, so just catch errors
-                System.println("failed to show alert: " + e);
-              }
+            var vibeData = [
+              new Attention.VibeProfile(100, 500),
+              new Attention.VibeProfile(0, 150),
+              new Attention.VibeProfile(100, 500),
+              new Attention.VibeProfile(0, 150),
+              new Attention.VibeProfile(100, 500),
+            ];
+            Attention.vibrate(vibeData);
           }
+          
+          lastOffTrackAlertSent = epoch;
+        } catch (e) {
+          // not sure there is a way to check that we can display or not, so just catch errors
+          System.println("failed to show alert: " + e);
         }
-        else {
-          offTrackPoint = null;
-        }
-        break;
-      }
     }
   }
 
   function onSettingsChanged() as Void
   {
     // they could have turned off off track alerts, changed the distance of anything, so let it all recalculate
+    // or modified routes
     lastOffTrackAlertSent = 0;
-    offTrackPoint = null;
+    offTrackInfo = new OffTrackInfo(true, null);
     // render mode could have changed
     updateScratchPadBitmap();
   }
@@ -293,11 +287,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       if (settings.displayRouteNames)
       {
           for (var i = 0; i < routes.size(); ++i) {
-              if (!settings.routeEnabled(i))
+              var route = routes[i];
+              if (!settings.routeEnabled(route.storageIndex))
               {
                   continue;
               }
-              var route = routes[i];
               if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING || settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING)
               {
                 renderer.renderTrackName(dc, route, settings.routeColour(route.storageIndex));
@@ -315,9 +309,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
           renderer.renderUser(dc, lastPoint);
 
           // only ever not null if feature enabled
-          if (offTrackPoint != null) {
+          if (!offTrackInfo.onTrack && offTrackInfo.pointWeLeftTrack != null) {
               // points need to be scaled and rotated :(
-              renderer.renderLineFromLastPointToRoute(dc, lastPoint, offTrackPoint);
+              renderer.renderLineFromLastPointToRoute(dc, lastPoint, offTrackInfo.pointWeLeftTrack);
           }
       }
       
@@ -423,11 +417,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
       dc.clear();
       mapRenderer.renderMapUnrotated(dc);
       for (var i = 0; i < routes.size(); ++i) {
-          if (!settings.routeEnabled(i))
+          var route = routes[i];
+          if (!settings.routeEnabled(route.storageIndex))
           {
               continue;
           }
-          var route = routes[i];
           renderer.renderTrackUnrotated(dc, route, settings.routeColour(route.storageIndex));
       }
       renderer.renderTrackUnrotated(dc, track, settings.trackColour);
@@ -489,11 +483,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     renderer.renderElevationChart(dc, hScale, vScale, startAt, track.distanceTotal, elevationText);
     if (routes.size() != 0) {
       for (var i = 0; i < routes.size(); ++i) {
-        if (!settings.routeEnabled(i))
+        var route = routes[i];
+        if (!settings.routeEnabled(route.storageIndex))
         {
             continue;
         }
-        var route = routes[i];
         renderer.renderTrackElevation(dc, route, settings.routeColour(route.storageIndex), hScale, vScale, startAt);
       }
     }

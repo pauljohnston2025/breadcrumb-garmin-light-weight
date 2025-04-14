@@ -87,11 +87,11 @@ class CachedValues {
         }
 
         for (var i = 0; i < routes.size(); ++i) {
-            if (!_settings.routeEnabled(i))
+            var route = routes[i];
+            if (!_settings.routeEnabled(route.storageIndex))
             {
                 continue;
             }
-            var route = routes[i];
             outerBoundingBox[0] = minF(route.boundingBox[0] / scaleDivisor, outerBoundingBox[0]);
             outerBoundingBox[1] = minF(route.boundingBox[1] / scaleDivisor, outerBoundingBox[1]);
             outerBoundingBox[2] = maxF(route.boundingBox[2] / scaleDivisor, outerBoundingBox[2]);

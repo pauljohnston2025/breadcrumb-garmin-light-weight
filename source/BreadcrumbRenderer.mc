@@ -895,7 +895,7 @@ class BreadcrumbRenderer {
 
     for (var i = 0; i < routes.size(); ++i) {
         var route = routes[i];
-        if (!settings.routeEnabled(i))
+        if (!settings.routeEnabled(route.storageIndex))
         {
             continue;
         }
