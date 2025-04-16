@@ -49,6 +49,7 @@ class RectangularPoint {
 
   // inverse of https://gis.stackexchange.com/a/387677
   // Converting lat, lon (epsg:4326) into EPSG:3857
+  // this function needs to exactly match Point.convert2XY on the companion app
   static function latLon2xy(lat as Float, lon as Float,
                      altitude as Float) as RectangularPoint or Null {
 

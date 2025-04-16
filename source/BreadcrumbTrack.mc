@@ -94,6 +94,24 @@ class BreadcrumbTrack {
       maxDistanceMScaled = maxDistanceMScaled * scaleFactor;
   }
 
+  function handleRouteV2(routeData as Array<Float>, cachedValues as CachedValues) as Void
+  {
+      // trust the app completely
+      coordinates._internalArrayBuffer = routeData;
+      coordinates._size = routeData.size();
+      // we could optimise this firther if the app rpovides us with biunding box, center max/min elevation
+      // but it makes it really hard to add any more cached data to the route, that the companion app then has to send
+      // by making these rectangular coordinates, we skip a huge amount of math converting them from lat/long
+      updatePointDataFromAllPoints();
+      writeToDisk(ROUTE_KEY); // write to disk before we scale, all routes on disk are unscaled
+      var currentScale = cachedValues.currentScale;
+      if (currentScale != 0f)
+      {
+        rescale(currentScale);
+      }
+      cachedValues.recalculateAll();
+  }
+
   // writeToDisk should always be in raw meters coordinates // UNSCALED
   function writeToDisk(key as String) as Void {
     key = key + storageIndex;

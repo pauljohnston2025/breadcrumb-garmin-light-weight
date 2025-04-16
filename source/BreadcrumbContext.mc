@@ -50,7 +50,7 @@ class BreadcrumbContext {
   function mapRenderer() as MapRenderer { return _mapRenderer; }
   function track() as BreadcrumbTrack { return _track; }
   function routes() as Array<BreadcrumbTrack> { return _routes; }
-  function newRoute(name as String) as BreadcrumbTrack or Null {
+  function newRoute(name as String) as BreadcrumbTrack {
     // we could maybe just not load the route if they are not enabled?
     // but they are pushing a new route from the app for this to happen
     // so forcing the new route to be enabled
@@ -91,7 +91,8 @@ class BreadcrumbContext {
     if (nextId == null)
     {
       System.println("failed to get route");
-      return null; // should never happen, we remove the oldest above if we are full
+      // should never happen, we remove the oldest above if we are full, so just overwrite the first route
+      nextId = 0;
     }
     var route = new BreadcrumbTrack(nextId, name);
     _routes.add(route);

@@ -13,6 +13,7 @@ enum Protocol {
   PROTOCOL_REQUEST_SETTINGS = 4,
   PROTOCOL_SAVE_SETTINGS = 5,
   PROTOCOL_DROP_TILE_CACHE = 6, // generally because a new url has been selected on the companion app
+  PROTOCOL_ROUTE_DATA2 = 7, // an optimised form of PROTOCOL_ROUTE_DATA, so we do not trip the watchdog
 }
 
 enum ProtocolSend {
@@ -99,7 +100,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
       var type = data[0];
       var rawData = data.slice(1, null);
 
-      if (type == PROTOCOL_ROUTE_DATA) {
+      if (type == PROTOCOL_ROUTE_DATA) { // keep for back compat with old apps
         // protocol:
         //  name
         //  [x, y, z]...  // latitude <float> and longitude <float> in degrees, altitude <float> too
@@ -112,11 +113,8 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         var name = rawData[0] as String;
         var routeData = rawData.slice(1, null);
         if (routeData.size() % 3 == 0) {
+          logD("Parsing route data");
           var route = _breadcrumbContext.newRoute(name);
-          if(route == null)
-          {
-            return;
-          }
           for (var i = 0; i < routeData.size(); i += 3) {
             route.addLatLongRaw(routeData[i].toFloat(), routeData[i + 1].toFloat(),
                               routeData[i + 2].toFloat());
@@ -129,10 +127,35 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             route.rescale(currentScale);
           }
           _breadcrumbContext.cachedValues().recalculateAll();
+          logD("Parsing route data complete");
           return;
         }
 
         System.println("Failed to parse route data, bad length: " +
+                       rawData.size() + " remainder: " + rawData.size() % 3);
+        return;
+      }
+      else if (type == PROTOCOL_ROUTE_DATA2) {
+        // protocol:
+        //  name
+        //  [x, y, z]...  // latitude <float> and longitude <float> in rectangular coordinates - pre calculated by the app, altitude <float> too
+        if (rawData.size() < 2) {
+          System.println("Failed to parse route 2 data, bad length: " +
+                       rawData.size() + " remainder: " + rawData.size() % 3);
+          return;
+        }
+
+        var name = rawData[0] as String;
+        var routeData = rawData[1]  as Array<Float>;
+        if (routeData.size() % ARRAY_POINT_SIZE == 0) {
+          logD("Parsing route data 2");
+          var route = _breadcrumbContext.newRoute(name);
+          route.handleRouteV2(routeData, _breadcrumbContext.cachedValues());
+          logD("Parsing route data 2 complete");
+          return;
+        }
+
+        System.println("Failed to parse route2 data, bad length: " +
                        rawData.size() + " remainder: " + rawData.size() % 3);
         return;
       }
