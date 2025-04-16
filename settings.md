@@ -2,7 +2,7 @@ All settings are editable from 4 places.
 
 * The [connect iq store](#garmin-settings-connect-iq-store) where you installed the app
 * [On Device](#on-device)
-* [Companion App](https://github.com/pauljohnston2025/breadcrumb-mobile.git)
+* [Companion App](https://github.com/pauljohnston2025/breadcrumb-mobile/blob/master/manual.md#device-settings-page)
 * [On Screen UI](#ui-mode)
 
 The connectiq store does not work for all settings (namely route configuration), use the on device or companion app settings instead. 
