@@ -6,6 +6,20 @@ Information on all the settings can be found in [Settings](settings.md)
 Companion app can be found at [Companion App](https://github.com/pauljohnston2025/breadcrumb-mobile.git)  
 [Companion App Releases](https://github.com/pauljohnston2025/breadcrumb-mobile/releases/latest)  
 
+---
+# Bug Reports
+
+To aid in the fastest resolution, please include.
+
+* Some screenshots of the issue, and possibly a recording
+* A reproduction case of exactly how to reproduce the issue
+* What you expected to happen
+* The settings that you had enabled/disabled (a full screenshot of all the settings is best)
+
+Please ensure any images/recordings do not contain any identifying information, such as your current location. 
+
+---
+
 Can be used without the companion app, but will only show current track. 
 Use the companion app to add a route that you can follow.
 
