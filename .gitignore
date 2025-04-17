@@ -1,3 +1,4 @@
 bin/
 f7bin/
 build/
+node_modules/

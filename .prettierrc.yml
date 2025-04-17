@@ -1,3 +1,10 @@
+# https://prettier.io/docs/options
+# npx prettier .\source\BreadcrumbRenderer.mc --write
+# https://github.com/markw65/prettier-plugin-monkeyc
 tabWidth: 4
 semi: true
 singleAttributePerLine: true
+printWidth: 100
+trailingComma: all
+bracketSameLine: false
+plugins: ["@markw65/prettier-plugin-monkeyc"]

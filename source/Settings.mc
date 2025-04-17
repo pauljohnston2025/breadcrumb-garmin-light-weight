@@ -6,47 +6,47 @@ import Toybox.Application;
 import Toybox.Communications;
 
 enum /*Mode*/ {
-  MODE_NORMAL,
-  MODE_ELEVATION,
-  MODE_MAP_MOVE,
-  MODE_DEBUG,
-  MODE_MAX,
+    MODE_NORMAL,
+    MODE_ELEVATION,
+    MODE_MAP_MOVE,
+    MODE_DEBUG,
+    MODE_MAX,
 }
 
 enum /*ZoomMode*/ {
-  ZOOM_AT_PACE_MODE_PACE,
-  ZOOM_AT_PACE_MODE_STOPPED,
-  ZOOM_AT_PACE_MODE_NEVER_ZOOM,
-  ZOOM_AT_PACE_MODE_ALWAYS_ZOOM,
-  ZOOM_AT_PACE_MODE_MAX,
+    ZOOM_AT_PACE_MODE_PACE,
+    ZOOM_AT_PACE_MODE_STOPPED,
+    ZOOM_AT_PACE_MODE_NEVER_ZOOM,
+    ZOOM_AT_PACE_MODE_ALWAYS_ZOOM,
+    ZOOM_AT_PACE_MODE_MAX,
 }
 
 enum /*UiMode*/ {
-  UI_MODE_SHOW_ALL, // show a heap of ui elements on screen always
-  UI_MODE_HIDDEN, // ui still active, but is hidden
-  UI_MODE_NONE, // no accessible ui (touch events disabled)
-  UI_MODE_MAX
+    UI_MODE_SHOW_ALL, // show a heap of ui elements on screen always
+    UI_MODE_HIDDEN, // ui still active, but is hidden
+    UI_MODE_NONE, // no accessible ui (touch events disabled)
+    UI_MODE_MAX,
 }
 
 enum /*RenderMode*/ {
-  RENDER_MODE_BUFFERED_ROTATING,
-  RENDER_MODE_UNBUFFERED_ROTATING,
-  RENDER_MODE_BUFFERED_NO_ROTATION,
-  RENDER_MODE_UNBUFFERED_NO_ROTATION,
-  RENDER_MODE_MAX,
+    RENDER_MODE_BUFFERED_ROTATING,
+    RENDER_MODE_UNBUFFERED_ROTATING,
+    RENDER_MODE_BUFFERED_NO_ROTATION,
+    RENDER_MODE_UNBUFFERED_NO_ROTATION,
+    RENDER_MODE_MAX,
 }
 
 enum /*RenderMode*/ {
-  ALERT_TYPE_TOAST,
-  ALERT_TYPE_ALERT,
-  ALERT_TYPE_MAX,
+    ALERT_TYPE_TOAST,
+    ALERT_TYPE_ALERT,
+    ALERT_TYPE_MAX,
 }
 
 const COMPANION_APP_TILE_URL = "http://127.0.0.1:8080";
 
 class Settings {
     // should be a multiple of 256 (since thats how tiles are stored, though the companion app will render them scaled for you)
-    // we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes. 
+    // we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes.
     // so math.ceil should be used what figuring out how many meters a tile is.
     // eg. maybe we cannot do 128 but we can do 120 (this would limit the number of tiles, but the resolution would be slightly off)
     var tileSize as Number = 64;
@@ -55,13 +55,13 @@ class Settings {
     var tileLayerMax as Number = 15;
     var tileLayerMin as Number = 2;
     // there is both a memory limit to the number of tiles we can store, as well as a storage limit
-    // for now this is both, though we may be able to store more than we can in memory 
-    // so we could use the storage as a tile cache, and revert to loading from there, as it would be much faster than 
+    // for now this is both, though we may be able to store more than we can in memory
+    // so we could use the storage as a tile cache, and revert to loading from there, as it would be much faster than
     // fetching over bluetooth
     // not sure if we can even store bitmaps into storage, it says only BitmapResource
     // id have to serialise it to an array and back out (might not be too hard)
     // 64 is enough to render outside the screen a bit 64*64 tiles with 64 tiles gives us 512*512 worth of pixel data
-    var tileCacheSize as Number = 64; // represented in number of tiles, parsed from a string eg. "64"=64tiles, "100KB"=100/2Kb per tile = 50 
+    var tileCacheSize as Number = 64; // represented in number of tiles, parsed from a string eg. "64"=64tiles, "100KB"=100/2Kb per tile = 50
     var mode as Number = MODE_NORMAL;
     // todo clear tile cache when this changes
     var mapEnabled as Boolean = false;
@@ -75,12 +75,12 @@ class Settings {
     var zoomAtPaceMode as Number = ZOOM_AT_PACE_MODE_PACE;
     var zoomAtPaceSpeedMPS as Float = 1.0; // meters per second
     var uiMode as Number = UI_MODE_SHOW_ALL;
-    var fixedLatitude as Float or Null = null;
-    var fixedLongitude as Float or Null = null;
-    // supports place holders such as 
+    var fixedLatitude as Float? = null;
+    var fixedLongitude as Float? = null;
+    // supports place holders such as
     // use http://127.0.0.1:8080 for companion app
     // but you can also use something like https://a.tile.opentopomap.org/{z}/{x}/{y}.png
-    // to make this work on the emulator you ned to run 
+    // to make this work on the emulator you ned to run
     // adb forward tcp:8080 tcp:8080
     var tileUrl as String = COMPANION_APP_TILE_URL;
     // see keys below in routes = getArraySchema(...)
@@ -91,7 +91,7 @@ class Settings {
     var displayRouteNames as Boolean = true;
     var normalModeColour as Number = Graphics.COLOR_BLUE;
     var uiColour as Number = Graphics.COLOR_DK_GRAY;
-    var debugColour as Number = 0xFEFFFFFF; // white, but colour_white results in FFFFFFFF (-1) when we parse it and that is fully transparent
+    var debugColour as Number = 0xfeffffff; // white, but colour_white results in FFFFFFFF (-1) when we parse it and that is fully transparent
     var routeMax as Number = 5;
 
     // note this only works if a single track is enabled (multiple tracks would always error)
@@ -101,9 +101,9 @@ class Settings {
     var alertType as Number = ALERT_TYPE_TOAST;
 
     var drawLineToClosestPoint as Boolean = true;
-    
+
     // scratrchpad used for rotations, but it also means we have a large bitmap stored around
-    // I will also use that bitmap for re-renders though, and just do rotations every render rather than re-drawing all the tracks/tiles again 
+    // I will also use that bitmap for re-renders though, and just do rotations every render rather than re-drawing all the tracks/tiles again
     var renderMode as Number = RENDER_MODE_BUFFERED_ROTATING;
     // how many seconds should we wait before even considerring the next point
     // changes in speed/angle/zoom are not effected by this number. Though maybe they should be?
@@ -115,28 +115,28 @@ class Settings {
     // however I do not think its a needed feture for end users, mostly for debugging
     // still have to do it as a second pass over the points array so colours can be set
     // var showPoints as Boolean = true;
-    
+
     function setMode(_mode as Number) as Void {
         mode = _mode;
         setValue("mode", mode);
     }
-    
+
     function setUiMode(_uiMode as Number) as Void {
         uiMode = _uiMode;
         setValue("uiMode", uiMode);
     }
-    
+
     function setAlertType(_alertType as Number) as Void {
         alertType = _alertType;
         setValue("alertType", alertType);
     }
-    
+
     function setRenderMode(_renderMode as Number) as Void {
         renderMode = _renderMode;
         setValue("renderMode", renderMode);
         updateViewSettings();
     }
-    
+
     function setFixedPositionRaw(lat as Float, long as Float) as Void {
         // hack method so that cached values can update the settings without reloading itself
         // its guaranteed to only be when moving around, and will never go to null
@@ -147,15 +147,13 @@ class Settings {
         clearPendingWebRequests();
     }
 
-    function setFixedPosition(lat as Float or Null, long as Float or Null, clearRequests as Boolean) as Void {
+    function setFixedPosition(lat as Float?, long as Float?, clearRequests as Boolean) as Void {
         // System.println("moving to: " + lat + " " + long);
         // be very careful about putting null into properties, it breaks everything
-        if (lat == null || !(lat instanceof Float))
-        {
+        if (lat == null || !(lat instanceof Float)) {
             lat = 0f;
         }
-        if (long == null || !(long instanceof Float))
-        {
+        if (long == null || !(long instanceof Float)) {
             long = 0f;
         }
         fixedLatitude = lat;
@@ -165,12 +163,10 @@ class Settings {
 
         var latIsBasicallyNull = fixedLatitude == null || fixedLatitude == 0;
         var longIsBasicallyNull = fixedLongitude == null || fixedLongitude == 0;
-        if (latIsBasicallyNull || longIsBasicallyNull)
-        {
+        if (latIsBasicallyNull || longIsBasicallyNull) {
             fixedLatitude = null;
             fixedLongitude = null;
-            if (clearRequests)
-            {
+            if (clearRequests) {
                 clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
             }
             updateCachedValues();
@@ -181,23 +177,21 @@ class Settings {
         // updateCachedValues(); already called by the above sets
         // var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y);
         // System.println("round trip conversion result: " + latlong);
-        if (clearRequests)
-        {
+        if (clearRequests) {
             clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
         }
     }
 
-    function setValue(key as String, value) as Void
-    {
+    function setValue(key as String, value) as Void {
         Application.Properties.setValue(key, value);
         updateCachedValues();
     }
-    
+
     function setZoomAtPaceMode(_zoomAtPaceMode as Number) as Void {
         zoomAtPaceMode = _zoomAtPaceMode;
         setValue("zoomAtPaceMode", zoomAtPaceMode);
     }
-    
+
     function setTileUrl(_tileUrl as String) as Void {
         tileUrl = _tileUrl;
         setValue("tileUrl", tileUrl);
@@ -205,17 +199,16 @@ class Settings {
         clearTileCache();
 
         // prompts user to open the app
-        if (tileUrl.equals(COMPANION_APP_TILE_URL))
-        {
-          transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
+        if (tileUrl.equals(COMPANION_APP_TILE_URL)) {
+            transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
         }
     }
-    
+
     function setZoomAtPaceSpeedMPS(mps as Float) as Void {
         zoomAtPaceSpeedMPS = mps;
         setValue("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
     }
-    
+
     function setMetersAroundUser(value as Number) as Void {
         metersAroundUser = value;
         setValue("metersAroundUser", metersAroundUser);
@@ -224,7 +217,7 @@ class Settings {
     function setFixedLatitude(value as Float) as Void {
         setFixedPosition(value, fixedLongitude, true);
     }
-    
+
     function setFixedLongitude(value as Float) as Void {
         setFixedPosition(fixedLatitude, value, true);
     }
@@ -233,110 +226,106 @@ class Settings {
         maxPendingWebRequests = value;
         setValue("maxPendingWebRequests", maxPendingWebRequests);
     }
-    
+
     function setTileSize(value as Number) as Void {
         tileSize = value;
         setValue("tileSize", tileSize);
         clearPendingWebRequests();
         clearTileCache();
     }
-    
+
     function setTileLayerMax(value as Number) as Void {
         tileLayerMax = value;
         setValue("tileLayerMax", tileLayerMax);
     }
-    
+
     function setTileLayerMin(value as Number) as Void {
         tileLayerMin = value;
         setValue("tileLayerMin", tileLayerMin);
     }
-    
+
     function setDisableMapsFailureCount(value as Number) as Void {
         disableMapsFailureCount = value;
         setValue("disableMapsFailureCount", disableMapsFailureCount);
     }
-    
+
     function setOffTrackAlertsDistanceM(value as Number) as Void {
         offTrackAlertsDistanceM = value;
         setValue("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
         updateViewSettings();
     }
-    
+
     function setOffTrackAlertsMaxReportIntervalS(value as Number) as Void {
         offTrackAlertsMaxReportIntervalS = value;
         setValue("offTrackAlertsMaxReportIntervalS", offTrackAlertsMaxReportIntervalS);
         updateViewSettings();
     }
-    
+
     function setRouteMax(value as Number) as Void {
         routeMax = value;
         setValue("routeMax", routeMax);
     }
-    
+
     function setTileCacheSize(value as Number) as Void {
         tileCacheSize = value;
         setValue("tileCacheSize", tileCacheSize);
         clearPendingWebRequests();
         clearTileCache();
     }
-    
+
     function setTileCachePadding(value as Number) as Void {
         tileCachePadding = value;
         setValue("tileCachePadding", tileCachePadding);
     }
-    
+
     function setRecalculateItervalS(value as Number) as Void {
         recalculateItervalS = value;
         setValue("recalculateItervalS", recalculateItervalS);
     }
-    
+
     function setMapEnabled(_mapEnabled as Boolean) as Void {
         mapEnabled = _mapEnabled;
         setValue("mapEnabled", mapEnabled);
 
-        if (!mapEnabled)
-        {
-           clearTileCache();
-           clearPendingWebRequests();
-           clearTileCacheStats();
-           clearWebStats();
-           return;
+        if (!mapEnabled) {
+            clearTileCache();
+            clearPendingWebRequests();
+            clearTileCacheStats();
+            clearWebStats();
+            return;
         }
 
         // prompts user to open the app
-        if (tileUrl.equals(COMPANION_APP_TILE_URL))
-        {
-          transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
+        if (tileUrl.equals(COMPANION_APP_TILE_URL)) {
+            transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
         }
     }
-    
+
     function setDrawLineToClosestPoint(value as Boolean) as Void {
         drawLineToClosestPoint = value;
         setValue("drawLineToClosestPoint", drawLineToClosestPoint);
         updateViewSettings();
     }
-    
+
     function setDisplayRouteNames(_displayRouteNames as Boolean) as Void {
         displayRouteNames = _displayRouteNames;
         setValue("displayRouteNames", displayRouteNames);
     }
-    
+
     function setEnableOffTrackAlerts(_enableOffTrackAlerts as Boolean) as Void {
         enableOffTrackAlerts = _enableOffTrackAlerts;
         setValue("enableOffTrackAlerts", enableOffTrackAlerts);
         updateViewSettings();
     }
-        
+
     function setRoutesEnabled(_routesEnabled as Boolean) as Void {
         routesEnabled = _routesEnabled;
         setValue("routesEnabled", routesEnabled);
     }
 
-    function routeColour(routeId as Number) as Number
-    {
+    function routeColour(routeId as Number) as Number {
         var routeIndex = getRouteIndexById(routeId);
-        if (routeIndex == null)
-        {
+        if (routeIndex == null) {
             return Graphics.COLOR_BLUE;
         }
 
@@ -344,27 +333,22 @@ class Settings {
     }
 
     // see oddity with route name and route loading new in context.newRoute
-    function routeName(routeId as Number) as String
-    {
+    function routeName(routeId as Number) as String {
         var routeIndex = getRouteIndexById(routeId);
-        if (routeIndex == null)
-        {
+        if (routeIndex == null) {
             return "";
         }
-        
+
         return routes[routeIndex]["name"];
     }
 
-    function routeEnabled(routeId as Number) as Boolean
-    {
-        if (!routesEnabled)
-        {
+    function routeEnabled(routeId as Number) as Boolean {
+        if (!routesEnabled) {
             return false;
         }
 
         var routeIndex = getRouteIndexById(routeId);
-        if (routeIndex == null)
-        {
+        if (routeIndex == null) {
             return false;
         }
         return routes[routeIndex]["enabled"];
@@ -373,21 +357,19 @@ class Settings {
     function setRouteColour(routeId as Number, value as Number) as Void {
         ensureRouteId(routeId);
         var routeIndex = getRouteIndexById(routeId);
-        if (routeIndex == null)
-        {
+        if (routeIndex == null) {
             return;
         }
 
         routes[routeIndex]["colour"] = value;
         saveRoutes();
     }
-    
+
     // see oddity with route name and route loading new in context.newRoute
     function setRouteName(routeId as Number, value as String) as Void {
         ensureRouteId(routeId);
         var routeIndex = getRouteIndexById(routeId);
-        if (routeIndex == null)
-        {
+        if (routeIndex == null) {
             return;
         }
 
@@ -398,158 +380,136 @@ class Settings {
     function setRouteEnabled(routeId as Number, value as Boolean) as Void {
         ensureRouteId(routeId);
         var routeIndex = getRouteIndexById(routeId);
-        if (routeIndex == null)
-        {
+        if (routeIndex == null) {
             return;
         }
-        
+
         routes[routeIndex]["enabled"] = value;
         saveRoutes();
     }
 
-    function ensureRouteId(routeId as Number) as Void
-    {
+    function ensureRouteId(routeId as Number) as Void {
         var routeIndex = getRouteIndexById(routeId);
-        if (routeIndex != null)
-        {
+        if (routeIndex != null) {
             return;
         }
 
-        if (routes.size() >= routeMax)
-        {
+        if (routes.size() >= routeMax) {
             return;
         }
 
-        routes.add(
-            {
-                "routeId" => routeId,
-                "name" => routeName(routeId),
-                "enabled" => true,
-                "colour" => routeColour(routeId)
-            }
-        );
+        routes.add({
+            "routeId" => routeId,
+            "name" => routeName(routeId),
+            "enabled" => true,
+            "colour" => routeColour(routeId),
+        });
         saveRoutes();
     }
 
-    function getRouteIndexById(routeId as Number) as Number or Null
-    {
+    function getRouteIndexById(routeId as Number) as Number? {
         for (var i = 0; i < routes.size(); ++i) {
             var route = routes[i];
-            if (route["routeId"] == routeId)
-            {
+            if (route["routeId"] == routeId) {
                 return i;
             }
         }
 
         return null;
     }
-    
+
     function clearRoutes() as Void {
         routes = [];
         saveRoutes();
     }
-    
-    function routesToSave() as Array
-    {
+
+    function routesToSave() as Array {
         var toSave = [];
         for (var i = 0; i < routes.size(); ++i) {
             var entry = routes[i];
-            toSave.add(
-                {
-                    "routeId" => entry["routeId"],
-                    "name" => entry["name"],
-                    "enabled" => entry["enabled"],
-                    "colour" => entry["colour"].format("%X") // this is why we have to copy it :(
-                }
-            );
+            toSave.add({
+                "routeId" => entry["routeId"],
+                "name" => entry["name"],
+                "enabled" => entry["enabled"],
+                "colour" => entry["colour"].format("%X"), // this is why we have to copy it :(
+            });
         }
         return toSave;
     }
-    
-    function saveRoutes() as Void
-    {
+
+    function saveRoutes() as Void {
         var toSave = routesToSave();
         setValue("routes", toSave);
     }
-    
+
     function setTrackColour(value as Number) as Void {
         trackColour = value;
         setValue("trackColour", trackColour.format("%X"));
     }
-    
+
     function setUserColour(value as Number) as Void {
         userColour = value;
         setValue("userColour", userColour.format("%X"));
     }
-    
+
     function setNormalModeColour(value as Number) as Void {
         normalModeColour = value;
         setValue("normalModeColour", normalModeColour.format("%X"));
     }
-    
+
     function setDebugColour(value as Number) as Void {
         debugColour = value;
         setValue("debugColour", debugColour.format("%X"));
     }
-    
+
     function setUiColour(value as Number) as Void {
         uiColour = value;
         setValue("uiColour", uiColour.format("%X"));
     }
-    
+
     function setElevationColour(value as Number) as Void {
         elevationColour = value;
         setValue("elevationColour", elevationColour.format("%X"));
     }
 
-    function toggleMapEnabled() as Void 
-    {
-        if (mapEnabled)
-        {
+    function toggleMapEnabled() as Void {
+        if (mapEnabled) {
             setMapEnabled(false);
             return;
         }
 
         setMapEnabled(true);
     }
-    
-    function toggleDrawLineToClosestPoint() as Void 
-    {
-        if (drawLineToClosestPoint)
-        {
+
+    function toggleDrawLineToClosestPoint() as Void {
+        if (drawLineToClosestPoint) {
             setDrawLineToClosestPoint(false);
             return;
         }
 
         setDrawLineToClosestPoint(true);
     }
-    
-    function toggleDisplayRouteNames() as Void 
-    {
-        if (displayRouteNames)
-        {
+
+    function toggleDisplayRouteNames() as Void {
+        if (displayRouteNames) {
             setDisplayRouteNames(false);
             return;
         }
 
         setDisplayRouteNames(true);
     }
-    
-    function toggleEnableOffTrackAlerts() as Void 
-    {
-        if (enableOffTrackAlerts)
-        {
+
+    function toggleEnableOffTrackAlerts() as Void {
+        if (enableOffTrackAlerts) {
             setEnableOffTrackAlerts(false);
             return;
         }
 
         setEnableOffTrackAlerts(true);
     }
-        
-    function toggleRoutesEnabled() as Void 
-    {
-        if (routesEnabled)
-        {
+
+    function toggleRoutesEnabled() as Void {
+        if (routesEnabled) {
             setRoutesEnabled(false);
             return;
         }
@@ -557,33 +517,28 @@ class Settings {
         setRoutesEnabled(true);
     }
 
-    function nextMode() as Void
-    {
+    function nextMode() as Void {
         // System.println("mode cycled");
         // could just add one and check if over MODE_MAX?
         mode++;
-        if (mode >= MODE_MAX)
-        {
+        if (mode >= MODE_MAX) {
             mode = MODE_NORMAL;
         }
-        
-        if (mode == MODE_MAP_MOVE && !mapEnabled)
-        {
+
+        if (mode == MODE_MAP_MOVE && !mapEnabled) {
             nextMode();
         }
 
         setMode(mode);
     }
 
-    function nextZoomAtPaceMode() as Void { 
-        if (mode != MODE_NORMAL)
-        {
+    function nextZoomAtPaceMode() as Void {
+        if (mode != MODE_NORMAL) {
             return;
         }
 
         zoomAtPaceMode++;
-        if (zoomAtPaceMode >= ZOOM_AT_PACE_MODE_MAX)
-        {
+        if (zoomAtPaceMode >= ZOOM_AT_PACE_MODE_MAX) {
             zoomAtPaceMode = ZOOM_AT_PACE_MODE_PACE;
         }
 
@@ -596,110 +551,140 @@ class Settings {
         // it alwasys has the symbol, but it might not be initalised yet
         // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
         var context = getApp()._breadcrumbContext;
-        if (context != null and context instanceof BreadcrumbContext && context has :_tileCache && context._tileCache != null && context._tileCache instanceof TileCache)
-        {
+        if (
+            (context != null and context instanceof BreadcrumbContext) &&
+            context has :_tileCache &&
+            context._tileCache != null &&
+            context._tileCache instanceof TileCache
+        ) {
             context._tileCache.clearValues();
         }
     }
-    
-    function transmit(content as Application.PersistableType, options as Dictionary or Null, listener as Communications.ConnectionListener) as Void {
+
+    function transmit(
+        content as Application.PersistableType,
+        options as Dictionary?,
+        listener as Communications.ConnectionListener
+    ) as Void {
         // symbol not found if the loadSettings method is called before we set tile cache
         // should n ot happen unless onsettingschange is called before initalise finishes
         // it alwasys has the symbol, but it might not be initalised yet
         // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
         var context = getApp()._breadcrumbContext;
-        if (context != null and context instanceof BreadcrumbContext && context has :_webRequestHandler && context._webRequestHandler != null && context._webRequestHandler instanceof WebRequestHandler)
-        {
+        if (
+            (context != null and context instanceof BreadcrumbContext) &&
+            context has :_webRequestHandler &&
+            context._webRequestHandler != null &&
+            context._webRequestHandler instanceof WebRequestHandler
+        ) {
             context._webRequestHandler.transmit(content, options, listener);
         }
     }
-    
+
     function clearTileCacheStats() as Void {
         // symbol not found if the loadSettings method is called before we set tile cache
         // should n ot happen unless onsettingschange is called before initalise finishes
         // it alwasys has the symbol, but it might not be initalised yet
         // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
         var context = getApp()._breadcrumbContext;
-        if (context != null and context instanceof BreadcrumbContext && context has :_tileCache && context._tileCache != null && context._tileCache instanceof TileCache)
-        {
+        if (
+            (context != null and context instanceof BreadcrumbContext) &&
+            context has :_tileCache &&
+            context._tileCache != null &&
+            context._tileCache instanceof TileCache
+        ) {
             context._tileCache.clearStats();
         }
     }
-    
+
     function clearPendingWebRequests() as Void {
         // symbol not found if the loadSettings method is called before we set tile cache
         // should n ot happen unless onsettingschange is called before initalise finishes
         // it alwasys has the symbol, but it might not be initalised yet
         // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
         var context = getApp()._breadcrumbContext;
-        if (context != null and context instanceof BreadcrumbContext && context has :_webRequestHandler && context._webRequestHandler != null && context._webRequestHandler instanceof WebRequestHandler)
-        {
+        if (
+            (context != null and context instanceof BreadcrumbContext) &&
+            context has :_webRequestHandler &&
+            context._webRequestHandler != null &&
+            context._webRequestHandler instanceof WebRequestHandler
+        ) {
             context._webRequestHandler.clearValues();
         }
     }
-    
+
     function updateViewSettings() as Void {
         // symbol not found if the loadSettings method is called before we set tile cache
         // should n ot happen unless onsettingschange is called before initalise finishes
         // it alwasys has the symbol, but it might not be initalised yet
         // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
         var app = getApp();
-        if (app != null && app has :_view && app._view != null && app._view instanceof BreadcrumbDataFieldView)
-        {
+        if (
+            app != null &&
+            app has :_view &&
+            app._view != null &&
+            app._view instanceof BreadcrumbDataFieldView
+        ) {
             app._view.onSettingsChanged();
         }
     }
-    
+
     function updateCachedValues() as Void {
         // symbol not found if the loadSettings method is called before we set tile cache
         // should n ot happen unless onsettingschange is called before initalise finishes
         // it alwasys has the symbol, but it might not be initalised yet
         // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
         var context = getApp()._breadcrumbContext;
-        if (context != null and context instanceof BreadcrumbContext && context has :_cachedValues && context._cachedValues != null && context._cachedValues instanceof CachedValues)
-        {
+        if (
+            (context != null and context instanceof BreadcrumbContext) &&
+            context has :_cachedValues &&
+            context._cachedValues != null &&
+            context._cachedValues instanceof CachedValues
+        ) {
             context._cachedValues.recalculateAll();
         }
     }
-    
+
     function clearWebStats() as Void {
         // symbol not found if the loadSettings method is called before we set tile cache
         // should n ot happen unless onsettingschange is called before initalise finishes
         // it alwasys has the symbol, but it might not be initalised yet
         // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
         var context = getApp()._breadcrumbContext;
-        if (context != null and context instanceof BreadcrumbContext && context has :_webRequestHandler && context._webRequestHandler != null && context._webRequestHandler instanceof WebRequestHandler)
-        {
+        if (
+            (context != null and context instanceof BreadcrumbContext) &&
+            context has :_webRequestHandler &&
+            context._webRequestHandler != null &&
+            context._webRequestHandler instanceof WebRequestHandler
+        ) {
             context._webRequestHandler.clearStats();
         }
     }
-    
+
     function clearContextRoutes() as Void {
         // symbol not found if the loadSettings method is called before we set tile cache
         // should n ot happen unless onsettingschange is called before initalise finishes
         // it alwasys has the symbol, but it might not be initalised yet
         // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
         var context = getApp()._breadcrumbContext;
-        if (context != null and context instanceof BreadcrumbContext)
-        {
+        if (context != null and context instanceof BreadcrumbContext) {
             context.clearRoutes();
         }
     }
-    
+
     function clearRouteFromContext(routeId as Number) as Void {
         // symbol not found if the loadSettings method is called before we set tile cache
         // should n ot happen unless onsettingschange is called before initalise finishes
         // it alwasys has the symbol, but it might not be initalised yet
         // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
         var context = getApp()._breadcrumbContext;
-        if (context != null and context instanceof BreadcrumbContext)
-        {
+        if (context != null and context instanceof BreadcrumbContext) {
             context.clearRouteId(routeId);
         }
     }
 
     // some times these parserswere throwing when it was an empty strings seem to result in, or wrong type
-    // 
+    //
     // Error: Unhandled Exception
     // Exception: UnexpectedTypeException: Expected Number/Float/Long/Double/Char, given null/Number
 
@@ -711,16 +696,18 @@ class Settings {
         }
         return defaultValue;
     }
-    
-    static function parseColourRaw(key as String, colourString as String or Null, defaultValue as Number) as Number {
+
+    static function parseColourRaw(
+        key as String,
+        colourString as String?,
+        defaultValue as Number
+    ) as Number {
         try {
-            if (colourString == null)
-            {
+            if (colourString == null) {
                 return defaultValue;
             }
 
-            if (colourString instanceof String)
-            {
+            if (colourString instanceof String) {
                 // want final string as AARRGGBB
                 // colourString = padStart(colourString, 6, '0'); // fill in 24 bit colour with 0's
                 // colourString = padStart(colourString, 8, 'F'); // pad alpha channel with FF
@@ -729,23 +716,20 @@ class Settings {
                 // if a user chooses FFFFFFFF (white) it is (-1) which is fully transparent, should choose FFFFFF (no alpha) or something close like FFFFFFFE
                 // in any case we are currently ignoring alpha because we use setColor (text does not support alpha)
                 var long = colourString.toLongWithBase(16);
-                if (long == null)
-                {
+                if (long == null) {
                     return defaultValue;
                 }
 
                 // calling tonumber breaks - because its out of range, but we need to set the alpha bits
-                var number = (long & 0xFFFFFFFFl).toNumber();
-                if (number == 0xFFFFFFFF)
-                {
+                var number = (long & 0xffffffffl).toNumber();
+                if (number == 0xffffffff) {
                     // -1 is transparent and will not render
-                    number = 0xFEFFFFFF;
+                    number = 0xfeffffff;
                 }
                 return number;
             }
 
             return parseNumberRaw(key, colourString, defaultValue);
-                
         } catch (e) {
             System.println("Error parsing colour: " + key + " " + colourString);
         }
@@ -760,20 +744,26 @@ class Settings {
         }
         return defaultValue;
     }
-    
-    function parseNumberRaw(key as String, value as String or Null or Float or Number or Double, defaultValue as Number) as Number {
+
+    function parseNumberRaw(
+        key as String,
+        value as String or Null or Float or Number or Double,
+        defaultValue as Number
+    ) as Number {
         try {
-            if (value == null)
-            {
+            if (value == null) {
                 return defaultValue;
             }
 
-            if (value instanceof String || value instanceof Float || value instanceof Number || value instanceof Double)
-            {
+            if (
+                value instanceof String ||
+                value instanceof Float ||
+                value instanceof Number ||
+                value instanceof Double
+            ) {
                 // empty or invalid strings convert to null
                 var ret = value.toNumber();
-                if (ret == null)
-                {
+                if (ret == null) {
                     return defaultValue;
                 }
 
@@ -786,7 +776,7 @@ class Settings {
         }
         return defaultValue;
     }
-    
+
     function parseBool(key as String, defaultValue as Boolean) as Boolean {
         try {
             return parseBoolRaw(key, Application.Properties.getValue(key), defaultValue);
@@ -795,21 +785,28 @@ class Settings {
         }
         return defaultValue;
     }
-    
-    function parseBoolRaw(key as String, value as String or Boolean or Null, defaultValue as Boolean) as Boolean {
+
+    function parseBoolRaw(
+        key as String,
+        value as String or Boolean or Null,
+        defaultValue as Boolean
+    ) as Boolean {
         try {
-            if (value == null)
-            {
+            if (value == null) {
                 return false;
             }
 
-            if (value instanceof String)
-            {
-                return value.equals("") || value.equals("false") || value.equals("False") || value.equals("FALSE") || value.equals("0");
+            if (value instanceof String) {
+                return (
+                    value.equals("") ||
+                    value.equals("false") ||
+                    value.equals("False") ||
+                    value.equals("FALSE") ||
+                    value.equals("0")
+                );
             }
 
-            if (!(value instanceof Boolean))
-            {
+            if (!(value instanceof Boolean)) {
                 return false;
             }
 
@@ -828,20 +825,26 @@ class Settings {
         }
         return defaultValue;
     }
-    
-    function parseFloatRaw(key as String, value as String or Null or Float or Number or Double , defaultValue as Float) as Float {
+
+    function parseFloatRaw(
+        key as String,
+        value as String or Null or Float or Number or Double,
+        defaultValue as Float
+    ) as Float {
         try {
-            if (value == null)
-            {
+            if (value == null) {
                 return defaultValue;
             }
 
-            if (value instanceof String || value instanceof Float || value instanceof Number || value instanceof Double)
-            {
+            if (
+                value instanceof String ||
+                value instanceof Float ||
+                value instanceof Number ||
+                value instanceof Double
+            ) {
                 // empty or invalid strings convert to null
                 var ret = value.toFloat();
-                if (ret == null)
-                {
+                if (ret == null) {
                     return defaultValue;
                 }
 
@@ -854,7 +857,7 @@ class Settings {
         }
         return defaultValue;
     }
-    
+
     function parseString(key as String, defaultValue as String) as String {
         try {
             return parseStringRaw(key, Application.Properties.getValue(key), defaultValue);
@@ -864,16 +867,13 @@ class Settings {
         return defaultValue;
     }
 
-    function parseStringRaw(key as String, value as String or Null, defaultValue as String) as String {
+    function parseStringRaw(key as String, value as String?, defaultValue as String) as String {
         try {
-            if (value == null)
-            {
+            if (value == null) {
                 return defaultValue;
             }
 
-            if (value instanceof String)
-            {
-
+            if (value instanceof String) {
                 return value;
             }
 
@@ -884,7 +884,7 @@ class Settings {
         return defaultValue;
     }
 
-    function parseOptionalFloat(key as String, defaultValue as Float or Null) as Float or Null {
+    function parseOptionalFloat(key as String, defaultValue as Float?) as Float? {
         try {
             return parseOptionalFloatRaw(key, Application.Properties.getValue(key), defaultValue);
         } catch (e) {
@@ -893,10 +893,13 @@ class Settings {
         return defaultValue;
     }
 
-    function parseOptionalFloatRaw(key as String, value as String or Float or Null, defaultValue as Float or Null) as Float or Null {
+    function parseOptionalFloatRaw(
+        key as String,
+        value as String or Float or Null,
+        defaultValue as Float?
+    ) as Float? {
         try {
-            if (value == null)
-            {
+            if (value == null) {
                 return null;
             }
 
@@ -906,41 +909,45 @@ class Settings {
         }
         return defaultValue;
     }
-    
-    function getArraySchema(key as String, expectedKeys as Array<String>, parsers as Array<Method>, defaultValue as Array) as Array {
+
+    function getArraySchema(
+        key as String,
+        expectedKeys as Array<String>,
+        parsers as Array<Method>,
+        defaultValue as Array
+    ) as Array {
         var value = null;
         try {
             value = Application.Properties.getValue(key);
-            if (value == null)
-            {
+            if (value == null) {
                 return defaultValue;
             }
 
-            if (!(value instanceof Array))
-            {
+            if (!(value instanceof Array)) {
                 return defaultValue;
             }
 
             // The dict we get is memory mapped, do not use it directly - need to create a copy so we can change the colour type from string to int
-            // If we use it directly the storage value gets overwritten 
+            // If we use it directly the storage value gets overwritten
             var result = [];
             for (var i = 0; i < value.size(); ++i) {
                 var entry = value[i];
                 var entryOut = {};
-                if (!(entry instanceof Dictionary))
-                {
+                if (!(entry instanceof Dictionary)) {
                     return defaultValue;
                 }
 
                 for (var j = 0; j < expectedKeys.size(); ++j) {
                     var thisKey = expectedKeys[j];
                     var thisParser = parsers[j];
-                    if (!entry.hasKey(thisKey))
-                    {
+                    if (!entry.hasKey(thisKey)) {
                         return defaultValue;
                     }
 
-                    entryOut[thisKey] = thisParser.invoke(key + "." + i + "." + thisKey, entry[thisKey]);
+                    entryOut[thisKey] = thisParser.invoke(
+                        key + "." + i + "." + thisKey,
+                        entry[thisKey]
+                    );
                 }
                 result.add(entryOut);
             }
@@ -952,8 +959,7 @@ class Settings {
         return defaultValue;
     }
 
-    function resetDefaults() as Void
-    {
+    function resetDefaults() as Void {
         System.println("Resetting settings to default values");
         // clear the flag first thing in case of crash we do not want to try clearing over and over
         setValue("resetDefaults", false);
@@ -1007,8 +1013,7 @@ class Settings {
         updateCachedValues();
     }
 
-    function asDict() as Dictionary
-    {
+    function asDict() as Dictionary {
         // all thse return values should bnebe identical to the storage value
         // eg. nulls are exposed as 0
         // colours are strings
@@ -1051,8 +1056,7 @@ class Settings {
         };
     }
 
-    function saveSettings(settings as Dictionary) as Void
-    {
+    function saveSettings(settings as Dictionary) as Void {
         // should we sanitize this as its untrusted? makes it significantly more annoying to do
         var keys = settings.keys();
         for (var i = 0; i < keys.size(); ++i) {
@@ -1070,15 +1074,13 @@ class Settings {
         // fix for a garmin bug where bool settings are not changable if they default to true
         // https://forums.garmin.com/developer/connect-iq/i/bug-reports/bug-boolean-properties-with-default-value-true-can-t-be-changed-in-simulator
         var haveDoneFirstLoadSetup = Application.Properties.getValue("haveDoneFirstLoadSetup");
-        if (!haveDoneFirstLoadSetup)
-        {
+        if (!haveDoneFirstLoadSetup) {
             setValue("haveDoneFirstLoadSetup", true);
             resetDefaults(); // pulls from our defaults
         }
 
         var resetDefaults = Application.Properties.getValue("resetDefaults") as Boolean;
-        if (resetDefaults)
-        {
+        if (resetDefaults) {
             resetDefaults();
             return;
         }
@@ -1088,15 +1090,12 @@ class Settings {
         tileLayerMax = parseNumber("tileLayerMax", tileLayerMax);
         tileLayerMin = parseNumber("tileLayerMin", tileLayerMin);
         // System.println("tileSize: " + tileSize);
-        if (tileSize < 2)
-        {
+        if (tileSize < 2) {
             tileSize = 2;
-        }
-        else if (tileSize > 256)
-        {
+        } else if (tileSize > 256) {
             tileSize = 256;
         }
-        
+
         tileCacheSize = parseNumber("tileCacheSize", tileCacheSize);
         tileCachePadding = parseNumber("tileCachePadding", tileCachePadding);
         recalculateItervalS = parseNumber("recalculateItervalS", recalculateItervalS);
@@ -1127,16 +1126,23 @@ class Settings {
         setFixedPosition(fixedLatitude, fixedLongitude, false);
         tileUrl = parseString("tileUrl", tileUrl);
         routes = getArraySchema(
-            "routes", 
-            ["routeId", "name", "enabled", "colour"], 
-            [method(:defaultNumberParser), method(:emptyString), method(:defaultFalse), method(:defaultColourParser)],
+            "routes",
+            ["routeId", "name", "enabled", "colour"],
+            [
+                method(:defaultNumberParser),
+                method(:emptyString),
+                method(:defaultFalse),
+                method(:defaultColourParser),
+            ],
             routes
         );
         System.println("parsed routes: " + routes);
         disableMapsFailureCount = parseNumber("disableMapsFailureCount", disableMapsFailureCount);
         offTrackAlertsDistanceM = parseNumber("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
-        offTrackAlertsMaxReportIntervalS = parseNumber("offTrackAlertsMaxReportIntervalS", offTrackAlertsMaxReportIntervalS);
-
+        offTrackAlertsMaxReportIntervalS = parseNumber(
+            "offTrackAlertsMaxReportIntervalS",
+            offTrackAlertsMaxReportIntervalS
+        );
 
         // testing coordinates (piper-comanche-wreck)
         // setFixedPosition(-27.297773, 152.753883);
@@ -1144,32 +1150,27 @@ class Settings {
         // cachedValues.setScale(1.96); // really close
     }
 
-    function emptyString(key as String, value) as String
-    {
+    function emptyString(key as String, value) as String {
         return parseStringRaw(key, value, "");
     }
-    
-    function defaultNumberParser(key as String, value) as Number
-    {
+
+    function defaultNumberParser(key as String, value) as Number {
         return parseNumberRaw(key, value, 0);
     }
 
-    function defaultFalse(key as String, value) as Boolean
-    {
-        if (value instanceof Boolean)
-        {
+    function defaultFalse(key as String, value) as Boolean {
+        if (value instanceof Boolean) {
             return value;
         }
 
         return false;
     }
 
-    function defaultColourParser(key as String, value) as Number
-    {
+    function defaultColourParser(key as String, value) as Number {
         return parseColourRaw(key, value, Graphics.COLOR_RED);
     }
 
-   function onSettingsChanged() as Void {
+    function onSettingsChanged() as Void {
         System.println("onSettingsChanged: Setting Changed, loading");
         var oldRoutes = routes;
         var oldTileUrl = tileUrl;
@@ -1180,16 +1181,14 @@ class Settings {
         updateCachedValues();
         updateViewSettings();
         // route settins do not work because garmins setting spage cannot edit them
-        // when any property is modified, so we have to explain to users not to touch the settings, but we cannot because it looks 
+        // when any property is modified, so we have to explain to users not to touch the settings, but we cannot because it looks
         // like garmmins settings are not rendering desciptions anymore :(
-        for (var i=0; i<oldRoutes.size(); ++i)
-        {
+        for (var i = 0; i < oldRoutes.size(); ++i) {
             var oldRouteEntry = oldRoutes[i];
             var oldRouteId = oldRouteEntry["routeId"];
 
             var routeIndex = getRouteIndexById(oldRouteId);
-            if (routeIndex != null)
-            {
+            if (routeIndex != null) {
                 // we have the same route
                 continue;
             }
@@ -1199,20 +1198,16 @@ class Settings {
         }
 
         // run any tile cache clearing that we need to when map features change
-        if (!oldTileUrl.equals(tileUrl))
-        {
+        if (!oldTileUrl.equals(tileUrl)) {
             setTileUrl(tileUrl);
         }
-        if (oldTileSize != tileSize)
-        {
+        if (oldTileSize != tileSize) {
             setTileSize(tileSize);
         }
-        if (oldTileCacheSize != tileCacheSize)
-        {
+        if (oldTileCacheSize != tileCacheSize) {
             setTileCacheSize(tileCacheSize);
         }
-        if (oldMapEnabled != mapEnabled)
-        {
+        if (oldMapEnabled != mapEnabled) {
             setMapEnabled(mapEnabled);
         }
     }

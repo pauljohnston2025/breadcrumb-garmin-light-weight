@@ -4,35 +4,33 @@ import Toybox.WatchUi;
 import Toybox.PersistedContent;
 
 class MapRenderer {
-    // single dim array might be better performance? 
+    // single dim array might be better performance?
     // Could do multidim array to make calling code slightly easier
     // todo: get screen size and factor in some amount of padding
     var _tileCache as TileCache;
     var _settings as Settings;
     var _cachedValues as CachedValues;
-    
+
     function initialize(
         tileCache as TileCache,
         settings as Settings,
-        cachedValues as CachedValues) {
+        cachedValues as CachedValues
+    ) {
         // todo persist to storage and load from storage in init
         _tileCache = tileCache;
         _settings = settings;
         _cachedValues = cachedValues;
     }
 
-    function seedTiles() as Void
-    {
+    function seedTiles() as Void {
         var cachedValues = _cachedValues; // local lookup faster
-        if (!_cachedValues.mapDataCanBeUsed)
-        {
+        if (!_cachedValues.mapDataCanBeUsed) {
             // do not divide by zero my good friends
             // we do not have a scale calculated yet
             return;
         }
 
-        if (!_settings.mapEnabled)
-        {
+        if (!_settings.mapEnabled) {
             return;
         }
 
@@ -44,29 +42,32 @@ class MapRenderer {
         var firstTileX = cachedValues.firstTileX; // local lookup faster
         var firstTileY = cachedValues.firstTileY; // local lookup faster
         var tileZ = cachedValues.tileZ; // local lookup faster
-        
-        for (var x=-_settings.tileCachePadding ; x<tileCountX + _settings.tileCachePadding; ++x)
-        {
-            for (var y=-_settings.tileCachePadding ; y<tileCountY + _settings.tileCachePadding; ++y)
-            {
+
+        for (
+            var x = -_settings.tileCachePadding;
+            x < tileCountX + _settings.tileCachePadding;
+            ++x
+        ) {
+            for (
+                var y = -_settings.tileCachePadding;
+                y < tileCountY + _settings.tileCachePadding;
+                ++y
+            ) {
                 var tileKey = new TileKey(firstTileX + x, firstTileY + y, tileZ);
                 _tileCache.seedTile(tileKey); // seed it for the next render
             }
         }
     }
-    
-    function renderMapUnrotated(dc as Dc) as Void
-    {
+
+    function renderMapUnrotated(dc as Dc) as Void {
         var cachedValues = _cachedValues; // local lookup faster
-        if (!_cachedValues.mapDataCanBeUsed)
-        {
+        if (!_cachedValues.mapDataCanBeUsed) {
             // do not divide by zero my good friends
             // we do not have a scale calculated yet
             return;
         }
 
-        if (!_settings.mapEnabled)
-        {
+        if (!_settings.mapEnabled) {
             return;
         }
 
@@ -82,15 +83,12 @@ class MapRenderer {
         var firstTileX = cachedValues.firstTileX; // local lookup faster
         var firstTileY = cachedValues.firstTileY; // local lookup faster
         var tileZ = cachedValues.tileZ; // local lookup faster
-        
-        for (var x=0 ; x<tileCountX; ++x)
-        {
-            for (var y=0 ; y<tileCountY; ++y)
-            {
+
+        for (var x = 0; x < tileCountX; ++x) {
+            for (var y = 0; y < tileCountY; ++y) {
                 var tileKey = new TileKey(firstTileX + x, firstTileY + y, tileZ);
                 var tileFromCache = _tileCache.getTile(tileKey); // seed it for the next render
-                if (tileFromCache == null || tileFromCache.bitmap == null)
-                {
+                if (tileFromCache == null || tileFromCache.bitmap == null) {
                     continue;
                 }
 
@@ -98,23 +96,27 @@ class MapRenderer {
                 // cant rotate individual tiles as you can see the seams between tiles
                 // one large one then rotate looks much better, and is possibly faster
                 // we must scale as the tile we picked is only close to the resolution we need
-                $.drawScaledBitmapHelper(dc, tileOffsetX + x * tileScalePixelSize, tileOffsetY + y * tileScalePixelSize, tileScalePixelSize, tileScalePixelSize, tileFromCache.bitmap);
+                $.drawScaledBitmapHelper(
+                    dc,
+                    tileOffsetX + x * tileScalePixelSize,
+                    tileOffsetY + y * tileScalePixelSize,
+                    tileScalePixelSize,
+                    tileScalePixelSize,
+                    tileFromCache.bitmap
+                );
             }
         }
     }
-    
-    function renderMap(dc as Dc) as Void
-    {
+
+    function renderMap(dc as Dc) as Void {
         var cachedValues = _cachedValues; // local lookup faster
-        if (!_cachedValues.mapDataCanBeUsed)
-        {
+        if (!_cachedValues.mapDataCanBeUsed) {
             // do not divide by zero my good friends
             // we do not have a scale calculated yet
             return;
         }
 
-        if (!_settings.mapEnabled)
-        {
+        if (!_settings.mapEnabled) {
             return;
         }
 
@@ -132,14 +134,11 @@ class MapRenderer {
         var firstTileY = cachedValues.firstTileY; // local lookup faster
         var tileZ = cachedValues.tileZ; // local lookup faster
 
-        for (var x=0 ; x<tileCountX; ++x)
-        {
-            for (var y=0 ; y<tileCountY; ++y)
-            {
+        for (var x = 0; x < tileCountX; ++x) {
+            for (var y = 0; y < tileCountY; ++y) {
                 var tileKey = new TileKey(firstTileX + x, firstTileY + y, tileZ);
                 var tileFromCache = _tileCache.getTile(tileKey); // seed it for the next render
-                if (tileFromCache == null || tileFromCache.bitmap == null)
-                {
+                if (tileFromCache == null || tileFromCache.bitmap == null) {
                     continue;
                 }
 
@@ -158,25 +157,17 @@ class MapRenderer {
                 rotationMatrix.translate(-xTranslate, -yTranslate); // move back to position
                 rotationMatrix.scale(tileScaleFactor, tileScaleFactor); // scale
 
-                dc.drawBitmap2(
-                    xPos,
-                    yPos,
-                    tileFromCache.bitmap,
-                    {
-                        // :bitmapX =>
-                        // :bitmapY =>
-                        // :bitmapWidth =>
-                        // :bitmapHeight =>
-                        // :tintColor =>
-                        :transform => rotationMatrix,
-                        // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
-                        :filterMode => Graphics.FILTER_MODE_BILINEAR,
-
-                    }
-                );
+                dc.drawBitmap2(xPos, yPos, tileFromCache.bitmap, {
+                    // :bitmapX =>
+                    // :bitmapY =>
+                    // :bitmapWidth =>
+                    // :bitmapHeight =>
+                    // :tintColor =>
+                    :transform => rotationMatrix,
+                    // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
+                    :filterMode => Graphics.FILTER_MODE_BILINEAR,
+                });
             }
         }
     }
 }
-
-    

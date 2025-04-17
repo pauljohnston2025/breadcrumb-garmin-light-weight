@@ -9,8 +9,8 @@ class NumberPicker {
     private var currentVal as String;
     private var _charset as String;
     private var maxLength as Number;
-    private var letterPositions as Array<Array<Number>>;
-    private var halfWidth as Number or Null;
+    private var letterPositions as Array<Array<Number> >;
+    private var halfWidth as Number?;
     private var myText as WatchUi.Text;
     const halfHitboxSize as Number = 35;
 
@@ -22,23 +22,33 @@ class NumberPicker {
         halfWidth = null;
 
         myText = new WatchUi.Text({
-            :text=>"",
-            :color=>Graphics.COLOR_WHITE,
-            :font=>Graphics.FONT_SMALL,
-            :locX=>WatchUi.LAYOUT_HALIGN_CENTER,
-            :locY=>WatchUi.LAYOUT_VALIGN_CENTER
+            :text => "",
+            :color => Graphics.COLOR_WHITE,
+            :font => Graphics.FONT_SMALL,
+            :locX => WatchUi.LAYOUT_HALIGN_CENTER,
+            :locY => WatchUi.LAYOUT_VALIGN_CENTER,
         });
-    }  
-
-    function onLayout(dc as Dc) as Void {
-        halfWidth = dc.getWidth()/2;
-        letterPositions = pointsOnCircle(halfWidth, halfWidth, halfWidth - halfHitboxSize, _charset.length());
     }
 
-    private function pointsOnCircle(centerX as Number, centerY as Number, radius as Number, numPoints as Number) as Array<Array<Number>> {
+    function onLayout(dc as Dc) as Void {
+        halfWidth = dc.getWidth() / 2;
+        letterPositions = pointsOnCircle(
+            halfWidth,
+            halfWidth,
+            halfWidth - halfHitboxSize,
+            _charset.length()
+        );
+    }
+
+    private function pointsOnCircle(
+        centerX as Number,
+        centerY as Number,
+        radius as Number,
+        numPoints as Number
+    ) as Array<Array<Number> > {
         var points = new [numPoints];
 
-        var angleIncrement = 2 * Math.PI / numPoints;
+        var angleIncrement = (2 * Math.PI) / numPoints;
 
         for (var i = 0; i < numPoints; i++) {
             var angle = i * angleIncrement;
@@ -63,21 +73,24 @@ class NumberPicker {
             var pointX = point[0];
             var pointY = point[1];
             var letter = self._charset.substring(i, i + 1);
-            dc.drawText(pointX, pointY, Graphics.FONT_SMALL, letter, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            dc.drawText(
+                pointX,
+                pointY,
+                Graphics.FONT_SMALL,
+                letter,
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            );
         }
 
         myText.draw(dc);
     }
 
-    function confirm() as Void
-    {
+    function confirm() as Void {
         onReading(currentVal);
     }
-    
-    function removeLast() as Void
-    {
-        if (currentVal.length() <= 0)
-        {
+
+    function removeLast() as Void {
+        if (currentVal.length() <= 0) {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
             return;
         }
@@ -87,11 +100,9 @@ class NumberPicker {
         forceRefresh();
     }
 
-    function onTap(x as Number, y as Number) as Boolean
-    {
+    function onTap(x as Number, y as Number) as Boolean {
         var letter = letterOfTap(x, y);
-        if (letter == null || currentVal.length() >= maxLength)
-        {
+        if (letter == null || currentVal.length() >= maxLength) {
             return false;
         }
 
@@ -100,18 +111,19 @@ class NumberPicker {
         return true;
     }
 
-    function letterOfTap(x as Number, y as Number) as String or Null
-    {
+    function letterOfTap(x as Number, y as Number) as String? {
         for (var i = 0; i < letterPositions.size(); i++) {
             var point = letterPositions[i];
             var pointX = point[0];
             var pointY = point[1];
 
             // Check if the tap is within the hit box
-            if (x >= pointX - halfHitboxSize &&
+            if (
+                x >= pointX - halfHitboxSize &&
                 x <= pointX + halfHitboxSize &&
                 y >= pointY - halfHitboxSize &&
-                y <= pointY + halfHitboxSize) {
+                y <= pointY + halfHitboxSize
+            ) {
                 return self._charset.substring(i, i + 1);
             }
         }
@@ -120,8 +132,7 @@ class NumberPicker {
     }
 
     protected function onReading(value as String);
-    protected function backgroundColour(value as String) as Number
-    {
+    protected function backgroundColour(value as String) as Number {
         return Graphics.COLOR_BLACK;
     }
 }
@@ -131,12 +142,11 @@ class FloatPicker extends NumberPicker {
         NumberPicker.initialize("0123456789.", 10);
     }
 
-    protected function onReading(value as String) as Void
-    {
+    protected function onReading(value as String) as Void {
         onValue(value.toFloat());
     }
 
-    protected function onValue(value as Float or Null) as Void;
+    protected function onValue(value as Float?) as Void;
 }
 
 class IntPicker extends NumberPicker {
@@ -144,12 +154,11 @@ class IntPicker extends NumberPicker {
         NumberPicker.initialize("0123456789", 10);
     }
 
-    protected function onReading(value as String) as Void
-    {
+    protected function onReading(value as String) as Void {
         onValue(value.toNumber());
     }
 
-    protected function onValue(value as Number or Null) as Void;
+    protected function onValue(value as Number?) as Void;
 }
 
 class ColourPicker extends NumberPicker {
@@ -157,67 +166,63 @@ class ColourPicker extends NumberPicker {
         NumberPicker.initialize("0123456789ABCDEF", 6);
     }
 
-    protected function onReading(value as String) as Void
-    {
+    protected function onReading(value as String) as Void {
         onValue(Settings.parseColourRaw("key", value, Graphics.COLOR_BLACK));
     }
 
-    protected function onValue(value as Number or Null) as Void;
+    protected function onValue(value as Number?) as Void;
 
-    protected function backgroundColour(value as String) as Number
-    {
+    protected function backgroundColour(value as String) as Number {
         return Settings.parseColourRaw("key", value, Graphics.COLOR_BLACK);
     }
 }
 
 class RerenderIgnoredView extends WatchUi.View {
-  function initialize() {
-    View.initialize();
+    function initialize() {
+        View.initialize();
 
-    // for seom reason WatchUi.requestUpdate(); was not working so im pushing this view just to remove it, which should force a re-render
-    // timer = new Timer.Timer();
-    // need a timer running of this, since button presses from within the delegate were not trigering a reload
-    // timer.start(method(:onTimer), 1000, true);
-    // but timers are not available in the settings view (or at all in datafield)
-    // "Module 'Toybox.Timer' not available to 'Data Field'"
-  }
+        // for seom reason WatchUi.requestUpdate(); was not working so im pushing this view just to remove it, which should force a re-render
+        // timer = new Timer.Timer();
+        // need a timer running of this, since button presses from within the delegate were not trigering a reload
+        // timer.start(method(:onTimer), 1000, true);
+        // but timers are not available in the settings view (or at all in datafield)
+        // "Module 'Toybox.Timer' not available to 'Data Field'"
+    }
 
-  function onLayout(dc as Dc) as Void {
-    WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-  }
+    function onLayout(dc as Dc) as Void {
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+    }
 }
 
-function forceRefresh() as Void
-{
+function forceRefresh() as Void {
     WatchUi.requestUpdate(); // sometimes does not work, but lets call it anyway
     WatchUi.pushView(new RerenderIgnoredView(), null, WatchUi.SLIDE_IMMEDIATE);
 }
 
-
 class NumberPickerView extends WatchUi.View {
-  private var picker as NumberPicker;
+    private var picker as NumberPicker;
 
-  function initialize(picker as NumberPicker) {
-    self.picker = picker;
-    View.initialize();
+    function initialize(picker as NumberPicker) {
+        self.picker = picker;
+        View.initialize();
 
-    // timer = new Timer.Timer();
-    // need a timer running of this, since button presses from within the delegate were not trigering a reload
-    // timer.start(method(:onTimer), 1000, true);
-    // but timers are not available in the settings view (or at all in datafield)
-    // "Module 'Toybox.Timer' not available to 'Data Field'"
-  }
+        // timer = new Timer.Timer();
+        // need a timer running of this, since button presses from within the delegate were not trigering a reload
+        // timer.start(method(:onTimer), 1000, true);
+        // but timers are not available in the settings view (or at all in datafield)
+        // "Module 'Toybox.Timer' not available to 'Data Field'"
+    }
 
-  function onLayout(dc as Dc) as Void {
-    picker.onLayout(dc);
-  }
+    function onLayout(dc as Dc) as Void {
+        picker.onLayout(dc);
+    }
 
-  function onUpdate(dc as Dc) as Void {
-    picker.onUpdate(dc);
-    // System.println("onUpdate");
-    // Some exampls have the line below, do not do that, screen goes black (though it does work in the examples, guess just not when lanunched from menu?)
-    // View.onUpdate(dc);
-  }
+    function onUpdate(dc as Dc) as Void {
+        picker.onUpdate(dc);
+        // System.println("onUpdate");
+        // Some exampls have the line below, do not do that, screen goes black (though it does work in the examples, guess just not when lanunched from menu?)
+        // View.onUpdate(dc);
+    }
 }
 
 class NumberPickerDelegate extends WatchUi.BehaviorDelegate {
@@ -237,8 +242,7 @@ class NumberPickerDelegate extends WatchUi.BehaviorDelegate {
         var y = coords[1];
 
         var handled = picker.onTap(x, y);
-        if (handled)
-        {
+        if (handled) {
             forceRefresh();
         }
         return handled;
@@ -247,8 +251,7 @@ class NumberPickerDelegate extends WatchUi.BehaviorDelegate {
     function onKey(keyEvent as WatchUi.KeyEvent) {
         var key = keyEvent.getKey();
         // System.println("got number picker key event: " + key);  // e.g. KEY_MENU = 7
-        if (key == WatchUi.KEY_ENTER)
-        {
+        if (key == WatchUi.KEY_ENTER) {
             picker.confirm();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
             return true;

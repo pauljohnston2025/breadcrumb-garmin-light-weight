@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "@markw65/prettier-plugin-monkeyc": "^1.0.61"
+  }
+}

@@ -5,7 +5,6 @@ import Toybox.WatchUi;
 import Toybox.Communications;
 import Toybox.Graphics;
 
-
 class SettingsFloatPicker extends FloatPicker {
     private var callback as Method;
     public var parent = null;
@@ -14,16 +13,13 @@ class SettingsFloatPicker extends FloatPicker {
         self.callback = callback;
     }
 
-    protected function onValue(value as Float or Null) as Void
-    {
-        if (value == null)
-        {
+    protected function onValue(value as Float?) as Void {
+        if (value == null) {
             return;
         }
 
         callback.invoke(value);
-        if (parent != null && parent has :rerender)
-        {
+        if (parent != null && parent has :rerender) {
             parent.rerender();
         }
     }
@@ -37,16 +33,13 @@ class SettingsNumberPicker extends IntPicker {
         self.callback = callback;
     }
 
-    protected function onValue(value as Number or Null) as Void
-    {
-        if (value == null)
-        {
+    protected function onValue(value as Number?) as Void {
+        if (value == null) {
             return;
         }
 
         callback.invoke(value);
-        if (parent != null && parent has :rerender)
-        {
+        if (parent != null && parent has :rerender) {
             parent.rerender();
         }
     }
@@ -65,8 +58,7 @@ class SettingsStringPicker extends WatchUi.TextPickerDelegate {
         System.println("onTextEntered: " + text + " " + changed);
 
         callback.invoke(text);
-        if (parent != null && parent has :rerender)
-        {
+        if (parent != null && parent has :rerender) {
             parent.rerender();
         }
 
@@ -87,78 +79,70 @@ class SettingsColourPicker extends ColourPicker {
         self.callback = callback;
     }
 
-    protected function onValue(value as Number or Null) as Void
-    {
-        if (value == null)
-        {
+    protected function onValue(value as Number?) as Void {
+        if (value == null) {
             return;
         }
 
         callback.invoke(value);
-        if (parent != null && parent has :rerender)
-        {
+        if (parent != null && parent has :rerender) {
             parent.rerender();
         }
     }
 }
 
-function startPicker(picker as SettingsFloatPicker or SettingsColourPicker or SettingsNumberPicker, parent) as Void
-{
+function startPicker(
+    picker as SettingsFloatPicker or SettingsColourPicker or SettingsNumberPicker,
+    parent
+) as Void {
     picker.parent = parent;
-    WatchUi.pushView(new $.NumberPickerView(picker), new $.NumberPickerDelegate(picker), WatchUi.SLIDE_IMMEDIATE);
+    WatchUi.pushView(
+        new $.NumberPickerView(picker),
+        new $.NumberPickerDelegate(picker),
+        WatchUi.SLIDE_IMMEDIATE
+    );
 }
 
-function safeSetSubLabel(menu as WatchUi.Menu2, id as Object, value as String) as Void
-{
+function safeSetSubLabel(menu as WatchUi.Menu2, id as Object, value as String) as Void {
     var itemIndex = menu.findItemById(id);
-    if (itemIndex <= -1)
-    {
+    if (itemIndex <= -1) {
         return;
     }
 
     var item = menu.getItem(itemIndex);
-    if (item == null)
-    {
+    if (item == null) {
         return;
     }
 
     item.setSubLabel(value);
 }
 
-function safeSetLabel(menu as WatchUi.Menu2, id as Object, value as String) as Void
-{
+function safeSetLabel(menu as WatchUi.Menu2, id as Object, value as String) as Void {
     var itemIndex = menu.findItemById(id);
-    if (itemIndex <= -1)
-    {
+    if (itemIndex <= -1) {
         return;
     }
 
     var item = menu.getItem(itemIndex);
-    if (item == null)
-    {
+    if (item == null) {
         return;
     }
 
     item.setLabel(value);
 }
 
-
-function safeSetToggle(menu as WatchUi.Menu2, id as Object, value as Boolean) as Void
-{
+function safeSetToggle(menu as WatchUi.Menu2, id as Object, value as Boolean) as Void {
     var itemIndex = menu.findItemById(id);
-    if (itemIndex <= -1)
-    {
+    if (itemIndex <= -1) {
         return;
     }
 
     var item = menu.getItem(itemIndex);
-    if (item == null)
-    {
+    if (item == null) {
         return;
     }
 
-    if (item instanceof WatchUi.ToggleMenuItem)
-    {
+    if (item instanceof WatchUi.ToggleMenuItem) {
         item.setEnabled(value);
     }
 }
@@ -188,24 +172,20 @@ class ColourIcon extends WatchUi.Drawable {
     }
 }
 
-function safeSetIcon(menu as WatchUi.Menu2, id as Object, value as WatchUi.Drawable) as Void
-{
+function safeSetIcon(menu as WatchUi.Menu2, id as Object, value as WatchUi.Drawable) as Void {
     var itemIndex = menu.findItemById(id);
-    if (itemIndex <= -1)
-    {
+    if (itemIndex <= -1) {
         return;
     }
 
     var item = menu.getItem(itemIndex);
-    if (item == null)
-    {
+    if (item == null) {
         return;
     }
 
     // support was added for icons on menuitems in API Level 3.4.0 but IconMenuItem had it from API 3.0.0
     // MenuItem and IconMenuItem, they both support icons
-    if (item has :setIcon) 
-    {
+    if (item has :setIcon) {
         item.setIcon(value);
     }
 }
@@ -217,12 +197,10 @@ class SettingsMain extends Rez.Menus.SettingsMain {
         rerender();
     }
 
-    function rerender() as Void
-    {
+    function rerender() as Void {
         var settings = getApp()._breadcrumbContext.settings();
         var modeString = "";
-        switch(settings.mode)
-        {
+        switch (settings.mode) {
             case MODE_NORMAL:
                 modeString = Rez.Strings.trackRouteMode;
                 break;
@@ -238,8 +216,7 @@ class SettingsMain extends Rez.Menus.SettingsMain {
         }
         safeSetSubLabel(me, :settingsMainMode, modeString);
         var uiModeString = "";
-        switch(settings.uiMode)
-        {
+        switch (settings.uiMode) {
             case UI_MODE_SHOW_ALL:
                 uiModeString = Rez.Strings.uiModeShowAll;
                 break;
@@ -251,10 +228,13 @@ class SettingsMain extends Rez.Menus.SettingsMain {
                 break;
         }
         safeSetSubLabel(me, :settingsMainModeUiMode, uiModeString);
-        safeSetSubLabel(me, :settingsMainRecalculateItervalS, settings.recalculateItervalS.toString());
+        safeSetSubLabel(
+            me,
+            :settingsMainRecalculateItervalS,
+            settings.recalculateItervalS.toString()
+        );
         var renderModeString = "";
-        switch(settings.renderMode)
-        {
+        switch (settings.renderMode) {
             case RENDER_MODE_BUFFERED_ROTATING:
                 renderModeString = Rez.Strings.renderModeBufferedRotating;
                 break;
@@ -278,12 +258,10 @@ class SettingsZoomAtPace extends Rez.Menus.SettingsZoomAtPace {
         rerender();
     }
 
-    function rerender() as Void
-    {
+    function rerender() as Void {
         var settings = getApp()._breadcrumbContext.settings();
         var modeString = "";
-        switch(settings.zoomAtPaceMode)
-        {
+        switch (settings.zoomAtPaceMode) {
             case ZOOM_AT_PACE_MODE_PACE:
                 modeString = Rez.Strings.zoomAtPaceModePace;
                 break;
@@ -298,8 +276,16 @@ class SettingsZoomAtPace extends Rez.Menus.SettingsZoomAtPace {
                 break;
         }
         safeSetSubLabel(me, :settingsZoomAtPaceMode, modeString);
-        safeSetSubLabel(me, :settingsZoomAtPaceUserMeters, settings.metersAroundUser.toString() + "m");
-        safeSetSubLabel(me, :settingsZoomAtPaceMPS, settings.zoomAtPaceSpeedMPS.format("%.2f") + "m/s");
+        safeSetSubLabel(
+            me,
+            :settingsZoomAtPaceUserMeters,
+            settings.metersAroundUser.toString() + "m"
+        );
+        safeSetSubLabel(
+            me,
+            :settingsZoomAtPaceMPS,
+            settings.zoomAtPaceSpeedMPS.format("%.2f") + "m/s"
+        );
     }
 }
 
@@ -309,8 +295,7 @@ class SettingsMap extends Rez.Menus.SettingsMap {
         rerender();
     }
 
-    function rerender() as Void
-    {
+    function rerender() as Void {
         var settings = getApp()._breadcrumbContext.settings();
         safeSetToggle(me, :settingsMapEnabled, true);
         safeSetSubLabel(me, :settingsTileUrl, settings.tileUrl);
@@ -319,11 +304,21 @@ class SettingsMap extends Rez.Menus.SettingsMap {
         safeSetSubLabel(me, :settingsMapTileLayerMin, settings.tileLayerMin.toString());
         safeSetSubLabel(me, :settingsMapTileCacheSize, settings.tileCacheSize.toString());
         safeSetSubLabel(me, :settingsMapTileCachePadding, settings.tileCachePadding.toString());
-        safeSetSubLabel(me, :settingsMapMaxPendingWebRequests, settings.maxPendingWebRequests.toString());
-        safeSetSubLabel(me, :settingsMapDisableMapsFailureCount, settings.disableMapsFailureCount.toString());
-        var latString = settings.fixedLatitude == null ? "Disabled" : settings.fixedLatitude.format("%.5f");
+        safeSetSubLabel(
+            me,
+            :settingsMapMaxPendingWebRequests,
+            settings.maxPendingWebRequests.toString()
+        );
+        safeSetSubLabel(
+            me,
+            :settingsMapDisableMapsFailureCount,
+            settings.disableMapsFailureCount.toString()
+        );
+        var latString =
+            settings.fixedLatitude == null ? "Disabled" : settings.fixedLatitude.format("%.5f");
         safeSetSubLabel(me, :settingsMapFixedLatitude, latString);
-        var longString = settings.fixedLongitude == null ? "Disabled" : settings.fixedLongitude.format("%.5f");
+        var longString =
+            settings.fixedLongitude == null ? "Disabled" : settings.fixedLongitude.format("%.5f");
         safeSetSubLabel(me, :settingsMapFixedLongitude, longString);
     }
 }
@@ -334,8 +329,7 @@ class SettingsMapDisabled extends Rez.Menus.SettingsMapDisabled {
         rerender();
     }
 
-    function rerender() as Void
-    {
+    function rerender() as Void {
         safeSetToggle(me, :settingsMapEnabled, false);
     }
 }
@@ -346,16 +340,22 @@ class SettingsAlerts extends Rez.Menus.SettingsAlerts {
         rerender();
     }
 
-    function rerender() as Void
-    {
+    function rerender() as Void {
         var settings = getApp()._breadcrumbContext.settings();
         safeSetToggle(me, :settingsAlertsDrawLineToClosestPoint, settings.drawLineToClosestPoint);
         safeSetToggle(me, :settingsAlertsEnabled, true);
-        safeSetSubLabel(me, :settingsAlertsOffTrackDistanceM, settings.offTrackAlertsDistanceM.toString());
-        safeSetSubLabel(me, :settingsAlertsOffTrackAlertsMaxReportIntervalS, settings.offTrackAlertsMaxReportIntervalS.toString());
+        safeSetSubLabel(
+            me,
+            :settingsAlertsOffTrackDistanceM,
+            settings.offTrackAlertsDistanceM.toString()
+        );
+        safeSetSubLabel(
+            me,
+            :settingsAlertsOffTrackAlertsMaxReportIntervalS,
+            settings.offTrackAlertsMaxReportIntervalS.toString()
+        );
         var alertTypeString = "";
-        switch(settings.alertType)
-        {
+        switch (settings.alertType) {
             case ALERT_TYPE_TOAST:
                 alertTypeString = Rez.Strings.alertTypeToast;
                 break;
@@ -373,11 +373,14 @@ class SettingsAlertsDisabled extends Rez.Menus.SettingsAlertsDisabled {
         rerender();
     }
 
-    function rerender() as Void
-    {
+    function rerender() as Void {
         var settings = getApp()._breadcrumbContext.settings();
         safeSetToggle(me, :settingsAlertsDrawLineToClosestPoint, settings.drawLineToClosestPoint);
-        safeSetSubLabel(me, :settingsAlertsOffTrackDistanceM, settings.offTrackAlertsDistanceM.toString());
+        safeSetSubLabel(
+            me,
+            :settingsAlertsOffTrackDistanceM,
+            settings.offTrackAlertsDistanceM.toString()
+        );
         safeSetToggle(me, :settingsAlertsEnabled, false);
     }
 }
@@ -388,13 +391,16 @@ class SettingsColours extends Rez.Menus.SettingsColours {
         rerender();
     }
 
-    function rerender() as Void
-    {
+    function rerender() as Void {
         var settings = getApp()._breadcrumbContext.settings();
         safeSetIcon(me, :settingsColoursTrackColour, new ColourIcon(settings.trackColour));
         safeSetIcon(me, :settingsColoursUserColour, new ColourIcon(settings.userColour));
         safeSetIcon(me, :settingsColoursElevationColour, new ColourIcon(settings.elevationColour));
-        safeSetIcon(me, :settingsColoursNormalModeColour, new ColourIcon(settings.normalModeColour));
+        safeSetIcon(
+            me,
+            :settingsColoursNormalModeColour,
+            new ColourIcon(settings.normalModeColour)
+        );
         safeSetIcon(me, :settingsColoursUiColour, new ColourIcon(settings.uiColour));
         safeSetIcon(me, :settingsColoursDebugColour, new ColourIcon(settings.debugColour));
     }
@@ -412,8 +418,7 @@ class SettingsRoute extends Rez.Menus.SettingsRoute {
         rerender();
     }
 
-    function rerender() as Void
-    {
+    function rerender() as Void {
         var name = settings.routeName(routeId);
         setTitle(name);
         safeSetSubLabel(me, :settingsRouteName, name);
@@ -422,23 +427,19 @@ class SettingsRoute extends Rez.Menus.SettingsRoute {
         parent.rerender();
     }
 
-    function setName(value as String) as Void
-    {
+    function setName(value as String) as Void {
         settings.setRouteName(routeId, value);
     }
-    
-    function setEnabled(value as Boolean) as Void
-    {
+
+    function setEnabled(value as Boolean) as Void {
         settings.setRouteEnabled(routeId, value);
     }
-    
-    function routeEnabled() as Boolean
-    {
+
+    function routeEnabled() as Boolean {
         return settings.routeEnabled(routeId);
     }
 
-    function setColour(value as Number) as Void
-    {
+    function setColour(value as Number) as Void {
         settings.setRouteColour(routeId, value);
     }
 }
@@ -464,8 +465,7 @@ class SettingsRoutes extends WatchUi.Menu2 {
                 {}
             )
         );
-        if (!settings.routesEnabled)
-        {
+        if (!settings.routesEnabled) {
             return;
         }
 
@@ -478,7 +478,7 @@ class SettingsRoutes extends WatchUi.Menu2 {
                 {}
             )
         );
-        
+
         addItem(
             new MenuItem(
                 Rez.Strings.routeMax,
@@ -487,7 +487,7 @@ class SettingsRoutes extends WatchUi.Menu2 {
                 {}
             )
         );
-        
+
         addItem(
             new MenuItem(
                 Rez.Strings.clearRoutes,
@@ -496,7 +496,7 @@ class SettingsRoutes extends WatchUi.Menu2 {
                 {}
             )
         );
-        
+
         for (var i = 0; i < settings.routeMax; ++i) {
             var routeIndex = settings.getRouteIndexById(i);
             if (routeIndex == null) {
@@ -521,8 +521,7 @@ class SettingsRoutes extends WatchUi.Menu2 {
         }
     }
 
-    function rerender() as Void
-    {
+    function rerender() as Void {
         safeSetToggle(me, :settingsRoutesEnabled, settings.routesEnabled);
         safeSetToggle(me, :settingsDisplayRouteNames, settings.displayRouteNames);
         safeSetSubLabel(me, :settingsDisplayRouteMax, settings.routeMax.toString());
@@ -546,79 +545,90 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
         var settings = getApp()._breadcrumbContext.settings();
         var itemId = item.getId();
         if (itemId == :settingsMainMode) {
-            WatchUi.pushView(new $.Rez.Menus.SettingsMode(), new $.SettingsModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(
+                new $.Rez.Menus.SettingsMode(),
+                new $.SettingsModeDelegate(view),
+                WatchUi.SLIDE_IMMEDIATE
+            );
         } else if (itemId == :settingsMainModeUiMode) {
-            WatchUi.pushView(new $.Rez.Menus.SettingsUiMode(), new $.SettingsUiModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(
+                new $.Rez.Menus.SettingsUiMode(),
+                new $.SettingsUiModeDelegate(view),
+                WatchUi.SLIDE_IMMEDIATE
+            );
         } else if (itemId == :settingsMainRecalculateItervalS) {
             startPicker(new SettingsNumberPicker(settings.method(:setRecalculateItervalS)), view);
         } else if (itemId == :settingsMainRenderMode) {
-            WatchUi.pushView(new $.Rez.Menus.SettingsRenderMode(), new $.SettingsRenderModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(
+                new $.Rez.Menus.SettingsRenderMode(),
+                new $.SettingsRenderModeDelegate(view),
+                WatchUi.SLIDE_IMMEDIATE
+            );
         } else if (itemId == :settingsMainZoomAtPace) {
             var view = new $.SettingsZoomAtPace();
             WatchUi.pushView(view, new $.SettingsZoomAtPaceDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainRoutes) {
             var view = new $.SettingsRoutes(settings);
-            WatchUi.pushView(view, new $.SettingsRoutesDelegate(view, settings), WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(
+                view,
+                new $.SettingsRoutesDelegate(view, settings),
+                WatchUi.SLIDE_IMMEDIATE
+            );
         } else if (itemId == :settingsMainMap) {
-            if (settings.mapEnabled)
-            {
+            if (settings.mapEnabled) {
                 var view = new SettingsMap();
                 WatchUi.pushView(view, new $.SettingsMapDelegate(view), WatchUi.SLIDE_IMMEDIATE);
                 return;
             }
             var disabledView = new SettingsMapDisabled();
-            WatchUi.pushView(disabledView, new $.SettingsMapDisabledDelegate(disabledView), WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(
+                disabledView,
+                new $.SettingsMapDisabledDelegate(disabledView),
+                WatchUi.SLIDE_IMMEDIATE
+            );
         } else if (itemId == :settingsMainAlerts) {
-            if (settings.enableOffTrackAlerts)
-            {
+            if (settings.enableOffTrackAlerts) {
                 var view = new SettingsAlerts();
                 WatchUi.pushView(view, new $.SettingsAlertsDelegate(view), WatchUi.SLIDE_IMMEDIATE);
                 return;
             }
             var disabledView = new SettingsAlertsDisabled();
-            WatchUi.pushView(disabledView, new $.SettingsAlertsDisabledDelegate(disabledView), WatchUi.SLIDE_IMMEDIATE);
-        } else if (itemId == :settingsMainColours) {
-            var view = new SettingsColours();
-            WatchUi.pushView(view, new $.SettingsColoursDelegate(view), WatchUi.SLIDE_IMMEDIATE);            
-        } else if (itemId == :settingsMainResetDefaults) {
-            var dialog = new WatchUi.Confirmation("Reset all settings?");
             WatchUi.pushView(
-                dialog,
-                new ResetSettingsDelegate(),
+                disabledView,
+                new $.SettingsAlertsDisabledDelegate(disabledView),
                 WatchUi.SLIDE_IMMEDIATE
             );
+        } else if (itemId == :settingsMainColours) {
+            var view = new SettingsColours();
+            WatchUi.pushView(view, new $.SettingsColoursDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMainResetDefaults) {
+            var dialog = new WatchUi.Confirmation("Reset all settings?");
+            WatchUi.pushView(dialog, new ResetSettingsDelegate(), WatchUi.SLIDE_IMMEDIATE);
         }
     }
 
-    function onBack() as Void
-    {
+    function onBack() as Void {
         System.println("onBack");
         Menu2InputDelegate.onBack();
     }
-    function onDone() as Void
-    {
+    function onDone() as Void {
         System.println("onDone");
     }
-    function onFooter() as Void
-    {
+    function onFooter() as Void {
         System.println("onFooter");
     }
-    function onNextPage() as Lang.Boolean
-    {
+    function onNextPage() as Lang.Boolean {
         System.println("onNextPage");
         return true;
     }
-    function onPreviousPage() as Lang.Boolean
-    {
+    function onPreviousPage() as Lang.Boolean {
         System.println("onPreviousPage");
         return true;
     }
-    function onTitle() as Void
-    {
+    function onTitle() as Void {
         System.println("onTitle");
     }
-    function onWrap(key as WatchUi.Key) as Lang.Boolean
-    {
+    function onWrap(key as WatchUi.Key) as Lang.Boolean {
         System.println("onWrap");
         return true;
     }
@@ -635,7 +645,7 @@ class ResetSettingsDelegate extends WatchUi.ConfirmationDelegate {
 
         return true; // we always handle it
     }
-} 
+}
 
 class SettingsModeDelegate extends WatchUi.Menu2InputDelegate {
     var parent as SettingsMain;
@@ -660,35 +670,28 @@ class SettingsModeDelegate extends WatchUi.Menu2InputDelegate {
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }
 
-    function onBack() as Void
-    {
+    function onBack() as Void {
         System.println("onBack from mode menu");
         Menu2InputDelegate.onBack();
     }
-    function onDone() as Void
-    {
+    function onDone() as Void {
         System.println("onDone  from mode menu");
     }
-    function onFooter() as Void
-    {
+    function onFooter() as Void {
         System.println("onFooter  from mode menu");
     }
-    function onNextPage() as Lang.Boolean
-    {
+    function onNextPage() as Lang.Boolean {
         System.println("onNextPage  from mode menu");
         return false;
     }
-    function onPreviousPage() as Lang.Boolean
-    {
+    function onPreviousPage() as Lang.Boolean {
         System.println("onPreviousPage  from mode menu");
         return false;
     }
-    function onTitle() as Void
-    {
+    function onTitle() as Void {
         System.println("onTitle  from mode menu");
     }
-    function onWrap(key as WatchUi.Key) as Lang.Boolean
-    {
+    function onWrap(key as WatchUi.Key) as Lang.Boolean {
         System.println("onWrap  from mode menu");
         return false;
     }
@@ -770,7 +773,11 @@ class SettingsZoomAtPaceDelegate extends WatchUi.Menu2InputDelegate {
         var settings = getApp()._breadcrumbContext.settings();
         var itemId = item.getId();
         if (itemId == :settingsZoomAtPaceMode) {
-            WatchUi.pushView(new $.Rez.Menus.SettingsZoomAtPaceMode(), new $.SettingsZoomAtPaceModeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(
+                new $.Rez.Menus.SettingsZoomAtPaceMode(),
+                new $.SettingsZoomAtPaceModeDelegate(view),
+                WatchUi.SLIDE_IMMEDIATE
+            );
         } else if (itemId == :settingsZoomAtPaceUserMeters) {
             startPicker(new SettingsNumberPicker(settings.method(:setMetersAroundUser)), view);
         } else if (itemId == :settingsZoomAtPaceMPS) {
@@ -793,7 +800,11 @@ class SettingsRoutesDelegate extends WatchUi.Menu2InputDelegate {
             settings.toggleRoutesEnabled();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
             var view = new $.SettingsRoutes(settings);
-            WatchUi.pushView(view, new $.SettingsRoutesDelegate(view, settings), WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(
+                view,
+                new $.SettingsRoutesDelegate(view, settings),
+                WatchUi.SLIDE_IMMEDIATE
+            );
         } else if (itemId == :settingsDisplayRouteNames) {
             settings.toggleDisplayRouteNames();
             view.rerender();
@@ -801,18 +812,17 @@ class SettingsRoutesDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(new SettingsNumberPicker(settings.method(:setRouteMax)), view);
         } else if (itemId == :settingsRoutesClearAll) {
             var dialog = new WatchUi.Confirmation("Clear all routes?");
-            WatchUi.pushView(
-                dialog,
-                new ClearRoutesDelegate(),
-                WatchUi.SLIDE_IMMEDIATE
-            );
+            WatchUi.pushView(dialog, new ClearRoutesDelegate(), WatchUi.SLIDE_IMMEDIATE);
         }
 
         // itemId should now be the route storageIndex = routeId
-        if (itemId instanceof Number)
-        {
+        if (itemId instanceof Number) {
             var thisView = new $.SettingsRoute(settings, itemId, view);
-            WatchUi.pushView(thisView, new $.SettingsRouteDelegate(thisView, settings), WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(
+                thisView,
+                new $.SettingsRouteDelegate(thisView, settings),
+                WatchUi.SLIDE_IMMEDIATE
+            );
         }
     }
 }
@@ -829,14 +839,15 @@ class SettingsRouteDelegate extends WatchUi.Menu2InputDelegate {
         var itemId = item.getId();
         if (itemId == :settingsRouteName) {
             var picker = new SettingsStringPicker(view.method(:setName), view);
-            WatchUi.pushView(new WatchUi.TextPicker(settings.routeName(view.routeId)), picker, WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(
+                new WatchUi.TextPicker(settings.routeName(view.routeId)),
+                picker,
+                WatchUi.SLIDE_IMMEDIATE
+            );
         } else if (itemId == :settingsRouteEnabled) {
-            if (view.routeEnabled())
-            {
+            if (view.routeEnabled()) {
                 view.setEnabled(false);
-            }
-            else 
-            {
+            } else {
                 view.setEnabled(true);
             }
             view.rerender();
@@ -883,10 +894,18 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
             settings.setMapEnabled(false);
             var view = new SettingsMapDisabled();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-            WatchUi.pushView(view, new $.SettingsMapDisabledDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(
+                view,
+                new $.SettingsMapDisabledDelegate(view),
+                WatchUi.SLIDE_IMMEDIATE
+            );
         } else if (itemId == :settingsTileUrl) {
             var picker = new SettingsStringPicker(settings.method(:setTileUrl), view);
-            WatchUi.pushView(new WatchUi.TextPicker(settings.tileUrl), picker, WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(
+                new WatchUi.TextPicker(settings.tileUrl),
+                picker,
+                WatchUi.SLIDE_IMMEDIATE
+            );
         } else if (itemId == :settingsMapTileSize) {
             startPicker(new SettingsNumberPicker(settings.method(:setTileSize)), view);
         } else if (itemId == :settingsMapTileLayerMax) {
@@ -897,10 +916,13 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(new SettingsNumberPicker(settings.method(:setTileCacheSize)), view);
         } else if (itemId == :settingsMapTileCachePadding) {
             startPicker(new SettingsNumberPicker(settings.method(:setTileCachePadding)), view);
-        }else if (itemId == :settingsMapMaxPendingWebRequests) {
+        } else if (itemId == :settingsMapMaxPendingWebRequests) {
             startPicker(new SettingsNumberPicker(settings.method(:setMaxPendingWebRequests)), view);
         } else if (itemId == :settingsMapDisableMapsFailureCount) {
-            startPicker(new SettingsNumberPicker(settings.method(:setDisableMapsFailureCount)), view);
+            startPicker(
+                new SettingsNumberPicker(settings.method(:setDisableMapsFailureCount)),
+                view
+            );
         } else if (itemId == :settingsMapFixedLatitude) {
             startPicker(new SettingsFloatPicker(settings.method(:setFixedLatitude)), view);
         } else if (itemId == :settingsMapFixedLongitude) {
@@ -943,13 +965,27 @@ class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
             settings.setEnableOffTrackAlerts(false);
             var view = new SettingsAlertsDisabled();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-            WatchUi.pushView(view, new $.SettingsAlertsDisabledDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(
+                view,
+                new $.SettingsAlertsDisabledDelegate(view),
+                WatchUi.SLIDE_IMMEDIATE
+            );
         } else if (itemId == :settingsAlertsOffTrackDistanceM) {
-            startPicker(new SettingsNumberPicker(settings.method(:setOffTrackAlertsDistanceM)), view);
+            startPicker(
+                new SettingsNumberPicker(settings.method(:setOffTrackAlertsDistanceM)),
+                view
+            );
         } else if (itemId == :settingsAlertsOffTrackAlertsMaxReportIntervalS) {
-            startPicker(new SettingsNumberPicker(settings.method(:setOffTrackAlertsMaxReportIntervalS)), view);
+            startPicker(
+                new SettingsNumberPicker(settings.method(:setOffTrackAlertsMaxReportIntervalS)),
+                view
+            );
         } else if (itemId == :settingsAlertsAlertType) {
-            WatchUi.pushView(new $.Rez.Menus.SettingsAlertType(), new $.SettingsAlertTypeDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(
+                new $.Rez.Menus.SettingsAlertType(),
+                new $.SettingsAlertTypeDelegate(view),
+                WatchUi.SLIDE_IMMEDIATE
+            );
         }
     }
 }
@@ -972,7 +1008,10 @@ class SettingsAlertsDisabledDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
             WatchUi.pushView(view, new $.SettingsAlertsDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsAlertsOffTrackDistanceM) {
-            startPicker(new SettingsNumberPicker(settings.method(:setOffTrackAlertsDistanceM)), view);
+            startPicker(
+                new SettingsNumberPicker(settings.method(:setOffTrackAlertsDistanceM)),
+                view
+            );
         }
     }
 }
@@ -1000,13 +1039,17 @@ class ClearRoutesDelegate extends WatchUi.ConfirmationDelegate {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop confirmation
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop routes view
             var view = new $.SettingsRoutes(settings);
-            WatchUi.pushView(view, new $.SettingsRoutesDelegate(view, settings), WatchUi.SLIDE_IMMEDIATE); // replace with new updated routes view
+            WatchUi.pushView(
+                view,
+                new $.SettingsRoutesDelegate(view, settings),
+                WatchUi.SLIDE_IMMEDIATE
+            ); // replace with new updated routes view
             WatchUi.pushView(new DummyView(), null, WatchUi.SLIDE_IMMEDIATE); // push dummy view for the confirmation to pop
         }
 
         return true; // we always handle it
     }
-} 
+}
 
 class SettingsColoursDelegate extends WatchUi.Menu2InputDelegate {
     var view as SettingsColours;
