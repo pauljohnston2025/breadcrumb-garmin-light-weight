@@ -69,23 +69,18 @@
                 <listEntry value="9">@Strings.esriWorldBoundariesandPlaces</listEntry>
                 <listEntry value="10">@Strings.esriWorldBoundariesandPlacesAlternate</listEntry>
                 <listEntry value="11">@Strings.esriWorldDarkGrayBase</listEntry>
-                <listEntry value="12">@Strings.esriWorldDarkGrayReference</listEntry>
-                <listEntry value="13">@Strings.esriWorldHillshade</listEntry>
-                <listEntry value="14">@Strings.esriWorldHillshadeDark</listEntry>
-                <listEntry value="15">@Strings.esriWorldImagery</listEntry>
-                <listEntry value="16">@Strings.esriWorldLightGrayBase</listEntry>
-                <listEntry value="17">@Strings.esriWorldLightGrayReference</listEntry>
-                <listEntry value="18">@Strings.esriWorldNavigationCharts</listEntry>
-                <listEntry value="19">@Strings.esriWorldOceanBase</listEntry>
-                <listEntry value="20">@Strings.esriWorldOceanReference</listEntry>
-                <listEntry value="21">@Strings.esriWorldPhysicalMap</listEntry>
-                <listEntry value="22">@Strings.esriWorldReferenceOverlay</listEntry>
-                <listEntry value="23">@Strings.esriWorldShadedRelief</listEntry>
-                <listEntry value="24">@Strings.esriWorldStreetMap</listEntry>
-                <listEntry value="25">@Strings.esriWorldTerrainBase</listEntry>
-                <listEntry value="26">@Strings.esriWorldTopoMap</listEntry>
-                <listEntry value="27">@Strings.esriWorldTransportation</listEntry>
-                <listEntry value="28">@Strings.openStreetMapcyclosm</listEntry>
+                <listEntry value="12">@Strings.esriWorldHillshade</listEntry>
+                <listEntry value="13">@Strings.esriWorldHillshadeDark</listEntry>
+                <listEntry value="14">@Strings.esriWorldImagery</listEntry>
+                <listEntry value="15">@Strings.esriWorldLightGrayBase</listEntry>
+                <listEntry value="16">@Strings.esriWorldNavigationCharts</listEntry>
+                <listEntry value="17">@Strings.esriWorldOceanBase</listEntry>
+                <listEntry value="18">@Strings.esriWorldPhysicalMap</listEntry>
+                <listEntry value="19">@Strings.esriWorldShadedRelief</listEntry>
+                <listEntry value="20">@Strings.esriWorldStreetMap</listEntry>
+                <listEntry value="21">@Strings.esriWorldTopoMap</listEntry>
+                <listEntry value="22">@Strings.esriWorldTransportation</listEntry>
+                <listEntry value="23">@Strings.openStreetMapcyclosm</listEntry>
             </settingConfig>
         </setting>
         <setting propertyKey="@Properties.tileUrl" title="@Strings.tileUrlTitle" prompt="@Strings.tileUrlPrompt">

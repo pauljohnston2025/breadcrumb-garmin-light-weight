@@ -1,5 +1,6 @@
 <menu2 id="SettingsMap" title="@Strings.mapsettingsTitle" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
     <toggle-menu-item id="settingsMapEnabled" label="@Strings.mapEnabledTitle"/>
+    <menu-item id="settingsMapChoice" label="@Strings.mapChoice"/>
     <menu-item id="settingsTileUrl" label="@Strings.tileUrlTitle"/>
     <menu-item id="settingsMapTileSize" label="@Strings.layerTileSize"/>
     <menu-item id="settingsMapTileLayerMax" label="@Strings.tileLayerMaxTitle"/>

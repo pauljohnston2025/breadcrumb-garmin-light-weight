@@ -298,6 +298,83 @@ class SettingsMap extends Rez.Menus.SettingsMap {
     function rerender() as Void {
         var settings = getApp()._breadcrumbContext.settings();
         safeSetToggle(me, :settingsMapEnabled, true);
+
+        var mapChoiceString = "";
+        switch (settings.mapChoice) {
+            case 0:
+                mapChoiceString = Rez.Strings.custom;
+                break;
+            case 1:
+                mapChoiceString = Rez.Strings.companionApp;
+                break;
+            case 2:
+                mapChoiceString = Rez.Strings.openTopoMap;
+                break;
+            case 3:
+                mapChoiceString = Rez.Strings.googleHybrid;
+                break;
+            case 4:
+                mapChoiceString = Rez.Strings.googleSatellite;
+                break;
+            case 5:
+                mapChoiceString = Rez.Strings.googleRoad;
+                break;
+            case 6:
+                mapChoiceString = Rez.Strings.googleTerain;
+                break;
+            case 7:
+                mapChoiceString = Rez.Strings.esriNatGeoWorldMap;
+                break;
+            case 8:
+                mapChoiceString = Rez.Strings.esriUSATopoMaps;
+                break;
+            case 9:
+                mapChoiceString = Rez.Strings.esriWorldBoundariesandPlaces;
+                break;
+            case 10:
+                mapChoiceString = Rez.Strings.esriWorldBoundariesandPlacesAlternate;
+                break;
+            case 11:
+                mapChoiceString = Rez.Strings.esriWorldDarkGrayBase;
+                break;
+            case 12:
+                mapChoiceString = Rez.Strings.esriWorldHillshade;
+                break;
+            case 13:
+                mapChoiceString = Rez.Strings.esriWorldHillshadeDark;
+                break;
+            case 14:
+                mapChoiceString = Rez.Strings.esriWorldImagery;
+                break;
+            case 15:
+                mapChoiceString = Rez.Strings.esriWorldLightGrayBase;
+                break;
+            case 16:
+                mapChoiceString = Rez.Strings.esriWorldNavigationCharts;
+                break;
+            case 17:
+                mapChoiceString = Rez.Strings.esriWorldOceanBase;
+                break;
+            case 18:
+                mapChoiceString = Rez.Strings.esriWorldPhysicalMap;
+                break;
+            case 19:
+                mapChoiceString = Rez.Strings.esriWorldShadedRelief;
+                break;
+            case 20:
+                mapChoiceString = Rez.Strings.esriWorldStreetMap;
+                break;
+            case 21:
+                mapChoiceString = Rez.Strings.esriWorldTopoMap;
+                break;
+            case 22:
+                mapChoiceString = Rez.Strings.esriWorldTransportation;
+                break;
+            case 23:
+                mapChoiceString = Rez.Strings.openStreetMapcyclosm;
+                break;
+        }
+        safeSetSubLabel(me, :settingsMapChoice, mapChoiceString);
         safeSetSubLabel(me, :settingsTileUrl, settings.tileUrl);
         safeSetSubLabel(me, :settingsMapTileSize, settings.tileSize.toString());
         safeSetSubLabel(me, :settingsMapTileLayerMax, settings.tileLayerMax.toString());
@@ -697,6 +774,95 @@ class SettingsModeDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
+class SettingsMapChoiceDelegate extends WatchUi.Menu2InputDelegate {
+    var parent as SettingsMap;
+    function initialize(parent as SettingsMap) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.parent = parent;
+    }
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var itemId = item.getId() as Object;
+        switch (itemId) {
+            case :settingsMapChoiceCustom:
+                settings.setMapChoice(0);
+                break;
+            case :settingsMapChoiceCompanionApp:
+                settings.setMapChoice(1);
+                break;
+            case :settingsMapChoiceOpenTopoMap:
+                settings.setMapChoice(2);
+                break;
+            case :settingsMapChoiceGoogleHybrid:
+                settings.setMapChoice(3);
+                break;
+            case :settingsMapChoiceGoogleSatellite:
+                settings.setMapChoice(4);
+                break;
+            case :settingsMapChoiceGoogleRoad:
+                settings.setMapChoice(5);
+                break;
+            case :settingsMapChoiceGoogleTerain:
+                settings.setMapChoice(6);
+                break;
+            case :settingsMapChoiceEsriNatGeoWorldMap:
+                settings.setMapChoice(7);
+                break;
+            case :settingsMapChoiceEsriUSATopoMaps:
+                settings.setMapChoice(8);
+                break;
+            case :settingsMapChoiceEsriWorldBoundariesandPlaces:
+                settings.setMapChoice(9);
+                break;
+            case :settingsMapChoiceEsriWorldBoundariesandPlacesAlternate:
+                settings.setMapChoice(10);
+                break;
+            case :settingsMapChoiceEsriWorldDarkGrayBase:
+                settings.setMapChoice(11);
+                break;
+            case :settingsMapChoiceEsriWorldHillshade:
+                settings.setMapChoice(12);
+                break;
+            case :settingsMapChoiceEsriWorldHillshadeDark:
+                settings.setMapChoice(13);
+                break;
+            case :settingsMapChoiceEsriWorldImagery:
+                settings.setMapChoice(14);
+                break;
+            case :settingsMapChoiceEsriWorldLightGrayBase:
+                settings.setMapChoice(15);
+                break;
+            case :settingsMapChoiceEsriWorldNavigationCharts:
+                settings.setMapChoice(16);
+                break;
+            case :settingsMapChoiceEsriWorldOceanBase:
+                settings.setMapChoice(17);
+                break;
+            case :settingsMapChoiceEsriWorldPhysicalMap:
+                settings.setMapChoice(18);
+                break;
+            case :settingsMapChoiceEsriWorldShadedRelief:
+                settings.setMapChoice(19);
+                break;
+            case :settingsMapChoiceEsriWorldStreetMap:
+                settings.setMapChoice(20);
+                break;
+            case :settingsMapChoiceEsriWorldTopoMap:
+                settings.setMapChoice(21);
+                break;
+            case :settingsMapChoiceEsriWorldTransportation:
+                settings.setMapChoice(22);
+                break;
+            case :settingsMapChoiceOpenStreetMapcyclosm:
+                settings.setMapChoice(23);
+                break;
+        }
+
+        parent.rerender();
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+    }
+}
+
 class SettingsUiModeDelegate extends WatchUi.Menu2InputDelegate {
     var parent as SettingsMain;
     function initialize(parent as SettingsMain) {
@@ -897,6 +1063,12 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(
                 view,
                 new $.SettingsMapDisabledDelegate(view),
+                WatchUi.SLIDE_IMMEDIATE
+            );
+        } else if (itemId == :settingsMapChoice) {
+            WatchUi.pushView(
+                new $.Rez.Menus.SettingsMapChoice(),
+                new $.SettingsMapChoiceDelegate(view),
                 WatchUi.SLIDE_IMMEDIATE
             );
         } else if (itemId == :settingsTileUrl) {

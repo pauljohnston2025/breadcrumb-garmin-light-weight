@@ -73,7 +73,7 @@ const TILE_SERVERS = [
     // new TileServerInfo("https://tiles.stadiamaps.com/tiles/stamen_terrain/{Z}/{Y}/{X}.png", 0, 20), // "Terrain"
     // new TileServerInfo("https://tiles.stadiamaps.com/tiles/stamen_terrain/{Z}/{Y}/{X}.png", 0, 20), // "Terrain"
     // arcgis (esri) - note some of these have been removed due to not enough coverage, and others have had layermin/max altered for australian coverage
-    // _Reference maps are all the same - just the location names
+    // _Reference maps are all the same - just the location names removing them
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}", 0, 12), // Esri - NatGeo World Map
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - USA Topo Maps
     // Note: when testing on the simulator, some of theese occasionaly seem to produce   
@@ -82,21 +82,16 @@ const TILE_SERVERS = [
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Boundaries and Places
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places_Alternate/MapServer/tile/{z}/{y}/{x}", 0, 11), // Esri - World Boundaries and Places Alternate
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Dark Gray Base
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Dark Gray Reference
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade Dark
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", 0, 20), // Esri - World Imagery
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Light Gray Base
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Light Gray Reference
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Specialty/World_Navigation_Charts/MapServer/tile/{z}/{y}/{x}", 0, 10), // Esri - World Navigation Charts
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Ocean Base
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Ocean Reference
     // not enough zoom levels to be useful, but does work
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}", 0, 8), // Esri - World Physical Map
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Reference Overlay
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Shaded Relief
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Street Map
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Terrain Base // remove
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Topo Map
     new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - World Transportation
     // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
@@ -263,8 +258,12 @@ class Settings {
             // custom - leave everything alone
             return;
         } else if (value == 1) {
-            // companion app - just update tile url, we do not know tile min/max because app tile serer might change
-            // app should probably send through that info when tile server changes
+            // companion app
+            // setting back to defaults otherwise when we chose companion app we will not get the correct tilesize and it will crash
+            var defaultSettings = new Settings();
+            setTileLayerMax(defaultSettings.tileLayerMax);
+            setTileLayerMin(defaultSettings.tileLayerMin);
+            setTileSize(defaultSettings.tileSize);
             setTileUrl(COMPANION_APP_TILE_URL);
             return;
         }

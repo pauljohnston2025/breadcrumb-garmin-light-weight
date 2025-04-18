@@ -124,6 +124,12 @@ Currently this dropdown is an override for
 * tileSize
 
 All other options in map settings can still be changed. Settings such as tile cahe size should be set to something much smaller to avoid crashes.
+If you need to tweak the tileUrl or other controlled settings (such as tileSize for companion app)
+* first select the tile server that matches most closely eg. `companion app`
+* save settings
+* go back into settings and select `custom`
+* edit the settings that need to be changed
+* save settings
 
 ### Tile Url
 
