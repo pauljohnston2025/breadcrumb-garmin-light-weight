@@ -44,6 +44,65 @@ enum /*RenderMode*/ {
 
 const COMPANION_APP_TILE_URL = "http://127.0.0.1:8080";
 
+class TileServerInfo {
+    var urlTemaplte as String;
+    var tileLayerMin as Number;
+    var tileLayerMax as Number;
+    function initialize(urlTemaplte as String, tileLayerMin as Number, tileLayerMax as Number) {
+        me.urlTemaplte = urlTemaplte;
+        me.tileLayerMin = tileLayerMin;
+        me.tileLayerMax = tileLayerMax;
+    }
+}
+
+// prettier-ignore
+// This is an array instead of a dict because dict does not render correctly, also arrays are faster
+const TILE_SERVERS = [
+    // 0 => null, // special custom (no tile property changes will happen)
+    // 1 => null, // special companion app (only the tileUrl will be updated)
+    // 2 -> ...
+    // open topo
+    new TileServerInfo("https://a.tile.opentopomap.org/{z}/{x}/{y}.png", 2, 15), // OpenTopoMap
+    // google
+    new TileServerInfo("https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", 0, 20), // "Google - Hybrid"
+    new TileServerInfo("https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", 0, 20), // "Google - Satellite"
+    new TileServerInfo("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", 0, 20), // "Google - Road"
+    new TileServerInfo("https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}", 0, 20), // "Google - Terain"
+    // stamen - cannot use statia requires auth
+    // new TileServerInfo("https://tiles.stadiamaps.com/tiles/stamen_toner/{Z}/{Y}/{X}.png", 0, 20), // "Toner"
+    // new TileServerInfo("https://tiles.stadiamaps.com/tiles/stamen_terrain/{Z}/{Y}/{X}.png", 0, 20), // "Terrain"
+    // new TileServerInfo("https://tiles.stadiamaps.com/tiles/stamen_terrain/{Z}/{Y}/{X}.png", 0, 20), // "Terrain"
+    // arcgis (esri) - note some of these have been removed due to not enough coverage, and others have had layermin/max altered for australian coverage
+    // _Reference maps are all the same - just the location names
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}", 0, 12), // Esri - NatGeo World Map
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - USA Topo Maps
+    // Note: when testing on the simulator, some of theese occasionaly seem to produce   
+    // Error: Invalid Value
+    // Details: failed inside handle_image_callback
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Boundaries and Places
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places_Alternate/MapServer/tile/{z}/{y}/{x}", 0, 11), // Esri - World Boundaries and Places Alternate
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Dark Gray Base
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Dark Gray Reference
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade Dark
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", 0, 20), // Esri - World Imagery
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Light Gray Base
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Light Gray Reference
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Specialty/World_Navigation_Charts/MapServer/tile/{z}/{y}/{x}", 0, 10), // Esri - World Navigation Charts
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Ocean Base
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Ocean Reference
+    // not enough zoom levels to be useful, but does work
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}", 0, 8), // Esri - World Physical Map
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Reference Overlay
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Shaded Relief
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Street Map
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Terrain Base // remove
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Topo Map
+    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - World Transportation
+    // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
+    new TileServerInfo("https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png", 0, 12), // OpenStreetMap - cyclosm
+];
+
 class Settings {
     // should be a multiple of 256 (since thats how tiles are stored, though the companion app will render them scaled for you)
     // we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes.
@@ -83,6 +142,7 @@ class Settings {
     // to make this work on the emulator you ned to run
     // adb forward tcp:8080 tcp:8080
     var tileUrl as String = COMPANION_APP_TILE_URL;
+    var mapChoice as Number = 0;
     // see keys below in routes = getArraySchema(...)
     // see oddity with route name and route loading new in context.newRoute
     var routes as Array<Dictionary> = [];
@@ -190,6 +250,36 @@ class Settings {
     function setZoomAtPaceMode(_zoomAtPaceMode as Number) as Void {
         zoomAtPaceMode = _zoomAtPaceMode;
         setValue("zoomAtPaceMode", zoomAtPaceMode);
+    }
+
+    function setMapChoice(value as Number) as Void {
+        mapChoice = value;
+        setValue("mapChoice", mapChoice);
+        updateMapChoiceChange(mapChoice);
+    }
+
+    function updateMapChoiceChange(value as Number) as Void {
+        if (value == 0) {
+            // custom - leave everything alone
+            return;
+        } else if (value == 1) {
+            // companion app - just update tile url, we do not know tile min/max because app tile serer might change
+            // app should probably send through that info when tile server changes
+            setTileUrl(COMPANION_APP_TILE_URL);
+            return;
+        }
+
+        var tileServerIndex = value - 2;
+        if (tileServerIndex >= TILE_SERVERS.size()) {
+            return; // invalid selection
+        }
+
+        var tileServerInfo = TILE_SERVERS[tileServerIndex];
+        setTileLayerMax(tileServerInfo.tileLayerMax);
+        setTileLayerMin(tileServerInfo.tileLayerMin);
+        setTileSize(256);
+        // set url last to clear tile cache
+        setTileUrl(tileServerInfo.urlTemaplte);
     }
 
     function setTileUrl(_tileUrl as String) as Void {
@@ -988,6 +1078,7 @@ class Settings {
         setFixedLatitude(defaultSettings.fixedLatitude);
         setFixedLongitude(defaultSettings.fixedLongitude);
         setTileUrl(defaultSettings.tileUrl);
+        setMapChoice(defaultSettings.mapChoice);
         routes = defaultSettings.routes;
         saveRoutes();
         setRoutesEnabled(defaultSettings.routesEnabled);
@@ -1041,6 +1132,7 @@ class Settings {
             "fixedLatitude" => fixedLatitude == null ? 0f : fixedLatitude,
             "fixedLongitude" => fixedLongitude == null ? 0f : fixedLongitude,
             "tileUrl" => tileUrl,
+            "mapChoice" => mapChoice,
             "routes" => routesToSave(),
             "routesEnabled" => routesEnabled,
             "displayRouteNames" => displayRouteNames,
@@ -1125,6 +1217,8 @@ class Settings {
         fixedLongitude = parseOptionalFloat("fixedLongitude", fixedLongitude);
         setFixedPosition(fixedLatitude, fixedLongitude, false);
         tileUrl = parseString("tileUrl", tileUrl);
+        mapChoice = parseNumber("mapChoice", mapChoice);
+        updateMapChoiceChange(mapChoice);
         routes = getArraySchema(
             "routes",
             ["routeId", "name", "enabled", "colour"],
@@ -1173,6 +1267,7 @@ class Settings {
     function onSettingsChanged() as Void {
         System.println("onSettingsChanged: Setting Changed, loading");
         var oldRoutes = routes;
+        var oldMapChoice = mapChoice;
         var oldTileUrl = tileUrl;
         var oldTileSize = tileSize;
         var oldTileCacheSize = tileCacheSize;
@@ -1209,6 +1304,10 @@ class Settings {
         }
         if (oldMapEnabled != mapEnabled) {
             setMapEnabled(mapEnabled);
+        }
+
+        if (oldMapChoice != mapChoice) {
+            setMapChoice(mapChoice);
         }
     }
 }

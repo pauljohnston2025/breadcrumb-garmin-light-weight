@@ -120,6 +120,15 @@ class CachedValues {
                     updateCurrentScale(calculateScale(renderDistanceM.toFloat()));
                     return;
                 }
+                // we are zooming around the user, but we do not have a last track point
+                // resort to using bounding box
+                var boundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
+                    getApp()._breadcrumbContext.routes(),
+                    null
+                );
+                calcCenterPointForBoundingBox(boundingBox);
+                updateCurrentScale(calculateScale(renderDistanceM.toFloat()));
+                return;
             }
 
             updateCurrentScale(calculateScale(renderDistanceM.toFloat()));

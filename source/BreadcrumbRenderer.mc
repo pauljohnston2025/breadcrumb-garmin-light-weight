@@ -8,7 +8,7 @@ import Toybox.Graphics;
 
 const DESIRED_SCALE_PIXEL_WIDTH as Float = 100.0f;
 const DESIRED_ELEV_SCALE_PIXEL_WIDTH as Float = 50.0f;
-const MIN_SCALE as Float = DESIRED_SCALE_PIXEL_WIDTH / 100000.0f;
+const MIN_SCALE as Float = DESIRED_SCALE_PIXEL_WIDTH / 1000000.0f;
 
 class BreadcrumbRenderer {
     // todo put into ui class
@@ -46,6 +46,7 @@ class BreadcrumbRenderer {
         100000 => "100km",
         500000 => "500km",
         1000000 => "1000km",
+        10000000 => "10000km",
     };
 
     var ELEVATION_SCALE_NAMES as Dictionary = {
@@ -758,7 +759,7 @@ class BreadcrumbRenderer {
         // prevent negative values
         // may need to go to lower scales to display larger maps (maybe like 0.05?)
         if (_cachedValues.scale < MIN_SCALE) {
-            _cachedValues.scale = MIN_SCALE;
+            _cachedValues.setScale(MIN_SCALE);
         }
     }
 

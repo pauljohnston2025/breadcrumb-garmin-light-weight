@@ -63,7 +63,7 @@ class TileKey {
 class Tile {
     var lastUsed as Number;
     var bitmap as
-    Graphics.BufferedBitmap or WatchUi.BitmapResource or Graphics.BitmapReference or Null;
+    Graphics.BufferedBitmap or WatchUi.BitmapResource or Null;
     var storageIndex as Number?;
 
     function initialize() {
@@ -73,7 +73,7 @@ class Tile {
     }
 
     function setBitmap(
-        bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource or Graphics.BitmapReference
+        bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource
     ) as Void {
         self.bitmap = bitmap;
     }
@@ -152,9 +152,16 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             return;
         }
 
-        if (data == null) {
+        if (data == null || (!(data instanceof WatchUi.BitmapResource) && !(data instanceof Graphics.BitmapReference))) {
             System.println("wrong data type not image");
             return;
+        }
+
+        if (data instanceof Graphics.BitmapReference)
+        {
+            // need to keep it in memory all the time, if we use the reference only it can be deallocated by the graphics memory pool
+            // https://developer.garmin.com/connect-iq/core-topics/graphics/
+            data = data.get(); 
         }
 
         var settings = getApp()._breadcrumbContext.settings();
