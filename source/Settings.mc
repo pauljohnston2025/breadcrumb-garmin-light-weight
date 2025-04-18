@@ -77,7 +77,7 @@ const TILE_SERVERS = [
     // 1 => null, // special companion app (only the tileUrl will be updated)
     // 2 -> ...
     // open topo
-    new TileServerInfo(ATTRIBUTION_OPENTOPOMAP, "https://a.tile.opentopomap.org/{z}/{x}/{y}.png", 2, 15), // OpenTopoMap
+    new TileServerInfo(ATTRIBUTION_OPENTOPOMAP, "https://a.tile.opentopomap.org/{z}/{x}/{y}.png", 0, 15), // OpenTopoMap
     // google
     new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", 0, 20), // "Google - Hybrid"
     new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", 0, 20), // "Google - Satellite"
