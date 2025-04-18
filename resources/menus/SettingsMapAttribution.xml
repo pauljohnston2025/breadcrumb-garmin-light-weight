@@ -1,0 +1,32 @@
+<menu2 id="SettingsMapAttribution" title="@Strings.attribution" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <menu-item id="settingsMapAttributionOpenTopoMap" label="@Strings.openTopoMapAttribution"/>
+    <menu-item id="settingsMapAttributionGoogle" label="@Strings.googleAttribution"/>
+    <menu-item id="settingsMapAttributionEsri" label="@Strings.esriAttribution"/>
+    <menu-item id="settingsMapAttributionOpenStreetmap" label="@Strings.openStreetmapAttribution"/>
+</menu2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -863,6 +863,34 @@ class SettingsMapChoiceDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
+class SettingsMapAttributionDelegate extends WatchUi.Menu2InputDelegate {
+    var parent as SettingsMap;
+    function initialize(parent as SettingsMap) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.parent = parent;
+    }
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var itemId = item.getId() as Object;
+        switch (itemId) {
+            case :settingsMapAttributionOpenTopoMap:
+                Communications.openWebPage("https://opentopomap.org/about", {}, {});
+                break;
+            case :settingsMapAttributionGoogle:
+                Communications.openWebPage("https://cloud.google.com/maps-platform/terms", {}, {});
+                break;
+            case :settingsMapAttributionEsri:
+                Communications.openWebPage("https://www.esri.com", {}, {});
+                break;
+            case :settingsMapAttributionOpenStreetmap:
+                Communications.openWebPage("https://openstreetmap.org/copyright", {}, {});
+                break;
+        }
+
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+    }
+}
+
 class SettingsUiModeDelegate extends WatchUi.Menu2InputDelegate {
     var parent as SettingsMain;
     function initialize(parent as SettingsMain) {
@@ -1100,6 +1128,13 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
         } else if (itemId == :settingsMapFixedLongitude) {
             startPicker(new SettingsFloatPicker(settings.method(:setFixedLongitude)), view);
         }
+        else if (itemId == :settingsMapAttribution) {
+            WatchUi.pushView(
+                new $.Rez.Menus.SettingsMapAttribution(),
+                new $.SettingsMapAttributionDelegate(view),
+                WatchUi.SLIDE_IMMEDIATE
+            );
+        } 
     }
 }
 

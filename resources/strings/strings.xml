@@ -136,4 +136,9 @@
     <string id="esriWorldTransportation">Esri - World Transportation</string>
     <string id="openStreetMapcyclosm">OpenStreetMap - cyclosm</string>
 
+    <string id="attribution">Attribution</string>
+    <string id="openTopoMapAttribution">OpenTopoMap</string>
+    <string id="googleAttribution">Google</string>
+    <string id="esriAttribution">Powered by Esri</string>
+    <string id="openStreetmapAttribution">OpenStreetMap</string>
 </strings>

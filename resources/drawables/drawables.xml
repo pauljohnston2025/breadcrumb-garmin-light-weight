@@ -7,4 +7,8 @@
     <bitmap id="LeftArrow" filename="leftarrow.svg" automaticPalette="false" dithering="none" scaleX="25" scaleY="25"/>
     <bitmap id="UpArrow" filename="uparrow.svg" automaticPalette="false" dithering="none" scaleX="25" scaleY="25"/>
     <bitmap id="DownArrow" filename="downarrow.svg" automaticPalette="false" dithering="none" scaleX="25" scaleY="25"/>
+    <bitmap id="GoogleAttribution" filename="google.svg" automaticPalette="false" dithering="none" scaleX="50" scaleY="20"/>
+    <bitmap id="OpenTopMapAttribution" filename="opentopomap.svg" automaticPalette="false" dithering="none" scaleX="100" scaleY="20"/>
+    <bitmap id="EsriAttribution" filename="esri.svg" automaticPalette="false" dithering="none" scaleX="100" scaleY="20"/>
+    <bitmap id="OpenStreetMapAttribution" filename="openstreetmap.svg" automaticPalette="false" dithering="none" scaleX="100" scaleY="20"/>
 </drawables>

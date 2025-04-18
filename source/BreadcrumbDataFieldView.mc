@@ -320,6 +320,15 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
 
         renderer.renderCurrentScale(dc);
+
+        if (settings.mapEnabled) {
+            var attrib = settings.getAttribution();
+            if (attrib != null) {
+                dc.drawBitmap2(_cachedValues.xHalf - attrib.getWidth() / 2, _cachedValues.screenHeight - 20, attrib, {
+                    :tintColor => settings.uiColour,
+                });
+            }
+        }
     }
 
     function renderMain(dc as Dc) as Void {

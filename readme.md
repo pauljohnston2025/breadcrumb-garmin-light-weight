@@ -62,3 +62,14 @@ To add datafield to a native app:
 
 For the venu range: https://support.garmin.com/en-AU/?faq=gyywAozBuAAGlvfzvR9VZ8&identifier=707572&searchQuery=data%20field&tab=topics  
 A more thorough explaination for a different app can be found at: https://support.garmin.com/en-AU/?faq=3HkHX1wT6U7TeNB7YHfiT7&identifier=707572&searchQuery=data%20field&tab=topics
+
+---
+
+# Map Tiles
+
+Powered by Esri: https://www.esri.com
+OpenStreetMap: https://openstreetmap.org/copyright
+OpenTopoMap: https://opentopomap.org/about
+Google: https://cloud.google.com/maps-platform/terms https://policies.google.com/privacy
+
+---

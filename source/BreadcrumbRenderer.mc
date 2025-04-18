@@ -658,14 +658,16 @@ class BreadcrumbRenderer {
             dc.drawBitmap2(xHalf - _upArrow.getWidth() / 2, 0, _upArrow, {
                 :tintColor => settings.uiColour,
             });
-            dc.drawBitmap2(
-                xHalf - _downArrow.getWidth() / 2,
-                screenHeight - _downArrow.getHeight(),
-                _downArrow,
-                {
-                    :tintColor => settings.uiColour,
-                }
-            );
+            if (settings.getAttribution() == null) {
+                dc.drawBitmap2(
+                    xHalf - _downArrow.getWidth() / 2,
+                    screenHeight - _downArrow.getHeight(),
+                    _downArrow,
+                    {
+                        :tintColor => settings.uiColour,
+                    }
+                );
+            }
             return;
         }
 
@@ -673,13 +675,15 @@ class BreadcrumbRenderer {
         dc.drawLine(xHalf - halfLineLength, lineFromEdge, xHalf + halfLineLength, lineFromEdge);
         dc.drawLine(xHalf, lineFromEdge - halfLineLength, xHalf, lineFromEdge + halfLineLength);
 
-        // minus at the bottom
-        dc.drawLine(
-            xHalf - halfLineLength,
-            dc.getHeight() - lineFromEdge,
-            xHalf + halfLineLength,
-            dc.getHeight() - lineFromEdge
-        );
+        if (settings.getAttribution() == null) {
+            // minus at the bottom
+            dc.drawLine(
+                xHalf - halfLineLength,
+                dc.getHeight() - lineFromEdge,
+                xHalf + halfLineLength,
+                dc.getHeight() - lineFromEdge
+            );
+        }
 
         // M - default, moving is zoomed view, stopped if full view
         // S - stopped is zoomed view, moving is entire view

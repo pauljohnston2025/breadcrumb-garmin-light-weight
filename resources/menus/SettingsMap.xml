@@ -11,4 +11,5 @@
     <menu-item id="settingsMapDisableMapsFailureCount" label="@Strings.disableMapsFailureCountTitleShort"/>
     <menu-item id="settingsMapFixedLatitude" label="@Strings.fixedLatitude"/>
     <menu-item id="settingsMapFixedLongitude" label="@Strings.fixedLongitude"/>
+    <menu-item id="settingsMapAttribution" label="@Strings.attribution"/>
 </menu2>

@@ -4,6 +4,7 @@ import Toybox.Graphics;
 import Toybox.System;
 import Toybox.Application;
 import Toybox.Communications;
+import Toybox.WatchUi;
 
 enum /*Mode*/ {
     MODE_NORMAL,
@@ -42,13 +43,27 @@ enum /*RenderMode*/ {
     ALERT_TYPE_MAX,
 }
 
+enum /*AttributionType*/ {
+    ATTRIBUTION_GOOGLE,
+    ATTRIBUTION_OPENTOPOMAP,
+    ATTRIBUTION_ESRI,
+    ATTRIBUTION_OPENSTREETMAP,
+}
+
 const COMPANION_APP_TILE_URL = "http://127.0.0.1:8080";
 
 class TileServerInfo {
+    var attributionType as Number;
     var urlTemaplte as String;
     var tileLayerMin as Number;
     var tileLayerMax as Number;
-    function initialize(urlTemaplte as String, tileLayerMin as Number, tileLayerMax as Number) {
+    function initialize(
+        attributionType as Number,
+        urlTemaplte as String,
+        tileLayerMin as Number,
+        tileLayerMax as Number
+    ) {
+        me.attributionType = attributionType;
         me.urlTemaplte = urlTemaplte;
         me.tileLayerMin = tileLayerMin;
         me.tileLayerMax = tileLayerMax;
@@ -62,40 +77,40 @@ const TILE_SERVERS = [
     // 1 => null, // special companion app (only the tileUrl will be updated)
     // 2 -> ...
     // open topo
-    new TileServerInfo("https://a.tile.opentopomap.org/{z}/{x}/{y}.png", 2, 15), // OpenTopoMap
+    new TileServerInfo(ATTRIBUTION_OPENTOPOMAP, "https://a.tile.opentopomap.org/{z}/{x}/{y}.png", 2, 15), // OpenTopoMap
     // google
-    new TileServerInfo("https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", 0, 20), // "Google - Hybrid"
-    new TileServerInfo("https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", 0, 20), // "Google - Satellite"
-    new TileServerInfo("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", 0, 20), // "Google - Road"
-    new TileServerInfo("https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}", 0, 20), // "Google - Terain"
+    new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", 0, 20), // "Google - Hybrid"
+    new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", 0, 20), // "Google - Satellite"
+    new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", 0, 20), // "Google - Road"
+    new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}", 0, 20), // "Google - Terain"
     // stamen - cannot use statia requires auth
     // new TileServerInfo("https://tiles.stadiamaps.com/tiles/stamen_toner/{Z}/{Y}/{X}.png", 0, 20), // "Toner"
     // new TileServerInfo("https://tiles.stadiamaps.com/tiles/stamen_terrain/{Z}/{Y}/{X}.png", 0, 20), // "Terrain"
     // new TileServerInfo("https://tiles.stadiamaps.com/tiles/stamen_terrain/{Z}/{Y}/{X}.png", 0, 20), // "Terrain"
     // arcgis (esri) - note some of these have been removed due to not enough coverage, and others have had layermin/max altered for australian coverage
     // _Reference maps are all the same - just the location names removing them
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}", 0, 12), // Esri - NatGeo World Map
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - USA Topo Maps
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}", 0, 12), // Esri - NatGeo World Map
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - USA Topo Maps
     // Note: when testing on the simulator, some of theese occasionaly seem to produce   
     // Error: Invalid Value
     // Details: failed inside handle_image_callback
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Boundaries and Places
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places_Alternate/MapServer/tile/{z}/{y}/{x}", 0, 11), // Esri - World Boundaries and Places Alternate
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Dark Gray Base
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade Dark
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", 0, 20), // Esri - World Imagery
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Light Gray Base
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Specialty/World_Navigation_Charts/MapServer/tile/{z}/{y}/{x}", 0, 10), // Esri - World Navigation Charts
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Ocean Base
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Boundaries and Places
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places_Alternate/MapServer/tile/{z}/{y}/{x}", 0, 11), // Esri - World Boundaries and Places Alternate
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Dark Gray Base
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade Dark
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", 0, 20), // Esri - World Imagery
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Light Gray Base
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Specialty/World_Navigation_Charts/MapServer/tile/{z}/{y}/{x}", 0, 10), // Esri - World Navigation Charts
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Ocean Base
     // not enough zoom levels to be useful, but does work
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}", 0, 8), // Esri - World Physical Map
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Shaded Relief
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Street Map
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Topo Map
-    new TileServerInfo("https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - World Transportation
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}", 0, 8), // Esri - World Physical Map
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Shaded Relief
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Street Map
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Topo Map
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - World Transportation
     // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
-    new TileServerInfo("https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png", 0, 12), // OpenStreetMap - cyclosm
+    new TileServerInfo(ATTRIBUTION_OPENSTREETMAP, "https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png", 0, 12), // OpenStreetMap - cyclosm
 ];
 
 class Settings {
@@ -251,6 +266,35 @@ class Settings {
         mapChoice = value;
         setValue("mapChoice", mapChoice);
         updateMapChoiceChange(mapChoice);
+    }
+
+    function getAttribution() as WatchUi.BitmapResource? {
+        if (mapChoice == 0) {
+            // custom - no way to know which tile server
+            return null;
+        } else if (mapChoice == 1) {
+            // companion app - attributions in the companion app (no way to know what image tiles we are getting)
+            return null;
+        }
+
+        var tileServerIndex = mapChoice - 2;
+        if (tileServerIndex >= TILE_SERVERS.size()) {
+            return null; // invalid selection
+        }
+
+        var tileServerInfo = TILE_SERVERS[tileServerIndex];
+        switch (tileServerInfo.attributionType) {
+            case ATTRIBUTION_GOOGLE:
+                return WatchUi.loadResource(Rez.Drawables.GoogleAttribution); // todo cache all of these
+            case ATTRIBUTION_OPENTOPOMAP:
+                return WatchUi.loadResource(Rez.Drawables.OpenTopMapAttribution); // todo cache all of these
+            case ATTRIBUTION_ESRI:
+                return WatchUi.loadResource(Rez.Drawables.EsriAttribution); // todo cache all of these
+            case ATTRIBUTION_OPENSTREETMAP:
+                return WatchUi.loadResource(Rez.Drawables.OpenStreetMapAttribution); // todo cache all of these
+        }
+
+        return null;
     }
 
     function updateMapChoiceChange(value as Number) as Void {
