@@ -114,6 +114,11 @@ const TILE_SERVERS = [
 ];
 
 class Settings {
+    var googleAttribution as WatchUi.BitmapResource = WatchUi.loadResource(Rez.Drawables.GoogleAttribution);
+    var openTopMapAttribution as WatchUi.BitmapResource = WatchUi.loadResource(Rez.Drawables.OpenTopMapAttribution);
+    var esriAttribution as WatchUi.BitmapResource = WatchUi.loadResource(Rez.Drawables.EsriAttribution);
+    var openStreetMapAttribution as WatchUi.BitmapResource = WatchUi.loadResource(Rez.Drawables.OpenStreetMapAttribution);
+
     // should be a multiple of 256 (since thats how tiles are stored, though the companion app will render them scaled for you)
     // we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes.
     // so math.ceil should be used what figuring out how many meters a tile is.
@@ -287,13 +292,13 @@ class Settings {
         var tileServerInfo = TILE_SERVERS[tileServerIndex];
         switch (tileServerInfo.attributionType) {
             case ATTRIBUTION_GOOGLE:
-                return WatchUi.loadResource(Rez.Drawables.GoogleAttribution); // todo cache all of these
+                return googleAttribution;
             case ATTRIBUTION_OPENTOPOMAP:
-                return WatchUi.loadResource(Rez.Drawables.OpenTopMapAttribution); // todo cache all of these
+                return openTopMapAttribution;
             case ATTRIBUTION_ESRI:
-                return WatchUi.loadResource(Rez.Drawables.EsriAttribution); // todo cache all of these
+                return esriAttribution;
             case ATTRIBUTION_OPENSTREETMAP:
-                return WatchUi.loadResource(Rez.Drawables.OpenStreetMapAttribution); // todo cache all of these
+                return openStreetMapAttribution;
         }
 
         return null;
