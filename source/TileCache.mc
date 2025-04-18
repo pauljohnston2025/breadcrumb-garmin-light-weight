@@ -62,8 +62,7 @@ class TileKey {
 
 class Tile {
     var lastUsed as Number;
-    var bitmap as
-    Graphics.BufferedBitmap or WatchUi.BitmapResource or Null;
+    var bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource or Null;
     var storageIndex as Number?;
 
     function initialize() {
@@ -72,9 +71,7 @@ class Tile {
         self.storageIndex = null;
     }
 
-    function setBitmap(
-        bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource
-    ) as Void {
+    function setBitmap(bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource) as Void {
         self.bitmap = bitmap;
     }
 
@@ -149,19 +146,35 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         if (responseCode != 200) {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
             System.println("failed with: " + responseCode);
+            // dirty debug hacks, rebuild the url from the tile key
+            // var x = _tileKey.x / getApp()._breadcrumbContext.cachedValues().smallTilesPerBigTile;
+            // var y = _tileKey.y / getApp()._breadcrumbContext.cachedValues().smallTilesPerBigTile;
+            // var origUrl = stringReplaceFirst(
+            //     stringReplaceFirst(
+            //         stringReplaceFirst(getApp()._breadcrumbContext.settings().tileUrl, "{x}", x.toString()),
+            //         "{y}",
+            //         y.toString()
+            //     ),
+            //     "{z}",
+            //     _tileKey.z.toString()
+            // );
+            // System.println("url failed: " + responseCode + " " + origUrl);
             return;
         }
 
-        if (data == null || (!(data instanceof WatchUi.BitmapResource) && !(data instanceof Graphics.BitmapReference))) {
+        if (
+            data == null ||
+            (!(data instanceof WatchUi.BitmapResource) &&
+                !(data instanceof Graphics.BitmapReference))
+        ) {
             System.println("wrong data type not image");
             return;
         }
 
-        if (data instanceof Graphics.BitmapReference)
-        {
+        if (data instanceof Graphics.BitmapReference) {
             // need to keep it in memory all the time, if we use the reference only it can be deallocated by the graphics memory pool
             // https://developer.garmin.com/connect-iq/core-topics/graphics/
-            data = data.get(); 
+            data = data.get();
         }
 
         var settings = getApp()._breadcrumbContext.settings();
@@ -179,12 +192,21 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             var maxDim = maxN(data.getWidth(), data.getHeight()); // should be equal (every time server i know of is 256*256), but who knows
             var pixelsPerTile = maxDim / cachedValues.smallTilesPerBigTile.toFloat();
             var sourceBitmap = data;
-            if (Math.ceil(pixelsPerTile) != pixelsPerTile) {
-                // we have an aloying situation - stretch the image
+            if (Math.ceil(pixelsPerTile) != settings.tileSize || Math.floor(pixelsPerTile) != settings.tileSize) {
+                // we have an anoying situation - stretch/reduce the image
                 var scaleUpSize = cachedValues.smallTilesPerBigTile * settings.tileSize;
+                var scaleFactor = scaleUpSize / maxDim.toFloat();
                 var upscaledBitmap = newBitmap(scaleUpSize, scaleUpSize, null);
                 var upscaledBitmapDc = upscaledBitmap.getDc();
-                upscaledBitmapDc.drawScaledBitmap(0, 0, scaleUpSize, scaleUpSize, sourceBitmap);
+
+                var scaleMatrix = new AffineTransform();
+                scaleMatrix.scale(scaleFactor, scaleFactor); // scale
+
+                upscaledBitmapDc.drawBitmap2(0, 0, sourceBitmap, {
+                    :transform => scaleMatrix,
+                    // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
+                    :filterMode => Graphics.FILTER_MODE_BILINEAR,
+                });
                 // System.println("scaled up to: " + upscaledBitmap.getWidth() + " " + upscaledBitmap.getHeight());
                 // System.println("from: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
                 sourceBitmap = upscaledBitmap; // resume what we were doing as if it was always the larger bitmap
@@ -198,26 +220,11 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             // System.println("croppedSection: " + croppedSection.getWidth() + " " + croppedSection.getHeight());
             // System.println("source: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
             // System.println("drawing from: " + xOffset * settings.tileSize + " " + yOffset * settings.tileSize);
-            croppedSectionDc.drawBitmap2(0, 0, sourceBitmap, {
-                // if this results in hitting the edge of the bitmap nothing is drawn
-                // so even though x=192 with width=64 should be drawn it is not
-                // it results in an empty image
-                // ie. it should be 0-64, 65-128, 128-192, 192-256 ie. half-open range [begin, end)
-                // but it look like they are using closed ranges?
-                // see Webrequest issues around Communications.makeImageRequest( and packing format
-                // the simulator also does the weird becaviour as listed above only first tile crop works
-                // it is good to note that i can only get this to work on the physical device, which makes it a real pain to test
-                // tried again with PNG, that did work at least once, and it broke like the simulator does
-                // in essence - use 256 as a user setting or this just wont work
-                // one of the first 12 tiles actually renderred - similar to the simulator
-                // must be something wrong with getting the bitmap from, or because its a reference? calling get() seems to be no different.
-                :bitmapX => xOffset * settings.tileSize,
-                :bitmapY => yOffset * settings.tileSize,
-                :bitmapWidth => settings.tileSize,
-                :bitmapHeight => settings.tileSize,
-                // :filterMode => Graphics.FILTER_MODE_BILINEAR,
-                // :dithering => Communications.IMAGE_DITHERING_NONE,
-            });
+            croppedSectionDc.drawBitmap(
+                -xOffset * settings.tileSize,
+                -yOffset * settings.tileSize,
+                sourceBitmap
+            );
 
             data = croppedSection;
         }

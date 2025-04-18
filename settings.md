@@ -127,7 +127,7 @@ Currently this dropdown is an override for
 * tileLayerMin
 * tileSize
 
-All other options in map settings can still be changed. Settings such as tile cahe size should be set to something much smaller to avoid crashes.
+All other options in map settings can still be changed. Settings such as tile cache size should be set to something much smaller to avoid crashes.
 If you need to tweak the tileUrl or other controlled settings (such as tileSize for companion app)
 * first select the tile server that matches most closely eg. `companion app`
 * save settings
@@ -184,7 +184,17 @@ The maximum tiles to grab around the user 0 means no more than the screen size. 
 
 ### Tile Cache Size
 
-The number of tiles to store locally in memory.
+The number of tiles to store locally in memory. The maximum value for this can be figuresd out by the user (each device and scenerio is different)
+* choose your tile url or map choice
+* set Disable Maps After X Failures (0 for unlimited failures) = 0 - temporary setting so we can test our limits
+* set Tile cache padding (tiles) to 5 - temporary setting this just makes us fill the tile cache quicker
+* zoom in and out of the map
+* check the debug page regulary to see how many map tiles are in the cache
+* last web result will likely go to -403 (NETWORK_RESPONSE_OUT_OF_MEMORY), or the app will crash with out of memory exception
+* check the tiles number on the debug page, and set that to your cache value (a little less is better as this is our absolute max)
+
+On the venu2s with full size tiles (256pixels) the max tile cache is ~23, so we probbaly do not want to exceed 15 tiles in our cache to be safe. The more tiles in the cache, the more memory that will be used and the sytem will slow to a crawl. For smaller tiles the cache size will be larger, as each tile takes up less space in memory.
+
 
 ### Max Pending Web Requests
 

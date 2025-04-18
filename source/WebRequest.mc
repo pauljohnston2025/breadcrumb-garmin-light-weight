@@ -289,7 +289,7 @@ class WebRequestHandler {
                     // so we must use PACKING_FORMAT_PNG if they really want a slow response and smaller tiles cache
                     // so tried it again, ang PNG did the same colour issue as JPG/YUV :( AHHHHHHHHHHHH
                     :packingFormat => requiresScaling
-                        ? Communications.PACKING_FORMAT_PNG
+                        ? Communications.PACKING_FORMAT_PNG // do not specify a pallete, we cannot draw
                         : Communications.PACKING_FORMAT_DEFAULT,
                     // from android code
                     // val osName = "Garmin"
