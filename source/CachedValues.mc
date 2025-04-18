@@ -277,6 +277,9 @@ class CachedValues {
 
     (:scaledbitmap)
     function calculateScale(maxDistanceM as Float) as Float {
+        if (_settings.scaleRestrictedToTileLayers && _settings.mapEnabled) {
+            return tileLayerScale(maxDistanceM);
+        }
         return calculateScaleStandard(maxDistanceM);
     }
 
@@ -293,30 +296,40 @@ class CachedValues {
         return (minScreenDim / maxDistanceM) * 0.75;
     }
 
+    function nextTileLayerScale(direction as Number) as Float {
+        var currentZ = Math.round(Math.log(earthsCircumference / (_settings.tileSize / currentScale) / smallTilesPerBigTile, 2)).toNumber();
+        currentZ = minN(maxN(currentZ, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits, otherwise we can decreent/increment outside the range if we are already at a bad scale
+        var nextZ = currentZ + direction;
+
+        nextZ = minN(maxN(nextZ, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
+        var tileWidthM2 = earthsCircumference / Math.pow(2, nextZ) / smallTilesPerBigTile;
+        return (_settings.tileSize / tileWidthM2).toFloat();
+    }
+
+    function tileLayerScale(maxDistanceM as Float) as Float {
+        var perfectScale = calculateScaleStandard(maxDistanceM);
+        // only allow map tile scale levels so that we can render the tiles without any gaps, and at the correct size
+        // todo cache these calcs, it is for the slower devices after all
+        var desiredResolution = 1 / perfectScale;
+        var z = Math.round(calculateTileLevel(desiredResolution)).toNumber();
+        z = minN(maxN(z, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
+
+        // we want these ratios to be the same
+        // var minScreenDimM = _minScreenDim / currentScale;
+        // var screenToTileMRatio = minScreenDimM / tileWidthM;
+        // var screenToTilePixelRatio = minScreenDim / _settings.tileSize;
+        var tileWidthM2 = earthsCircumference / Math.pow(2, z) / smallTilesPerBigTile;
+        //  var screenToTilePixelRatio = _minScreenDim / settings.tileSize;
+
+        // note: this gets as close as it can to the zoom level, some route clipping might occur
+        // we have to go to the largertile sizes so that we can see the whole route
+        return (_settings.tileSize / tileWidthM2).toFloat();
+    }
+
     (:noscaledbitmap)
     function calculateScale(maxDistanceM as Float) as Float {
         // note: this can come from user intervention, and settings the sclae overload, we will get a close as we can
         var perfectScale = calculateScaleStandard(maxDistanceM);
-
-        // if (_settings.mapEnabled)
-        // {
-        //     // only allow map tile scale levels so that we can render the tiles without any gaps, and at the correct size
-        //     // todo cache these calcs, it is for the slower devices after all
-        //     var desiredResolution = 1 / perfectScale;
-        //     var z = Math.floor(calculateTileLevel(desiredResolution)).toNumber();
-        //     z = minN(maxN(z, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
-
-        //     // we want these ratios to be the same
-        //     // var minScreenDimM = _minScreenDim / currentScale;
-        //     // var screenToTileMRatio = minScreenDimM / tileWidthM;
-        //     // var screenToTilePixelRatio = minScreenDim / _settings.tileSize;
-        //     var tileWidthM2 = (earthsCircumference / Math.pow(2, z)) / smallTilesPerBigTile;
-        //     //  var screenToTilePixelRatio = _minScreenDim / settings.tileSize;
-
-        //     // note: this gets as close as it can to the zoom level, some route clipping might occur
-        //     // we have to go to the largertile sizes so that we can see the whole route
-        //     return _settings.tileSize / tileWidthM2;
-        // }
 
         return perfectScale;
     }

@@ -8,7 +8,8 @@ import Toybox.Graphics;
 
 const DESIRED_SCALE_PIXEL_WIDTH as Float = 100.0f;
 const DESIRED_ELEV_SCALE_PIXEL_WIDTH as Float = 50.0f;
-const MIN_SCALE as Float = DESIRED_SCALE_PIXEL_WIDTH / 1000000.0f;
+// note sure why this has anything to do with DESIRED_SCALE_PIXEL_WIDTH, should just be whatever tile layer 0 equates to for the screen size
+const MIN_SCALE as Float = DESIRED_SCALE_PIXEL_WIDTH / 1000000000.0f;
 
 class BreadcrumbRenderer {
     // todo put into ui class
@@ -711,6 +712,12 @@ class BreadcrumbRenderer {
     }
 
     function getDecIncAmount(direction as Number) as Float {
+        if (settings.scaleRestrictedToTileLayers && settings.mapEnabled) {
+            var desiredScale = _cachedValues.nextTileLayerScale(direction);
+            var toInc = desiredScale - _cachedValues.scale;
+            return toInc;
+        }
+
         var scaleData = getScaleSize();
         var iInc = direction;
         var currentDistanceM = scaleData[1];

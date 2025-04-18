@@ -87,7 +87,8 @@
     <string id="tileSizePrompt">Pixels per tile x and y</string>
     <string id="tileCacheSizePrompt">Number of tiles to cache</string>
     <string id="colourPrompt">Colour in AARRGGBB format</string>
-    <string id="displayLatLongTitle">Display lat/long</string>
+    <string id="displayLatLongTitle">Display Lat/Long</string>
+    <string id="scaleRestrictedToTileLayersTitle">Restrict Scale To Tile Layers</string>
 
     <string id="selectedRoute">Selected route</string>
     <string id="routesTitle">Routes</string>
@@ -135,7 +136,7 @@
     <string id="esriWorldTerrainBase">Esri - World Terrain Base</string>
     <string id="esriWorldTopoMap">Esri - World Topo Map</string>
     <string id="esriWorldTransportation">Esri - World Transportation</string>
-    <string id="openStreetMapcyclosm">OpenStreetMap - cyclosm</string>
+    <string id="openStreetMapcyclosm">OpenStreetMap - Cyclosm</string>
 
     <string id="attribution">Attribution</string>
     <string id="openTopoMapAttribution">OpenTopoMap</string>

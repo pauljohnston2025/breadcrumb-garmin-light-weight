@@ -122,7 +122,7 @@ class Settings {
     // website says: Worldwide, Zoom to 17. (Zoom limited to 15 on website opentopomap.org)
     // real world test showed 17 produced errors (maybe you need to be authed to get this?)
     var tileLayerMax as Number = 15;
-    var tileLayerMin as Number = 2;
+    var tileLayerMin as Number = 0;
     // there is both a memory limit to the number of tiles we can store, as well as a storage limit
     // for now this is both, though we may be able to store more than we can in memory
     // so we could use the storage as a tile cache, and revert to loading from there, as it would be much faster than
@@ -172,6 +172,7 @@ class Settings {
 
     var drawLineToClosestPoint as Boolean = true;
     var displayLatLong as Boolean = true;
+    var scaleRestrictedToTileLayers as Boolean = false; // scale will be restricted to the tile layers - could do more optimised render in future
 
     // scratrchpad used for rotations, but it also means we have a large bitmap stored around
     // I will also use that bitmap for re-renders though, and just do rotations every render rather than re-drawing all the tracks/tiles again
@@ -445,6 +446,11 @@ class Settings {
         displayLatLong = value;
         setValue("displayLatLong", displayLatLong);
     }
+    
+    function setScaleRestrictedToTileLayers(value as Boolean) as Void {
+        scaleRestrictedToTileLayers = value;
+        setValue("scaleRestrictedToTileLayers", scaleRestrictedToTileLayers);
+    }
 
     function setDisplayRouteNames(_displayRouteNames as Boolean) as Void {
         displayRouteNames = _displayRouteNames;
@@ -636,6 +642,15 @@ class Settings {
         }
 
         setDisplayLatLong(true);
+    }
+    
+    function toggleScaleRestrictedToTileLayers() as Void {
+        if (scaleRestrictedToTileLayers) {
+            setScaleRestrictedToTileLayers(false);
+            return;
+        }
+
+        setScaleRestrictedToTileLayers(true);
     }
 
     function toggleDisplayRouteNames() as Void {
@@ -1124,6 +1139,7 @@ class Settings {
         setMapEnabled(defaultSettings.mapEnabled);
         setDrawLineToClosestPoint(defaultSettings.drawLineToClosestPoint);
         setDisplayLatLong(defaultSettings.displayLatLong);
+        setScaleRestrictedToTileLayers(defaultSettings.scaleRestrictedToTileLayers);
         setTrackColour(defaultSettings.trackColour);
         setElevationColour(defaultSettings.elevationColour);
         setUserColour(defaultSettings.userColour);
@@ -1179,6 +1195,7 @@ class Settings {
             "mapEnabled" => mapEnabled,
             "drawLineToClosestPoint" => drawLineToClosestPoint,
             "displayLatLong" => displayLatLong,
+            "scaleRestrictedToTileLayers" => scaleRestrictedToTileLayers,
             "trackColour" => trackColour.format("%X"),
             "elevationColour" => elevationColour.format("%X"),
             "userColour" => userColour.format("%X"),
@@ -1256,6 +1273,7 @@ class Settings {
         setMapEnabled(mapEnabled); // prompt for app to open if needed
         drawLineToClosestPoint = parseBool("drawLineToClosestPoint", drawLineToClosestPoint);
         displayLatLong = parseBool("displayLatLong", displayLatLong);
+        scaleRestrictedToTileLayers = parseBool("scaleRestrictedToTileLayers", scaleRestrictedToTileLayers);
         displayRouteNames = parseBool("displayRouteNames", displayRouteNames);
         enableOffTrackAlerts = parseBool("enableOffTrackAlerts", enableOffTrackAlerts);
         routesEnabled = parseBool("routesEnabled", routesEnabled);

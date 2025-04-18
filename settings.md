@@ -24,6 +24,10 @@ Map Move - Should only be used if maps are enabled, allows panning around the ma
 Debug - A debug screen that may be removed in future releases. Shows the current state of the app.  
 ![](images/settings/debug.png)
 
+### Display Lat/Long
+
+Determines if the curent latitude and longitide are displayed on the watch screen.
+
 ---
 
 ### UI Mode
@@ -199,6 +203,10 @@ The latitude to render (must also set longitude)
 The longitude to render (must also set latitude)
 
 Set both latitude and longitude to 0 to disable fixed position and use the current location.
+
+### Restrict Scale To Tile Layers
+
+Only allow zooming in/out to the tile layer limits. Also all steps between scales will be the next tile layer (no tile scaling).
 
 ---
 

@@ -398,6 +398,7 @@ class SettingsMap extends Rez.Menus.SettingsMap {
         var longString =
             settings.fixedLongitude == null ? "Disabled" : settings.fixedLongitude.format("%.5f");
         safeSetSubLabel(me, :settingsMapFixedLongitude, longString);
+        safeSetToggle(me, :settingsMapScaleRestrictedToTileLayers, settings.scaleRestrictedToTileLayers);
     }
 }
 
@@ -1131,7 +1132,10 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(new SettingsFloatPicker(settings.method(:setFixedLatitude)), view);
         } else if (itemId == :settingsMapFixedLongitude) {
             startPicker(new SettingsFloatPicker(settings.method(:setFixedLongitude)), view);
-        }
+        } else if (itemId == :settingsMapScaleRestrictedToTileLayers) {
+            settings.toggleScaleRestrictedToTileLayers();
+            view.rerender();
+        } 
         else if (itemId == :settingsMapAttribution) {
             WatchUi.pushView(
                 new $.Rez.Menus.SettingsMapAttribution(),

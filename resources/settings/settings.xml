@@ -126,6 +126,10 @@
         <setting propertyKey="@Properties.fixedLongitude" title="@Strings.fixedLongitude" prompt="@Strings.fixedLongitudePrompt">
             <settingConfig type="numeric" min="-180" max="180"/>
         </setting>
+
+        <setting propertyKey="@Properties.scaleRestrictedToTileLayers" title="@Strings.scaleRestrictedToTileLayersTitle">
+            <settingConfig type="boolean"/>
+        </setting>
     </group>
 
     <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle" prompt="@Strings.offTrackAlertsDistanceMPrompt">
