@@ -609,30 +609,16 @@ class BreadcrumbRenderer {
             );
         }
 
-        // always show location
-        if (
-            _cachedValues.fixedPosition != null &&
-            settings.fixedLatitude != null &&
-            settings.fixedLongitude != null
-        ) {
-            var txt =
-                settings.fixedLatitude.format("%.3f") +
-                ", " +
-                settings.fixedLongitude.format("%.3f");
-            dc.drawText(
-                xHalf,
-                screenHeight - scaleFromEdge,
-                Graphics.FONT_XTINY,
-                txt,
-                Graphics.TEXT_JUSTIFY_CENTER
-            );
-        } else if (currentScale != 0f) {
-            var latLong = RectangularPoint.xyToLatLon(
-                centerPosition.x / currentScale,
-                centerPosition.y / currentScale
-            );
-            if (latLong != null) {
-                var txt = latLong[0].format("%.3f") + ", " + latLong[1].format("%.3f");
+        if (settings.displayLatLong) {
+            if (
+                _cachedValues.fixedPosition != null &&
+                settings.fixedLatitude != null &&
+                settings.fixedLongitude != null
+            ) {
+                var txt =
+                    settings.fixedLatitude.format("%.3f") +
+                    ", " +
+                    settings.fixedLongitude.format("%.3f");
                 dc.drawText(
                     xHalf,
                     screenHeight - scaleFromEdge,
@@ -640,6 +626,21 @@ class BreadcrumbRenderer {
                     txt,
                     Graphics.TEXT_JUSTIFY_CENTER
                 );
+            } else if (currentScale != 0f) {
+                var latLong = RectangularPoint.xyToLatLon(
+                    centerPosition.x / currentScale,
+                    centerPosition.y / currentScale
+                );
+                if (latLong != null) {
+                    var txt = latLong[0].format("%.3f") + ", " + latLong[1].format("%.3f");
+                    dc.drawText(
+                        xHalf,
+                        screenHeight - scaleFromEdge,
+                        Graphics.FONT_XTINY,
+                        txt,
+                        Graphics.TEXT_JUSTIFY_CENTER
+                    );
+                }
             }
         }
 

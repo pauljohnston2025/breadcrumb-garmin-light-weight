@@ -171,6 +171,7 @@ class Settings {
     var alertType as Number = ALERT_TYPE_TOAST;
 
     var drawLineToClosestPoint as Boolean = true;
+    var displayLatLong as Boolean = true;
 
     // scratrchpad used for rotations, but it also means we have a large bitmap stored around
     // I will also use that bitmap for re-renders though, and just do rotations every render rather than re-drawing all the tracks/tiles again
@@ -439,6 +440,11 @@ class Settings {
         setValue("drawLineToClosestPoint", drawLineToClosestPoint);
         updateViewSettings();
     }
+    
+    function setDisplayLatLong(value as Boolean) as Void {
+        displayLatLong = value;
+        setValue("displayLatLong", displayLatLong);
+    }
 
     function setDisplayRouteNames(_displayRouteNames as Boolean) as Void {
         displayRouteNames = _displayRouteNames;
@@ -621,6 +627,15 @@ class Settings {
         }
 
         setDrawLineToClosestPoint(true);
+    }
+    
+    function toggleDisplayLatLong() as Void {
+        if (displayLatLong) {
+            setDisplayLatLong(false);
+            return;
+        }
+
+        setDisplayLatLong(true);
     }
 
     function toggleDisplayRouteNames() as Void {
@@ -1108,6 +1123,7 @@ class Settings {
         setMode(defaultSettings.mode);
         setMapEnabled(defaultSettings.mapEnabled);
         setDrawLineToClosestPoint(defaultSettings.drawLineToClosestPoint);
+        setDisplayLatLong(defaultSettings.displayLatLong);
         setTrackColour(defaultSettings.trackColour);
         setElevationColour(defaultSettings.elevationColour);
         setUserColour(defaultSettings.userColour);
@@ -1162,6 +1178,7 @@ class Settings {
             "mode" => mode,
             "mapEnabled" => mapEnabled,
             "drawLineToClosestPoint" => drawLineToClosestPoint,
+            "displayLatLong" => displayLatLong,
             "trackColour" => trackColour.format("%X"),
             "elevationColour" => elevationColour.format("%X"),
             "userColour" => userColour.format("%X"),
@@ -1238,6 +1255,7 @@ class Settings {
         mapEnabled = parseBool("mapEnabled", mapEnabled);
         setMapEnabled(mapEnabled); // prompt for app to open if needed
         drawLineToClosestPoint = parseBool("drawLineToClosestPoint", drawLineToClosestPoint);
+        displayLatLong = parseBool("displayLatLong", displayLatLong);
         displayRouteNames = parseBool("displayRouteNames", displayRouteNames);
         enableOffTrackAlerts = parseBool("enableOffTrackAlerts", enableOffTrackAlerts);
         routesEnabled = parseBool("routesEnabled", routesEnabled);

@@ -31,6 +31,10 @@
             <listEntry value="3">@Strings.renderModeNoBufferedNoRotating</listEntry>
         </settingConfig>
     </setting>
+
+    <setting propertyKey="@Properties.displayLatLong" title="@Strings.displayLatLongTitle">
+        <settingConfig type="boolean"/>
+    </setting>
     
     <group id="zoomAtPace" title="@Strings.zoomAtPaceTitle" description="@Strings.zoomAtPaceDescription">
         <setting propertyKey="@Properties.zoomAtPaceMode" title="@Strings.zoomAtPaceModeTitle">

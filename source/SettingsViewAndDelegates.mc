@@ -249,6 +249,7 @@ class SettingsMain extends Rez.Menus.SettingsMain {
                 break;
         }
         safeSetSubLabel(me, :settingsMainRenderMode, renderModeString);
+        safeSetToggle(me, :settingsMainDisplayLatLong, settings.displayLatLong);
     }
 }
 
@@ -641,6 +642,9 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
                 new $.SettingsRenderModeDelegate(view),
                 WatchUi.SLIDE_IMMEDIATE
             );
+        } else if (itemId == :settingsMainDisplayLatLong) {
+            settings.toggleDisplayLatLong();
+            view.rerender();
         } else if (itemId == :settingsMainZoomAtPace) {
             var view = new $.SettingsZoomAtPace();
             WatchUi.pushView(view, new $.SettingsZoomAtPaceDelegate(view), WatchUi.SLIDE_IMMEDIATE);

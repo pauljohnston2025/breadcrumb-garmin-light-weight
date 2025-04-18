@@ -87,6 +87,7 @@
     <string id="tileSizePrompt">Pixels per tile x and y</string>
     <string id="tileCacheSizePrompt">Number of tiles to cache</string>
     <string id="colourPrompt">Colour in AARRGGBB format</string>
+    <string id="displayLatLongTitle">Display lat/long</string>
 
     <string id="selectedRoute">Selected route</string>
     <string id="routesTitle">Routes</string>

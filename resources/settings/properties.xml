@@ -47,5 +47,6 @@
 	<property id="displayRouteNames" type="boolean">false</property>
 	<property id="routesEnabled" type="boolean">false</property>
 	<property id="haveDoneFirstLoadSetup" type="boolean">false</property>
+	<property id="displayLatLong" type="boolean">false</property>
 
 </properties>

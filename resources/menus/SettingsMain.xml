@@ -3,6 +3,7 @@
     <menu-item id="settingsMainModeUiMode" label="@Strings.uiModeTitle"/>
     <menu-item id="settingsMainRecalculateItervalS" label="@Strings.recalculateItervalSTitle"/>
     <menu-item id="settingsMainRenderMode" label="@Strings.renderModeTitle"/>
+    <toggle-menu-item id="settingsMainDisplayLatLong" label="@Strings.displayLatLongTitle"/>
     <menu-item id="settingsMainZoomAtPace" label="@Strings.zoomAtPaceTitle"/>
     <menu-item id="settingsMainRoutes" label="@Strings.routesTitle"/>
     <menu-item id="settingsMainMap" label="@Strings.mapsettingsTitle"/>
