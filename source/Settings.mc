@@ -54,17 +54,17 @@ const COMPANION_APP_TILE_URL = "http://127.0.0.1:8080";
 
 class TileServerInfo {
     var attributionType as Number;
-    var urlTemaplte as String;
+    var urlTempalte as String;
     var tileLayerMin as Number;
     var tileLayerMax as Number;
     function initialize(
         attributionType as Number,
-        urlTemaplte as String,
+        urlTempalte as String,
         tileLayerMin as Number,
         tileLayerMax as Number
     ) {
         me.attributionType = attributionType;
-        me.urlTemaplte = urlTemaplte;
+        me.urlTempalte = urlTempalte;
         me.tileLayerMin = tileLayerMin;
         me.tileLayerMax = tileLayerMax;
     }
@@ -314,10 +314,22 @@ class Settings {
             // companion app
             // setting back to defaults otherwise when we chose companion app we will not get the correct tilesize and it will crash
             var defaultSettings = new Settings();
-            setTileLayerMax(defaultSettings.tileLayerMax);
-            setTileLayerMin(defaultSettings.tileLayerMin);
-            setTileSize(defaultSettings.tileSize);
-            setTileUrl(COMPANION_APP_TILE_URL);
+            if (tileLayerMax != defaultSettings.tileLayerMax)
+            {
+                setTileLayerMax(defaultSettings.tileLayerMax);
+            }
+            if (tileLayerMin != defaultSettings.tileLayerMin)
+            {
+                setTileLayerMin(defaultSettings.tileLayerMin);
+            }
+            if (tileSize != defaultSettings.tileSize)
+            {
+                setTileSize(defaultSettings.tileSize);
+            }
+            if (tileUrl != COMPANION_APP_TILE_URL)
+            {
+                setTileUrl(COMPANION_APP_TILE_URL);
+            }
             return;
         }
 
@@ -327,11 +339,23 @@ class Settings {
         }
 
         var tileServerInfo = TILE_SERVERS[tileServerIndex];
-        setTileLayerMax(tileServerInfo.tileLayerMax);
-        setTileLayerMin(tileServerInfo.tileLayerMin);
-        setTileSize(256);
-        // set url last to clear tile cache
-        setTileUrl(tileServerInfo.urlTemaplte);
+        if (tileLayerMax != tileServerInfo.tileLayerMax)
+        {
+            setTileLayerMax(tileServerInfo.tileLayerMax);
+        }
+        if (tileLayerMin != tileServerInfo.tileLayerMin)
+        {
+            setTileLayerMin(tileServerInfo.tileLayerMin);
+        }
+        if (tileSize != 256)
+        {
+            setTileSize(256);
+        }
+        if (tileUrl != tileServerInfo.urlTempalte)
+        {
+            // set url last to clear tile cache (if needed)
+            setTileUrl(tileServerInfo.urlTempalte);
+        }
     }
 
     function setTileUrl(_tileUrl as String) as Void {

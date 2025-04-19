@@ -85,30 +85,33 @@ class WebRequestHandleWrapper {
     ) as Void {
         try {
             handler.handle(responseCode, data);
-        
-        if (responseCode != 200 && webHandler._settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
-            // todo only send this on certain errors, and only probbaly only after some limit?
-            webHandler.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
-        }
 
-        // got some stack overflows, as handle can be called inline if it knows it will fail (eg. BLE_CONNECTION_UNAVAILABLE)
-        // also saw alot of NETWORK_REQUEST_TIMED_OUT in the logs, but thnk it was when the BLE_CONNECTION_UNAVAILABLE happened
-        // as that was the last log, and it makes sense that it can short circuit
-        // so launch the next task in a timer
-        // var timer = new Timer.Timer();
-        // timer.start(webHandler.method(:startNext), 1, false);
-        // or at least I would do this if the timer task was available to datafields :(
-        // so we might have to call 'startNext' every time the compute method runs :(
-        // new Timer.Timer(); Error: Permission Required ; Details: Module 'Toybox.Timer' not available to 'Data Field'
-        webHandler.decrementOutstanding();
+            if (
+                responseCode != 200 &&
+                webHandler._settings.tileUrl.equals(COMPANION_APP_TILE_URL)
+            ) {
+                // todo only send this on certain errors, and only probbaly only after some limit?
+                webHandler.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
+            }
 
-        if (responseCode == 200) {
-            webHandler._successCount++;
-        } else {
-            // System.println("got web error: " + responseCode);
-            webHandler._errorCount++;
-        }
-        webHandler._lastResult = responseCode;
+            // got some stack overflows, as handle can be called inline if it knows it will fail (eg. BLE_CONNECTION_UNAVAILABLE)
+            // also saw alot of NETWORK_REQUEST_TIMED_OUT in the logs, but thnk it was when the BLE_CONNECTION_UNAVAILABLE happened
+            // as that was the last log, and it makes sense that it can short circuit
+            // so launch the next task in a timer
+            // var timer = new Timer.Timer();
+            // timer.start(webHandler.method(:startNext), 1, false);
+            // or at least I would do this if the timer task was available to datafields :(
+            // so we might have to call 'startNext' every time the compute method runs :(
+            // new Timer.Timer(); Error: Permission Required ; Details: Module 'Toybox.Timer' not available to 'Data Field'
+            webHandler.decrementOutstanding();
+
+            if (responseCode == 200) {
+                webHandler._successCount++;
+            } else {
+                // System.println("got web error: " + responseCode);
+                webHandler._errorCount++;
+            }
+            webHandler._lastResult = responseCode;
         } catch (e) {
             System.println("failed to handle web request: " + e);
         }
@@ -130,9 +133,9 @@ class ConnectionListenerWrapper extends Communications.ConnectionListener {
     }
 
     function onComplete() {
-        try{
-        decOutstanding();
-        handler.onComplete();
+        try {
+            decOutstanding();
+            handler.onComplete();
         } catch (e) {
             System.println("failed onComplete: " + e);
         }
@@ -140,8 +143,8 @@ class ConnectionListenerWrapper extends Communications.ConnectionListener {
 
     function onError() {
         try {
-        decOutstanding();
-        handler.onError();
+            decOutstanding();
+            handler.onError();
         } catch (e) {
             System.println("failed onError: " + e);
         }

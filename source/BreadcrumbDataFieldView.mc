@@ -244,6 +244,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         offTrackInfo = new OffTrackInfo(true, null);
         // render mode could have changed
         updateScratchPadBitmap();
+        resetRenderTime();
     }
 
     function resetRenderTime() as Void {
