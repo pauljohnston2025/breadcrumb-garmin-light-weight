@@ -30,6 +30,17 @@ You can also manually add a text file `BreadcrumbDataField.TXT` to the log direc
 
 ---
 
+# Development
+
+Must port forward both adb and the tile server for the simulator to be able to fetch tiles from the comapnion app
+
+* adb forward tcp:8080 tcp:8080
+* adb forward tcp:7381 tcp:7381
+
+---
+
+# Garmin Iq Store Content
+
 Can be used without the companion app, but will only show current track.
 Use the companion app to add a route that you can follow.
 

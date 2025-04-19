@@ -474,13 +474,14 @@ class TileCache {
 
     function tileDataToBitmap(arr as Array<Number>) as Graphics.BufferedBitmap? {
         // System.println("tile data " + arr);
-
-        if (arr.size() < _settings.tileSize * _settings.tileSize) {
+        var tileSize = _settings.tileSize;
+        var requiredSize = tileSize * tileSize;
+        if (arr.size() < requiredSize) {
             System.println("tile length too short: " + arr.size());
             return null;
         }
 
-        if (arr.size() != _settings.tileSize * _settings.tileSize) {
+        if (arr.size() != requiredSize) {
             // we could load tile partially, but that would require checking each itteration of the for loop,
             // want to avoid any extra work for perf
             System.println("bad tile length: " + arr.size() + " best effort load");
@@ -489,7 +490,6 @@ class TileCache {
         // System.println("processing tile data, first colour is: " + arr[0]);
 
         // todo check if setting the pallet actually reduces memory
-        var tileSize = _settings.tileSize;
         var localBitmap = newBitmap(tileSize, tileSize, null);
         var localDc = localBitmap.getDc();
         var it = 0;
