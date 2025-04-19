@@ -913,7 +913,7 @@ class Settings {
         return defaultValue;
     }
 
-    function parseNumberRaw(
+    static function parseNumberRaw(
         key as String,
         value as String or Null or Float or Number or Double,
         defaultValue as Number
@@ -994,7 +994,7 @@ class Settings {
         return defaultValue;
     }
 
-    function parseFloatRaw(
+    static function parseFloatRaw(
         key as String,
         value as String or Null or Float or Number or Double,
         defaultValue as Float

@@ -138,36 +138,42 @@ class NumberPicker {
 }
 
 class FloatPicker extends NumberPicker {
-    function initialize() {
+    var defaultVal as Float;
+    function initialize(defaultVal as Float) {
         NumberPicker.initialize("0123456789.", 10);
+        me.defaultVal = defaultVal;
     }
 
     protected function onReading(value as String) as Void {
-        onValue(value.toFloat());
+        onValue(Settings.parseFloatRaw("key", value, defaultVal));
     }
 
     protected function onValue(value as Float?) as Void;
 }
 
 class IntPicker extends NumberPicker {
-    function initialize() {
+    var defaultVal as Number;
+    function initialize(defaultVal as Number) {
         NumberPicker.initialize("0123456789", 10);
+        me.defaultVal = defaultVal;
     }
 
     protected function onReading(value as String) as Void {
-        onValue(value.toNumber());
+        onValue(Settings.parseNumberRaw("key", value, defaultVal));
     }
 
     protected function onValue(value as Number?) as Void;
 }
 
 class ColourPicker extends NumberPicker {
-    function initialize() {
+    var defaultVal as Number;
+    function initialize(defaultVal as Number) {
         NumberPicker.initialize("0123456789ABCDEF", 6);
+        me.defaultVal = defaultVal;
     }
 
     protected function onReading(value as String) as Void {
-        onValue(Settings.parseColourRaw("key", value, Graphics.COLOR_BLACK));
+        onValue(Settings.parseColourRaw("key", value, defaultVal));
     }
 
     protected function onValue(value as Number?) as Void;

@@ -3,6 +3,7 @@ A garmin watch datafield that shows a breadcrumb trail. For watches that do not 
 Donations are always welcome, but not required: paypal.me/pauljohnston2025
 
 Information on all the settings can be found in [Settings](settings.md)  
+note: Map support is disabled by default, but can be turned on in app settings, this is because map tile loading is memory intensive and may cause crashes on some devices. You must set `Tile Cache Size` if using maps to avoid crashes.    
 Companion app can be found at [Companion App](https://github.com/pauljohnston2025/breadcrumb-mobile.git)  
 [Companion App Releases](https://github.com/pauljohnston2025/breadcrumb-mobile/releases/latest)
 
@@ -18,6 +19,14 @@ To aid in the fastest resolution, please include.
 - The settings that you had enabled/disabled (a full screenshot of all the settings is best)
 
 Please ensure any images/recordings do not contain any identifying information, such as your current location.
+
+If the watch app encounters a crash (connect iq symbol displayed), you should also include the crash report. This can be obtained by:
+
+* Connect the watch to a computer
+* Open the contents of the watch and navigate to  `<watch>\Internal Storage\GARMIN\APPS\LOGS`
+* Copy any log files, usually it is called CIQ_LOG.LOG, but may be called CIQ_LOG.BAK
+
+You can also manually add a text file `BreadcrumbDataField.TXT` to the log directory (before the crash), and any app logs will be printed there. Please also include this log file.
 
 ---
 
@@ -39,8 +48,6 @@ Elevation Overview: Shows an elevation profile of the route, allowing users to a
 Routing (companion app required): Users can import routes from Google Maps or GPX files using the companion app.  
 Customizable Settings: Fully customizable via the watch or Connect IQ settings. No companion app required for basic functionality.  
 Breadcrumb-Only Mode: (Optional) A simplified display mode showing only the breadcrumb trail, without the underlying map tiles, for increased battery life on devices with limited screen resolution or memory.
-
-note: Map support is disabled by default, but can be turned on in app settings, this is because map tile loading is memory intensive and may cause crashes on some devices.
 
 Companion app:
 The companion app is available on my github: https://github.com/pauljohnston2025/breadcrumb-mobile.git  

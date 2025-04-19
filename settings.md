@@ -1,3 +1,11 @@
+# Prerequisites
+
+If enabling map tiles or trying to send routes to the watch app you will require a bluetooth connection with a phone running the [Companion App](https://github.com/pauljohnston2025/breadcrumb-mobile.git), and the [garmin connect app](https://play.google.com/store/apps/details?id=com.garmin.android.apps.connectmobile&hl=en_AU).  
+If you just wish to use the breadcrumb track feature (a trail of your current track), it can be used without any phone connection.  
+Map support can be enabled without the companion app, but the [garmin connect app](https://play.google.com/store/apps/details?id=com.garmin.android.apps.connectmobile&hl=en_AU) must still be installed, and an active bluetooth connection maintained.
+
+---
+
 All settings are editable from 4 places.
 
 - The [connect iq store](#garmin-settings-connect-iq-store) where you installed the app
@@ -108,7 +116,9 @@ How fast, in m/s, the user needs to be moving in order to trigger zoom changes.
 ### Map Enabled
 
 Enables the map tile rendering.
-Choose these values wisely. Too big = crash, too small = crash or slow performance.
+Choose these values wisely. Too big = crash, too small = crash or slow performance.  
+note: Map support is disabled by default, this is because map tile loading is memory intensive and may cause crashes on some devices. You must set `Tile Cache Size` if using maps to avoid crashes.  
+Please ensure DND mode is off when using maps, I have encountered slow tile loads due to low bluetooth speeds (suspect DND mode was the reason).
 
 Best Guess for map settings:  
 Tile Cache Size if using zoom at pace: `2*<Tile Cache Size without zoom at pace>`  
