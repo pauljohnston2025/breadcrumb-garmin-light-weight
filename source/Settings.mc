@@ -78,37 +78,34 @@ const TILE_SERVERS = [
     // 2 -> ...
     // open topo
     new TileServerInfo(ATTRIBUTION_OPENTOPOMAP, "https://a.tile.opentopomap.org/{z}/{x}/{y}.png", 0, 15), // OpenTopoMap
-    // google
-    new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", 0, 20), // "Google - Hybrid"
-    new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", 0, 20), // "Google - Satellite"
-    new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", 0, 20), // "Google - Road"
-    new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}", 0, 20), // "Google - Terain"
+    // google - cannot use returns 404 - works from companion app (userAgent sent)
+    // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", 0, 20), // "Google - Hybrid"
+    // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", 0, 20), // "Google - Satellite"
+    // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", 0, 20), // "Google - Road"
+    // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}", 0, 20), // "Google - Terain"
     // stamen - cannot use statia requires auth
     // new TileServerInfo("https://tiles.stadiamaps.com/tiles/stamen_toner/{Z}/{Y}/{X}.png", 0, 20), // "Toner"
     // new TileServerInfo("https://tiles.stadiamaps.com/tiles/stamen_terrain/{Z}/{Y}/{X}.png", 0, 20), // "Terrain"
     // new TileServerInfo("https://tiles.stadiamaps.com/tiles/stamen_terrain/{Z}/{Y}/{X}.png", 0, 20), // "Terrain"
     // arcgis (esri) - note some of these have been removed due to not enough coverage, and others have had layermin/max altered for australian coverage
     // _Reference maps are all the same - just the location names removing them
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}", 0, 12), // Esri - NatGeo World Map
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - USA Topo Maps
     // Note: when testing on the simulator, some of theese occasionaly seem to produce   
     // Error: Invalid Value
     // Details: failed inside handle_image_callback
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Boundaries and Places
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places_Alternate/MapServer/tile/{z}/{y}/{x}", 0, 11), // Esri - World Boundaries and Places Alternate
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Dark Gray Base
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade Dark
     new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", 0, 20), // Esri - World Imagery
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Light Gray Base
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Specialty/World_Navigation_Charts/MapServer/tile/{z}/{y}/{x}", 0, 10), // Esri - World Navigation Charts
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Ocean Base
-    // not enough zoom levels to be useful, but does work
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}", 0, 8), // Esri - World Physical Map
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Shaded Relief
     new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Street Map
     new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Topo Map
     new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - World Transportation
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Dark Gray Base
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade Dark
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Light Gray Base
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - USA Topo Maps
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Ocean Base
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Shaded Relief
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}", 0, 12), // Esri - NatGeo World Map
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Specialty/World_Navigation_Charts/MapServer/tile/{z}/{y}/{x}", 0, 10), // Esri - World Navigation Charts
+    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}", 0, 8), // Esri - World Physical Map
     // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
     new TileServerInfo(ATTRIBUTION_OPENSTREETMAP, "https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png", 0, 12), // OpenStreetMap - cyclosm
 ];
