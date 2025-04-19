@@ -83,8 +83,9 @@ class WebRequestHandleWrapper {
                 Graphics.BitmapReference or
                 Null
     ) as Void {
-        handler.handle(responseCode, data);
-
+        try {
+            handler.handle(responseCode, data);
+        
         if (responseCode != 200 && webHandler._settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
             // todo only send this on certain errors, and only probbaly only after some limit?
             webHandler.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
@@ -108,6 +109,9 @@ class WebRequestHandleWrapper {
             webHandler._errorCount++;
         }
         webHandler._lastResult = responseCode;
+        } catch (e) {
+            System.println("failed to handle web request: " + e);
+        }
     }
 }
 
@@ -126,13 +130,21 @@ class ConnectionListenerWrapper extends Communications.ConnectionListener {
     }
 
     function onComplete() {
+        try{
         decOutstanding();
         handler.onComplete();
+        } catch (e) {
+            System.println("failed onComplete: " + e);
+        }
     }
 
     function onError() {
+        try {
         decOutstanding();
         handler.onError();
+        } catch (e) {
+            System.println("failed onError: " + e);
+        }
     }
 
     function decOutstanding() as Void {

@@ -62,6 +62,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     // see onUpdate explaqination for when each is called
     function onLayout(dc as Dc) as Void {
+        try {
+            actualOnLayout(dc);
+        } catch (e) {
+            logE("failed onLayout: " + e);
+        }
+    }
+
+    function actualOnLayout(dc as Dc) as Void {
         // logD("onLayout");
         _cachedValues.setScreenSize(dc.getWidth(), dc.getHeight());
         var textDim = dc.getTextDimensions("1234", Graphics.FONT_XTINY);
@@ -77,8 +85,16 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         _breadcrumbContext.track().onStartResume();
     }
 
-    // see onUpdate explaqination for when each is called
     function compute(info as Activity.Info) as Void {
+        try {
+            actualCompute(info);
+        } catch (e) {
+            logE("failed compute: " + e);
+        }
+    }
+
+    // see onUpdate explaqination for when each is called
+    function actualCompute(info as Activity.Info) as Void {
         // logD("compute");
         // temp hack for debugging (since it seems altitude does not work when playing activity data from gpx file)
         // var route = _breadcrumbContext.route();
@@ -93,8 +109,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
         // store rotations and speed every time
         var rescaleOccurred = _cachedValues.onActivityInfo(info);
-        if (rescaleOccurred)
-        {
+        if (rescaleOccurred) {
             // rescaling is an expensive operatioj, f we have multiple large routes rescale and then try and recalculate off track alerts (or anything else expensive)
             // we could hit watchdog errors. Best to not attempt anything else.
             logD("rescale ocurred, skipping remaining calculate");
@@ -180,8 +195,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             }
         }
 
-        if (!atLeastOneEnabled)
-        {
+        if (!atLeastOneEnabled) {
             // no routes are enabled - pretend we are ontrack
             offTrackInfo.onTrack = true;
             return;
@@ -265,6 +279,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // in some other cases onUpdate is called interleaved with onCompute once a second each (think this might be when its the active screen but not currently renderring)
     // so we need to do all or heavy scaling code in compute, and make onUpdate just handle drawing, and possibly rotation (pre storing rotation could be slow/hard)
     function onUpdate(dc as Dc) as Void {
+        try {
+            actualOnUpdate(dc);
+        } catch (e) {
+            logE("failed onUpdate: " + e);
+        }
+    }
+    function actualOnUpdate(dc as Dc) as Void {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
 
@@ -340,9 +361,18 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         if (settings.mapEnabled) {
             var attrib = settings.getAttribution();
             if (attrib != null) {
-                dc.drawBitmap2(_cachedValues.xHalf - attrib.getWidth() / 2, _cachedValues.screenHeight - 20, attrib, {
-                    :tintColor => settings.uiColour,
-                });
+                try {
+                    dc.drawBitmap2(
+                        _cachedValues.xHalf - attrib.getWidth() / 2,
+                        _cachedValues.screenHeight - 20,
+                        attrib,
+                        {
+                            :tintColor => settings.uiColour,
+                        }
+                    );
+                } catch (e) {
+                    logE("failed drawBitmap2: " + e);
+                }
             }
         }
     }
@@ -385,20 +415,23 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 rederUnrotated(scratchPadBitmapDc, routes, track);
             }
 
-            if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING) {
-                dc.drawBitmap2(0, 0, _scratchPadBitmap, {
-                    // :bitmapX =>
-                    // :bitmapY =>
-                    // :bitmapWidth =>
-                    // :bitmapHeight =>
-                    // :tintColor =>
-                    // :filterMode =>
-                    :transform => _cachedValues.rotationMatrix,
-                });
-            } else {
-                dc.drawBitmap(0, 0, _scratchPadBitmap);
+            try {
+                if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING) {
+                    dc.drawBitmap2(0, 0, _scratchPadBitmap, {
+                        // :bitmapX =>
+                        // :bitmapY =>
+                        // :bitmapWidth =>
+                        // :bitmapHeight =>
+                        // :tintColor =>
+                        // :filterMode =>
+                        :transform => _cachedValues.rotationMatrix,
+                    });
+                } else {
+                    dc.drawBitmap(0, 0, _scratchPadBitmap);
+                }
+            } catch (e) {
+                logE("failed drawBitmap2 or drawBitmap: " + e);
             }
-
             return;
         }
 

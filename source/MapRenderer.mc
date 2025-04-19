@@ -157,16 +157,42 @@ class MapRenderer {
                 rotationMatrix.translate(-xTranslate, -yTranslate); // move back to position
                 rotationMatrix.scale(tileScaleFactor, tileScaleFactor); // scale
 
-                dc.drawBitmap2(xPos, yPos, tileFromCache.bitmap, {
-                    // :bitmapX =>
-                    // :bitmapY =>
-                    // :bitmapWidth =>
-                    // :bitmapHeight =>
-                    // :tintColor =>
-                    :transform => rotationMatrix,
-                    // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
-                    :filterMode => Graphics.FILTER_MODE_BILINEAR,
-                });
+                // Error: Unhandled Exception
+                // Time: 2025-04-19T13:31:58Z
+                // Part-Number: 006-B3704-00
+                // Firmware-Version: '19.05'
+                // Language-Code: eng
+                // ConnectIQ-Version: 5.1.1
+                // Filename: BreadcrumbDataField
+                // Appname: BreadcrumbDataField
+                // Stack:
+                //   - pc: 0x1000c98a
+                //     File: 'BreadcrumbDataField\source\MapRenderer.mc'
+                //     Line: 160
+                //     Function: renderMap
+                //   - pc: 0x1000ad04
+                //     File: 'BreadcrumbDataField\source\BreadcrumbDataFieldView.mc'
+                //     Line: 410
+                //     Function: renderMain
+                //   - pc: 0x1000b7f0
+                //     File: 'BreadcrumbDataField\source\BreadcrumbDataFieldView.mc'
+                //     Line: 293
+                //     Function: onUpdate
+                try {
+                    dc.drawBitmap2(xPos, yPos, tileFromCache.bitmap, {
+                        // :bitmapX =>
+                        // :bitmapY =>
+                        // :bitmapWidth =>
+                        // :bitmapHeight =>
+                        // :tintColor =>
+                        :transform => rotationMatrix,
+                        // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
+                        :filterMode => Graphics.FILTER_MODE_BILINEAR,
+                    });
+                } catch (e) {
+                    // not sure what this exception was see above
+                    logE("failed drawBitmap2: " + e);
+                }
             }
         }
     }

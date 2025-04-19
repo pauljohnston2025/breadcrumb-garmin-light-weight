@@ -158,12 +158,15 @@ function drawScaledBitmapHelper(
     var tileScaleFactor = getApp()._breadcrumbContext.cachedValues().tileScaleFactor;
     var scaleMatrix = new AffineTransform();
     scaleMatrix.scale(tileScaleFactor, tileScaleFactor); // scale
-
-    dc.drawBitmap2(x, y, bitmap, {
-        :transform => scaleMatrix,
-        // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
-        :filterMode => Graphics.FILTER_MODE_BILINEAR,
-    });
+    try {
+        dc.drawBitmap2(x, y, bitmap, {
+            :transform => scaleMatrix,
+            // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
+            :filterMode => Graphics.FILTER_MODE_BILINEAR,
+        });
+    } catch (e) {
+        logE("failed drawBitmap2: " + e);
+    }
 }
 
 function padStart(str as String?, targetLength as Number, padChar as Char) as String {

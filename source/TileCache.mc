@@ -192,7 +192,10 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             var maxDim = maxN(data.getWidth(), data.getHeight()); // should be equal (every time server i know of is 256*256), but who knows
             var pixelsPerTile = maxDim / cachedValues.smallTilesPerBigTile.toFloat();
             var sourceBitmap = data;
-            if (Math.ceil(pixelsPerTile) != settings.tileSize || Math.floor(pixelsPerTile) != settings.tileSize) {
+            if (
+                Math.ceil(pixelsPerTile) != settings.tileSize ||
+                Math.floor(pixelsPerTile) != settings.tileSize
+            ) {
                 // we have an anoying situation - stretch/reduce the image
                 var scaleUpSize = cachedValues.smallTilesPerBigTile * settings.tileSize;
                 var scaleFactor = scaleUpSize / maxDim.toFloat();
@@ -202,11 +205,15 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
                 var scaleMatrix = new AffineTransform();
                 scaleMatrix.scale(scaleFactor, scaleFactor); // scale
 
-                upscaledBitmapDc.drawBitmap2(0, 0, sourceBitmap, {
-                    :transform => scaleMatrix,
-                    // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
-                    :filterMode => Graphics.FILTER_MODE_BILINEAR,
-                });
+                try {
+                    upscaledBitmapDc.drawBitmap2(0, 0, sourceBitmap, {
+                        :transform => scaleMatrix,
+                        // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
+                        :filterMode => Graphics.FILTER_MODE_BILINEAR,
+                    });
+                } catch (e) {
+                    logE("failed drawBitmap2: " + e);
+                }
                 // System.println("scaled up to: " + upscaledBitmap.getWidth() + " " + upscaledBitmap.getHeight());
                 // System.println("from: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
                 sourceBitmap = upscaledBitmap; // resume what we were doing as if it was always the larger bitmap
@@ -476,11 +483,11 @@ class TileCache {
         // System.println("tile data " + arr);
         var tileSize = _settings.tileSize;
         var requiredSize = tileSize * tileSize;
-        // got a heap of 
+        // got a heap of
         // Error: Unexpected Type Error
         // Details: 'Failed invoking <symbol>'
         // even though the only calling coe checks it's a string, then calls .toUtf8Array()
-        // Stack: 
+        // Stack:
         // - pc: 0x1000867c
         //     File: 'BreadcrumbDataField\source\TileCache.mc'
         //     Line: 479
@@ -493,16 +500,15 @@ class TileCache {
         //     File: 'BreadcrumbDataField\source\WebRequest.mc'
         //     Line: 86
         //     Function: handle
-        if (!(charArr instanceof Array))
-        {
+        if (!(charArr instanceof Array)) {
             // managed to get this in the sim, it was a null (when using .toUtf8Array())
             // docs do not say that it can ever be null though
-            // perhaps the colour string im sending is no good? 
+            // perhaps the colour string im sending is no good?
             // seems to be random though. And it seems to get through on the next pass, might be memory related?
             // it even occurs on a simple string (no special characters)
             // resorting to using the string directly
             // the toCharArray method im using now seems to throw OOM errors instead of returning null
-            // not sure which is better, we are at our memory limits regardless, so 
+            // not sure which is better, we are at our memory limits regardless, so
             // optimisation level seems to effect it (think it must garbage collect faster or inline things where it can)
             // slow optimisations are always good for relase, but make debugging harder when variables are optimised away (which is why i was running no optimisations).
             System.println("got a bad type somehow?: " + charArr);

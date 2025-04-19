@@ -600,14 +600,19 @@ class BreadcrumbRenderer {
         var scaleFromEdge = 75; // guestimate
 
         if (_cachedValues.fixedPosition != null || _cachedValues.scale != null) {
-            dc.drawBitmap2(
-                returnToUserX - _crosshair.getWidth() / 2,
-                returnToUserY - _crosshair.getHeight() / 2,
-                _crosshair,
-                {
-                    :tintColor => settings.uiColour,
-                }
-            );
+            try {
+                dc.drawBitmap2(
+                    returnToUserX - _crosshair.getWidth() / 2,
+                    returnToUserY - _crosshair.getHeight() / 2,
+                    _crosshair,
+                    {
+                        :tintColor => settings.uiColour,
+                    }
+                );
+            } catch (e) {
+                // not sure what this exception was see above
+                logE("failed drawBitmap2: " + e);
+            }
         }
 
         if (settings.displayLatLong) {
@@ -646,29 +651,34 @@ class BreadcrumbRenderer {
         }
 
         if (settings.mode == MODE_MAP_MOVE) {
-            dc.drawBitmap2(0, yHalf - _leftArrow.getHeight() / 2, _leftArrow, {
-                :tintColor => settings.uiColour,
-            });
-            dc.drawBitmap2(
-                screenWidth - _rightArrow.getWidth(),
-                yHalf - _rightArrow.getHeight() / 2,
-                _rightArrow,
-                {
+            try {
+                dc.drawBitmap2(0, yHalf - _leftArrow.getHeight() / 2, _leftArrow, {
                     :tintColor => settings.uiColour,
-                }
-            );
-            dc.drawBitmap2(xHalf - _upArrow.getWidth() / 2, 0, _upArrow, {
-                :tintColor => settings.uiColour,
-            });
-            if (settings.getAttribution() == null) {
+                });
                 dc.drawBitmap2(
-                    xHalf - _downArrow.getWidth() / 2,
-                    screenHeight - _downArrow.getHeight(),
-                    _downArrow,
+                    screenWidth - _rightArrow.getWidth(),
+                    yHalf - _rightArrow.getHeight() / 2,
+                    _rightArrow,
                     {
                         :tintColor => settings.uiColour,
                     }
                 );
+                dc.drawBitmap2(xHalf - _upArrow.getWidth() / 2, 0, _upArrow, {
+                    :tintColor => settings.uiColour,
+                });
+                if (settings.getAttribution() == null) {
+                    dc.drawBitmap2(
+                        xHalf - _downArrow.getWidth() / 2,
+                        screenHeight - _downArrow.getHeight(),
+                        _downArrow,
+                        {
+                            :tintColor => settings.uiColour,
+                        }
+                    );
+                }
+            } catch (e) {
+                // not sure what this exception was see above
+                logE("failed drawBitmap2: " + e);
             }
             return;
         }
@@ -1087,8 +1097,7 @@ class BreadcrumbRenderer {
     ) as [Float, Float, Float, Float] {
         var distanceM = distanceScaled;
         var distanceScale = _cachedValues.currentScale;
-        if (distanceScale != 0f)
-        {
+        if (distanceScale != 0f) {
             distanceM = distanceScaled / distanceScale;
         }
 
