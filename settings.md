@@ -229,6 +229,9 @@ Set both latitude and longitude to 0 to disable fixed position and use the curre
 Only allow zooming in/out to the tile layer limits. Also all steps between scales will be the next tile layer (no tile scaling).
 
 ---
+# Off Track Alerts
+
+Calculating off track alerts (either Draw Line To Last Point, or Off Track Alerts) is a computationally heavy task. This means if there are multiple large routes the watch can error out with a watchdog error if our code executes too long. I have tested with up to 3 large routes on my venu2s, and it seems to handle it. Only enabled routes are taken into consideration. For multiple enabled routes, you are considerred ontrack if you are on at least one of the tracks. See the [Routes](#routes) section for use cases of multiple routes, eg. triathlons. 
 
 ### Off Track Distance
 
@@ -236,15 +239,15 @@ The number of meters you need to be off track for an alert to be triggered or a 
 
 ### Draw Line To Last Point
 
-Draw a line back to the spot where you left the route (only works if a single route is enabled).
+Draw a line back to the spot where you left the route. If multiple routes are enabled a line will be drawn the last point where you left closest route.
 
 ### Off Track Alerts
 
-Trigger an alert when you leave the track by `Off Track Distance`.
+Trigger an alert when you leave a route by `Off Track Distance`.
 
 ### Off Track Alerts Max Report Interval
 
-How often, in seconds, an alert should fire. Alerts will continue firing until you return to the planned route.
+How often, in seconds, an alert should fire. Alerts will continue firing until you return to the planned route (or reach a section of another enabled route). 
 
 ### Off Track Alerts Alert Type
 

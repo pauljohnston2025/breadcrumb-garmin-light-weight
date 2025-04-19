@@ -92,7 +92,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         // }
 
         // store rotations and speed every time
-        _cachedValues.onActivityInfo(info);
+        var rescaleOccurred = _cachedValues.onActivityInfo(info);
+        if (rescaleOccurred)
+        {
+            // rescaling is an expensive operatioj, f we have multiple large routes rescale and then try and recalculate off track alerts (or anything else expensive)
+            // we could hit watchdog errors. Best to not attempt anything else.
+            logD("rescale ocurred, skipping remaining calculate");
+            return;
+        }
         // this is here due to stack overflow bug when requests trigger the next request
         while (_breadcrumbContext.webRequestHandler().startNextIfWeCan()) {}
 
@@ -148,11 +155,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             return;
         }
 
+        var atLeastOneEnabled = false;
         for (var i = 0; i < _breadcrumbContext.routes().size(); ++i) {
             var route = _breadcrumbContext.routes()[i];
             if (!settings.routeEnabled(route.storageIndex)) {
                 continue;
             }
+            atLeastOneEnabled = true;
             var routeOffTrackInfo = route.checkOffTrack(
                 newPoint,
                 settings.offTrackAlertsDistanceM * _cachedValues.currentScale
@@ -169,6 +178,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 offTrackInfo = routeOffTrackInfo;
                 return;
             }
+        }
+
+        if (!atLeastOneEnabled)
+        {
+            // no routes are enabled - pretend we are ontrack
+            offTrackInfo.onTrack = true;
+            return;
         }
 
         offTrackInfo.onTrack = false; // use the last pointWeLeftTrack from when we were on track

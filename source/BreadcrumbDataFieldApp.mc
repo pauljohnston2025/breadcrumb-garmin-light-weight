@@ -184,12 +184,11 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             }
 
             var tileDataStr = rawData[3] as String;
-            var tileData = tileDataStr.toUtf8Array();
             if (
-                tileData.size() !=
+                tileDataStr.length() !=
                 _breadcrumbContext.settings().tileSize * _breadcrumbContext.settings().tileSize
             ) {
-                System.println("Failed to parse map tile, bad tile length: " + tileData.size());
+                System.println("Failed to parse map tile, bad tile length: " + tileDataStr.length());
                 return;
             }
 
@@ -199,7 +198,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             var tileKey = new TileKey(x, y, z);
             var tile = new Tile();
             var _tileCache = _breadcrumbContext.mapRenderer()._tileCache;
-            var bitmap = _tileCache.tileDataToBitmap(tileData);
+            var bitmap = _tileCache.tileDataToBitmap(tileDataStr.toCharArray());
             if (bitmap == null) {
                 System.println("failed to parse bitmap on set tile data");
                 return;

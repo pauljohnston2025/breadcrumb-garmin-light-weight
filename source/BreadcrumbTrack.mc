@@ -395,25 +395,27 @@ class BreadcrumbTrack {
 
     function calculateDistancePointToSegment(
         pointP as RectangularPoint,
-        segmentA as RectangularPoint,
-        segmentB as RectangularPoint
-    ) as [Float, RectangularPoint] {
-        var segmentLengthSq = segmentA.distanceTo(segmentB);
-        segmentLengthSq = segmentLengthSq * segmentLengthSq;
+        segmentAX as Float,
+        segmentAY as Float,
+        segmentBX as Float,
+        segmentBY as Float
+    ) as [Float, Float, Float] {
+
+        // Vector V = B - A
+        var vx = segmentBX - segmentAX;
+        var vy = segmentBY - segmentAY;
+        var segmentLengthSq = vx * vx + vy * vy;
 
         if (segmentLengthSq == 0.0) {
             // Points A and B are the same
-            return [pointP.distanceTo(segmentA), pointP];
+            return [Math.sqrt(segmentLengthSq), segmentAX, segmentAY];
         }
 
         // --- Simplified Vector Math ---
-        // Vector V = B - A
-        var vx = segmentB.x - segmentA.x; // Example if x, y are accessible
-        var vy = segmentB.y - segmentA.y; // Example
 
         // Vector W = P - A
-        var wx = pointP.x - segmentA.x; // Example
-        var wy = pointP.y - segmentA.y; // Example
+        var wx = pointP.x - segmentAX;
+        var wy = pointP.y - segmentAY;
 
         // Dot product W . V
         var dotWV = wx * vx + wy * vy;
@@ -422,62 +424,103 @@ class BreadcrumbTrack {
         var t = dotWV / segmentLengthSq;
 
         // Clamp t to the range [0, 1]
-        var clampedT = maxF(0.0, minF(1.0, t)); // Use appropriate Math functions
+        var clampedT = maxF(0.0, minF(1.0, t));
 
         // Calculate closest point on segment: Closest = A + clampedT * V
-        var closestX = segmentA.x + clampedT * vx;
-        var closestY = segmentA.y + clampedT * vy;
-
-        // Create a temporary point object for the closest point on the segment
-        var closestPointOnSegment = new RectangularPoint(closestX, closestY, 0f);
+        var closestX = segmentAX + clampedT * vx;
+        var closestY = segmentAY + clampedT * vy;
 
         // Calculate the final distance
-        return [pointP.distanceTo(closestPointOnSegment), closestPointOnSegment];
+        var xDist = pointP.x - closestX;
+        var yDist = pointP.y - closestY;
+        var closestSegmentDistance = Math.sqrt(xDist * xDist + yDist * yDist);
+        return [closestSegmentDistance, closestX, closestY];
     }
 
     // checkpoint should already be scaled, as should distanceCheck
     function checkOffTrack(checkPoint as RectangularPoint, distanceCheck as Float) as OffTrackInfo {
+        logD("checking off track: " + storageIndex);
         // the big annying thing with off track alerts is that routes do not have evenly spaced points
         // if the route goes in a straight line, there is only 2 points, these can be frther than the alert distance
         // larger routes also have further spaced apart points (since we are limited to 500ish points per route to be able to transfer them from phone)
         // this means we could be ontrack, but between 2 points
         // this makes the calculation significantly harder :(, since we have to draw a line between each set of points and see if the user is
         // within some limit of that line
-        var endSecondScanAt = coordinates.pointSize() - 1;
+        var sizeRaw = coordinates.size();
+        if (sizeRaw < 2) {
+            return new OffTrackInfo(false, lastClosePoint);
+        }
+
+        var endSecondScanAtRaw = sizeRaw;
+        var coordinatesRaw = coordinates._internalArrayBuffer; // raw dog access means we can do the calcs much faster (and do not need to create a point with altitude)
         if (lastClosePointIndex != null) {
-            endSecondScanAt =
-                lastClosePointIndex < coordinates.pointSize() - 1
-                    ? lastClosePointIndex
-                    : coordinates.pointSize() - 1;
+            var lastClosePointRawStart = lastClosePointIndex * ARRAY_POINT_SIZE;
             // note: this algoriithm will likely fail if the user is doing the track in the oposite direction
             // but we resort to scanning all the points below anyway
-            for (var i = lastClosePointIndex; i < coordinates.pointSize() - 1; ++i) {
-                var p1 = coordinates.getPoint(i); // p1 can never be null, its always withing size (unless a slice happens in parallel somehow?)
-                var p2 = coordinates.getPoint(i + 1); // p2 can never be null (we stop at 1 less than the end of the array), its always withing size (unless a slice happens in parallel somehow?)
+            if (lastClosePointRawStart <= sizeRaw - ARRAY_POINT_SIZE) {
+                endSecondScanAtRaw = lastClosePointRawStart;
+                var lastPointX = coordinatesRaw[lastClosePointRawStart];
+                var lastPointY = coordinatesRaw[lastClosePointRawStart + 1];
+                for (
+                    var i = lastClosePointRawStart + ARRAY_POINT_SIZE;
+                    i < sizeRaw;
+                    i += ARRAY_POINT_SIZE
+                ) {
+                    var nextX = coordinatesRaw[i];
+                    var nextY = coordinatesRaw[i + 1];
 
-                var distToSegmentAndSegPoint = calculateDistancePointToSegment(checkPoint, p1, p2);
-                if (distToSegmentAndSegPoint[0] < distanceCheck) {
-                    lastClosePointIndex = i;
-                    lastClosePoint = distToSegmentAndSegPoint[1];
-                    return new OffTrackInfo(true, lastClosePoint);
+                    var distToSegmentAndSegPoint = calculateDistancePointToSegment(
+                        checkPoint,
+                        lastPointX,
+                        lastPointY,
+                        nextX,
+                        nextY
+                    );
+
+                    if (distToSegmentAndSegPoint[0] < distanceCheck) {
+                        lastClosePointIndex = i;
+                        lastClosePoint = new RectangularPoint(
+                            distToSegmentAndSegPoint[1],
+                            distToSegmentAndSegPoint[2],
+                            0f
+                        );
+                        return new OffTrackInfo(true, lastClosePoint);
+                    }
+
+                    lastPointX = nextX;
+                    lastPointY = nextY;
                 }
-            }
 
-            lastClosePointIndex = null; // we have to search the start of the range now
+                lastClosePointIndex = null; // we have to search the start of the range now
+            }
         }
 
         // System.println("lastClosePointIndex: " + lastClosePointIndex);
+        var lastPointX = coordinatesRaw[0];
+        var lastPointY = coordinatesRaw[1];
+        for (var i = ARRAY_POINT_SIZE; i < endSecondScanAtRaw; i += ARRAY_POINT_SIZE) {
+            var nextX = coordinatesRaw[i];
+            var nextY = coordinatesRaw[i + 1];
 
-        for (var i = 0; i < endSecondScanAt; ++i) {
-            var p1 = coordinates.getPoint(i); // p1 can never be null, its always withing size (unless a slice happens in parallel somehow?)
-            var p2 = coordinates.getPoint(i + 1); // p2 should not be null, we sanitized it at the top fof the function to end at -1 from the size
-
-            var distToSegmentAndSegPoint = calculateDistancePointToSegment(checkPoint, p1, p2);
+            var distToSegmentAndSegPoint = calculateDistancePointToSegment(
+                checkPoint,
+                lastPointX,
+                lastPointY,
+                nextX,
+                nextY
+            );
             if (distToSegmentAndSegPoint[0] < distanceCheck) {
                 lastClosePointIndex = i;
-                lastClosePoint = distToSegmentAndSegPoint[1];
+                lastClosePoint = new RectangularPoint(
+                    distToSegmentAndSegPoint[1],
+                    distToSegmentAndSegPoint[2],
+                    0f
+                );
                 return new OffTrackInfo(true, lastClosePoint);
             }
+
+            lastPointX = nextX;
+            lastPointY = nextY;
         }
         if (lastClosePoint == null) {
             // very start when we have never seen the track, closest point is the start of the track

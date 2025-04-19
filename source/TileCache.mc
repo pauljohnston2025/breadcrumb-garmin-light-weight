@@ -118,7 +118,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var tile = new Tile();
         var mapTileStr = mapTile as String;
         // System.println("got tile string of length: " + mapTileStr.length());
-        var bitmap = _tileCache.tileDataToBitmap(mapTileStr.toUtf8Array());
+        var bitmap = _tileCache.tileDataToBitmap(mapTileStr.toCharArray());
         if (bitmap == null) {
             System.println("failed to parse bitmap");
             return;
@@ -472,19 +472,52 @@ class TileCache {
         }
     }
 
-    function tileDataToBitmap(arr as Array<Number>) as Graphics.BufferedBitmap? {
+    function tileDataToBitmap(charArr as Array<Char>) as Graphics.BufferedBitmap? {
         // System.println("tile data " + arr);
         var tileSize = _settings.tileSize;
         var requiredSize = tileSize * tileSize;
-        if (arr.size() < requiredSize) {
-            System.println("tile length too short: " + arr.size());
+        // got a heap of 
+        // Error: Unexpected Type Error
+        // Details: 'Failed invoking <symbol>'
+        // even though the only calling coe checks it's a string, then calls .toUtf8Array()
+        // Stack: 
+        // - pc: 0x1000867c
+        //     File: 'BreadcrumbDataField\source\TileCache.mc'
+        //     Line: 479
+        //     Function: tileDataToBitmap
+        // - pc: 0x1000158c
+        //     File: 'BreadcrumbDataField\source\TileCache.mc'
+        //     Line: 121
+        //     Function: handle
+        // - pc: 0x10004e8d
+        //     File: 'BreadcrumbDataField\source\WebRequest.mc'
+        //     Line: 86
+        //     Function: handle
+        if (!(charArr instanceof Array))
+        {
+            // managed to get this in the sim, it was a null (when using .toUtf8Array())
+            // docs do not say that it can ever be null though
+            // perhaps the colour string im sending is no good? 
+            // seems to be random though. And it seems to get through on the next pass, might be memory related?
+            // it even occurs on a simple string (no special characters)
+            // resorting to using the string directly
+            // the toCharArray method im using now seems to throw OOM errors instead of returning null
+            // not sure which is better, we are at our memory limits regardless, so 
+            // optimisation level seems to effect it (think it must garbage collect faster or inline things where it can)
+            // slow optimisations are always good for relase, but make debugging harder when variables are optimised away (which is why i was running no optimisations).
+            System.println("got a bad type somehow?: " + charArr);
             return null;
         }
 
-        if (arr.size() != requiredSize) {
+        if (charArr.size() < requiredSize) {
+            System.println("tile length too short: " + charArr.size());
+            return null;
+        }
+
+        if (charArr.size() != requiredSize) {
             // we could load tile partially, but that would require checking each itteration of the for loop,
             // want to avoid any extra work for perf
-            System.println("bad tile length: " + arr.size() + " best effort load");
+            System.println("bad tile length: " + charArr.size() + " best effort load");
         }
 
         // System.println("processing tile data, first colour is: " + arr[0]);
@@ -495,7 +528,7 @@ class TileCache {
         var it = 0;
         for (var i = 0; i < tileSize; ++i) {
             for (var j = 0; j < tileSize; ++j) {
-                var colour = _palette[(arr[it] as Number) & 0x3f];
+                var colour = _palette[charArr[it].toNumber() & 0x3f]; // charArr[it] as Char the toNumber is The UTF-32 representation of the Char interpreted as a Number
                 it++;
                 localDc.setColor(colour, colour);
                 localDc.drawPoint(i, j);
