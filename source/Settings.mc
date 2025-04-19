@@ -167,7 +167,9 @@ class Settings {
     var normalModeColour as Number = Graphics.COLOR_BLUE;
     var uiColour as Number = Graphics.COLOR_DK_GRAY;
     var debugColour as Number = 0xfeffffff; // white, but colour_white results in FFFFFFFF (-1) when we parse it and that is fully transparent
-    var routeMax as Number = 5;
+    // I did get up to 4 large routes working with off track alerts, but any more than that and watchdog catches us out, 3 is a safer limit. 
+    // currently we still load disabled routes into memory, so its also not great having this larege and a heap of disabled routes
+    var routeMax as Number = 3; 
 
     // note this only works if a single track is enabled (multiple tracks would always error)
     var enableOffTrackAlerts as Boolean = true;

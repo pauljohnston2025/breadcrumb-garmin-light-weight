@@ -464,6 +464,11 @@ class SettingsAlertsDisabled extends Rez.Menus.SettingsAlertsDisabled {
             :settingsAlertsOffTrackDistanceM,
             settings.offTrackAlertsDistanceM.toString()
         );
+        safeSetSubLabel(
+            me,
+            :settingsAlertsOffTrackAlertsMaxReportIntervalS,
+            settings.offTrackAlertsMaxReportIntervalS.toString()
+        );
         safeSetToggle(me, :settingsAlertsEnabled, false);
     }
 }
@@ -1306,6 +1311,14 @@ class SettingsAlertsDisabledDelegate extends WatchUi.Menu2InputDelegate {
                 new SettingsNumberPicker(
                     settings.method(:setOffTrackAlertsDistanceM),
                     settings.offTrackAlertsDistanceM
+                ),
+                view
+            );
+        } else if (itemId == :settingsAlertsOffTrackAlertsMaxReportIntervalS) {
+            startPicker(
+                new SettingsNumberPicker(
+                    settings.method(:setOffTrackAlertsMaxReportIntervalS),
+                    settings.offTrackAlertsMaxReportIntervalS
                 ),
                 view
             );
