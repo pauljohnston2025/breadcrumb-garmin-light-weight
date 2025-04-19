@@ -545,12 +545,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var hScale = elevationScale[0];
         var vScale = elevationScale[1];
         var startAt = elevationScale[2];
+        var hScalePPM = elevationScale[3];
 
         var elevationText =
             track.lastPoint() == null ? "" : track.lastPoint().altitude.format("%.0f") + "m";
+
         renderer.renderElevationChart(
             dc,
-            hScale,
+            hScalePPM,
             vScale,
             startAt,
             track.distanceTotal,

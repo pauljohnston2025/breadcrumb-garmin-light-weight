@@ -923,7 +923,7 @@ class BreadcrumbRenderer {
 
     function renderElevationChart(
         dc as Dc,
-        hScale as Float,
+        hScalePPM as Float,
         vScale as Float,
         startAt as Float,
         distanceM as Float,
@@ -933,7 +933,7 @@ class BreadcrumbRenderer {
         var yHalf = _cachedValues.yHalf; // local lookup faster
         var screenHeight = _cachedValues.screenHeight; // local lookup faster
 
-        var hScaleData = getScaleSizeGeneric(hScale, DESIRED_SCALE_PIXEL_WIDTH, SCALE_NAMES);
+        var hScaleData = getScaleSizeGeneric(hScalePPM, DESIRED_SCALE_PIXEL_WIDTH, SCALE_NAMES);
         var hPixelWidth = hScaleData[0];
         var hDistanceM = hScaleData[1];
         var vScaleData = getScaleSizeGeneric(
@@ -1052,12 +1052,12 @@ class BreadcrumbRenderer {
     function getElevationScale(
         track as BreadcrumbTrack,
         routes as Array<BreadcrumbTrack>
-    ) as [Float, Float, Float] {
-        var maxDistance = 0f;
+    ) as [Float, Float, Float, Float] {
+        var maxDistanceScaled = 0f;
         var minElevation = FLOAT_MAX;
         var maxElevation = FLOAT_MIN;
         if (track.coordinates.pointSize() > 2) {
-            maxDistance = maxF(maxDistance, track.distanceTotal);
+            maxDistanceScaled = maxF(maxDistanceScaled, track.distanceTotal);
             minElevation = minF(minElevation, track.elevationMin);
             maxElevation = maxF(maxElevation, track.elevationMax);
         }
@@ -1068,7 +1068,7 @@ class BreadcrumbRenderer {
                 continue;
             }
             if (route.coordinates.pointSize() > 2) {
-                maxDistance = maxF(maxDistance, route.distanceTotal);
+                maxDistanceScaled = maxF(maxDistanceScaled, route.distanceTotal);
                 minElevation = minF(minElevation, route.elevationMin);
                 maxElevation = maxF(maxElevation, route.elevationMax);
             }
@@ -1077,34 +1077,42 @@ class BreadcrumbRenderer {
         // abs really only needed until we get the first point (then max should always be more than min)
         var elevationChange = abs(maxElevation - minElevation);
         var startAt = minElevation + elevationChange / 2;
-        return getElevationScaleRaw(maxDistance, elevationChange, startAt);
+        return getElevationScaleRaw(maxDistanceScaled, elevationChange, startAt);
     }
 
     function getElevationScaleRaw(
-        distance as Float,
+        distanceScaled as Float,
         elevationChange as Float,
         startAt as Float
-    ) as [Float, Float, Float] {
+    ) as [Float, Float, Float, Float] {
+        var distanceM = distanceScaled;
+        var distanceScale = _cachedValues.currentScale;
+        if (distanceScale != 0f)
+        {
+            distanceM = distanceScaled / distanceScale;
+        }
+
         // clip to a a square (since we cannot see the edges of the circle)
         var totalXDistance = _cachedValues.screenWidth - 2 * _xElevationStart;
         var totalYDistance = _yElevationHeight;
 
-        if (distance == 0 && elevationChange == 0) {
-            return [0f, 0f, startAt]; // do not divide by 0
+        if (distanceScaled == 0 && elevationChange == 0) {
+            return [0f, 0f, startAt, 0f]; // do not divide by 0
         }
 
-        if (distance == 0) {
-            return [0f, totalYDistance / elevationChange, startAt]; // do not divide by 0
+        if (distanceScaled == 0) {
+            return [0f, totalYDistance / elevationChange, startAt, 0f]; // do not divide by 0
         }
 
         if (elevationChange == 0) {
-            return [totalXDistance / distance, 0f, startAt]; // do not divide by 0
+            return [totalXDistance / distanceScaled, 0f, startAt, totalXDistance / distanceM]; // do not divide by 0
         }
 
-        var hScale = totalXDistance / distance;
+        var hScalePPM = totalXDistance / distanceM; // pixels per meter
+        var hScale = totalXDistance / distanceScaled; // pixels per pixel - make track renderring faster (single multiply)
         var vScale = totalYDistance / elevationChange;
 
-        return [hScale, vScale, startAt];
+        return [hScale, vScale, startAt, hScalePPM];
     }
 
     function renderTrackElevation(
@@ -1117,10 +1125,9 @@ class BreadcrumbRenderer {
     ) as Void {
         var yHalf = _cachedValues.yHalf; // local lookup faster
 
-        var firstPoint = track.firstPoint();
-
-        if (firstPoint == null) {
-            return;
+        var sizeRaw = track.coordinates.size();
+        if (sizeRaw < ARRAY_POINT_SIZE * 2) {
+            return; // not enough points for iteration
         }
 
         dc.setColor(colour, Graphics.COLOR_TRANSPARENT);
@@ -1128,26 +1135,33 @@ class BreadcrumbRenderer {
 
         var pointSize = track.coordinates.pointSize();
 
-        // we do alot of distance calcualtion, much more expensive than the array itteration
-        var prevX = _xElevationStart;
-        var prevY = yHalf + (startAt - firstPoint.altitude) * vScale;
-        for (var i = 1; i < pointSize; i++) {
-            var prevPoint = track.coordinates.getPoint(i - 1);
-            var currPoint = track.coordinates.getPoint(i);
+        var coordinatesRaw = track.coordinates._internalArrayBuffer;
+        var prevPointX = coordinatesRaw[0];
+        var prevPointY = coordinatesRaw[1];
+        var prevPointAlt = coordinatesRaw[2];
+        var prevChartX = _xElevationStart;
+        var prevChartY = yHalf + (startAt - prevPointAlt) * vScale;
+        for (var i = ARRAY_POINT_SIZE; i < sizeRaw; i += ARRAY_POINT_SIZE) {
+            var currPointX = coordinatesRaw[i];
+            var currPointY = coordinatesRaw[i + 1];
+            var currPointAlt = coordinatesRaw[i + 2];
 
-            if (prevPoint == null || currPoint == null) {
-                break; // we cannot draw anymore
-            }
+            var xDist = prevPointX - currPointX;
+            var yDist = prevPointY - currPointY;
+            var xDistance = Math.sqrt(xDist * xDist + yDist * yDist);
 
-            var xDistance = prevPoint.distanceTo(currPoint);
-            var yDistance = prevPoint.altitude - currPoint.altitude;
-            var currX = prevX + xDistance * hScale;
-            var currY = prevY + yDistance * vScale;
+            var yDistance = prevPointAlt - currPointAlt;
 
-            dc.drawLine(prevX, prevY, currX, currY);
+            var currChartX = prevChartX + xDistance * hScale;
+            var currChartY = prevChartY + yDistance * vScale;
 
-            prevX = currX;
-            prevY = currY;
+            dc.drawLine(prevChartX, prevChartY, currChartX, currChartY);
+
+            prevPointX = currPointX;
+            prevPointY = currPointY;
+            prevPointAlt = currPointAlt;
+            prevChartX = currChartX;
+            prevChartY = currChartY;
         }
     }
 }
