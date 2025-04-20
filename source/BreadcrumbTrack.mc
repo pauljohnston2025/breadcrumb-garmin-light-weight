@@ -82,10 +82,10 @@ class BreadcrumbTrack {
         boundingBox[2] = boundingBox[2] * scaleFactor;
         boundingBox[3] = boundingBox[3] * scaleFactor;
         distanceTotal = distanceTotal * scaleFactor;
-        boundingBoxCenter = boundingBoxCenter.rescale(scaleFactor);
+        boundingBoxCenter.rescaleInPlace(scaleFactor);
         coordinates.rescale(scaleFactor);
         if (lastClosePoint != null) {
-            lastClosePoint = lastClosePoint.rescale(scaleFactor);
+            lastClosePoint.rescaleInPlace(scaleFactor);
         }
         minDistanceMScaled = minDistanceMScaled * scaleFactor;
         maxDistanceMScaled = maxDistanceMScaled * scaleFactor;

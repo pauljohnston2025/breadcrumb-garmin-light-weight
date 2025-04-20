@@ -274,6 +274,41 @@ class Settings {
         if (clearRequests) {
             clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
         }
+
+    }
+    function setFixedPositionWithoutUpdate(lat as Float?, long as Float?, clearRequests as Boolean) as Void {
+        // System.println("moving to: " + lat + " " + long);
+        // be very careful about putting null into properties, it breaks everything
+        if (lat == null || !(lat instanceof Float)) {
+            lat = 0f;
+        }
+        if (long == null || !(long instanceof Float)) {
+            long = 0f;
+        }
+        fixedLatitude = lat;
+        fixedLongitude = long;
+        Application.Properties.setValue("fixedLatitude", lat);
+        Application.Properties.setValue("fixedLongitude", long);
+
+        var latIsBasicallyNull = fixedLatitude == null || fixedLatitude == 0;
+        var longIsBasicallyNull = fixedLongitude == null || fixedLongitude == 0;
+        if (latIsBasicallyNull || longIsBasicallyNull) {
+            fixedLatitude = null;
+            fixedLongitude = null;
+            if (clearRequests) {
+                clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
+            }
+            updateCachedValues();
+            return;
+        }
+
+        // we should have a lat and a long at this point
+        // updateCachedValues(); already called by the above sets
+        // var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y);
+        // System.println("round trip conversion result: " + latlong);
+        if (clearRequests) {
+            clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
+        }
     }
 
     function setValue(key as String, value) as Void {
@@ -499,8 +534,11 @@ class Settings {
     }
 
     function setMapEnabled(_mapEnabled as Boolean) as Void {
-        mapEnabled = _mapEnabled;
+        setMapEnabledRaw(_mapEnabled);
         setValue("mapEnabled", mapEnabled);
+    }
+    function setMapEnabledRaw(_mapEnabled as Boolean) as Void {
+        mapEnabled = _mapEnabled;
 
         if (!mapEnabled) {
             clearTileCache();
@@ -1320,28 +1358,12 @@ class Settings {
             var value = settings[key];
             // for now just blindly trust the users
             // we do reload which sanitizes, but they could break garmins settings page with unexpected types
-            setValue(key, value);
+            Application.Properties.setValue(key, value);
         }
-        onSettingsChanged();
     }
 
-    // Load the values initially from storage
-    function loadSettings() as Void {
-        // fix for a garmin bug where bool settings are not changable if they default to true
-        // https://forums.garmin.com/developer/connect-iq/i/bug-reports/bug-boolean-properties-with-default-value-true-can-t-be-changed-in-simulator
-        var haveDoneFirstLoadSetup = Application.Properties.getValue("haveDoneFirstLoadSetup");
-        if (!haveDoneFirstLoadSetup) {
-            setValue("haveDoneFirstLoadSetup", true);
-            resetDefaults(); // pulls from our defaults
-        }
-
-        var resetDefaults = Application.Properties.getValue("resetDefaults") as Boolean;
-        if (resetDefaults) {
-            resetDefaults();
-            return;
-        }
-
-        System.println("loadSettings: Loading all settings");
+    function loadSettingsPart1() as Void
+    {
         tileSize = parseNumber("tileSize", tileSize);
         fullTileSize = parseNumber("fullTileSize", fullTileSize);
         scaledTileSize = parseNumber("scaledTileSize", scaledTileSize);
@@ -1369,7 +1391,7 @@ class Settings {
         recalculateItervalS = parseNumber("recalculateItervalS", recalculateItervalS);
         mode = parseNumber("mode", mode);
         mapEnabled = parseBool("mapEnabled", mapEnabled);
-        setMapEnabled(mapEnabled); // prompt for app to open if needed
+        setMapEnabledRaw(mapEnabled); // prompt for app to open if needed
         drawLineToClosestPoint = parseBool("drawLineToClosestPoint", drawLineToClosestPoint);
         displayLatLong = parseBool("displayLatLong", displayLatLong);
         scaleRestrictedToTileLayers = parseBool("scaleRestrictedToTileLayers", scaleRestrictedToTileLayers);
@@ -1380,6 +1402,10 @@ class Settings {
         elevationColour = parseColour("elevationColour", elevationColour);
         userColour = parseColour("userColour", userColour);
         normalModeColour = parseColour("normalModeColour", normalModeColour);
+    }
+
+    function loadSettingsPart2() as Void
+    {
         routeMax = parseColour("routeMax", routeMax);
         uiColour = parseColour("uiColour", uiColour);
         debugColour = parseColour("debugColour", debugColour);
@@ -1394,7 +1420,7 @@ class Settings {
 
         fixedLatitude = parseOptionalFloat("fixedLatitude", fixedLatitude);
         fixedLongitude = parseOptionalFloat("fixedLongitude", fixedLongitude);
-        setFixedPosition(fixedLatitude, fixedLongitude, false);
+        setFixedPositionWithoutUpdate(fixedLatitude, fixedLongitude, false);
         tileUrl = parseString("tileUrl", tileUrl);
         mapChoice = parseNumber("mapChoice", mapChoice);
         routes = getArraySchema(
@@ -1415,7 +1441,28 @@ class Settings {
             "offTrackAlertsMaxReportIntervalS",
             offTrackAlertsMaxReportIntervalS
         );
+    }
 
+    // Load the values initially from storage
+    function loadSettings() as Void {
+        // fix for a garmin bug where bool settings are not changable if they default to true
+        // https://forums.garmin.com/developer/connect-iq/i/bug-reports/bug-boolean-properties-with-default-value-true-can-t-be-changed-in-simulator
+        var haveDoneFirstLoadSetup = Application.Properties.getValue("haveDoneFirstLoadSetup");
+        if (!haveDoneFirstLoadSetup) {
+            setValue("haveDoneFirstLoadSetup", true);
+            resetDefaults(); // pulls from our defaults
+        }
+
+        var resetDefaults = Application.Properties.getValue("resetDefaults") as Boolean;
+        if (resetDefaults) {
+            resetDefaults();
+            return;
+        }
+
+        System.println("loadSettings: Loading all settings");
+        loadSettingsPart1();
+        loadSettingsPart2();
+        
         // testing coordinates (piper-comanche-wreck)
         // setFixedPosition(-27.297773, 152.753883);
         // // cachedValues.setScale(0.39); // zoomed out a bit

@@ -56,7 +56,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     function rescale(scaleFactor as Float) as Void {
         if (offTrackInfo.pointWeLeftTrack != null) {
-            offTrackInfo.pointWeLeftTrack = offTrackInfo.pointWeLeftTrack.rescale(scaleFactor);
+            offTrackInfo.pointWeLeftTrack.rescaleInPlace(scaleFactor);
         }
     }
 
@@ -142,7 +142,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var newPoint = _breadcrumbContext.track().pointFromActivityInfo(info);
         if (newPoint != null) {
             if (_cachedValues.currentScale != 0f) {
-                newPoint = newPoint.rescale(_cachedValues.currentScale);
+                newPoint.rescaleInPlace(_cachedValues.currentScale);
             }
             if (_breadcrumbContext.track().onActivityInfo(newPoint)) {
                 // todo: PERF only update this if the new point added changed the bounding box

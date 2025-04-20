@@ -105,7 +105,8 @@ class CachedValues {
 
     /** returns true if a rescale ocurred */
     function updateScaleCenterAndMap() as Boolean {
-        var rescaleOccurred = updateScaleAndCenter();
+        var newScale = getNewScaleAndUpdateCenter();
+        var rescaleOccurred = handleNewScale(newScale);
         if (_settings.mapEnabled) {
             updateMapData();
         }
@@ -116,15 +117,15 @@ class CachedValues {
         return rescaleOccurred;
     }
 
-    /** returns true if a rescale ocurred */
-    function updateScaleAndCenter() as Boolean {
+    /** returns the new scale */
+    function getNewScaleAndUpdateCenter() as Float {
         if (currentlyZoomingAroundUser) {
             var renderDistanceM = _settings.metersAroundUser;
             if (!calcCenterPoint()) {
                 var lastPoint = getApp()._breadcrumbContext.track().coordinates.lastPoint();
                 if (lastPoint != null) {
                     centerPosition = lastPoint;
-                    return updateCurrentScale(calculateScale(renderDistanceM.toFloat()));
+                    return calculateScale(renderDistanceM.toFloat());
                 }
                 // we are zooming around the user, but we do not have a last track point
                 // resort to using bounding box
@@ -133,10 +134,10 @@ class CachedValues {
                     null
                 );
                 calcCenterPointForBoundingBox(boundingBox);
-                return updateCurrentScale(calculateScale(renderDistanceM.toFloat()));
+                return calculateScale(renderDistanceM.toFloat());
             }
 
-            return updateCurrentScale(calculateScale(renderDistanceM.toFloat()));
+            return calculateScale(renderDistanceM.toFloat());
         }
 
         var boundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
@@ -146,7 +147,7 @@ class CachedValues {
                 : getApp()._breadcrumbContext.track().boundingBox
         );
         calcCenterPointForBoundingBox(boundingBox);
-        return updateCurrentScaleFromBoundingBox(boundingBox);
+        return getNewScaleFromBoundingBox(boundingBox);
     }
 
     // needs to be called whenever the screen moves to a new bounding box
@@ -355,10 +356,10 @@ class CachedValues {
         return perfectScale;
     }
 
-    /** returns true if a rescale ocurred */
-    function updateCurrentScaleFromBoundingBox(
+    /** returns the new scale */
+    function getNewScaleFromBoundingBox(
         outerBoundingBox as [Float, Float, Float, Float]
-    ) as Boolean {
+    ) as Float {
         var xDistanceM = outerBoundingBox[2] - outerBoundingBox[0];
         var yDistanceM = outerBoundingBox[3] - outerBoundingBox[1];
 
@@ -369,11 +370,11 @@ class CachedValues {
             maxDistanceM = 1;
         }
 
-        return updateCurrentScale(calculateScale(maxDistanceM));
+        return calculateScale(maxDistanceM);
     }
 
-    /** returns true if a rescale ocurred */
-    function updateCurrentScale(newScale as Float) as Boolean {
+    /** returns true if the scale changed */
+    function handleNewScale(newScale as Float) as Boolean {
         if (abs(currentScale - newScale) < 0.000001) {
             // ignore any minor scale changes, esp if the scale is the same but float == does not work
             return false;
@@ -398,7 +399,7 @@ class CachedValues {
         if (getApp()._view != null) {
             getApp()._view.rescale(scaleFactor);
         }
-        centerPosition = centerPosition.rescale(scaleFactor);
+        centerPosition.rescaleInPlace(scaleFactor);
 
         currentScale = newScale;
         return true;
@@ -572,7 +573,7 @@ class CachedValues {
         );
 
         if (currentScale != 0f) {
-            centerPosition = centerPosition.rescale(currentScale);
+            centerPosition.rescaleInPlace(currentScale);
         }
     }
 

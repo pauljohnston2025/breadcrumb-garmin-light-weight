@@ -240,6 +240,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             } else if (type == PROTOCOL_SAVE_SETTINGS) {
                 System.println("got save settings req: " + rawData);
                 _breadcrumbContext.settings().saveSettings(rawData[0] as Dictionary);
+                _breadcrumbContext.settings().onSettingsChanged(); // reload anything that has changed
                 return;
             } else if (type == PROTOCOL_DROP_TILE_CACHE) {
                 System.println("got drop tile cache req: " + rawData);

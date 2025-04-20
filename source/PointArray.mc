@@ -43,6 +43,12 @@ class RectangularPoint {
         return new RectangularPoint(x * scaleFactor, y * scaleFactor, altitude);
     }
 
+    function rescaleInPlace(scaleFactor as Float) as Void {
+        // unsafe to call with nulls or 0, checks should be made in parent
+        x *= scaleFactor;
+        y *= scaleFactor;
+    }
+
     // inverse of https://gis.stackexchange.com/a/387677
     // Converting lat, lon (epsg:4326) into EPSG:3857
     // this function needs to exactly match Point.convert2XY on the companion app
