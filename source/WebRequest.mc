@@ -63,14 +63,17 @@ class ImageRequest extends WebRequest {
 
 class WebRequestHandleWrapper {
     var webHandler as WebRequestHandler;
+    var hash as String;
     var handler as JsonWebHandler or ImageWebHandler;
 
     function initialize(
         _webHandler as WebRequestHandler,
-        _handler as JsonWebHandler or ImageWebHandler
+        _handler as JsonWebHandler or ImageWebHandler,
+        _hash as String
     ) {
         webHandler = _webHandler;
         handler = _handler;
+        hash = _hash;
     }
 
     function handle(
@@ -103,7 +106,7 @@ class WebRequestHandleWrapper {
             // or at least I would do this if the timer task was available to datafields :(
             // so we might have to call 'startNext' every time the compute method runs :(
             // new Timer.Timer(); Error: Permission Required ; Details: Module 'Toybox.Timer' not available to 'Data Field'
-            webHandler.decrementOutstanding();
+            webHandler.decrementOutstanding(hash);
 
             if (responseCode == 200) {
                 webHandler._successCount++;
@@ -156,7 +159,7 @@ class ConnectionListenerWrapper extends Communications.ConnectionListener {
         }
 
         alreadyDecedWebHandler = true;
-        webHandler.decrementOutstanding();
+        webHandler.decrementTransmit();
     }
 }
 
@@ -169,6 +172,7 @@ class WebRequestHandler {
     Array<[Application.PersistableType, Dictionary?, Communications.ConnectionListener]> = [];
     var pending as Array<JsonRequest or ImageRequest> = [];
     var pendingHashes as Array<String> = [];
+    var outstandingHashes as Array<String> = [];
     var _outstandingCount as Number = 0;
     var _settings as Settings;
     var _errorCount as Number = 0;
@@ -182,6 +186,7 @@ class WebRequestHandler {
     function clearValues() as Void {
         pending = [];
         pendingHashes = [];
+        outstandingHashes = [];
     }
 
     // Communications.trnsmit can fail if web requests are pending, 'Communications transmit queue full'
@@ -214,6 +219,11 @@ class WebRequestHandler {
             // startNextIfWeCan(); // start any other ones whilst we are in a different function
             return;
         }
+        
+        if (outstandingHashes.indexOf(hash) > -1) {
+            // we already have an outstanding request, do not queue up another to run as soon as the outstanding one completes
+            return;
+        }
 
         pending.add(jsonOrImageReq);
         pendingHashes.add(hash);
@@ -244,8 +254,13 @@ class WebRequestHandler {
         return false;
     }
 
-    function decrementOutstanding() as Void {
+    function decrementTransmit() as Void {
         --_outstandingCount;
+    }
+    
+    function decrementOutstanding(hash as String) as Void {
+        --_outstandingCount;
+        outstandingHashes.remove(hash);
     }
 
     function start() as Void {
@@ -271,6 +286,7 @@ class WebRequestHandler {
             pending = [];
             pendingHashes = [];
         }
+        outstandingHashes.add(jsonOrImageReq.hash);
 
         // System.println("url: "  + jsonOrImageReq.url);
         // System.println("params: "  + jsonOrImageReq.params);
@@ -278,7 +294,7 @@ class WebRequestHandler {
         if (jsonOrImageReq instanceof ImageRequest) {
             // System.println("sending image request");
             var callback =
-                (new WebRequestHandleWrapper(me, jsonOrImageReq.handler)).method(:handle) as
+                (new WebRequestHandleWrapper(me, jsonOrImageReq.handler, jsonOrImageReq.hash)).method(:handle) as
                 (Method
                     (
                         responseCode as Lang.Number,
@@ -291,6 +307,10 @@ class WebRequestHandler {
                 jsonOrImageReq.url,
                 jsonOrImageReq.params,
                 {
+                    // consider setting maxWidth and maxHeight 
+                    // could download image as 128*128 then scale to 256*256 (faster ble transfer speeds)
+                    // or no need to scale, just use 128 as bigTileSize everywhere.
+
                     // needs to be png or we will get
                     // Error: Unhandled Exception
                     // Exception: Source must not use a color palette if we try and draw it to another bufferredBitmap
@@ -326,7 +346,7 @@ class WebRequestHandler {
 
         // System.println("sending json request");
         var callback =
-            (new WebRequestHandleWrapper(me, jsonOrImageReq.handler)).method(:handle) as
+            (new WebRequestHandleWrapper(me, jsonOrImageReq.handler, jsonOrImageReq.hash)).method(:handle) as
             (Method
                 (
                     responseCode as Lang.Number,
@@ -371,6 +391,14 @@ class WebRequestHandler {
 
     function pendingTransmitCount() as Number {
         return pendingTransmit.size();
+    }
+    
+    function outstandingCount() as Number {
+        return _outstandingCount;
+    }
+    
+    function outstandingHashesCount() as Number {
+        return outstandingHashes.size();
     }
 
     function errorCount() as Number {

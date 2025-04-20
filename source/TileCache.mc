@@ -87,11 +87,13 @@ class Tile {
 class JsonWebTileRequestHandler extends JsonWebHandler {
     var _tileCache as TileCache;
     var _tileKey as TileKey;
+    var _tileCacheVersion as Number;
 
-    function initialize(tileCache as TileCache, tileKey as TileKey) {
+    function initialize(tileCache as TileCache, tileKey as TileKey, tileCacheVersion as Number) {
         JsonWebHandler.initialize();
         _tileCache = tileCache;
         _tileKey = tileKey;
+        _tileCacheVersion = tileCacheVersion;
     }
 
     function handle(
@@ -125,18 +127,20 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         }
 
         tile.setBitmap(bitmap);
-        _tileCache.addTile(_tileKey, tile);
+        _tileCache.addTile(_tileKey, _tileCacheVersion, tile);
     }
 }
 
 class ImageWebTileRequestHandler extends ImageWebHandler {
     var _tileCache as TileCache;
     var _tileKey as TileKey;
+    var _tileCacheVersion as Number;
 
-    function initialize(tileCache as TileCache, tileKey as TileKey) {
+    function initialize(tileCache as TileCache, tileKey as TileKey, tileCacheVersion as Number) {
         ImageWebHandler.initialize();
         _tileCache = tileCache;
         _tileKey = tileKey;
+        _tileCacheVersion = tileCacheVersion;
     }
 
     function handle(
@@ -238,7 +242,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 
         var tile = new Tile();
         tile.setBitmap(data);
-        _tileCache.addTile(_tileKey, tile);
+        _tileCache.addTile(_tileKey, _tileCacheVersion, tile);
     }
 }
 
@@ -250,6 +254,8 @@ class TileCache {
     var _cachedValues as CachedValues;
     var _hits as Number = 0;
     var _misses as Number = 0;
+    // Ignore any tile adds that do not have this version (allows outstanding web requests to be ignored once they are handled)
+    var _tileCacheVersion as Number = 0;
 
     function initialize(
         webRequestHandler as WebRequestHandler,
@@ -356,6 +362,7 @@ class TileCache {
 
     public function clearValues() as Void {
         _internalCache = {};
+        _tileCacheVersion++;
     }
 
     // loads a tile into the cache
@@ -374,7 +381,7 @@ class TileCache {
             var y = tileKey.y / _cachedValues.smallTilesPerBigTile;
             _webRequestHandler.add(
                 new ImageRequest(
-                    "tileimage" + tileKey, // the hash is for the small tile request, not the big one (they will send the same phiscial request out, but again use 256 tilSize if your using external sources)
+                    "tileimage" + tileKey + "-" + _tileCacheVersion, // the hash is for the small tile request, not the big one (they will send the same physical request out, but again use 256 tilSize if your using external sources)
                     stringReplaceFirst(
                         stringReplaceFirst(
                             stringReplaceFirst(_settings.tileUrl, "{x}", x.toString()),
@@ -385,7 +392,7 @@ class TileCache {
                         tileKey.z.toString()
                     ),
                     {},
-                    new ImageWebTileRequestHandler(me, tileKey)
+                    new ImageWebTileRequestHandler(me, tileKey, _tileCacheVersion)
                 )
             );
             return;
@@ -393,7 +400,7 @@ class TileCache {
 
         _webRequestHandler.add(
             new JsonRequest(
-                "/loadtile" + tileKey,
+                "/loadtile" + tileKey + "-" + _tileCacheVersion,
                 _settings.tileUrl + "/loadtile",
                 {
                     "x" => tileKey.x,
@@ -401,13 +408,17 @@ class TileCache {
                     "z" => tileKey.z,
                     "tileSize" => getApp()._breadcrumbContext.settings().tileSize,
                 },
-                new JsonWebTileRequestHandler(me, tileKey)
+                new JsonWebTileRequestHandler(me, tileKey, _tileCacheVersion)
             )
         );
     }
 
     // puts a tile into the cache
-    function addTile(tileKey as TileKey, tile as Tile) as Void {
+    function addTile(tileKey as TileKey, tileCacheVersion as Number, tile as Tile) as Void {
+        if (tileCacheVersion != _tileCacheVersion) {
+            return;
+        }
+
         if (_internalCache.size() == getApp()._breadcrumbContext.settings().tileCacheSize) {
             evictLeastRecentlyUsedTile();
         }

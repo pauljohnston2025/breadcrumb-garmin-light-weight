@@ -205,7 +205,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             }
 
             tile.setBitmap(bitmap);
-            _tileCache.addTile(tileKey, tile);
+            _tileCache.addTile(tileKey, _breadcrumbContext.tileCache()._tileCacheVersion, tile);
             return;
         } else if (type == PROTOCOL_REQUEST_LOCATION_LOAD) {
             if (rawData.size() < 2) {

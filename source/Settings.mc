@@ -559,6 +559,7 @@ class Settings {
 
         routes[routeIndex]["enabled"] = value;
         saveRoutes();
+        updateViewSettings(); // routes enabled/disabled can effect off track alerts and other view renderring
     }
 
     function ensureRouteId(routeId as Number) as Void {

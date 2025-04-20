@@ -484,7 +484,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         dc.clear();
         // its only a debug menu that should probbaly be optimised out in release, hard code to venu2s screen coordinates
         // it is actually pretty nice info, best guess on string sizes down the screen
-        var fieldCount = 9;
+        var fieldCount = 10;
         var y = 30;
         var spacing = (dc.getHeight() - y).toFloat() / fieldCount;
         var x = _cachedValues.xHalf;
@@ -501,6 +501,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             y,
             Graphics.FONT_XTINY,
             "pending transmit: " + _breadcrumbContext.webRequestHandler().pendingTransmitCount(),
+            Graphics.TEXT_JUSTIFY_CENTER
+        );
+        y += spacing;
+        dc.drawText(
+            x,
+            y,
+            Graphics.FONT_XTINY,
+            "outstanding: " + _breadcrumbContext.webRequestHandler().outstandingCount() + " hash: " + _breadcrumbContext.webRequestHandler().outstandingHashesCount(),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
