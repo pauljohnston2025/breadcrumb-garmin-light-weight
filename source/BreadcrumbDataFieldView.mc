@@ -39,7 +39,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     var _scratchPadBitmap as BufferedBitmap?;
     var settings as Settings;
     var _cachedValues as CachedValues;
-    var lastOffTrackAlertSent = 0;
+    var lastOffTrackAlertCalculated = 0;
     var _computeCounter as Number = 0;
     var _lastFullRenderTime as Number = 0;
     var _lastFullRenderScale as Float = 0f;
@@ -166,9 +166,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // new point is already pre scaled
     function handleOffTrackAlerts(newPoint as RectangularPoint) as Void {
         var epoch = Time.now().value();
-        if (epoch - settings.offTrackAlertsMaxReportIntervalS < lastOffTrackAlertSent) {
+        if (epoch - settings.offTrackAlertsMaxReportIntervalS < lastOffTrackAlertCalculated) {
             return;
         }
+
+        // Do not check again for hits long, prevents alerts retrigerring, as well as stopping the expensive off track calculation running constantly whilst we are on track.
+        lastOffTrackAlertCalculated = epoch;
 
         var atLeastOneEnabled = false;
         for (var i = 0; i < _breadcrumbContext.routes().size(); ++i) {
@@ -203,9 +206,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
         offTrackInfo.onTrack = false; // use the last pointWeLeftTrack from when we were on track
 
-        // we are off track if we get there, time to fire alert
-        lastOffTrackAlertSent = epoch;
-
         if (settings.enableOffTrackAlerts) {
             try {
                 logD("trying to trigger alert");
@@ -229,7 +229,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     Attention.vibrate(vibeData);
                 }
 
-                lastOffTrackAlertSent = epoch;
+                lastOffTrackAlertCalculated = epoch;
             } catch (e) {
                 // not sure there is a way to check that we can display or not, so just catch errors
                 System.println("failed to show alert: " + e);
@@ -240,7 +240,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     function onSettingsChanged() as Void {
         // they could have turned off off track alerts, changed the distance of anything, so let it all recalculate
         // or modified routes
-        lastOffTrackAlertSent = 0;
+        lastOffTrackAlertCalculated = 0;
         offTrackInfo = new OffTrackInfo(true, null);
         // render mode could have changed
         updateScratchPadBitmap();
@@ -523,7 +523,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "last alert: " + (epoch - lastOffTrackAlertSent) + "s",
+            "last alert: " + (epoch - lastOffTrackAlertCalculated) + "s",
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;

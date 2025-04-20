@@ -186,7 +186,6 @@ class WebRequestHandler {
     function clearValues() as Void {
         pending = [];
         pendingHashes = [];
-        outstandingHashes = [];
     }
 
     // Communications.trnsmit can fail if web requests are pending, 'Communications transmit queue full'

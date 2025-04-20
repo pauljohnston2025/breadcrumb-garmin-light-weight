@@ -228,6 +228,16 @@ class SettingsMain extends Rez.Menus.SettingsMain {
                 break;
         }
         safeSetSubLabel(me, :settingsMainModeUiMode, uiModeString);
+        var elevationModeString = "";
+        switch (settings.elevationMode) {
+            case ELEVATION_MODE_STACKED:
+                elevationModeString = Rez.Strings.elevationModeStacked;
+                break;
+            case ELEVATION_MODE_ORDERED_ROUTES:
+                elevationModeString = Rez.Strings.elevationModeOrderedRoutes;
+                break;
+        }
+        safeSetSubLabel(me, :settingsMainModeElevationMode, elevationModeString);
         safeSetSubLabel(
             me,
             :settingsMainRecalculateItervalS,
@@ -360,6 +370,8 @@ class SettingsMap extends Rez.Menus.SettingsMap {
         safeSetSubLabel(me, :settingsMapChoice, mapChoiceString);
         safeSetSubLabel(me, :settingsTileUrl, settings.tileUrl);
         safeSetSubLabel(me, :settingsMapTileSize, settings.tileSize.toString());
+        safeSetSubLabel(me, :settingsMapFullTileSize, settings.fullTileSize.toString());
+        safeSetSubLabel(me, :settingsMapScaledTileSize, settings.scaledTileSize.toString());
         safeSetSubLabel(me, :settingsMapTileLayerMax, settings.tileLayerMax.toString());
         safeSetSubLabel(me, :settingsMapTileLayerMin, settings.tileLayerMin.toString());
         safeSetSubLabel(me, :settingsMapTileCacheSize, settings.tileCacheSize.toString());
@@ -628,6 +640,12 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(
                 new $.Rez.Menus.SettingsUiMode(),
                 new $.SettingsUiModeDelegate(view),
+                WatchUi.SLIDE_IMMEDIATE
+            );
+        } else if (itemId == :settingsMainModeElevationMode) {
+            WatchUi.pushView(
+                new $.Rez.Menus.SettingsElevationMode(),
+                new $.SettingsElevationModeDelegate(view),
                 WatchUi.SLIDE_IMMEDIATE
             );
         } else if (itemId == :settingsMainRecalculateItervalS) {
@@ -901,6 +919,26 @@ class SettingsUiModeDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
+class SettingsElevationModeDelegate extends WatchUi.Menu2InputDelegate {
+    var parent as SettingsMain;
+    function initialize(parent as SettingsMain) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.parent = parent;
+    }
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var itemId = item.getId();
+        if (itemId == :settingsElevationModeStacked) {
+            settings.setElevationMode(ELEVATION_MODE_STACKED);
+        } else if (itemId == :settingsElevationModeOrderedRoutes) {
+            settings.setElevationMode(ELEVATION_MODE_ORDERED_ROUTES);
+        }
+
+        parent.rerender();
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+    }
+}
+
 class SettingsAlertTypeDelegate extends WatchUi.Menu2InputDelegate {
     var parent as SettingsAlerts;
     function initialize(parent as SettingsAlerts) {
@@ -1115,6 +1153,16 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
         } else if (itemId == :settingsMapTileSize) {
             startPicker(
                 new SettingsNumberPicker(settings.method(:setTileSize), settings.tileSize),
+                view
+            );
+        } else if (itemId == :settingsMapFullTileSize) {
+            startPicker(
+                new SettingsNumberPicker(settings.method(:setFullTileSize), settings.fullTileSize),
+                view
+            );
+        } else if (itemId == :settingsMapScaledTileSize) {
+            startPicker(
+                new SettingsNumberPicker(settings.method(:setScaledTileSize), settings.scaledTileSize),
                 view
             );
         } else if (itemId == :settingsMapTileLayerMax) {

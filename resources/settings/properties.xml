@@ -1,6 +1,7 @@
 <properties>
     <!-- https://developer.garmin.com/connect-iq/core-topics/properties-and-app-settings/ -->
 	<property id="mode" type="number">0</property>
+	<property id="elevationMode" type="number">0</property>
 	<property id="uiMode" type="number">0</property>
 	<property id="renderMode" type="number">0</property>
 
@@ -13,6 +14,8 @@
 	<property id="mapChoice" type="number">0</property>
 	<property id="tileUrl" type="string">http://127.0.0.1:8080</property>
 	<property id="tileSize" type="number">64</property>
+	<property id="fullTileSize" type="number">256</property>
+	<property id="scaledTileSize" type="number">256</property>
 	<property id="tileLayerMax" type="number">15</property>
 	<property id="tileLayerMin" type="number">0</property>
 	<property id="tileCacheSize" type="number">64</property>

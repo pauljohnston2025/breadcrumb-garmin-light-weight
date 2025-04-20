@@ -14,6 +14,12 @@ enum /*Mode*/ {
     MODE_MAX,
 }
 
+enum /*ElevationMode*/ {
+    ELEVATION_MODE_STACKED,
+    ELEVATION_MODE_ORDERED_ROUTES,
+    ELEVATION_MODE_MAX,
+}
+
 enum /*ZoomMode*/ {
     ZOOM_AT_PACE_MODE_PACE,
     ZOOM_AT_PACE_MODE_STOPPED,
@@ -120,7 +126,11 @@ class Settings {
     // we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes.
     // so math.ceil should be used what figuring out how many meters a tile is.
     // eg. maybe we cannot do 128 but we can do 120 (this would limit the number of tiles, but the resolution would be slightly off)
-    var tileSize as Number = 64;
+    var tileSize as Number = 64; // The smaller tile size, mainly for use with companion app, allows slicing scaledTileSize into smaller tiles
+    // todo: impl support for these
+    var fullTileSize as Number = 256; // The tile size on the tile server
+    // todo: reduce this to 128 for better results (companion app will also need to be defaulted)
+    var scaledTileSize as Number = 256; // The tile size to scale images to, results in significantly smaller downloads (and faster speeds) but makes image slightly blurry.
     // website says: Worldwide, Zoom to 17. (Zoom limited to 15 on website opentopomap.org)
     // real world test showed 17 produced errors (maybe you need to be authed to get this?)
     var tileLayerMax as Number = 15;
@@ -134,6 +144,7 @@ class Settings {
     // 64 is enough to render outside the screen a bit 64*64 tiles with 64 tiles gives us 512*512 worth of pixel data
     var tileCacheSize as Number = 64; // represented in number of tiles, parsed from a string eg. "64"=64tiles, "100KB"=100/2Kb per tile = 50
     var mode as Number = MODE_NORMAL;
+    var elevationMode as Number = ELEVATION_MODE_STACKED;
     // todo clear tile cache when this changes
     var mapEnabled as Boolean = false;
     var trackColour as Number = Graphics.COLOR_GREEN;
@@ -195,6 +206,11 @@ class Settings {
     function setMode(_mode as Number) as Void {
         mode = _mode;
         setValue("mode", mode);
+    }
+    
+    function setElevationMode(value as Number) as Void {
+        elevationMode = value;
+        setValue("elevationMode", elevationMode);
     }
 
     function setUiMode(_uiMode as Number) as Void {
@@ -319,6 +335,14 @@ class Settings {
             {
                 setTileLayerMin(defaultSettings.tileLayerMin);
             }
+            if (fullTileSize != defaultSettings.fullTileSize)
+            {
+                setFullTileSize(defaultSettings.fullTileSize);
+            }
+            if (scaledTileSize != defaultSettings.scaledTileSize)
+            {
+                setScaledTileSize(defaultSettings.scaledTileSize);
+            }
             if (tileSize != defaultSettings.tileSize)
             {
                 setTileSize(defaultSettings.tileSize);
@@ -335,6 +359,7 @@ class Settings {
             return; // invalid selection
         }
 
+        var defaultSettings = new Settings();
         var tileServerInfo = TILE_SERVERS[tileServerIndex];
         if (tileLayerMax != tileServerInfo.tileLayerMax)
         {
@@ -344,9 +369,18 @@ class Settings {
         {
             setTileLayerMin(tileServerInfo.tileLayerMin);
         }
-        if (tileSize != 256)
+        if (fullTileSize != 256)
         {
-            setTileSize(256);
+            setFullTileSize(256);
+        }
+        // todo: reduce this to 128 for better results
+        if (scaledTileSize != defaultSettings.scaledTileSize)
+        {
+            setScaledTileSize(defaultSettings.scaledTileSize);
+        }
+        if (tileSize != defaultSettings.scaledTileSize)
+        {
+            setTileSize(defaultSettings.scaledTileSize);
         }
         if (tileUrl != tileServerInfo.urlTempalte)
         {
@@ -360,6 +394,8 @@ class Settings {
         setValue("tileUrl", tileUrl);
         clearPendingWebRequests();
         clearTileCache();
+        clearTileCacheStats();
+        clearWebStats();
 
         // prompts user to open the app
         if (tileUrl.equals(COMPANION_APP_TILE_URL)) {
@@ -393,6 +429,20 @@ class Settings {
     function setTileSize(value as Number) as Void {
         tileSize = value;
         setValue("tileSize", tileSize);
+        clearPendingWebRequests();
+        clearTileCache();
+    }
+    
+    function setFullTileSize(value as Number) as Void {
+        fullTileSize = value;
+        setValue("fullTileSize", fullTileSize);
+        clearPendingWebRequests();
+        clearTileCache();
+    }
+    
+    function setScaledTileSize(value as Number) as Void {
+        scaledTileSize = value;
+        setValue("scaledTileSize", scaledTileSize);
         clearPendingWebRequests();
         clearTileCache();
     }
@@ -1159,6 +1209,8 @@ class Settings {
         // note: this pulls the defaults from whatever we have at the top of the filem these may differ from the defaults in properties.xml
         var defaultSettings = new Settings();
         setTileSize(defaultSettings.tileSize);
+        setFullTileSize(defaultSettings.fullTileSize);
+        setScaledTileSize(defaultSettings.scaledTileSize);
         setTileLayerMax(defaultSettings.tileLayerMax);
         setTileLayerMin(defaultSettings.tileLayerMin);
         setTileCacheSize(defaultSettings.tileCacheSize);
@@ -1177,6 +1229,7 @@ class Settings {
         setZoomAtPaceMode(defaultSettings.zoomAtPaceMode);
         setZoomAtPaceSpeedMPS(defaultSettings.zoomAtPaceSpeedMPS);
         setUiMode(defaultSettings.uiMode);
+        setElevationMode(defaultSettings.elevationMode);
         setAlertType(defaultSettings.alertType);
         setRenderMode(defaultSettings.renderMode);
         setFixedLatitude(defaultSettings.fixedLatitude);
@@ -1215,6 +1268,8 @@ class Settings {
 
         return {
             "tileSize" => tileSize,
+            "fullTileSize" => fullTileSize,
+            "scaledTileSize" => scaledTileSize,
             "tileLayerMax" => tileLayerMax,
             "tileLayerMin" => tileLayerMin,
             "tileCacheSize" => tileCacheSize,
@@ -1233,6 +1288,7 @@ class Settings {
             "zoomAtPaceMode" => zoomAtPaceMode,
             "zoomAtPaceSpeedMPS" => zoomAtPaceSpeedMPS,
             "uiMode" => uiMode,
+            "elevationMode" => elevationMode,
             "alertType" => alertType,
             "renderMode" => renderMode,
             "fixedLatitude" => fixedLatitude == null ? 0f : fixedLatitude,
@@ -1285,6 +1341,8 @@ class Settings {
 
         System.println("loadSettings: Loading all settings");
         tileSize = parseNumber("tileSize", tileSize);
+        fullTileSize = parseNumber("fullTileSize", fullTileSize);
+        scaledTileSize = parseNumber("scaledTileSize", scaledTileSize);
         tileLayerMax = parseNumber("tileLayerMax", tileLayerMax);
         tileLayerMin = parseNumber("tileLayerMin", tileLayerMin);
         // System.println("tileSize: " + tileSize);
@@ -1292,6 +1350,16 @@ class Settings {
             tileSize = 2;
         } else if (tileSize > 256) {
             tileSize = 256;
+        }
+        if (fullTileSize < 2) {
+            fullTileSize = 2;
+        } else if (fullTileSize > 256) {
+            fullTileSize = 256;
+        }
+        if (scaledTileSize < 2) {
+            scaledTileSize = 2;
+        } else if (scaledTileSize > 256) {
+            scaledTileSize = 256;
         }
 
         tileCacheSize = parseNumber("tileCacheSize", tileCacheSize);
@@ -1318,6 +1386,7 @@ class Settings {
         zoomAtPaceMode = parseNumber("zoomAtPaceMode", zoomAtPaceMode);
         zoomAtPaceSpeedMPS = parseFloat("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
         uiMode = parseNumber("uiMode", uiMode);
+        elevationMode = parseNumber("elevationMode", elevationMode);
         alertType = parseNumber("alertType", alertType);
         renderMode = parseNumber("renderMode", renderMode);
 
@@ -1378,6 +1447,8 @@ class Settings {
         var oldMapChoice = mapChoice;
         var oldTileUrl = tileUrl;
         var oldTileSize = tileSize;
+        var oldFullTileSize = fullTileSize;
+        var oldScaledTileSize = scaledTileSize;
         var oldTileCacheSize = tileCacheSize;
         var oldMapEnabled = mapEnabled;
         loadSettings();
@@ -1406,6 +1477,12 @@ class Settings {
         }
         if (oldTileSize != tileSize) {
             setTileSize(tileSize);
+        }
+        if (oldFullTileSize != fullTileSize) {
+            setFullTileSize(fullTileSize);
+        }
+        if (oldScaledTileSize != scaledTileSize) {
+            setScaledTileSize(scaledTileSize);
         }
         if (oldTileCacheSize != tileCacheSize) {
             setTileCacheSize(tileCacheSize);

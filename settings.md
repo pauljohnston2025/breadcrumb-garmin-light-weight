@@ -238,6 +238,10 @@ Calculating off track alerts (either Draw Line To Last Point, or Off Track Alert
 
 The number of meters you need to be off track for an alert to be triggered or a line to be drawn back to the track.
 
+### Off Track Alerts Max Report Interval
+
+How often, in seconds, an alert should fire. Alerts will continue firing until you return to the planned route (or reach a section of another enabled route). This setting is also used to to slow down the calculation of off track alerts (since its expensive). Once you rejoin the track, a line will continue to be draw to the last point you left the track until we recalculate. eg. an interval of 60 will mean the line will still be drawn for up to 1minute after we rejoin the track, and alerts will only fire once a minute.
+
 ### Draw Line To Last Point
 
 Draw a line back to the spot where you left the route. If multiple routes are enabled a line will be drawn the last point where you left closest route.
@@ -245,10 +249,6 @@ Draw a line back to the spot where you left the route. If multiple routes are en
 ### Off Track Alerts
 
 Trigger an alert when you leave a route by `Off Track Distance`.
-
-### Off Track Alerts Max Report Interval
-
-How often, in seconds, an alert should fire. Alerts will continue firing until you return to the planned route (or reach a section of another enabled route). 
 
 ### Off Track Alerts Alert Type
 

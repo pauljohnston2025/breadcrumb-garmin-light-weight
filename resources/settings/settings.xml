@@ -18,6 +18,13 @@
             <listEntry value="2">@Strings.uiModeNone</listEntry>
         </settingConfig>
     </setting>
+    
+    <setting propertyKey="@Properties.elevationMode" title="@Strings.elevationModeTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.elevationModeStacked</listEntry>
+            <listEntry value="1">@Strings.elevationModeOrderedRoutes</listEntry>
+        </settingConfig>
+    </setting>
 
     <setting propertyKey="@Properties.recalculateItervalS" title="@Strings.recalculateItervalSTitle" prompt="@Strings.recalculateItervalSPrompt">
         <settingConfig type="numeric" min="0"/>
@@ -86,6 +93,14 @@
         </setting>
         
         <setting propertyKey="@Properties.tileSize" title="@Strings.layerTileSize" prompt="@Strings.tileSizePrompt">
+            <settingConfig type="numeric" min="2" max="256"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.fullTileSize" title="@Strings.fullTileSizeTitle" prompt="@Strings.fullTileSizePrompt">
+            <settingConfig type="numeric" min="2" max="256"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.scaledTileSize" title="@Strings.scaledTileSizeTitle" prompt="@Strings.scaledTileSizePrompt">
             <settingConfig type="numeric" min="2" max="256"/>
         </setting>
 

@@ -12,6 +12,9 @@
     <string id="tileLayerMinPrompt">2</string>
     <string id="tileCacheSizeTitle">Tile Cache Size (tiles)</string>
     <string id="modeTitle">Display Mode</string>
+    <string id="elevationModeTitle">Elevation Mode</string>
+    <string id="elevationModeStacked">Stacked</string>
+    <string id="elevationModeOrderedRoutes">Ordered Routes</string>
     <string id="tileUrlTitle">Tile Url</string>
     <string id="mapSettingsDescription">Tile size should be a multiple of 256 for best results. Choose these values wisely. Too big = crash, too small = crash or slow performance. Tile url should be 'http://127.0.0.1:8080' for companion app or template eg. 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png'. Tile size should generally be 256 if using a template.</string>
     <string id="tileUrlPrompt">https://fancytileserver/{z}/{x}/{y}.png</string>
@@ -85,6 +88,10 @@
     <string id="mapsettingsTitle">Map Settings</string>
 
     <string id="tileSizePrompt">Pixels per tile x and y</string>
+    <string id="fullTileSizeTitle">Full Tile Size</string>
+    <string id="scaledTileSizeTitle">Scaled Tile Size</string>
+    <string id="fullTileSizePrompt">Tile server tile size</string>
+    <string id="scaledTileSizePrompt">smaller = faster but more blurry</string>
     <string id="tileCacheSizePrompt">Number of tiles to cache</string>
     <string id="colourPrompt">Colour in AARRGGBB format</string>
     <string id="displayLatLongTitle">Display Lat/Long</string>
