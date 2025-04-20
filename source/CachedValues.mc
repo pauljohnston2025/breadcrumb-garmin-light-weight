@@ -62,7 +62,9 @@ class CachedValues {
 
     function initialize(settings as Settings) {
         self._settings = settings;
-        smallTilesPerScaledTile = Math.ceil(_settings.scaledTileSize / _settings.tileSize).toNumber();
+        smallTilesPerScaledTile = Math.ceil(
+            _settings.scaledTileSize / _settings.tileSize
+        ).toNumber();
         smallTilesPerFullTile = Math.ceil(_settings.fullTileSize / _settings.tileSize).toNumber();
         fixedPosition = null;
         // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
@@ -149,7 +151,7 @@ class CachedValues {
 
     // needs to be called whenever the screen moves to a new bounding box
     function updateMapData() {
-        if (currentScale == 0f) {
+        if (currentScale == 0f || smallTilesPerScaledTile == 0f) {
             // do not divide by zero my good friends
             // we do not have a scale calculated yet
             return;
@@ -302,7 +304,16 @@ class CachedValues {
     }
 
     function nextTileLayerScale(direction as Number) as Float {
-        var currentZ = Math.round(Math.log(earthsCircumference / (_settings.tileSize / currentScale) / smallTilesPerFullTile, 2)).toNumber();
+        if (smallTilesPerFullTile == 0) {
+            return 0f;
+        }
+
+        var currentZ = Math.round(
+            Math.log(
+                earthsCircumference / (_settings.tileSize / currentScale) / smallTilesPerFullTile,
+                2
+            )
+        ).toNumber();
         currentZ = minN(maxN(currentZ, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits, otherwise we can decreent/increment outside the range if we are already at a bad scale
         var nextZ = currentZ + direction;
 
@@ -314,8 +325,7 @@ class CachedValues {
     function tileLayerScale(maxDistanceM as Float) as Float {
         var perfectScale = calculateScaleStandard(maxDistanceM);
 
-        if (perfectScale == 0f)
-        {
+        if (perfectScale == 0f || smallTilesPerFullTile == 0f) {
             return perfectScale; // do not divide by 0
         }
 
@@ -396,7 +406,9 @@ class CachedValues {
 
     function recalculateAll() as Void {
         System.println("recalculating all cached values from settings/routes change");
-        smallTilesPerScaledTile = Math.ceil(_settings.scaledTileSize / _settings.tileSize).toNumber();
+        smallTilesPerScaledTile = Math.ceil(
+            _settings.scaledTileSize / _settings.tileSize
+        ).toNumber();
         smallTilesPerFullTile = Math.ceil(_settings.fullTileSize / _settings.tileSize).toNumber();
         updateFixedPositionFromSettings();
         updateScaleCenterAndMap();
