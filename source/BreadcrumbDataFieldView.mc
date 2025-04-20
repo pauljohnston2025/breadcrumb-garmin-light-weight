@@ -345,9 +345,21 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 renderer.renderLineFromLastPointToRoute(
                     dc,
                     lastPoint,
-                    offTrackInfo.pointWeLeftTrack
+                    offTrackInfo.pointWeLeftTrack,
+                    Graphics.COLOR_RED
                 );
             }
+
+            // debug draw line to point
+            // if (offTrackInfo.onTrack && offTrackInfo.pointWeLeftTrack != null) {
+            //     // points need to be scaled and rotated :(
+            //     renderer.renderLineFromLastPointToRoute(
+            //         dc,
+            //         lastPoint,
+            //         offTrackInfo.pointWeLeftTrack,
+            //         Graphics.COLOR_PURPLE
+            //     );
+            // }
         }
 
         // move based on the last scale we drew
@@ -482,7 +494,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         dc.clear();
         // its only a debug menu that should probbaly be optimised out in release, hard code to venu2s screen coordinates
         // it is actually pretty nice info, best guess on string sizes down the screen
-        var fieldCount = 9;
+        var fieldCount = 10;
         var y = 30;
         var spacing = (dc.getHeight() - y).toFloat() / fieldCount;
         var x = _cachedValues.xHalf;
@@ -522,6 +534,27 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             y,
             Graphics.FONT_XTINY,
             "last alert: " + (epoch - lastOffTrackAlertCalculated) + "s",
+            Graphics.TEXT_JUSTIFY_CENTER
+        );
+        y += spacing;
+        var distToLastStr = "NA";
+        var lastPoint = _breadcrumbContext.track().lastPoint();
+        if ( lastPoint != null && offTrackInfo.pointWeLeftTrack != null)
+        {
+            var distMeters = offTrackInfo.pointWeLeftTrack.distanceTo(lastPoint);
+            if (_cachedValues.currentScale != 0f)
+            {
+                distMeters = distMeters / _cachedValues.currentScale;
+            }
+
+            distToLastStr = distMeters.format("%.2f") + "m";
+        }
+        
+        dc.drawText(
+            x,
+            y,
+            Graphics.FONT_XTINY,
+            "on track: " + (offTrackInfo.onTrack ? "Y" : "N") + " dist: " + distToLastStr,
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;

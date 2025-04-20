@@ -156,7 +156,8 @@ class BreadcrumbRenderer {
     function renderLineFromLastPointToRoute(
         dc as Dc,
         lastPoint as RectangularPoint,
-        offTrackPoint as RectangularPoint
+        offTrackPoint as RectangularPoint,
+        colour as Number
     ) as Void {
         // todo make this use the buffered rendering mode
         // its only when off track, so not a huge issue
@@ -203,7 +204,7 @@ class BreadcrumbRenderer {
         }
 
         dc.setPenWidth(4);
-        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
+        dc.setColor(colour, Graphics.COLOR_BLACK);
         dc.drawLine(
             lastPointRotatedX,
             lastPointRotatedY,
