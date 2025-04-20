@@ -33,6 +33,14 @@ class OffTrackInfo {
         me.onTrack = onTrack;
         me.pointWeLeftTrack = pointWeLeftTrack;
     }
+
+    function clone() as OffTrackInfo {
+        if (pointWeLeftTrack == null) {
+            return new OffTrackInfo(onTrack, null);
+        }
+
+        return new OffTrackInfo(onTrack, pointWeLeftTrack.clone());
+    }
 }
 
 class BreadcrumbTrack {
@@ -400,7 +408,6 @@ class BreadcrumbTrack {
         segmentBX as Float,
         segmentBY as Float
     ) as [Float, Float, Float] {
-
         // Vector V = B - A
         var vx = segmentBX - segmentAX;
         var vy = segmentBY - segmentAY;

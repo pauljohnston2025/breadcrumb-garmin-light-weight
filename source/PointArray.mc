@@ -38,6 +38,10 @@ class RectangularPoint {
         return "RectangularPoint(" + x + " " + y + " " + altitude + ")";
     }
 
+    function clone() as RectangularPoint {
+        return new RectangularPoint(x, y, altitude);
+    }
+    
     function rescale(scaleFactor as Float) as RectangularPoint {
         // unsafe to call with nulls or 0, checks should be made in parent
         return new RectangularPoint(x * scaleFactor, y * scaleFactor, altitude);

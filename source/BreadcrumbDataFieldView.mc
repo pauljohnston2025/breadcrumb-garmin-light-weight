@@ -181,17 +181,18 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 newPoint,
                 settings.offTrackAlertsDistanceM * _cachedValues.currentScale
             );
+
+            if (routeOffTrackInfo.onTrack) {
+                offTrackInfo = routeOffTrackInfo.clone(); // never store the point we got or rescales could occur twice on the same object
+                return;
+            }
+
             if (
                 offTrackInfo.pointWeLeftTrack == null ||
                 offTrackInfo.pointWeLeftTrack.distanceTo(newPoint) >
                     routeOffTrackInfo.pointWeLeftTrack.distanceTo(newPoint)
             ) {
-                offTrackInfo = routeOffTrackInfo;
-            }
-
-            if (routeOffTrackInfo.onTrack) {
-                offTrackInfo = routeOffTrackInfo;
-                return;
+                offTrackInfo = routeOffTrackInfo.clone(); // never store the point we got or rescales could occur twice on the same object
             }
         }
 

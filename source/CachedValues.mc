@@ -393,7 +393,7 @@ class CachedValues {
         var routes = getApp()._breadcrumbContext.routes();
         for (var i = 0; i < routes.size(); ++i) {
             var route = routes[i];
-            route.rescale(scaleFactor);
+            route.rescale(scaleFactor); // rescale all routes, even if they are not enabled
         }
         getApp()._breadcrumbContext.track().rescale(scaleFactor);
         if (getApp()._view != null) {
@@ -538,7 +538,7 @@ class CachedValues {
     function calcCenterPoint() as Boolean {
         if (fixedPosition != null) {
             if (currentScale == 0f) {
-                centerPosition = fixedPosition;
+                centerPosition = fixedPosition.clone();
             } else {
                 centerPosition = fixedPosition.rescale(currentScale);
             }
