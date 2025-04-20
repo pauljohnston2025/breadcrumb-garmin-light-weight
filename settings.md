@@ -139,6 +139,8 @@ Max Pending Web Requests: `Tile Cache Size`
 eg. On my venu2s if scale is set to `0.075` it uses approximately 10\*10 tiles to fill the screen, this means the tile cache would need to be set to at least 100 (at 64 you can see the tiles loading and unloading)  
 The math above is worst case, if you pick a better fixed scale or `Meters Around User` then the tile cache size can be significantly reduced (by at least half). Layer min/max could also be used to specify a fixed layer and further reduce the need for tiles in memory (since we can zoom in and make a single tile cover the screen). All these settings are here so users can configure their own memory requirements for the best battery life and stability. I suggest settings the scale to one that you like, and then reducing the tile cache size until black squares appear to find the tile cache lower limit.
 
+You can also set <Scaled Tile Size> to reduce the cache requirements further, if <Scaled Tile Size> is set to 128, <Scaled Tile Size> and <Full Tile Size> is 256, then the tile cache size can be reduced by a factor of 4. ie. (<Full Tile Size>/<Scaled Tile Size>)^2.
+
 ### Map Choice
 
 Pick from a list on tile servers, select custom if you wish to manually specify a tileUrl.
@@ -198,7 +200,7 @@ The full tile size of the server, if using the companion app as the tile server,
 
 ### Scaled Tile Size
 
-The tile size to fetch images from the web, setting this to something like 128 will result in 4 times the performance (compared to 256), since the images we need to download are much smaller. But it also means each pixel of the downloaded tile will be 4 pixels on the screen (at full resolution). Smaller values are much faster, but may not look as nice (slightly blurry). Should be a multiple of 256 for best results.
+The tile size to fetch images from the web, setting this to something like 128 will result in 4 times the performance (compared to 256), since the images we need to download are much smaller. But it also means each pixel of the downloaded tile will be 4 pixels on the screen (at full resolution). Smaller values are much faster, but may not look as nice (slightly blurry). Should be a multiple of 256 for best results. Setting the scaled tile size also reduces the size of the tile cache, see the calculations in the maps description above.
 
 ### Tile Layer Max
 

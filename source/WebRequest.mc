@@ -287,7 +287,7 @@ class WebRequestHandler {
         }
         outstandingHashes.add(jsonOrImageReq.hash);
 
-        // System.println("url: "  + jsonOrImageReq.url);
+        System.println("url: "  + jsonOrImageReq.url);
         // System.println("params: "  + jsonOrImageReq.params);
 
         if (jsonOrImageReq instanceof ImageRequest) {
@@ -301,14 +301,13 @@ class WebRequestHandler {
                     ) as Void
                 );
             // we only use image requests for exeternal servers
-            var requiresScaling = _settings.tileSize != 256;
+            var requiresScaling = _settings.tileSize != _settings.scaledTileSize;
             Communications.makeImageRequest(
                 jsonOrImageReq.url,
                 jsonOrImageReq.params,
                 {
-                    // consider setting maxWidth and maxHeight 
-                    // could download image as 128*128 then scale to 256*256 (faster ble transfer speeds)
-                    // or no need to scale, just use 128 as bigTileSize everywhere.
+                    :maxWidth => _settings.scaledTileSize,
+                    :maxHeight => _settings.scaledTileSize,
 
                     // needs to be png or we will get
                     // Error: Unhandled Exception

@@ -18,7 +18,8 @@ class CachedValues {
     // things set to -1 are updated on the first layout/calcualte call
 
     // updated when settings change
-    var smallTilesPerBigTile as Number;
+    var smallTilesPerScaledTile as Number;
+    var smallTilesPerFullTile as Number;
     // updated when user manually pans around screen
     var fixedPosition as RectangularPoint?; // NOT SCALED - raw meters
     var scale as Float? = null; // fixed map scale, when manually zooming or panning around map
@@ -61,7 +62,8 @@ class CachedValues {
 
     function initialize(settings as Settings) {
         self._settings = settings;
-        smallTilesPerBigTile = Math.ceil(256f / _settings.tileSize).toNumber();
+        smallTilesPerScaledTile = Math.ceil(_settings.scaledTileSize / _settings.tileSize).toNumber();
+        smallTilesPerFullTile = Math.ceil(_settings.fullTileSize / _settings.tileSize).toNumber();
         fixedPosition = null;
         // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
         mapMoveDistanceM = _settings.metersAroundUser.toFloat();
@@ -160,7 +162,7 @@ class CachedValues {
         var z = Math.round(calculateTileLevel(desiredResolution)).toNumber();
         tileZ = minN(maxN(z, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
 
-        var tileWidthM = earthsCircumference / Math.pow(2, tileZ) / smallTilesPerBigTile;
+        var tileWidthM = earthsCircumference / Math.pow(2, tileZ) / smallTilesPerScaledTile;
         // var minScreenDim = minF(_screenWidth, _screenHeight);
         // var minScreenDimM = minScreenDim / currentScale;
         var screenWidthM = screenWidth / currentScale;
@@ -300,12 +302,12 @@ class CachedValues {
     }
 
     function nextTileLayerScale(direction as Number) as Float {
-        var currentZ = Math.round(Math.log(earthsCircumference / (_settings.tileSize / currentScale) / smallTilesPerBigTile, 2)).toNumber();
+        var currentZ = Math.round(Math.log(earthsCircumference / (_settings.tileSize / currentScale) / smallTilesPerFullTile, 2)).toNumber();
         currentZ = minN(maxN(currentZ, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits, otherwise we can decreent/increment outside the range if we are already at a bad scale
         var nextZ = currentZ + direction;
 
         nextZ = minN(maxN(nextZ, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
-        var tileWidthM2 = earthsCircumference / Math.pow(2, nextZ) / smallTilesPerBigTile;
+        var tileWidthM2 = earthsCircumference / Math.pow(2, nextZ) / smallTilesPerFullTile;
         return (_settings.tileSize / tileWidthM2).toFloat();
     }
 
@@ -321,7 +323,7 @@ class CachedValues {
         // var minScreenDimM = _minScreenDim / currentScale;
         // var screenToTileMRatio = minScreenDimM / tileWidthM;
         // var screenToTilePixelRatio = minScreenDim / _settings.tileSize;
-        var tileWidthM2 = earthsCircumference / Math.pow(2, z) / smallTilesPerBigTile;
+        var tileWidthM2 = earthsCircumference / Math.pow(2, z) / smallTilesPerFullTile;
         //  var screenToTilePixelRatio = _minScreenDim / settings.tileSize;
 
         // note: this gets as close as it can to the zoom level, some route clipping might occur
@@ -388,7 +390,8 @@ class CachedValues {
 
     function recalculateAll() as Void {
         System.println("recalculating all cached values from settings/routes change");
-        smallTilesPerBigTile = Math.ceil(256f / _settings.tileSize).toNumber();
+        smallTilesPerScaledTile = Math.ceil(_settings.scaledTileSize / _settings.tileSize).toNumber();
+        smallTilesPerFullTile = Math.ceil(_settings.fullTileSize / _settings.tileSize).toNumber();
         updateFixedPositionFromSettings();
         updateScaleCenterAndMap();
     }
@@ -409,7 +412,7 @@ class CachedValues {
         // var tileWidthAtZoom0 = earthsCircumference;
 
         // Pixel resolution (meters per pixel) at zoom level 0
-        var resolutionAtZoom0 = earthsCircumference / 256f; // big tile coordinates
+        var resolutionAtZoom0 = earthsCircumference / _settings.fullTileSize; // big tile coordinates
 
         // Calculate the tile level (Z)
         var tileLevel = Math.ln(resolutionAtZoom0 / desiredResolution) / Math.ln(2);

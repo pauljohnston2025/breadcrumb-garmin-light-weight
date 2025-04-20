@@ -129,8 +129,7 @@ class Settings {
     var tileSize as Number = 64; // The smaller tile size, mainly for use with companion app, allows slicing scaledTileSize into smaller tiles
     // todo: impl support for these
     var fullTileSize as Number = 256; // The tile size on the tile server
-    // todo: reduce this to 128 for better results (companion app will also need to be defaulted)
-    var scaledTileSize as Number = 256; // The tile size to scale images to, results in significantly smaller downloads (and faster speeds) but makes image slightly blurry.
+    var scaledTileSize as Number = 128; // The tile size to scale images to, results in significantly smaller downloads (and faster speeds) but makes image slightly blurry.
     // website says: Worldwide, Zoom to 17. (Zoom limited to 15 on website opentopomap.org)
     // real world test showed 17 produced errors (maybe you need to be authed to get this?)
     var tileLayerMax as Number = 15;

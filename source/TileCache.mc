@@ -150,19 +150,6 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         if (responseCode != 200) {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
             System.println("failed with: " + responseCode);
-            // dirty debug hacks, rebuild the url from the tile key
-            // var x = _tileKey.x / getApp()._breadcrumbContext.cachedValues().smallTilesPerBigTile;
-            // var y = _tileKey.y / getApp()._breadcrumbContext.cachedValues().smallTilesPerBigTile;
-            // var origUrl = stringReplaceFirst(
-            //     stringReplaceFirst(
-            //         stringReplaceFirst(getApp()._breadcrumbContext.settings().tileUrl, "{x}", x.toString()),
-            //         "{y}",
-            //         y.toString()
-            //     ),
-            //     "{z}",
-            //     _tileKey.z.toString()
-            // );
-            // System.println("url failed: " + responseCode + " " + origUrl);
             return;
         }
 
@@ -194,14 +181,14 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             // if users are using a smaller size it should be a multiple of 256.
             // if its not, we will stretch the image then downsize, if its already a multiple we will use the image as is (optimal)
             var maxDim = maxN(data.getWidth(), data.getHeight()); // should be equal (every time server i know of is 256*256), but who knows
-            var pixelsPerTile = maxDim / cachedValues.smallTilesPerBigTile.toFloat();
+            var pixelsPerTile = maxDim / cachedValues.smallTilesPerScaledTile.toFloat();
             var sourceBitmap = data;
             if (
                 Math.ceil(pixelsPerTile) != settings.tileSize ||
                 Math.floor(pixelsPerTile) != settings.tileSize
             ) {
                 // we have an anoying situation - stretch/reduce the image
-                var scaleUpSize = cachedValues.smallTilesPerBigTile * settings.tileSize;
+                var scaleUpSize = cachedValues.smallTilesPerScaledTile * settings.tileSize;
                 var scaleFactor = scaleUpSize / maxDim.toFloat();
                 var upscaledBitmap = newBitmap(scaleUpSize, scaleUpSize, null);
                 var upscaledBitmapDc = upscaledBitmap.getDc();
@@ -225,8 +212,8 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 
             var croppedSection = newBitmap(settings.tileSize, settings.tileSize, null);
             var croppedSectionDc = croppedSection.getDc();
-            var xOffset = _tileKey.x % cachedValues.smallTilesPerBigTile;
-            var yOffset = _tileKey.y % cachedValues.smallTilesPerBigTile;
+            var xOffset = _tileKey.x % cachedValues.smallTilesPerScaledTile;
+            var yOffset = _tileKey.y % cachedValues.smallTilesPerScaledTile;
             // System.println("tile: " + _tileKey);
             // System.println("croppedSection: " + croppedSection.getWidth() + " " + croppedSection.getHeight());
             // System.println("source: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
@@ -377,8 +364,8 @@ class TileCache {
         // System.println("starting load tile: " + x + " " + y + " " + z);
 
         if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
-            var x = tileKey.x / _cachedValues.smallTilesPerBigTile;
-            var y = tileKey.y / _cachedValues.smallTilesPerBigTile;
+            var x = tileKey.x / _cachedValues.smallTilesPerScaledTile;
+            var y = tileKey.y / _cachedValues.smallTilesPerScaledTile;
             _webRequestHandler.add(
                 new ImageRequest(
                     "tileimage" + tileKey + "-" + _tileCacheVersion, // the hash is for the small tile request, not the big one (they will send the same physical request out, but again use 256 tilSize if your using external sources)
@@ -406,6 +393,7 @@ class TileCache {
                     "x" => tileKey.x,
                     "y" => tileKey.y,
                     "z" => tileKey.z,
+                    "scaledTileSize" => _settings.scaledTileSize,
                     "tileSize" => getApp()._breadcrumbContext.settings().tileSize,
                 },
                 new JsonWebTileRequestHandler(me, tileKey, _tileCacheVersion)
