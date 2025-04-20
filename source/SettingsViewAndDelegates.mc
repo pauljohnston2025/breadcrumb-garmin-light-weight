@@ -748,6 +748,40 @@ class ResetSettingsDelegate extends WatchUi.ConfirmationDelegate {
     }
 }
 
+
+class DeleteRouteDelegate extends WatchUi.ConfirmationDelegate {
+    var routeId as Number;
+    var settings as Settings;
+    function initialize(_routeId as Number, _settings as Settings) {
+        WatchUi.ConfirmationDelegate.initialize();
+        routeId = _routeId;
+        settings = _settings;
+    }
+    function onResponse(response as Confirm) as Boolean {
+        if (response == WatchUi.CONFIRM_YES) {
+            getApp()._breadcrumbContext.clearRoute(routeId);
+
+            // WARNING: this is a massive hack, probably dependant on platform
+            // just poping the vew and replacing does not work, because the confirmation is still active whilst we are in this function
+            // so we need to pop the confirmation too
+            // but the confirmation is also about to call WatchUi.popView()
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop confirmation
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop route view
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop routes view
+            var view = new $.SettingsRoutes(settings);
+            WatchUi.pushView(
+                view,
+                new $.SettingsRoutesDelegate(view, settings),
+                WatchUi.SLIDE_IMMEDIATE
+            ); // replace with new updated routes view
+            WatchUi.pushView(new DummyView(), null, WatchUi.SLIDE_IMMEDIATE); // push dummy view for the confirmation to pop
+
+        }
+
+        return true; // we always handle it
+    }
+}
+
 class SettingsModeDelegate extends WatchUi.Menu2InputDelegate {
     var parent as SettingsMain;
     function initialize(parent as SettingsMain) {
@@ -1091,6 +1125,9 @@ class SettingsRouteDelegate extends WatchUi.Menu2InputDelegate {
                 new SettingsColourPicker(view.method(:setColour), view.routeColour()),
                 view
             );
+        } else if (itemId == :settingsRouteDelete) {
+            var dialog = new WatchUi.Confirmation("Delete Route?");
+            WatchUi.pushView(dialog, new DeleteRouteDelegate(view.routeId, settings), WatchUi.SLIDE_IMMEDIATE);
         }
     }
 }

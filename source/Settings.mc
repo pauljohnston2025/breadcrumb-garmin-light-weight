@@ -686,6 +686,15 @@ class Settings {
         routes = [];
         saveRoutes();
     }
+    
+    function clearRoute(routeId as Number) as Void {
+        var routeIndex = getRouteIndexById(routeId);
+        if (routeIndex == null) {
+            return;
+        }
+        routes.remove(routes[routeIndex]);
+        saveRoutes();
+    }
 
     function routesToSave() as Array {
         var toSave = [];

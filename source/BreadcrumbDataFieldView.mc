@@ -109,7 +109,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         if (rescaleOccurred) {
             // rescaling is an expensive operatioj, f we have multiple large routes rescale and then try and recalculate off track alerts (or anything else expensive)
             // we could hit watchdog errors. Best to not attempt anything else.
-            logD("rescale ocurred, skipping remaining calculate");
+            logD("rescale occurred, skipping remaining calculate");
             return;
         }
         // this is here due to stack overflow bug when requests trigger the next request

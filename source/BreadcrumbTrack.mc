@@ -446,7 +446,7 @@ class BreadcrumbTrack {
 
     // checkpoint should already be scaled, as should distanceCheck
     function checkOffTrack(checkPoint as RectangularPoint, distanceCheck as Float) as OffTrackInfo {
-        logD("checking off track: " + storageIndex);
+        // logD("checking off track: " + storageIndex);
         // the big annying thing with off track alerts is that routes do not have evenly spaced points
         // if the route goes in a straight line, there is only 2 points, these can be frther than the alert distance
         // larger routes also have further spaced apart points (since we are limited to 500ish points per route to be able to transfer them from phone)

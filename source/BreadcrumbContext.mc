@@ -83,19 +83,25 @@ class BreadcrumbContext {
         // the colours will be uneffected
         // note: the route will also be force enabled, as described above
         if (_routes.size() >= _settings.routeMax) {
-            var oldestRoute = null;
+            var oldestOrFirstDisabledRoute = null;
             for (var i = 0; i < _routes.size(); ++i) {
                 var thisRoute = _routes[i];
-                if (oldestRoute == null || oldestRoute.epoch > thisRoute.epoch) {
-                    oldestRoute = thisRoute;
+                if (oldestOrFirstDisabledRoute == null || oldestOrFirstDisabledRoute.epoch > thisRoute.epoch) {
+                    oldestOrFirstDisabledRoute = thisRoute;
+                }
+
+                if (!_settings.routeEnabled(thisRoute.storageIndex)) {
+                    oldestOrFirstDisabledRoute = thisRoute;
+                    break;
                 }
             }
-            _routes.remove(oldestRoute);
-            var route = new BreadcrumbTrack(oldestRoute.storageIndex, name);
+            _routes.remove(oldestOrFirstDisabledRoute);
+            var routeId = oldestOrFirstDisabledRoute.storageIndex;
+            var route = new BreadcrumbTrack(routeId, name);
             _routes.add(route);
-            _settings.ensureRouteId(oldestRoute.storageIndex);
-            _settings.setRouteName(oldestRoute.storageIndex, route.name);
-            _settings.setRouteEnabled(oldestRoute.storageIndex, true);
+            _settings.ensureRouteId(routeId);
+            _settings.setRouteName(routeId, route.name);
+            _settings.setRouteEnabled(routeId, true);
             return route;
         }
 
@@ -143,6 +149,11 @@ class BreadcrumbContext {
         }
         _routes = [];
         _settings.clearRoutes();
+    }
+
+    function clearRoute(routeId as Number) as Void {
+        clearRouteId(routeId);
+        _settings.clearRoute(routeId);
     }
 
     function clearRouteId(routeId as Number) as Void {

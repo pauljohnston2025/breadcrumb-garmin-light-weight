@@ -103,7 +103,7 @@ class CachedValues {
         return outerBoundingBox;
     }
 
-    /** returns true if a rescale ocurred */
+    /** returns true if a rescale occurred */
     function updateScaleCenterAndMap() as Boolean {
         var newScale = getNewScaleAndUpdateCenter();
         var rescaleOccurred = handleNewScale(newScale);
@@ -220,7 +220,7 @@ class CachedValues {
         mapDataCanBeUsed = true;
     }
 
-    /** returns true if a rescale ocurred */
+    /** returns true if a rescale occurred */
     function onActivityInfo(activityInfo as Activity.Info) as Boolean {
         // System.println(
         //     "store heading, current speed etc. so we can know how to render the "

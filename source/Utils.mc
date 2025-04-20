@@ -1,6 +1,7 @@
 import Toybox.Lang;
 import Toybox.System;
 import Toybox.Graphics;
+import Toybox.Time;
 
 const FLOAT_MIN = -340282346638528859811704183484516925440.0;
 const FLOAT_MAX = 340282346638528859811704183484516925440.0;
@@ -97,7 +98,7 @@ function log(message as String) as Void {
 }
 
 function logLevel(lvl as String, message as String) as Void {
-    System.println("" + System.getTimer() + " " + lvl + " " + message);
+    System.println("" + Time.now().value() + " " + lvl + " " + message);
 }
 
 function logE(message as String) as Void {
