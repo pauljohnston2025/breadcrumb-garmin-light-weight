@@ -96,15 +96,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // see onUpdate explaqination for when each is called
     function actualCompute(info as Activity.Info) as Void {
         // logD("compute");
-        // temp hack for debugging (since it seems altitude does not work when playing activity data from gpx file)
-        // var route = _breadcrumbContext.route();
-        // if (route != null)
+        // temp hack for debugging in simulator (since it seems altitude does not work when playing activity data from gpx file)
+        // var route = _breadcrumbContext.routes()[0];
+        // var nextPoint = route.coordinates.getPoint(_breadcrumbContext.track().coordinates.pointSize());
+        // if (nextPoint != null)
         // {
-        //   var nextPoint = route.coordinates.getPoint(_breadcrumbContext.track().coordinates.pointSize());
-        //   if (nextPoint != null)
-        //   {
         //     info.altitude = nextPoint.altitude;
-        //   }
         // }
 
         // store rotations and speed every time
@@ -579,6 +576,16 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
 
     function renderElevation(dc as Dc) as Void {
+        if (settings.elevationMode == ELEVATION_MODE_STACKED)
+        {
+            renderElevationStacked(dc);
+            return;
+        }
+
+        renderElevationOrderedRoutes(dc);
+    }
+
+    function renderElevationStacked(dc as Dc) as Void {
         var routes = _breadcrumbContext.routes();
         var track = _breadcrumbContext.track();
         var renderer = _breadcrumbContext.trackRenderer();
@@ -608,6 +615,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 }
                 renderer.renderTrackElevation(
                     dc,
+                    renderer._xElevationStart,
                     route,
                     settings.routeColour(route.storageIndex),
                     hScale,
@@ -616,6 +624,50 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 );
             }
         }
-        renderer.renderTrackElevation(dc, track, settings.trackColour, hScale, vScale, startAt);
+        renderer.renderTrackElevation(dc, renderer._xElevationStart, track, settings.trackColour, hScale, vScale, startAt);
+    }
+    
+    function renderElevationOrderedRoutes(dc as Dc) as Void {
+        var routes = _breadcrumbContext.routes();
+        var track = _breadcrumbContext.track();
+        var renderer = _breadcrumbContext.trackRenderer();
+        
+        var elevationScale = renderer.getElevationScaleOrderedRoutes(track, routes);
+        var hScale = elevationScale[0];
+        var vScale = elevationScale[1];
+        var startAt = elevationScale[2];
+        var hScalePPM = elevationScale[3];
+
+        var elevationText =
+            track.lastPoint() == null ? "" : track.lastPoint().altitude.format("%.0f") + "m";
+
+        var elevationStartX = renderer._xElevationStart;
+
+        renderer.renderElevationChart(
+            dc,
+            hScalePPM,
+            vScale,
+            startAt,
+            track.distanceTotal,
+            elevationText
+        );
+        if (routes.size() != 0) {
+            for (var i = 0; i < routes.size(); ++i) {
+                var route = routes[i];
+                if (!settings.routeEnabled(route.storageIndex)) {
+                    continue;
+                }
+                elevationStartX = renderer.renderTrackElevation(
+                    dc,
+                    elevationStartX,
+                    route,
+                    settings.routeColour(route.storageIndex),
+                    hScale,
+                    vScale,
+                    startAt
+                );
+            }
+        }
+        renderer.renderTrackElevation(dc, renderer._xElevationStart, track, settings.trackColour, hScale, vScale, startAt);
     }
 }

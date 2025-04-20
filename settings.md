@@ -25,7 +25,7 @@ Configure which screen is displayed for the datafield.
 
 Track/Route - Current track, and any loaded routes, will be shown  
 ![](images/track-full.png)  
-Elevation - An elevation chart showing current distance and the route/track profile.  
+Elevation - An elevation chart showing current distance traveled, current elevation and the route/track profile.  
 ![](images/elevation.png)  
 Map Move - Should only be used if maps are enabled, allows panning around the map at a set zoom.  
 ![](images/settings/mapmove.png)  
@@ -76,6 +76,17 @@ Other Screens:
 Map move allows you to pan around the map, clear routes and toggle the display mode.  
 Elevation allows you to clear routes and toggle display mode.  
 The debug screen only allows you to toggle the display mode.
+
+---
+
+### Elevation Mode
+
+Stacked - Draw all routes and the current track ontop of each other, the first point of each route will be on the left of the screen  
+Route 1 - Blue, Route 2 - Red, Current Track - Green  
+![](images/settings/elevationstacked.png)  
+OrderedRoutes - Draw all routes one after the other, and overlay the track ontop. Generally best when each route is a different part of an overall route, eg. triathlons. Ensure you load the routes in the correct order on the device, an incorrect order will lead to elevation data being in the wrong spot.    
+Route 1 - Blue, Route 2 - Red, Current Track - Green  
+![](images/settings/elevationorderedroutes.png)  
 
 ---
 
@@ -179,7 +190,15 @@ Light All: https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png
 
 ### Tile Size
 
-Tile size should be a multiple of 256 for best results. The tile size in pixels loaded from the companion app or other source. Should be 256 if using a template. There are known issues with setting it smaller (performance being a big one), but it does work on some devices.
+Tile size should be a multiple of 256 for best results. The tile size in pixels loaded from the companion app or other source. Should be equal to Scaled Tile Size if using a template.
+
+### Full Tile Size
+
+The full tile size of the server, if using the companion app as the tile server, this is still the full size of the server the companion app is using. eg. opentopomaps. Normally this will be 256. 
+
+### Scaled Tile Size
+
+The tile size to fetch images from the web, setting this to something like 128 will result in 4 times the performance (compared to 256), since the images we need to download are much smaller. But it also means each pixel of the downloaded tile will be 4 pixels on the screen (at full resolution). Smaller values are much faster, but may not look as nice (slightly blurry). Should be a multiple of 256 for best results.
 
 ### Tile Layer Max
 

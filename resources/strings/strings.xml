@@ -90,7 +90,7 @@
     <string id="tileSizePrompt">Pixels per tile x and y</string>
     <string id="fullTileSizeTitle">Full Tile Size</string>
     <string id="scaledTileSizeTitle">Scaled Tile Size</string>
-    <string id="fullTileSizePrompt">Tile server tile size</string>
+    <string id="fullTileSizePrompt">Tile server tile size - 256 usually </string>
     <string id="scaledTileSizePrompt">smaller = faster but more blurry</string>
     <string id="tileCacheSizePrompt">Number of tiles to cache</string>
     <string id="colourPrompt">Colour in AARRGGBB format</string>

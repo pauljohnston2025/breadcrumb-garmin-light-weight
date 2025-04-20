@@ -1089,6 +1089,41 @@ class BreadcrumbRenderer {
         var startAt = minElevation + elevationChange / 2;
         return getElevationScaleRaw(maxDistanceScaled, elevationChange, startAt);
     }
+    
+    function getElevationScaleOrderedRoutes(
+        track as BreadcrumbTrack,
+        routes as Array<BreadcrumbTrack>
+    ) as [Float, Float, Float, Float] {
+        var maxTrackDistanceScaled = 0f;
+        var minElevation = FLOAT_MAX;
+        var maxElevation = FLOAT_MIN;
+        if (track.coordinates.pointSize() > 2) {
+            maxTrackDistanceScaled = maxF(maxTrackDistanceScaled, track.distanceTotal);
+            minElevation = minF(minElevation, track.elevationMin);
+            maxElevation = maxF(maxElevation, track.elevationMax);
+        }
+
+        var allRouteDistanceScaled = 0f;
+        for (var i = 0; i < routes.size(); ++i) {
+            var route = routes[i];
+            if (!settings.routeEnabled(route.storageIndex)) {
+                continue;
+            }
+            if (route.coordinates.pointSize() > 2) {
+                allRouteDistanceScaled += route.distanceTotal;
+                minElevation = minF(minElevation, route.elevationMin);
+                maxElevation = maxF(maxElevation, route.elevationMax);
+            }
+        }
+
+        // track renders ontop of the routes, so we need to get the max distance of the routes or the track
+        var maxDistanceScaled = maxF(allRouteDistanceScaled, maxTrackDistanceScaled);
+
+        // abs really only needed until we get the first point (then max should always be more than min)
+        var elevationChange = abs(maxElevation - minElevation);
+        var startAt = minElevation + elevationChange / 2;
+        return getElevationScaleRaw(maxDistanceScaled, elevationChange, startAt);
+    }
 
     function getElevationScaleRaw(
         distanceScaled as Float,
@@ -1126,17 +1161,18 @@ class BreadcrumbRenderer {
 
     function renderTrackElevation(
         dc as Dc,
+        xElevationStart as Float,
         track as BreadcrumbTrack,
         colour as Graphics.ColorType,
         hScale as Float,
         vScale as Float,
         startAt as Float
-    ) as Void {
+    ) as Float {
         var yHalf = _cachedValues.yHalf; // local lookup faster
 
         var sizeRaw = track.coordinates.size();
         if (sizeRaw < ARRAY_POINT_SIZE * 2) {
-            return; // not enough points for iteration
+            return xElevationStart; // not enough points for iteration
         }
 
         dc.setColor(colour, Graphics.COLOR_TRANSPARENT);
@@ -1148,7 +1184,7 @@ class BreadcrumbRenderer {
         var prevPointX = coordinatesRaw[0];
         var prevPointY = coordinatesRaw[1];
         var prevPointAlt = coordinatesRaw[2];
-        var prevChartX = _xElevationStart;
+        var prevChartX = xElevationStart;
         var prevChartY = yHalf + (startAt - prevPointAlt) * vScale;
         for (var i = ARRAY_POINT_SIZE; i < sizeRaw; i += ARRAY_POINT_SIZE) {
             var currPointX = coordinatesRaw[i];
@@ -1172,5 +1208,7 @@ class BreadcrumbRenderer {
             prevChartX = currChartX;
             prevChartY = currChartY;
         }
+
+        return prevChartX;
     }
 }
