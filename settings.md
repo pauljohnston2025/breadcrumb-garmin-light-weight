@@ -192,7 +192,7 @@ Light All: https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png
 
 ### Tile Size
 
-Tile size should be a multiple of 256 for best results. The tile size in pixels loaded from the companion app or other source. Should be equal to Scaled Tile Size if using a template.
+Tile size should be a multiple of Scaled Tile Size for best results. The tile size in pixels loaded from the companion app or other source. Should be equal to Scaled Tile Size if using a template url.
 
 ### Full Tile Size
 
@@ -200,7 +200,7 @@ The full tile size of the server, if using the companion app as the tile server,
 
 ### Scaled Tile Size
 
-The tile size to fetch images from the web, setting this to something like 128 will result in 4 times the performance (compared to 256), since the images we need to download are much smaller. But it also means each pixel of the downloaded tile will be 4 pixels on the screen (at full resolution). Smaller values are much faster, but may not look as nice (slightly blurry). Should be a multiple of 256 for best results. Setting the scaled tile size also reduces the size of the tile cache, see the calculations in the maps description above.
+The tile size to fetch images from the web (or companion app). Setting this to something like 128 will result in 4 times the performance (compared to 256), since the images we need to download are much smaller. Smaller sizes such as 128 come at the cost of resolution as each pixel of the downloaded tile will be 4 pixels on the screen (at full resolution). Smaller values are much faster, but may not look as nice (slightly blurry). Setting the scaled tile size also reduces the size of the tile cache, see the calculations in the maps description above.
 
 ### Tile Layer Max
 

@@ -97,6 +97,16 @@ class WebRequestHandleWrapper {
                 webHandler.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
             }
 
+            if (responseCode == 200) {
+                webHandler._successCount++;
+            } else {
+                // System.println("got web error: " + responseCode);
+                webHandler._errorCount++;
+            }
+            webHandler._lastResult = responseCode;
+        } catch (e) {
+            System.println("failed to handle web request: " + e);
+        } finally {
             // got some stack overflows, as handle can be called inline if it knows it will fail (eg. BLE_CONNECTION_UNAVAILABLE)
             // also saw alot of NETWORK_REQUEST_TIMED_OUT in the logs, but thnk it was when the BLE_CONNECTION_UNAVAILABLE happened
             // as that was the last log, and it makes sense that it can short circuit
@@ -107,16 +117,6 @@ class WebRequestHandleWrapper {
             // so we might have to call 'startNext' every time the compute method runs :(
             // new Timer.Timer(); Error: Permission Required ; Details: Module 'Toybox.Timer' not available to 'Data Field'
             webHandler.decrementOutstanding(hash);
-
-            if (responseCode == 200) {
-                webHandler._successCount++;
-            } else {
-                // System.println("got web error: " + responseCode);
-                webHandler._errorCount++;
-            }
-            webHandler._lastResult = responseCode;
-        } catch (e) {
-            System.println("failed to handle web request: " + e);
         }
     }
 }
@@ -137,19 +137,21 @@ class ConnectionListenerWrapper extends Communications.ConnectionListener {
 
     function onComplete() {
         try {
-            decOutstanding();
             handler.onComplete();
         } catch (e) {
             System.println("failed onComplete: " + e);
+        } finally {
+            decOutstanding();
         }
     }
 
     function onError() {
         try {
-            decOutstanding();
             handler.onError();
         } catch (e) {
             System.println("failed onError: " + e);
+        } finally {
+            decOutstanding();
         }
     }
 
@@ -218,7 +220,7 @@ class WebRequestHandler {
             // startNextIfWeCan(); // start any other ones whilst we are in a different function
             return;
         }
-        
+
         if (outstandingHashes.indexOf(hash) > -1) {
             // we already have an outstanding request, do not queue up another to run as soon as the outstanding one completes
             return;
@@ -256,7 +258,7 @@ class WebRequestHandler {
     function decrementTransmit() as Void {
         --_outstandingCount;
     }
-    
+
     function decrementOutstanding(hash as String) as Void {
         --_outstandingCount;
         outstandingHashes.remove(hash);
@@ -287,13 +289,15 @@ class WebRequestHandler {
         }
         outstandingHashes.add(jsonOrImageReq.hash);
 
-        System.println("url: "  + jsonOrImageReq.url);
+        // System.println("url: " + jsonOrImageReq.url);
         // System.println("params: "  + jsonOrImageReq.params);
 
         if (jsonOrImageReq instanceof ImageRequest) {
             // System.println("sending image request");
             var callback =
-                (new WebRequestHandleWrapper(me, jsonOrImageReq.handler, jsonOrImageReq.hash)).method(:handle) as
+                (
+                    new WebRequestHandleWrapper(me, jsonOrImageReq.handler, jsonOrImageReq.hash)
+                ).method(:handle) as
                 (Method
                     (
                         responseCode as Lang.Number,
@@ -344,7 +348,9 @@ class WebRequestHandler {
 
         // System.println("sending json request");
         var callback =
-            (new WebRequestHandleWrapper(me, jsonOrImageReq.handler, jsonOrImageReq.hash)).method(:handle) as
+            (new WebRequestHandleWrapper(me, jsonOrImageReq.handler, jsonOrImageReq.hash)).method(
+                :handle
+            ) as
             (Method
                 (
                     responseCode as Lang.Number,
@@ -390,11 +396,11 @@ class WebRequestHandler {
     function pendingTransmitCount() as Number {
         return pendingTransmit.size();
     }
-    
+
     function outstandingCount() as Number {
         return _outstandingCount;
     }
-    
+
     function outstandingHashesCount() as Number {
         return outstandingHashes.size();
     }

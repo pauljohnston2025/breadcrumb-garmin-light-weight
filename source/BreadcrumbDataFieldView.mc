@@ -481,7 +481,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         dc.clear();
         // its only a debug menu that should probbaly be optimised out in release, hard code to venu2s screen coordinates
         // it is actually pretty nice info, best guess on string sizes down the screen
-        var fieldCount = 10;
+        var fieldCount = 9;
         var y = 30;
         var spacing = (dc.getHeight() - y).toFloat() / fieldCount;
         var x = _cachedValues.xHalf;
@@ -505,7 +505,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "outstanding: " + _breadcrumbContext.webRequestHandler().outstandingCount() + " hash: " + _breadcrumbContext.webRequestHandler().outstandingHashesCount(),
+            "outstanding: " + _breadcrumbContext.webRequestHandler().outstandingCount() + " web: " + _breadcrumbContext.webRequestHandler().outstandingHashesCount(),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -524,22 +524,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
-        // _lastFullRenderTime only updates when rendering the track (debug screen does not use it, so it just counts up whilst on the debug page)
-        // dc.drawText(x, y, Graphics.FONT_XTINY, "last buff render: " + (epoch - _lastFullRenderTime) + "s", Graphics.TEXT_JUSTIFY_CENTER);
-        // y+=spacing;
         // could do as a ratio for a single field
-        // auto
-        if (_cachedValues.scale != null) {
-            dc.drawText(
-                x,
-                y,
-                Graphics.FONT_XTINY,
-                "Scale: " + _cachedValues.scale.format("%.2f"),
-                Graphics.TEXT_JUSTIFY_CENTER
-            );
-        } else {
-            dc.drawText(x, y, Graphics.FONT_XTINY, "Scale: Auto", Graphics.TEXT_JUSTIFY_CENTER);
-        }
+        dc.drawText(
+            x,
+            y,
+            Graphics.FONT_XTINY,
+            "web err: " + _breadcrumbContext.webRequestHandler().errorCount() + " web ok: " + _breadcrumbContext.webRequestHandler().successCount(),
+            Graphics.TEXT_JUSTIFY_CENTER
+        );
         y += spacing;
         dc.drawText(
             x,
@@ -557,22 +549,23 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
+        // _lastFullRenderTime only updates when rendering the track (debug screen does not use it, so it just counts up whilst on the debug page)
+        // dc.drawText(x, y, Graphics.FONT_XTINY, "last buff render: " + (epoch - _lastFullRenderTime) + "s", Graphics.TEXT_JUSTIFY_CENTER);
+        // y+=spacing;
         // could do as a ratio for a single field
-        dc.drawText(
-            x,
-            y,
-            Graphics.FONT_XTINY,
-            "web err: " + _breadcrumbContext.webRequestHandler().errorCount(),
-            Graphics.TEXT_JUSTIFY_CENTER
-        );
-        y += spacing;
-        dc.drawText(
-            x,
-            y,
-            Graphics.FONT_XTINY,
-            "web ok: " + _breadcrumbContext.webRequestHandler().successCount(),
-            Graphics.TEXT_JUSTIFY_CENTER
-        );
+        // auto
+        if (_cachedValues.scale != null) {
+            dc.drawText(
+                x,
+                y,
+                Graphics.FONT_XTINY,
+                "scale: " + _cachedValues.scale.format("%.2f"),
+                Graphics.TEXT_JUSTIFY_CENTER
+            );
+        } else {
+            dc.drawText(x, y, Graphics.FONT_XTINY, "scale: Auto", Graphics.TEXT_JUSTIFY_CENTER);
+        }
+        
     }
 
     function renderElevation(dc as Dc) as Void {

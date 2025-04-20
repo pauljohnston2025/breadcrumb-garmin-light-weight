@@ -119,7 +119,7 @@ class CachedValues {
         if (currentlyZoomingAroundUser) {
             var renderDistanceM = _settings.metersAroundUser;
             if (!calcCenterPoint()) {
-                var lastPoint = getApp()._breadcrumbContext.track().lastPoint();
+                var lastPoint = getApp()._breadcrumbContext.track().coordinates.lastPoint();
                 if (lastPoint != null) {
                     centerPosition = lastPoint;
                     return updateCurrentScale(calculateScale(renderDistanceM.toFloat()));
@@ -139,7 +139,7 @@ class CachedValues {
 
         var boundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
             getApp()._breadcrumbContext.routes(),
-            getApp()._breadcrumbContext.track().lastPoint() == null
+            getApp()._breadcrumbContext.track().coordinates.lastPoint() == null
                 ? null
                 : getApp()._breadcrumbContext.track().boundingBox
         );
@@ -313,6 +313,12 @@ class CachedValues {
 
     function tileLayerScale(maxDistanceM as Float) as Float {
         var perfectScale = calculateScaleStandard(maxDistanceM);
+
+        if (perfectScale == 0f)
+        {
+            return perfectScale; // do not divide by 0
+        }
+
         // only allow map tile scale levels so that we can render the tiles without any gaps, and at the correct size
         // todo cache these calcs, it is for the slower devices after all
         var desiredResolution = 1 / perfectScale;
@@ -532,7 +538,7 @@ class CachedValues {
         // context
         if (scale != null) {
             // the hacks begin
-            var lastPoint = getApp()._breadcrumbContext.track().lastPoint();
+            var lastPoint = getApp()._breadcrumbContext.track().coordinates.lastPoint();
             if (lastPoint != null) {
                 centerPosition = lastPoint;
                 return true;

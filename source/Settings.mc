@@ -1394,7 +1394,6 @@ class Settings {
         setFixedPosition(fixedLatitude, fixedLongitude, false);
         tileUrl = parseString("tileUrl", tileUrl);
         mapChoice = parseNumber("mapChoice", mapChoice);
-        updateMapChoiceChange(mapChoice);
         routes = getArraySchema(
             "routes",
             ["routeId", "name", "enabled", "colour"],

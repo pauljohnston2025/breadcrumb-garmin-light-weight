@@ -107,7 +107,7 @@ class PointArray {
     }
 
     function lastPoint() as RectangularPoint? {
-        return getPoint(pointSize() - 1);
+        return getPoint((_size / ARRAY_POINT_SIZE) - 1); // stack overflow if we call pointSize()
     }
 
     function firstPoint() as RectangularPoint? {
@@ -119,7 +119,7 @@ class PointArray {
             return null;
         }
 
-        if (i >= pointSize()) {
+        if (i >= (_size / ARRAY_POINT_SIZE)) {
             return null;
         }
 
