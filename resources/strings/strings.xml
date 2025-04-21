@@ -39,7 +39,7 @@
     <string id="alertTypeAlert">Alerts (requires enable in garmin settings)</string>
     <string id="enableOffTrackAlerts"></string>
     <string id="enableOffTrackAlertsTitle">Off Track Alerts</string>
-    <string id="drawLineToClosestPointTitle">Draw Line To Last Point</string>
+    <string id="drawLineToClosestPointTitle">Draw Line To Closest Point</string>
     <string id="drawLineToClosestPointPrompt"></string>
     <string id="enableOffTrackAlertsDescription"></string>
     <string id="disableMapsFailureCountTitle">Disable Maps After X Failures (0 for unlimited failures)</string>

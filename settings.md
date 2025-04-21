@@ -253,7 +253,7 @@ Only allow zooming in/out to the tile layer limits. Also all steps between scale
 ---
 # Off Track Alerts
 
-Calculating off track alerts (either Draw Line To Last Point, or Off Track Alerts) is a computationally heavy task. This means if there are multiple large routes the watch can error out with a watchdog error if our code executes too long. I have tested with up to 3 large routes on my venu2s, and it seems to handle it. Only enabled routes are taken into consideration. For multiple enabled routes, you are considerred ontrack if you are on at least one of the tracks. See the [Routes](#routes) section for use cases of multiple routes, eg. triathlons. 
+Calculating off track alerts (either Draw Line To Closest Point, or Off Track Alerts) is a computationally heavy task. This means if there are multiple large routes the watch can error out with a watchdog error if our code executes too long. I have tested with up to 3 large routes on my venu2s, and it seems to handle it. Only enabled routes are taken into consideration. For multiple enabled routes, you are considerred ontrack if you are on at least one of the tracks. See the [Routes](#routes) section for use cases of multiple routes, eg. triathlons. 
 
 ### Off Track Distance
 
@@ -261,11 +261,11 @@ The number of meters you need to be off track for an alert to be triggered or a 
 
 ### Off Track Alerts Max Report Interval
 
-How often, in seconds, an alert should fire. Alerts will continue firing until you return to the planned route (or reach a section of another enabled route). This setting is also used to to slow down the calculation of off track alerts (since its expensive). Once you rejoin the track, a line will continue to be draw to the last point you left the track until we recalculate. eg. an interval of 60 will mean the line will still be drawn for up to 1minute after we rejoin the track, and alerts will only fire once a minute.
+How often, in seconds, an alert should fire. Alerts will continue firing until you return to the planned route (or reach a section of another enabled route). This setting is also used to to slow down the calculation of off track alerts (since its expensive). Once you rejoin the track, a line will continue to be draw to the closest point  on the closests enabled route until we recalculate. eg. an interval of 60 will mean the line will still be drawn for up to 1minute after we rejoin the track, and alerts will only fire once a minute.
 
-### Draw Line To Last Point
+### Draw Line To Closest Point
 
-Draw a line back to the spot where you left the route. If multiple routes are enabled a line will be drawn the last point where you left closest route.
+Draw a line to the closests point on the closest enabled route.
 
 ### Off Track Alerts
 

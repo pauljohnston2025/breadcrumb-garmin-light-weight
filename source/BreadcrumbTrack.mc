@@ -468,6 +468,8 @@ class BreadcrumbTrack {
             var lastClosePointRawStart = lastClosePointIndex * ARRAY_POINT_SIZE;
             // note: this algoriithm will likely fail if the user is doing the track in the oposite direction
             // but we resort to scanning all the points below anyway
+            // this for loop is optimised for on track, and navigating in the direction of the track
+            // it should result in only a single itteration in most cases, as they get closer to the next point
             if (lastClosePointRawStart <= sizeRaw - ARRAY_POINT_SIZE) {
                 endSecondScanAtRaw = lastClosePointRawStart;
                 var lastPointX = coordinatesRaw[lastClosePointRawStart];
@@ -509,6 +511,12 @@ class BreadcrumbTrack {
         // System.println("lastClosePointIndex: " + lastClosePointIndex);
         var lastPointX = coordinatesRaw[0];
         var lastPointY = coordinatesRaw[1];
+        // The below for loop only runs when we are off track, or when the user is navigating the track in the reverse direction
+        // so we need to check which point is closest, rather than grabbing the last point we left the track.
+        // Because that could default to a random spot on the track, or the start of the track that is further away.
+        var lastClosestX = lastPointX;
+        var lastClosestY = lastPointY;
+        var lastClosestDist = FLOAT_MAX;
         for (var i = ARRAY_POINT_SIZE; i < endSecondScanAtRaw; i += ARRAY_POINT_SIZE) {
             var nextX = coordinatesRaw[i];
             var nextY = coordinatesRaw[i + 1];
@@ -530,13 +538,17 @@ class BreadcrumbTrack {
                 return new OffTrackInfo(true, lastClosePoint);
             }
 
+            if (distToSegmentAndSegPoint[0] < lastClosestDist) {
+                lastClosestDist = distToSegmentAndSegPoint[0];
+                lastClosestX = distToSegmentAndSegPoint[1];
+                lastClosestY = distToSegmentAndSegPoint[2];
+            }
+
             lastPointX = nextX;
             lastPointY = nextY;
         }
-        if (lastClosePoint == null) {
-            // very start when we have never seen the track, closest point is the start of the track
-            lastClosePoint = coordinates.getPoint(0); // note this can still be null in the extreemely rae case where we have a 0 length route
-        }
+
+        lastClosePoint = new RectangularPoint(lastClosestX, lastClosestY, 0f);
         return new OffTrackInfo(false, lastClosePoint);
     }
 
