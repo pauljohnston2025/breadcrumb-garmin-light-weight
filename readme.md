@@ -85,9 +85,9 @@ A more thorough explaination for a different app can be found at: https://suppor
 
 # Map Tiles
 
-Powered by Esri: https://www.esri.com
-OpenStreetMap: https://openstreetmap.org/copyright
-OpenTopoMap: https://opentopomap.org/about
-Google: https://cloud.google.com/maps-platform/terms https://policies.google.com/privacy
+Powered by Esri: https://www.esri.com  
+OpenStreetMap: https://openstreetmap.org/copyright  
+OpenTopoMap: https://opentopomap.org/about  
+Google: https://cloud.google.com/maps-platform/terms https://policies.google.com/privacy  
 
 ---
