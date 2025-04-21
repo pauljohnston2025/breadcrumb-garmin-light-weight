@@ -299,7 +299,8 @@ class BreadcrumbRenderer {
     function renderTrackUnrotated(
         dc as Dc,
         breadcrumb as BreadcrumbTrack,
-        colour as Graphics.ColorType
+        colour as Graphics.ColorType,
+        drawEndMarker as Boolean
     ) as Void {
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var xHalf = _cachedValues.xHalf; // local lookup faster
@@ -322,8 +323,10 @@ class BreadcrumbRenderer {
         if (size >= ARRAY_POINT_SIZE * 2) {
             var firstXScaledAtCenter = coordinatesRaw[0] - centerPosition.x;
             var firstYScaledAtCenter = coordinatesRaw[1] - centerPosition.y;
-            var lastX = xHalf + firstXScaledAtCenter;
-            var lastY = yHalf - firstYScaledAtCenter;
+            var firstX = xHalf + firstXScaledAtCenter;
+            var firstY = yHalf - firstYScaledAtCenter;
+            var lastX = firstX;
+            var lastY = firstY;
 
             for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
                 var nextX = xHalf + (coordinatesRaw[i] - centerPosition.x);
@@ -334,6 +337,8 @@ class BreadcrumbRenderer {
                 lastX = nextX;
                 lastY = nextY;
             }
+
+            renderStartAndEnd(dc, firstX, firstY, lastX, lastY, drawEndMarker);
         }
     }
 
@@ -393,7 +398,8 @@ class BreadcrumbRenderer {
     function renderTrack(
         dc as Dc,
         breadcrumb as BreadcrumbTrack,
-        colour as Graphics.ColorType
+        colour as Graphics.ColorType,
+        drawEndMarker as Boolean
     ) as Void {
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var rotateCos = _cachedValues.rotateCos; // local lookup faster
@@ -418,10 +424,12 @@ class BreadcrumbRenderer {
         if (size >= ARRAY_POINT_SIZE * 2) {
             var firstXScaledAtCenter = coordinatesRaw[0] - centerPosition.x;
             var firstYScaledAtCenter = coordinatesRaw[1] - centerPosition.y;
-            var lastXRotated =
+            var firstXRotated =
                 xHalf + rotateCos * firstXScaledAtCenter - rotateSin * firstYScaledAtCenter;
-            var lastYRotated =
+            var firstYRotated =
                 yHalf - (rotateSin * firstXScaledAtCenter + rotateCos * firstYScaledAtCenter);
+            var lastXRotated = firstXRotated;
+            var lastYRotated = firstYRotated;
 
             for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
                 var nextX = coordinatesRaw[i];
@@ -440,6 +448,26 @@ class BreadcrumbRenderer {
                 lastXRotated = nextXRotated;
                 lastYRotated = nextYRotated;
             }
+
+            renderStartAndEnd(dc, firstXRotated, firstYRotated, lastXRotated, lastYRotated, drawEndMarker);
+        }
+    }
+
+    function renderStartAndEnd(dc as Dc, firstX as Float, firstY as Float, lastX as Float, lastY as Float, drawEndMarker as Boolean) {
+        // todo let user confgure these, or render icons instead
+        // could add a start play button and a finnish flag (not finlands flag, the checkered kind)
+        var squareSize = 10;
+        var squareHalf = squareSize / 2;
+        dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_BLACK);
+        dc.fillRectangle(
+            firstX - squareHalf,
+            firstY - squareHalf,
+            squareSize,
+            squareSize
+        );
+        if (drawEndMarker) {
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
+            dc.fillRectangle(lastX - squareHalf, lastY - squareHalf, squareSize, squareSize);
         }
     }
 
@@ -1090,7 +1118,7 @@ class BreadcrumbRenderer {
         var startAt = minElevation + elevationChange / 2;
         return getElevationScaleRaw(maxDistanceScaled, elevationChange, startAt);
     }
-    
+
     function getElevationScaleOrderedRoutes(
         track as BreadcrumbTrack,
         routes as Array<BreadcrumbTrack>

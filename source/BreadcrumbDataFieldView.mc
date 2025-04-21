@@ -457,9 +457,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 if (!settings.routeEnabled(route.storageIndex)) {
                     continue;
                 }
-                renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex));
+                renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex), true);
             }
-            renderer.renderTrack(dc, track, settings.trackColour);
+            renderer.renderTrack(dc, track, settings.trackColour, false);
             return;
         }
 
@@ -483,9 +483,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             if (!settings.routeEnabled(route.storageIndex)) {
                 continue;
             }
-            renderer.renderTrackUnrotated(dc, route, settings.routeColour(route.storageIndex));
+            renderer.renderTrackUnrotated(dc, route, settings.routeColour(route.storageIndex), true);
         }
-        renderer.renderTrackUnrotated(dc, track, settings.trackColour);
+        renderer.renderTrackUnrotated(dc, track, settings.trackColour, false);
     }
 
     function renderDebug(dc as Dc) as Void {
