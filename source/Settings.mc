@@ -200,10 +200,10 @@ class Settings {
     // pre seed tiles on either side of the viewable area
     var tileCachePadding as Number = 0;
 
-    // feature is not too hard to implement now, as all track points are pre-scaled
-    // however I do not think its a needed feture for end users, mostly for debugging
-    // still have to do it as a second pass over the points array so colours can be set
-    // var showPoints as Boolean = true;
+    // more for debugging off track than anything else, should normally be disabled for a release
+    // maybe expose this as a user setting?
+    var showPoints as Boolean = true; 
+    var drawLineToClosestTrack as Boolean = true; 
 
     function setMode(_mode as Number) as Void {
         mode = _mode;

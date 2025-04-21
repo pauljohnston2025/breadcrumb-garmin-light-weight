@@ -159,8 +159,6 @@ class BreadcrumbRenderer {
         offTrackPoint as RectangularPoint,
         colour as Number
     ) as Void {
-        // todo make this use the buffered rendering mode
-        // its only when off track, so not a huge issue
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
             // its very confusing seeing the routes disappear when scrolling
             // and it makes sense to want to sroll around the route too
@@ -175,34 +173,14 @@ class BreadcrumbRenderer {
 
         var lastPointUnrotatedX = lastPoint.x - centerPosition.x;
         var lastPointUnrotatedY = lastPoint.y - centerPosition.y;
-
-        var lastPointRotatedX = xHalf + lastPointUnrotatedX;
-        var lastPointRotatedY = yHalf - lastPointUnrotatedY;
-        if (
-            settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
-            settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING
-        ) {
-            lastPointRotatedX =
-                xHalf + rotateCos * lastPointUnrotatedX - rotateSin * lastPointUnrotatedY;
-            lastPointRotatedY =
-                yHalf - (rotateSin * lastPointUnrotatedX + rotateCos * lastPointUnrotatedY);
-        }
-
+        var lastPointRotatedX = xHalf + rotateCos * lastPointUnrotatedX - rotateSin * lastPointUnrotatedY;
+        var lastPointRotatedY = yHalf - (rotateSin * lastPointUnrotatedX + rotateCos * lastPointUnrotatedY);
+        
         var offTrackPointUnrotatedX = offTrackPoint.x - centerPosition.x;
         var offTrackPointUnrotatedY = offTrackPoint.y - centerPosition.y;
-
-        var offTrackPointRotatedX = xHalf + offTrackPointUnrotatedX;
-        var offTrackPointRotatedY = yHalf - offTrackPointUnrotatedY;
-        if (
-            settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
-            settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING
-        ) {
-            offTrackPointRotatedX =
-                xHalf + rotateCos * offTrackPointUnrotatedX - rotateSin * offTrackPointUnrotatedY;
-            offTrackPointRotatedY =
-                yHalf - (rotateSin * offTrackPointUnrotatedX + rotateCos * offTrackPointUnrotatedY);
-        }
-
+        var offTrackPointRotatedX = xHalf + rotateCos * offTrackPointUnrotatedX - rotateSin * offTrackPointUnrotatedY;
+        var offTrackPointRotatedY = yHalf - (rotateSin * offTrackPointUnrotatedX + rotateCos * offTrackPointUnrotatedY);
+        
         dc.setPenWidth(4);
         dc.setColor(colour, Graphics.COLOR_BLACK);
         dc.drawLine(
@@ -210,6 +188,38 @@ class BreadcrumbRenderer {
             lastPointRotatedY,
             offTrackPointRotatedX,
             offTrackPointRotatedY
+        );
+    }
+    
+    function renderLineFromLastPointToRouteUnrotated(
+        dc as Dc,
+        lastPoint as RectangularPoint,
+        offTrackPoint as RectangularPoint,
+        colour as Number
+    ) as Void {
+        if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
+            // its very confusing seeing the routes disappear when scrolling
+            // and it makes sense to want to sroll around the route too
+            return;
+        }
+
+        var centerPosition = _cachedValues.centerPosition; // local lookup faster
+        var xHalf = _cachedValues.xHalf; // local lookup faster
+        var yHalf = _cachedValues.yHalf; // local lookup faster
+
+        var lastPointUnrotatedX = xHalf + (lastPoint.x - centerPosition.x);
+        var lastPointUnrotatedY = yHalf - (lastPoint.y - centerPosition.y);
+
+        var offTrackPointUnrotatedX = xHalf + (offTrackPoint.x - centerPosition.x);
+        var offTrackPointUnrotatedY = yHalf - (offTrackPoint.y - centerPosition.y);
+
+        dc.setPenWidth(4);
+        dc.setColor(colour, Graphics.COLOR_BLACK);
+        dc.drawLine(
+            lastPointUnrotatedX,
+            lastPointUnrotatedY,
+            offTrackPointUnrotatedX,
+            offTrackPointUnrotatedY
         );
     }
 
@@ -342,6 +352,34 @@ class BreadcrumbRenderer {
         }
     }
 
+    function renderTrackPointsUnrotated(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType
+    ) as Void {
+        var centerPosition = _cachedValues.centerPosition; // local lookup faster
+        var xHalf = _cachedValues.xHalf; // local lookup faster
+        var yHalf = _cachedValues.yHalf; // local lookup faster
+
+        if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
+            // its very cofusing seeing the routes disappear when scrolling
+            // and it makes sense to want to sroll around the route too
+            return;
+        }
+
+        dc.setColor(colour, Graphics.COLOR_BLACK);
+
+        var size = breadcrumb.coordinates.size();
+        var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
+
+        for (var i = 0; i < size; i += ARRAY_POINT_SIZE) {
+            var x = xHalf + (coordinatesRaw[i] - centerPosition.x);
+            var y = yHalf - (coordinatesRaw[i + 1] - centerPosition.y);
+
+            dc.fillCircle(x, y, 5);
+        }
+    }
+
     function renderTrackName(
         dc as Dc,
         breadcrumb as BreadcrumbTrack,
@@ -449,22 +487,66 @@ class BreadcrumbRenderer {
                 lastYRotated = nextYRotated;
             }
 
-            renderStartAndEnd(dc, firstXRotated, firstYRotated, lastXRotated, lastYRotated, drawEndMarker);
+            renderStartAndEnd(
+                dc,
+                firstXRotated,
+                firstYRotated,
+                lastXRotated,
+                lastYRotated,
+                drawEndMarker
+            );
         }
     }
 
-    function renderStartAndEnd(dc as Dc, firstX as Float, firstY as Float, lastX as Float, lastY as Float, drawEndMarker as Boolean) {
+    function renderTrackPoints(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType
+    ) as Void {
+        var centerPosition = _cachedValues.centerPosition; // local lookup faster
+        var rotateCos = _cachedValues.rotateCos; // local lookup faster
+        var rotateSin = _cachedValues.rotateSin; // local lookup faster
+        var xHalf = _cachedValues.xHalf; // local lookup faster
+        var yHalf = _cachedValues.yHalf; // local lookup faster
+
+        if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
+            // its very cofusing seeing the routes disappear when scrolling
+            // and it makes sense to want to sroll around the route too
+            return;
+        }
+
+        dc.setColor(colour, Graphics.COLOR_BLACK);
+
+        var size = breadcrumb.coordinates.size();
+        var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
+        for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
+            var nextX = coordinatesRaw[i];
+            var nextY = coordinatesRaw[i + 1];
+
+            var nextXScaledAtCenter = nextX - centerPosition.x;
+            var nextYScaledAtCenter = nextY - centerPosition.y;
+
+            var x = xHalf + rotateCos * nextXScaledAtCenter - rotateSin * nextYScaledAtCenter;
+            var y = yHalf - (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
+
+            dc.fillCircle(x, y, 5);
+        }
+    }
+
+    function renderStartAndEnd(
+        dc as Dc,
+        firstX as Float,
+        firstY as Float,
+        lastX as Float,
+        lastY as Float,
+        drawEndMarker as Boolean
+    ) {
         // todo let user confgure these, or render icons instead
         // could add a start play button and a finnish flag (not finlands flag, the checkered kind)
         var squareSize = 10;
         var squareHalf = squareSize / 2;
         dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_BLACK);
-        dc.fillRectangle(
-            firstX - squareHalf,
-            firstY - squareHalf,
-            squareSize,
-            squareSize
-        );
+        dc.fillRectangle(firstX - squareHalf, firstY - squareHalf, squareSize, squareSize);
         if (drawEndMarker) {
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
             dc.fillRectangle(lastX - squareHalf, lastY - squareHalf, squareSize, squareSize);
@@ -640,7 +722,7 @@ class BreadcrumbRenderer {
                 );
             } catch (e) {
                 // not sure what this exception was see above
-                logE("failed drawBitmap2: " + e);
+                logE("failed drawBitmap2: " + e.getErrorMessage());
             }
         }
 
@@ -707,7 +789,7 @@ class BreadcrumbRenderer {
                 }
             } catch (e) {
                 // not sure what this exception was see above
-                logE("failed drawBitmap2: " + e);
+                logE("failed drawBitmap2: " + e.getErrorMessage());
             }
             return;
         }

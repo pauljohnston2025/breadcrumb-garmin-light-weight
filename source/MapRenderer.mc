@@ -191,9 +191,18 @@ class MapRenderer {
                     });
                 } catch (e) {
                     // not sure what this exception was see above
-                    logE("failed drawBitmap2: " + e);
+                    // simultor keeps getting InvalidValueException: Source must not use a color palette but I never use a colour pallete for this very reason
+                    // seems to only be in render modes that render directly to dc, and not through the scratchpad
+                    // also worked fine with vivoactive 5 (that always renders the bitmaps through drawBitmap2), but failed with the venu2s (my normal test device).
+                    // purged the tmp dir AppData\Local\Temp\com.garmin.connectiq
+                    // it seems to be wehn loading from an external tile server - so Communications.PACKING_FORMAT_DEFAULT in makeImageRequest must be the culprit (possibly vivoactive is always a png?).
+                    // changing it to 
+                    // tileFromCache.bitmap.isCached() + " "
+                    //  + " " + tileFromCache.bitmap
+                    logE("failed drawBitmap2: " + e.getErrorMessage());
                 }
             }
+            
         }
     }
 }

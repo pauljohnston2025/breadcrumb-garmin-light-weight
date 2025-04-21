@@ -99,7 +99,7 @@ The number of seconds that need to elapse before we try and add or next track po
 ### Render Mode
 
 Buffered Rotations - Keeps a buffer of the map, track and routes in memory (only refreshes every Compute Interval). Should result in better performance and less battery consumption, a the cost of higher memory usage for the buffer.  
-Unbuffered Rotations - No buffer, all rotations are done manually every compute, will take more cpu to calculate each time a render occurs. Allows low memory devices to still have rotating maps.  
+Unbuffered Rotations - No buffer, all rotations are done manually every compute, will take more cpu to calculate each time a render occurs. Allows low memory devices to still have rotating maps. Note: this mode does make the map tiles visible as small artifacts between the map tiles, so maps do not look the best in this mode.  
 Buffered Without Rotations - Same as Buffered Rotations mode but does not rotate the map.  
 No Buffer No Rotations - Same as Unbuffered Rotations mode but does not rotate the map.
 

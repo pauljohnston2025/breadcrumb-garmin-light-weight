@@ -65,7 +65,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         try {
             actualOnLayout(dc);
         } catch (e) {
-            logE("failed onLayout: " + e);
+            logE("failed onLayout: " + e.getErrorMessage());
         }
     }
 
@@ -89,7 +89,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         try {
             actualCompute(info);
         } catch (e) {
-            logE("failed compute: " + e);
+            logE("failed compute: " + e.getErrorMessage());
         }
     }
 
@@ -230,7 +230,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 lastOffTrackAlertCalculated = epoch;
             } catch (e) {
                 // not sure there is a way to check that we can display or not, so just catch errors
-                System.println("failed to show alert: " + e);
+                System.println("failed to show alert: " + e.getErrorMessage());
             }
         }
     }
@@ -265,7 +265,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             ) {
                 _scratchPadBitmap = null; // null out the old one first, otherwise we have 2 bit bitmaps allocated at the same time
                 // assuming garbage collection will run immediately, or when trying to allocate the next it will clean up the old one
-                _scratchPadBitmap = newBitmap(width, height, null);
+                _scratchPadBitmap = newBitmap(width, height);
             }
         } else {
             _scratchPadBitmap = null; // settigns have disabled it - clean up after ourselves on next render
@@ -281,7 +281,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         try {
             actualOnUpdate(dc);
         } catch (e) {
-            logE("failed onUpdate: " + e);
+            logE("failed onUpdate: " + e.getErrorMessage());
         }
     }
     function actualOnUpdate(dc as Dc) as Void {
@@ -335,39 +335,17 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             }
         }
 
-        var lastPoint = _breadcrumbContext.track().lastPoint();
-        if (lastPoint != null) {
-            renderer.renderUser(dc, lastPoint);
-
-            // only ever not null if feature enabled
-            if (!offTrackInfo.onTrack && offTrackInfo.pointWeLeftTrack != null) {
-                // points need to be scaled and rotated :(
-                renderer.renderLineFromLastPointToRoute(
-                    dc,
-                    lastPoint,
-                    offTrackInfo.pointWeLeftTrack,
-                    Graphics.COLOR_RED
-                );
-            }
-
-            // debug draw line to point
-            // if (offTrackInfo.onTrack && offTrackInfo.pointWeLeftTrack != null) {
-            //     // points need to be scaled and rotated :(
-            //     renderer.renderLineFromLastPointToRoute(
-            //         dc,
-            //         lastPoint,
-            //         offTrackInfo.pointWeLeftTrack,
-            //         Graphics.COLOR_PURPLE
-            //     );
-            // }
-        }
-
         // move based on the last scale we drew
         if (_breadcrumbContext.settings().uiMode == UI_MODE_SHOW_ALL) {
             renderer.renderUi(dc);
         }
 
         renderer.renderCurrentScale(dc);
+
+        var lastPoint = _breadcrumbContext.track().lastPoint();
+        if (lastPoint != null) {
+            renderer.renderUser(dc, lastPoint);
+        }
 
         if (settings.mapEnabled) {
             var attrib = settings.getAttribution();
@@ -382,7 +360,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                         }
                     );
                 } catch (e) {
-                    logE("failed drawBitmap2: " + e);
+                    logE("failed drawBitmap2: " + e.getErrorMessage());
                 }
             }
         }
@@ -441,7 +419,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     dc.drawBitmap(0, 0, _scratchPadBitmap);
                 }
             } catch (e) {
-                logE("failed drawBitmap2 or drawBitmap: " + e);
+                logE("failed drawBitmap2 or drawBitmap: " + e.getErrorMessage());
             }
             return;
         }
@@ -458,8 +436,15 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     continue;
                 }
                 renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex), true);
+                if (settings.showPoints) {
+                    renderer.renderTrackPoints(dc, route, Graphics.COLOR_ORANGE);
+                }
             }
             renderer.renderTrack(dc, track, settings.trackColour, false);
+            if (settings.showPoints) {
+                renderer.renderTrackPoints(dc, track, Graphics.COLOR_ORANGE);
+            }
+            renderOffTrackPoint(dc);
             return;
         }
 
@@ -483,9 +468,83 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             if (!settings.routeEnabled(route.storageIndex)) {
                 continue;
             }
-            renderer.renderTrackUnrotated(dc, route, settings.routeColour(route.storageIndex), true);
+            renderer.renderTrackUnrotated(
+                dc,
+                route,
+                settings.routeColour(route.storageIndex),
+                true
+            );
+            if (settings.showPoints) {
+                renderer.renderTrackPointsUnrotated(dc, route, Graphics.COLOR_ORANGE);
+            }
         }
         renderer.renderTrackUnrotated(dc, track, settings.trackColour, false);
+        if (settings.showPoints) {
+            renderer.renderTrackPointsUnrotated(dc, track, Graphics.COLOR_ORANGE);
+        }
+
+        renderOffTrackPointUnrotated(dc);
+    }
+
+    function renderOffTrackPoint(dc as Dc) as Void {
+        var lastPoint = _breadcrumbContext.track().lastPoint();
+        var renderer = _breadcrumbContext.trackRenderer();
+        if (lastPoint != null) {
+
+            // only ever not null if feature enabled
+            if (!offTrackInfo.onTrack && offTrackInfo.pointWeLeftTrack != null) {
+                // points need to be scaled and rotated :(
+                renderer.renderLineFromLastPointToRoute(
+                    dc,
+                    lastPoint,
+                    offTrackInfo.pointWeLeftTrack,
+                    Graphics.COLOR_RED
+                );
+            }
+
+            // debug draw line to point
+            if (settings.drawLineToClosestTrack) {
+                if (offTrackInfo.onTrack && offTrackInfo.pointWeLeftTrack != null) {
+                    // points need to be scaled and rotated :(
+                    renderer.renderLineFromLastPointToRoute(
+                        dc,
+                        lastPoint,
+                        offTrackInfo.pointWeLeftTrack,
+                        Graphics.COLOR_PURPLE
+                    );
+                }
+            }
+        }
+    }
+    
+    function renderOffTrackPointUnrotated(dc as Dc) as Void {
+        var lastPoint = _breadcrumbContext.track().lastPoint();
+        var renderer = _breadcrumbContext.trackRenderer();
+        if (lastPoint != null) {
+            // only ever not null if feature enabled
+            if (!offTrackInfo.onTrack && offTrackInfo.pointWeLeftTrack != null) {
+                // points need to be scaled and rotated :(
+                renderer.renderLineFromLastPointToRouteUnrotated(
+                    dc,
+                    lastPoint,
+                    offTrackInfo.pointWeLeftTrack,
+                    Graphics.COLOR_RED
+                );
+            }
+
+            // debug draw line to point
+            if (settings.drawLineToClosestTrack) {
+                if (offTrackInfo.onTrack && offTrackInfo.pointWeLeftTrack != null) {
+                    // points need to be scaled and rotated :(
+                    renderer.renderLineFromLastPointToRouteUnrotated(
+                        dc,
+                        lastPoint,
+                        offTrackInfo.pointWeLeftTrack,
+                        Graphics.COLOR_PURPLE
+                    );
+                }
+            }
+        }
     }
 
     function renderDebug(dc as Dc) as Void {
@@ -518,7 +577,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "outstanding: " + _breadcrumbContext.webRequestHandler().outstandingCount() + " web: " + _breadcrumbContext.webRequestHandler().outstandingHashesCount(),
+            "outstanding: " +
+                _breadcrumbContext.webRequestHandler().outstandingCount() +
+                " web: " +
+                _breadcrumbContext.webRequestHandler().outstandingHashesCount(),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -539,17 +601,15 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         y += spacing;
         var distToLastStr = "NA";
         var lastPoint = _breadcrumbContext.track().lastPoint();
-        if ( lastPoint != null && offTrackInfo.pointWeLeftTrack != null)
-        {
+        if (lastPoint != null && offTrackInfo.pointWeLeftTrack != null) {
             var distMeters = offTrackInfo.pointWeLeftTrack.distanceTo(lastPoint);
-            if (_cachedValues.currentScale != 0f)
-            {
+            if (_cachedValues.currentScale != 0f) {
                 distMeters = distMeters / _cachedValues.currentScale;
             }
 
             distToLastStr = distMeters.format("%.2f") + "m";
         }
-        
+
         dc.drawText(
             x,
             y,
@@ -563,7 +623,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "web err: " + _breadcrumbContext.webRequestHandler().errorCount() + " web ok: " + _breadcrumbContext.webRequestHandler().successCount(),
+            "web err: " +
+                _breadcrumbContext.webRequestHandler().errorCount() +
+                " web ok: " +
+                _breadcrumbContext.webRequestHandler().successCount(),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -599,12 +662,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         } else {
             dc.drawText(x, y, Graphics.FONT_XTINY, "scale: Auto", Graphics.TEXT_JUSTIFY_CENTER);
         }
-        
     }
 
     function renderElevation(dc as Dc) as Void {
-        if (settings.elevationMode == ELEVATION_MODE_STACKED)
-        {
+        if (settings.elevationMode == ELEVATION_MODE_STACKED) {
             renderElevationStacked(dc);
             return;
         }
@@ -651,14 +712,22 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 );
             }
         }
-        renderer.renderTrackElevation(dc, renderer._xElevationStart, track, settings.trackColour, hScale, vScale, startAt);
+        renderer.renderTrackElevation(
+            dc,
+            renderer._xElevationStart,
+            track,
+            settings.trackColour,
+            hScale,
+            vScale,
+            startAt
+        );
     }
-    
+
     function renderElevationOrderedRoutes(dc as Dc) as Void {
         var routes = _breadcrumbContext.routes();
         var track = _breadcrumbContext.track();
         var renderer = _breadcrumbContext.trackRenderer();
-        
+
         var elevationScale = renderer.getElevationScaleOrderedRoutes(track, routes);
         var hScale = elevationScale[0];
         var vScale = elevationScale[1];
@@ -695,6 +764,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 );
             }
         }
-        renderer.renderTrackElevation(dc, renderer._xElevationStart, track, settings.trackColour, hScale, vScale, startAt);
+        renderer.renderTrackElevation(
+            dc,
+            renderer._xElevationStart,
+            track,
+            settings.trackColour,
+            hScale,
+            vScale,
+            startAt
+        );
     }
 }

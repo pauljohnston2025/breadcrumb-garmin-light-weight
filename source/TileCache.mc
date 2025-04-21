@@ -190,7 +190,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
                 // we have an anoying situation - stretch/reduce the image
                 var scaleUpSize = cachedValues.smallTilesPerScaledTile * settings.tileSize;
                 var scaleFactor = scaleUpSize / maxDim.toFloat();
-                var upscaledBitmap = newBitmap(scaleUpSize, scaleUpSize, null);
+                var upscaledBitmap = newBitmap(scaleUpSize, scaleUpSize);
                 var upscaledBitmapDc = upscaledBitmap.getDc();
 
                 var scaleMatrix = new AffineTransform();
@@ -203,14 +203,14 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
                         :filterMode => Graphics.FILTER_MODE_BILINEAR,
                     });
                 } catch (e) {
-                    logE("failed drawBitmap2: " + e);
+                    logE("failed drawBitmap2: " + e.getErrorMessage());
                 }
                 // System.println("scaled up to: " + upscaledBitmap.getWidth() + " " + upscaledBitmap.getHeight());
                 // System.println("from: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
                 sourceBitmap = upscaledBitmap; // resume what we were doing as if it was always the larger bitmap
             }
 
-            var croppedSection = newBitmap(settings.tileSize, settings.tileSize, null);
+            var croppedSection = newBitmap(settings.tileSize, settings.tileSize);
             var croppedSectionDc = croppedSection.getDc();
             var xOffset = _tileKey.x % cachedValues.smallTilesPerScaledTile;
             var yOffset = _tileKey.y % cachedValues.smallTilesPerScaledTile;
@@ -528,7 +528,7 @@ class TileCache {
         // System.println("processing tile data, first colour is: " + arr[0]);
 
         // todo check if setting the pallet actually reduces memory
-        var localBitmap = newBitmap(tileSize, tileSize, null);
+        var localBitmap = newBitmap(tileSize, tileSize);
         var localDc = localBitmap.getDc();
         var it = 0;
         for (var i = 0; i < tileSize; ++i) {

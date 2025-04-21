@@ -253,7 +253,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
             System.println("Unknown message type: " + data[0]);
         } catch (e) {
-            logE("failed onPhone: " + e);
+            logE("failed onPhone: " + e.getErrorMessage());
         }
     }
 }

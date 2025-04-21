@@ -105,7 +105,7 @@ class WebRequestHandleWrapper {
             }
             webHandler._lastResult = responseCode;
         } catch (e) {
-            System.println("failed to handle web request: " + e);
+            System.println("failed to handle web request: " + e.getErrorMessage());
         } finally {
             // got some stack overflows, as handle can be called inline if it knows it will fail (eg. BLE_CONNECTION_UNAVAILABLE)
             // also saw alot of NETWORK_REQUEST_TIMED_OUT in the logs, but thnk it was when the BLE_CONNECTION_UNAVAILABLE happened
@@ -139,7 +139,7 @@ class ConnectionListenerWrapper extends Communications.ConnectionListener {
         try {
             handler.onComplete();
         } catch (e) {
-            System.println("failed onComplete: " + e);
+            System.println("failed onComplete: " + e.getErrorMessage());
         } finally {
             decOutstanding();
         }
@@ -149,7 +149,7 @@ class ConnectionListenerWrapper extends Communications.ConnectionListener {
         try {
             handler.onError();
         } catch (e) {
-            System.println("failed onError: " + e);
+            System.println("failed onError: " + e.getErrorMessage());
         } finally {
             decOutstanding();
         }
@@ -305,7 +305,6 @@ class WebRequestHandler {
                     ) as Void
                 );
             // we only use image requests for exeternal servers
-            var requiresScaling = _settings.tileSize != _settings.scaledTileSize;
             Communications.makeImageRequest(
                 jsonOrImageReq.url,
                 jsonOrImageReq.params,
@@ -325,9 +324,14 @@ class WebRequestHandler {
                     // (we have to scale the image - at this point im thinking i should just override the users setting to 256 if the tile server is not the companion app)
                     // so we must use PACKING_FORMAT_PNG if they really want a slow response and smaller tiles cache
                     // so tried it again, ang PNG did the same colour issue as JPG/YUV :( AHHHHHHHHHHHH
-                    :packingFormat => requiresScaling
-                        ? Communications.PACKING_FORMAT_PNG // do not specify a pallete, we cannot draw
-                        : Communications.PACKING_FORMAT_DEFAULT,
+                    // Communications.PACKING_FORMAT_DEFAULT - Image data is encoded in the device native format, a lossless encoding that available on all devices. It is very efficient to decode, but often results in large transfer sizes so is slow to download.
+                    // The default is slow to download? wtf? guess it is efficient to decode though. But it also has a pallet on some devices, so cannot be rendered in unbufferred rotations mode
+                    // PACKING_FORMAT_YUV - Image data is encoded in YUV format. This is a lossy encoding that is compressed, and is fast to load. It is ideal for photographic imagery with transparency.
+                    // PACKING_FORMAT_PNG - Image data is encoded in PNG format. This is a lossless encoding that is compressed, but is relatively slow to load. It is ideal for non-photographic imagery.
+                    // PACKING_FORMAT_JPG - Image data is encoded in JPG format. This is a lossy encoding that is compressed, and is reasonably fast to load. It is ideal for photographic imagery.
+                    // PACKING_FORMAT_YUV seems the fastest, compressed and fast to load
+                    // should perf test the others on real device, eg. perhaps jpg is faser download but slightly slower draw
+                    :packingFormat => Communications.PACKING_FORMAT_YUV // do not specify a pallete, as we cannot draw directly to dc on some devices
                     // from android code
                     // val osName = "Garmin"
                     // val osVersion = Build.VERSION.RELEASE ?: "Unknown"

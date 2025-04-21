@@ -73,13 +73,11 @@ function isnan(a as Float) as Boolean {
 // not too bad for temporaries, but terrible for tiles (they can not be garbage collected)
 function newBitmap(
     width as Number,
-    height as Number,
-    palette as Array?
+    height as Number
 ) as Graphics.BufferedBitmap {
     var options = {
         :width => width,
-        :height => height,
-        :palette => palette,
+        :height => height
     };
 
     var bitmap = Graphics.createBufferedBitmap(options).get();
@@ -166,7 +164,7 @@ function drawScaledBitmapHelper(
             :filterMode => Graphics.FILTER_MODE_BILINEAR,
         });
     } catch (e) {
-        logE("failed drawBitmap2: " + e);
+        logE("failed drawBitmap2: " + e.getErrorMessage());
     }
 }
 
