@@ -91,3 +91,9 @@ OpenTopoMap: https://opentopomap.org/about
 Google: https://cloud.google.com/maps-platform/terms https://policies.google.com/privacy  
 
 ---
+
+# Licencing
+
+Attribution-NonCommercial-ShareAlike 4.0 International: https://creativecommons.org/licenses/by-nc-sa/4.0/  
+
+---
