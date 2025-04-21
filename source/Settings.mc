@@ -202,8 +202,8 @@ class Settings {
 
     // more for debugging off track than anything else, should normally be disabled for a release
     // maybe expose this as a user setting?
-    var showPoints as Boolean = true; 
-    var drawLineToClosestTrack as Boolean = true; 
+    var showPoints as Boolean = false; 
+    var drawLineToClosestTrack as Boolean = false; 
 
     function setMode(_mode as Number) as Void {
         mode = _mode;
