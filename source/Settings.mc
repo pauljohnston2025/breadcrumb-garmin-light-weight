@@ -144,7 +144,39 @@ class Settings {
     // not sure if we can even store bitmaps into storage, it says only BitmapResource
     // id have to serialise it to an array and back out (might not be too hard)
     // 64 is enough to render outside the screen a bit 64*64 tiles with 64 tiles gives us 512*512 worth of pixel data
-    var tileCacheSize as Number = 64; // represented in number of tiles, parsed from a string eg. "64"=64tiles, "100KB"=100/2Kb per tile = 50
+
+    // did some tests in the sim (render mode buffered rotations - so we also have the giant scratchpad bitmap active, suspect that why memory starts at ~115.0k)
+    // no tiles 114.8kb used memory
+    // 36 64*64 tiles 132.5kb = ~0.491
+    // 64 64*64 tiles 144.9kb = ~0.4703125 per 64*64 tile
+    // make image request
+    // cleared 115.0k
+    // 18 192*192 tiles 120.3k = ~0.294k per tile - less than the 64*64 tiles possibly because it stored as an optimised png image instead of a bitmap?
+    // 64 64*64 tiles 145.0k = ~0.468 per tile
+    // what I did notice though is that I can have many more tiles of 64*64 even though each tile is larger. The 192*192 image tiles crash the system at ~20 tiles with OOM errors.
+    // Think its not registerrring correctly with System.getSystemStats().usedMemory, since its graphics memory pool
+    // 95 64*64 tiles 180.0k (though sim was spitting out error saying it could not render) = ~ 0.684
+    // so its ~0.000146484375k per pixel
+    // there appears to be some overhead though
+
+
+    // with render mode unbuffered roatations (no scratchpad bitmap)
+    // 100 64*64 tiles 174.0k
+    // cleared after we are now at 132.4K - go figure, larger than with the scratchpad
+
+    // restart sim with nothing render mode unbuffered rotations (no scratchpad bitmap)
+    // cleared - 114.9K
+    // changed render mode to buffered rotations - 115.1K so scratchpad has almost 0 effect?
+    // a small route is like 3K
+    // graphics memory pool is
+
+    // using the memory view (which crashes constantly) instead of the on device System.getSystemStats().usedMemory
+    // graphics pool memeory only
+    // 36 64*64 tiles 16496b =  .45822k per tile          // note: this is about the same as previous calcs, image resources must be stored differently to bufferedbitmaps
+    // 13 192X192 tiles 73840b = 5.680k per tile  0.000154k per pixel - consistent with previous calcs
+
+    const BYTES_PER_PIXEL = 0.15f;
+    var tileCacheSize as Number = 64;
     var mode as Number = MODE_NORMAL;
     var elevationMode as Number = ELEVATION_MODE_STACKED;
     // todo clear tile cache when this changes
@@ -356,6 +388,23 @@ class Settings {
         return null;
     }
 
+    // this is a wild guess, its only used to try and protect users
+    // they can set it higher after configuring the tile server choice, or custom mode is full hands off
+    // this is just to ry and limit it for users when they ar simply selecting a new map choice
+    function maxTileCacheSizeGuess() as Number
+    {
+        var ROUTE_SIZE_BYTES = 7000; // a large route loaded onto the device
+        // var MAX_CACHE_SIZE_USER_PROTECT_BYTES = 80 /*tiles*/ *64*64 /*tile size*/ * BYTES_PER_PIXEL;
+        var availableMemBytes  = System.getSystemStats().totalMemory - 116000; // magic number we saw in testing with 0 routes loaded
+        availableMemBytes -= ROUTE_SIZE_BYTES * routeMax;
+        var OVERHEAD_PER_BITMAP_BYTES = 650; // larger image tiles seem to work better (we want smaller tiles to be effected by this more)
+        // I pretty much want perfectSize to be ~20 for large image tiles (192*192) and ~90 for small buffered bitmap tiles (64*64)
+        // so adjust OVERHEAD_PER_BITMAP_BYTES accordingly
+        // all calcs done on venu2s, smaller memory watches will be smaller
+        var perfectSize = availableMemBytes / (tileSize*tileSize*BYTES_PER_PIXEL + OVERHEAD_PER_BITMAP_BYTES);
+        return maxN(1, Math.floor(perfectSize * 0.85).toNumber()); // give ourselves a bit of a buffer
+    }
+
     function updateMapChoiceChange(value as Number) as Void {
         if (value == 0) {
             // custom - leave everything alone
@@ -388,6 +437,13 @@ class Settings {
             {
                 setTileUrl(COMPANION_APP_TILE_URL);
             }
+            var tileCacheMax = maxTileCacheSizeGuess();
+            if (tileCacheSize > tileCacheMax)
+            {
+                logD("limiting tile cache size to: "  + tileCacheMax);
+                setTileCacheSize(tileCacheMax);
+            }
+
             return;
         }
 
@@ -423,6 +479,12 @@ class Settings {
         {
             // set url last to clear tile cache (if needed)
             setTileUrl(tileServerInfo.urlTempalte);
+        }
+        var tileCacheMax = maxTileCacheSizeGuess();
+        if (tileCacheSize > tileCacheMax)
+        {
+            logD("limiting tile cache size to: "  + tileCacheMax);
+            setTileCacheSize(tileCacheMax);
         }
     }
 
