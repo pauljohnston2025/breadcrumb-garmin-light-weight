@@ -364,8 +364,10 @@ class TileCache {
         // System.println("starting load tile: " + x + " " + y + " " + z);
 
         if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
+            // logD("small tile: " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
             var x = tileKey.x / _cachedValues.smallTilesPerScaledTile;
             var y = tileKey.y / _cachedValues.smallTilesPerScaledTile;
+            // logD("large tile: " + x + ", " + y + ", " + tileKey.z);
             _webRequestHandler.add(
                 new ImageRequest(
                     "tileimage" + tileKey + "-" + _tileCacheVersion, // the hash is for the small tile request, not the big one (they will send the same physical request out, but again use 256 tilSize if your using external sources)
@@ -385,6 +387,7 @@ class TileCache {
             return;
         }
 
+        // logD("small tile (companion): " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
         _webRequestHandler.add(
             new JsonRequest(
                 "/loadtile" + tileKey + "-" + _tileCacheVersion,
@@ -394,7 +397,7 @@ class TileCache {
                     "y" => tileKey.y,
                     "z" => tileKey.z,
                     "scaledTileSize" => _settings.scaledTileSize,
-                    "tileSize" => getApp()._breadcrumbContext.settings().tileSize,
+                    "tileSize" => _settings.tileSize,
                 },
                 new JsonWebTileRequestHandler(me, tileKey, _tileCacheVersion)
             )

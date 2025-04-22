@@ -470,8 +470,10 @@ class BreadcrumbTrack {
             // but we resort to scanning all the points below anyway
             // this for loop is optimised for on track, and navigating in the direction of the track
             // it should result in only a single itteration in most cases, as they get closer to the next point
-            if (lastClosePointRawStart <= sizeRaw - ARRAY_POINT_SIZE) {
-                endSecondScanAtRaw = lastClosePointRawStart;
+            // we need at least 2 points of reference to be able to itterate the for loop,
+            // if we were the second to last point the for loop will never run
+            if (lastClosePointRawStart <= sizeRaw - 2 * ARRAY_POINT_SIZE) {
+                endSecondScanAtRaw = lastClosePointRawStart + ARRAY_POINT_SIZE; // the second scan needs to include endSecondScanAtRaw, or we would skip a point in the overlap
                 var lastPointX = coordinatesRaw[lastClosePointRawStart];
                 var lastPointY = coordinatesRaw[lastClosePointRawStart + 1];
                 for (

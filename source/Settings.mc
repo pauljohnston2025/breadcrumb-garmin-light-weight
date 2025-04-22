@@ -132,7 +132,7 @@ class Settings {
     // The tile size to scale images to, results in significantly smaller downloads (and faster speeds) but makes image slightly blurry.
     // 190 seems to be a good compromise between speed and crisp images. it does not effect the image too much, but gives us about 2X the speed.
     // 128 is a bit too blurry, but would be fine on some maps (anything without words)
-    var scaledTileSize as Number = 190; 
+    var scaledTileSize as Number = 192; // should be a multiple of the default tileSize
     // website says: Worldwide, Zoom to 17. (Zoom limited to 15 on website opentopomap.org)
     // real world test showed 17 produced errors (maybe you need to be authed to get this?)
     var tileLayerMax as Number = 15;
