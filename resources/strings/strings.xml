@@ -33,6 +33,7 @@
     <string id="offTrackAlertsDistanceMPrompt"></string>
     <string id="offTrackAlertsMaxReportIntervalSTitle">Max Report Interval (s)</string>
     <string id="offTrackAlertsMaxReportIntervalSPrompt"></string>
+    <string id="offTrackAlertsGroup1Title">Draw Line To Closest Point Settings</string>
     <string id="offTrackAlertsGroupTitle">Off Track Alert Settings</string>
     <string id="alertTypeTitle">Alert Type</string>
     <string id="alertTypeToast">Toast (notification)</string>

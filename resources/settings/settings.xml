@@ -141,25 +141,25 @@
         </setting>
     </group>
 
-    <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle" prompt="@Strings.offTrackAlertsDistanceMPrompt">
-        <settingConfig type="numeric" min="0"/>
-    </setting>
-    <setting propertyKey="@Properties.offTrackAlertsMaxReportIntervalS" title="@Strings.offTrackAlertsMaxReportIntervalSTitle" prompt="@Strings.offTrackAlertsMaxReportIntervalSPrompt">
-        <settingConfig type="numeric" min="0"/>
-    </setting>
-    <setting propertyKey="@Properties.drawLineToClosestPoint" title="@Strings.drawLineToClosestPointTitle">
-        <settingConfig type="boolean"/>
-    </setting>
-    <setting propertyKey="@Properties.enableOffTrackAlerts" title="@Strings.enableOffTrackAlertsTitle">
-        <settingConfig type="boolean"/>
-    </setting>
-    <group id="offTrackAlertsGroup" title="@Strings.offTrackAlertsGroupTitle" description="@Strings.enableOffTrackAlertsDescription" enableIfTrue="@Properties.enableOffTrackAlerts">
+    <group id="offTrackAlertsGroup" title="@Strings.offTrackAlertsGroupTitle" description="@Strings.enableOffTrackAlertsDescription">
+        <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle" prompt="@Strings.offTrackAlertsDistanceMPrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+        <setting propertyKey="@Properties.offTrackAlertsMaxReportIntervalS" title="@Strings.offTrackAlertsMaxReportIntervalSTitle" prompt="@Strings.offTrackAlertsMaxReportIntervalSPrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+        <setting propertyKey="@Properties.drawLineToClosestPoint" title="@Strings.drawLineToClosestPointTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+        <setting propertyKey="@Properties.enableOffTrackAlerts" title="@Strings.enableOffTrackAlertsTitle">
+            <settingConfig type="boolean"/>
+        </setting>
         <setting propertyKey="@Properties.alertType" title="@Strings.alertTypeTitle">
-        <settingConfig type="list">
-            <listEntry value="0">@Strings.alertTypeToast</listEntry>
-            <listEntry value="1">@Strings.alertTypeAlert</listEntry>
-        </settingConfig>
-    </setting>
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.alertTypeToast</listEntry>
+                <listEntry value="1">@Strings.alertTypeAlert</listEntry>
+            </settingConfig>
+        </setting>
     </group>
 
     <group id="colours" title="@Strings.coloursTitle" description="@Strings.coloursDescription">
