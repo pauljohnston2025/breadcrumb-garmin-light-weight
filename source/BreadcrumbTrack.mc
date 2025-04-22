@@ -505,9 +505,8 @@ class BreadcrumbTrack {
                     lastPointX = nextX;
                     lastPointY = nextY;
                 }
-
-                lastClosePointIndex = null; // we have to search the start of the range now
             }
+            lastClosePointIndex = null; // we have to search the start of the range now
         }
 
         // System.println("lastClosePointIndex: " + lastClosePointIndex);

@@ -63,9 +63,11 @@ class CachedValues {
     function initialize(settings as Settings) {
         self._settings = settings;
         smallTilesPerScaledTile = Math.ceil(
-            _settings.scaledTileSize / _settings.tileSize
+            _settings.scaledTileSize / _settings.tileSize.toFloat()
         ).toNumber();
-        smallTilesPerFullTile = Math.ceil(_settings.fullTileSize / _settings.tileSize).toNumber();
+        smallTilesPerFullTile = Math.ceil(
+            _settings.fullTileSize / _settings.tileSize.toFloat()
+        ).toNumber();
         fixedPosition = null;
         // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
         mapMoveDistanceM = _settings.metersAroundUser.toFloat();
@@ -152,7 +154,7 @@ class CachedValues {
 
     // needs to be called whenever the screen moves to a new bounding box
     function updateMapData() {
-        if (currentScale == 0f || smallTilesPerScaledTile == 0f) {
+        if (currentScale == 0f || smallTilesPerScaledTile == 0) {
             // do not divide by zero my good friends
             // we do not have a scale calculated yet
             return;
@@ -326,7 +328,7 @@ class CachedValues {
     function tileLayerScale(maxDistanceM as Float) as Float {
         var perfectScale = calculateScaleStandard(maxDistanceM);
 
-        if (perfectScale == 0f || smallTilesPerFullTile == 0f) {
+        if (perfectScale == 0f || smallTilesPerFullTile == 0) {
             return perfectScale; // do not divide by 0
         }
 
@@ -357,9 +359,7 @@ class CachedValues {
     }
 
     /** returns the new scale */
-    function getNewScaleFromBoundingBox(
-        outerBoundingBox as [Float, Float, Float, Float]
-    ) as Float {
+    function getNewScaleFromBoundingBox(outerBoundingBox as [Float, Float, Float, Float]) as Float {
         var xDistanceM = outerBoundingBox[2] - outerBoundingBox[0];
         var yDistanceM = outerBoundingBox[3] - outerBoundingBox[1];
 
@@ -408,9 +408,11 @@ class CachedValues {
     function recalculateAll() as Void {
         System.println("recalculating all cached values from settings/routes change");
         smallTilesPerScaledTile = Math.ceil(
-            _settings.scaledTileSize / _settings.tileSize
+            _settings.scaledTileSize / _settings.tileSize.toFloat()
         ).toNumber();
-        smallTilesPerFullTile = Math.ceil(_settings.fullTileSize / _settings.tileSize).toNumber();
+        smallTilesPerFullTile = Math.ceil(
+            _settings.fullTileSize / _settings.tileSize.toFloat()
+        ).toNumber();
         updateFixedPositionFromSettings();
         updateScaleCenterAndMap();
     }
