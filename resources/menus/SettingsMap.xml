@@ -2,6 +2,7 @@
     <toggle-menu-item id="settingsMapEnabled" label="@Strings.mapEnabledTitle"/>
     <menu-item id="settingsMapChoice" label="@Strings.mapChoice"/>
     <menu-item id="settingsTileUrl" label="@Strings.tileUrlTitle"/>
+    <menu-item id="settingsAuthToken" label="@Strings.authTokenTitle"/>
     <menu-item id="settingsMapTileSize" label="@Strings.layerTileSize"/>
     <menu-item id="settingsMapFullTileSize" label="@Strings.fullTileSizeTitle"/>
     <menu-item id="settingsMapScaledTileSize" label="@Strings.scaledTileSizeTitle"/>

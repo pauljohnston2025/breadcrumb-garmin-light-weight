@@ -366,9 +366,34 @@ class SettingsMap extends Rez.Menus.SettingsMap {
             case 17:
                 mapChoiceString = Rez.Strings.openStreetMapcyclosm;
                 break;
+            case 18:
+                mapChoiceString = Rez.Strings.stadiaAlidadeSmooth;
+                break;
+            case 19:
+                mapChoiceString = Rez.Strings.stadiaAlidadeSmoothDark;
+                break;
+            case 20:
+                mapChoiceString = Rez.Strings.stadiaOutdoors;
+                break;
+            case 21:
+                mapChoiceString = Rez.Strings.stadiaStamenToner;
+                break;
+            case 22:
+                mapChoiceString = Rez.Strings.stadiaStamenTonerLite;
+                break;
+            case 23:
+                mapChoiceString = Rez.Strings.stadiaStamenTerrain;
+                break;
+            case 24:
+                mapChoiceString = Rez.Strings.stadiaStamenWatercolor;
+                break;
+            case 25:
+                mapChoiceString = Rez.Strings.stadiaOSMBright;
+                break;
         }
         safeSetSubLabel(me, :settingsMapChoice, mapChoiceString);
         safeSetSubLabel(me, :settingsTileUrl, settings.tileUrl);
+        safeSetSubLabel(me, :settingsAuthToken, settings.authToken);
         safeSetSubLabel(me, :settingsMapTileSize, settings.tileSize.toString());
         safeSetSubLabel(me, :settingsMapFullTileSize, settings.fullTileSize.toString());
         safeSetSubLabel(me, :settingsMapScaledTileSize, settings.scaledTileSize.toString());
@@ -748,7 +773,6 @@ class ResetSettingsDelegate extends WatchUi.ConfirmationDelegate {
     }
 }
 
-
 class DeleteRouteDelegate extends WatchUi.ConfirmationDelegate {
     var routeId as Number;
     var settings as Settings;
@@ -775,7 +799,6 @@ class DeleteRouteDelegate extends WatchUi.ConfirmationDelegate {
                 WatchUi.SLIDE_IMMEDIATE
             ); // replace with new updated routes view
             WatchUi.pushView(new DummyView(), null, WatchUi.SLIDE_IMMEDIATE); // push dummy view for the confirmation to pop
-
         }
 
         return true; // we always handle it
@@ -895,6 +918,30 @@ class SettingsMapChoiceDelegate extends WatchUi.Menu2InputDelegate {
                 break;
             case :settingsMapChoiceOpenStreetMapcyclosm:
                 settings.setMapChoice(17);
+                break;
+            case :settingsMapChoiceStadiaAlidadeSmooth:
+                settings.setMapChoice(18);
+                break;
+            case :settingsMapChoiceStadiaAlidadeSmoothDark:
+                settings.setMapChoice(19);
+                break;
+            case :settingsMapChoiceStadiaOutdoors:
+                settings.setMapChoice(20);
+                break;
+            case :settingsMapChoiceStadiaStamenToner:
+                settings.setMapChoice(21);
+                break;
+            case :settingsMapChoiceStadiaStamenTonerLite:
+                settings.setMapChoice(22);
+                break;
+            case :settingsMapChoiceStadiaStamenTerrain:
+                settings.setMapChoice(23);
+                break;
+            case :settingsMapChoiceStadiaStamenWatercolor:
+                settings.setMapChoice(24);
+                break;
+            case :settingsMapChoiceStadiaOSMBright:
+                settings.setMapChoice(25);
                 break;
         }
 
@@ -1127,7 +1174,11 @@ class SettingsRouteDelegate extends WatchUi.Menu2InputDelegate {
             );
         } else if (itemId == :settingsRouteDelete) {
             var dialog = new WatchUi.Confirmation("Delete Route?");
-            WatchUi.pushView(dialog, new DeleteRouteDelegate(view.routeId, settings), WatchUi.SLIDE_IMMEDIATE);
+            WatchUi.pushView(
+                dialog,
+                new DeleteRouteDelegate(view.routeId, settings),
+                WatchUi.SLIDE_IMMEDIATE
+            );
         }
     }
 }
@@ -1187,6 +1238,13 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
                 picker,
                 WatchUi.SLIDE_IMMEDIATE
             );
+        } else if (itemId == :settingsAuthToken) {
+            var picker = new SettingsStringPicker(settings.method(:setAuthToken), view);
+            WatchUi.pushView(
+                new WatchUi.TextPicker(settings.authToken),
+                picker,
+                WatchUi.SLIDE_IMMEDIATE
+            );
         } else if (itemId == :settingsMapTileSize) {
             startPicker(
                 new SettingsNumberPicker(settings.method(:setTileSize), settings.tileSize),
@@ -1199,7 +1257,10 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
             );
         } else if (itemId == :settingsMapScaledTileSize) {
             startPicker(
-                new SettingsNumberPicker(settings.method(:setScaledTileSize), settings.scaledTileSize),
+                new SettingsNumberPicker(
+                    settings.method(:setScaledTileSize),
+                    settings.scaledTileSize
+                ),
                 view
             );
         } else if (itemId == :settingsMapTileLayerMax) {

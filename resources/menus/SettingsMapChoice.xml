@@ -17,6 +17,14 @@
     <menu-item id="settingsMapChoiceEsriWorldNavigationCharts" label="@Strings.esriWorldNavigationCharts"/>
     <menu-item id="settingsMapChoiceEsriWorldPhysicalMap" label="@Strings.esriWorldPhysicalMap"/>
     <menu-item id="settingsMapChoiceOpenStreetMapcyclosm" label="@Strings.openStreetMapcyclosm"/>
+    <menu-item id="settingsMapChoiceStadiaAlidadeSmooth" label="@Strings.stadiaAlidadeSmooth"/>
+    <menu-item id="settingsMapChoiceStadiaAlidadeSmoothDark" label="@Strings.stadiaAlidadeSmoothDark"/>
+    <menu-item id="settingsMapChoiceStadiaOutdoors" label="@Strings.stadiaOutdoors"/>
+    <menu-item id="settingsMapChoiceStadiaStamenToner" label="@Strings.stadiaStamenToner"/>
+    <menu-item id="settingsMapChoiceStadiaStamenTonerLite" label="@Strings.stadiaStamenTonerLite"/>
+    <menu-item id="settingsMapChoiceStadiaStamenTerrain" label="@Strings.stadiaStamenTerrain"/>
+    <menu-item id="settingsMapChoiceStadiaStamenWatercolor" label="@Strings.stadiaStamenWatercolor"/>
+    <menu-item id="settingsMapChoiceStadiaOSMBright" label="@Strings.stadiaOSMBright"/>
 </menu2>
 
 

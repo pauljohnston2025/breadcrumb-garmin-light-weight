@@ -86,9 +86,21 @@
                 <listEntry value="15">@Strings.esriWorldNavigationCharts</listEntry>
                 <listEntry value="16">@Strings.esriWorldPhysicalMap</listEntry>
                 <listEntry value="17">@Strings.openStreetMapcyclosm</listEntry>
+                <listEntry value="18">@Strings.stadiaAlidadeSmooth</listEntry>
+                <listEntry value="19">@Strings.stadiaAlidadeSmoothDark</listEntry>
+                <listEntry value="20">@Strings.stadiaOutdoors</listEntry>
+                <listEntry value="21">@Strings.stadiaStamenToner</listEntry>
+                <listEntry value="22">@Strings.stadiaStamenTonerLite</listEntry>
+                <listEntry value="23">@Strings.stadiaStamenTerrain</listEntry>
+                <listEntry value="24">@Strings.stadiaStamenWatercolor</listEntry>
+                <listEntry value="25">@Strings.stadiaOSMBright</listEntry>
             </settingConfig>
         </setting>
         <setting propertyKey="@Properties.tileUrl" title="@Strings.tileUrlTitle" prompt="@Strings.tileUrlPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.authToken" title="@Strings.authTokenTitle" prompt="@Strings.authTokenPrompt">
             <settingConfig type="alphaNumeric"/>
         </setting>
         

@@ -54,27 +54,56 @@ enum /*AttributionType*/ {
     ATTRIBUTION_OPENTOPOMAP,
     ATTRIBUTION_ESRI,
     ATTRIBUTION_OPENSTREETMAP,
+    ATTRIBUTION_STADIA,
+}
+
+enum /*UrlPrefix*/ {
+    URL_PREFIX_NONE,
+    URL_PREFIX_ESRI,
+    URL_PREFIX_STADIA,
+}
+
+enum /*AuthTokenType*/ {
+    AUTH_TOKEN_TYPE_NONE,
+    AUTH_TOKEN_TYPE_STADIA,
 }
 
 const COMPANION_APP_TILE_URL = "http://127.0.0.1:8080";
 
 class TileServerInfo {
     var attributionType as Number;
-    var urlTempalte as String;
+    var urlPrefix as Number;
+    var authTokenType as Number;
+    var urlTemplate as String;
     var tileLayerMin as Number;
     var tileLayerMax as Number;
     function initialize(
         attributionType as Number,
-        urlTempalte as String,
+        urlPrefix as Number,
+        authTokenType as Number,
+        urlTemplate as String,
         tileLayerMin as Number,
         tileLayerMax as Number
     ) {
         me.attributionType = attributionType;
-        me.urlTempalte = urlTempalte;
+        me.urlPrefix = urlPrefix;
+        me.authTokenType = authTokenType;
+        me.urlTemplate = urlTemplate;
         me.tileLayerMin = tileLayerMin;
         me.tileLayerMax = tileLayerMax;
     }
 }
+
+const URL_PREFIXES = {
+    URL_PREFIX_NONE => "",
+    URL_PREFIX_ESRI => "https://server.arcgisonline.com/arcgis/rest/services/",
+    URL_PREFIX_STADIA => "https://tiles.stadiamaps.com/tiles/",
+};
+
+const AUTH_TOKEN_TYPES = {
+    AUTH_TOKEN_TYPE_NONE => "",
+    AUTH_TOKEN_TYPE_STADIA => "?api_key={authToken}",
+};
 
 // prettier-ignore
 // This is an array instead of a dict because dict does not render correctly, also arrays are faster
@@ -83,37 +112,42 @@ const TILE_SERVERS = [
     // 1 => null, // special companion app (only the tileUrl will be updated)
     // 2 -> ...
     // open topo
-    new TileServerInfo(ATTRIBUTION_OPENTOPOMAP, "https://a.tile.opentopomap.org/{z}/{x}/{y}.png", 0, 15), // OpenTopoMap
+    new TileServerInfo(ATTRIBUTION_OPENTOPOMAP, URL_PREFIX_NONE, AUTH_TOKEN_TYPE_NONE, "https://a.tile.opentopomap.org/{z}/{x}/{y}.png", 0, 15), // OpenTopoMap
     // google - cannot use returns 404 - works from companion app (userAgent sent)
     // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", 0, 20), // "Google - Hybrid"
     // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", 0, 20), // "Google - Satellite"
     // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", 0, 20), // "Google - Road"
     // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}", 0, 20), // "Google - Terain"
-    // stamen - cannot use statia requires auth
-    // new TileServerInfo("https://tiles.stadiamaps.com/tiles/stamen_toner/{Z}/{Y}/{X}.png", 0, 20), // "Toner"
-    // new TileServerInfo("https://tiles.stadiamaps.com/tiles/stamen_terrain/{Z}/{Y}/{X}.png", 0, 20), // "Terrain"
-    // new TileServerInfo("https://tiles.stadiamaps.com/tiles/stamen_terrain/{Z}/{Y}/{X}.png", 0, 20), // "Terrain"
     // arcgis (esri) - note some of these have been removed due to not enough coverage, and others have had layermin/max altered for australian coverage
     // _Reference maps are all the same - just the location names removing them
     // Note: when testing on the simulator, some of theese occasionaly seem to produce   
     // Error: Invalid Value
     // Details: failed inside handle_image_callback
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", 0, 20), // Esri - World Imagery
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Street Map
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Topo Map
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - World Transportation
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Dark Gray Base
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade Dark
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Light Gray Base
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - USA Topo Maps
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Ocean Base
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Shaded Relief
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}", 0, 12), // Esri - NatGeo World Map
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/Specialty/World_Navigation_Charts/MapServer/tile/{z}/{y}/{x}", 0, 10), // Esri - World Navigation Charts
-    new TileServerInfo(ATTRIBUTION_ESRI, "https://server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}", 0, 8), // Esri - World Physical Map
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Imagery/MapServer/tile/{z}/{y}/{x}", 0, 20), // Esri - World Imagery
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Street_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Street Map
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Topo_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Topo Map
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - World Transportation
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Dark Gray Base
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade Dark
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Light Gray Base
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - USA Topo Maps
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Ocean Base
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Shaded Relief
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}", 0, 12), // Esri - NatGeo World Map
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Specialty/World_Navigation_Charts/MapServer/tile/{z}/{y}/{x}", 0, 10), // Esri - World Navigation Charts
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Physical_Map/MapServer/tile/{z}/{y}/{x}", 0, 8), // Esri - World Physical Map
     // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
-    new TileServerInfo(ATTRIBUTION_OPENSTREETMAP, "https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png", 0, 12), // OpenStreetMap - cyclosm
+    new TileServerInfo(ATTRIBUTION_OPENSTREETMAP, URL_PREFIX_NONE, AUTH_TOKEN_TYPE_NONE, "https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png", 0, 12), // OpenStreetMap - cyclosm
+    // stadia (also includes stamen) https://docs.stadiamaps.com/themes/
+    new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, "alidade_smooth/{z}/{x}/{y}.png", 0, 20), // Stadia - Alidade Smooth (auth required)
+    new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, "alidade_smooth_dark/{z}/{x}/{y}.png", 0, 20), // Stadia - Alidade Smooth Dark (auth required)
+    new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, "outdoors/{z}/{x}/{y}.png", 0, 20), // Stadia - Outdoors (auth required)
+    new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, "stamen_toner/{z}/{x}/{y}.png", 0, 20), // Stadia - Stamen Toner (auth required)
+    new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, "stamen_toner_lite/{z}/{x}/{y}.png", 0, 20), // Stadia - Stamen Toner Lite (auth required)
+    new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, "stamen_terrain/{z}/{x}/{y}.png", 0, 20), // Stadia - Stamen Terrain (auth required)
+    new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, "stamen_watercolor/{z}/{x}/{y}.jpg", 0, 16), // Stadia - Stamen Watercolor (auth required)
+    new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, "osm_bright/{z}/{x}/{y}.png", 0, 20), // Stadia - OSM Bright (auth required)
 ];
 
 class Settings {
@@ -121,6 +155,7 @@ class Settings {
     var openTopMapAttribution as WatchUi.BitmapResource = WatchUi.loadResource(Rez.Drawables.OpenTopMapAttribution);
     var esriAttribution as WatchUi.BitmapResource = WatchUi.loadResource(Rez.Drawables.EsriAttribution);
     var openStreetMapAttribution as WatchUi.BitmapResource = WatchUi.loadResource(Rez.Drawables.OpenStreetMapAttribution);
+    var stadiaAttribution as WatchUi.BitmapResource = WatchUi.loadResource(Rez.Drawables.StadiaAttribution);
 
     // should be a multiple of 256 (since thats how tiles are stored, though the companion app will render them scaled for you)
     // we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes.
@@ -199,6 +234,7 @@ class Settings {
     // to make this work on the emulator you ned to run
     // adb forward tcp:8080 tcp:8080
     var tileUrl as String = COMPANION_APP_TILE_URL;
+    var authToken as String = "";
     var mapChoice as Number = 0;
     // see keys below in routes = getArraySchema(...)
     // see oddity with route name and route loading new in context.newRoute
@@ -383,6 +419,8 @@ class Settings {
                 return esriAttribution;
             case ATTRIBUTION_OPENSTREETMAP:
                 return openStreetMapAttribution;
+            case ATTRIBUTION_STADIA:
+                return stadiaAttribution;
         }
 
         return null;
@@ -475,10 +513,12 @@ class Settings {
         {
             setTileSize(defaultSettings.scaledTileSize);
         }
-        if (tileUrl != tileServerInfo.urlTempalte)
+        // auth token added later
+        var newUrl = URL_PREFIXES[tileServerInfo.urlPrefix] + tileServerInfo.urlTemplate + AUTH_TOKEN_TYPES[tileServerInfo.authTokenType];
+        if (tileUrl != newUrl)
         {
             // set url last to clear tile cache (if needed)
-            setTileUrl(tileServerInfo.urlTempalte);
+            setTileUrl(newUrl);
         }
         var tileCacheMax = maxTileCacheSizeGuess();
         if (tileCacheSize > tileCacheMax)
@@ -500,6 +540,11 @@ class Settings {
         if (tileUrl.equals(COMPANION_APP_TILE_URL)) {
             transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
         }
+    }
+    
+    function setAuthToken(value as String) as Void {
+        authToken = value;
+        setValue("authToken", authToken);
     }
 
     function setZoomAtPaceSpeedMPS(mps as Float) as Void {
@@ -1346,6 +1391,7 @@ class Settings {
         setFixedLatitude(defaultSettings.fixedLatitude);
         setFixedLongitude(defaultSettings.fixedLongitude);
         setTileUrl(defaultSettings.tileUrl);
+        setAuthToken(defaultSettings.authToken);
         setMapChoice(defaultSettings.mapChoice);
         routes = defaultSettings.routes;
         saveRoutes();
@@ -1405,6 +1451,7 @@ class Settings {
             "fixedLatitude" => fixedLatitude == null ? 0f : fixedLatitude,
             "fixedLongitude" => fixedLongitude == null ? 0f : fixedLongitude,
             "tileUrl" => tileUrl,
+            "authToken" => authToken,
             "mapChoice" => mapChoice,
             "routes" => routesToSave(),
             "routesEnabled" => routesEnabled,
@@ -1493,6 +1540,7 @@ class Settings {
         fixedLongitude = parseOptionalFloat("fixedLongitude", fixedLongitude);
         setFixedPositionWithoutUpdate(fixedLatitude, fixedLongitude, false);
         tileUrl = parseString("tileUrl", tileUrl);
+        authToken = parseString("authToken", authToken);
         mapChoice = parseNumber("mapChoice", mapChoice);
         routes = getArraySchema(
             "routes",

@@ -190,6 +190,8 @@ Voyager: https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png
 Dark Matter: https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png  
 Light All: https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png
 
+The tile url can also include an auth token, that will be filled out from the Auth Token property eg. `?api_key={authToken}`
+
 ### Tile Size
 
 Tile size should be a multiple of Scaled Tile Size for best results. The tile size in pixels loaded from the companion app or other source. Should be equal to Scaled Tile Size if using a template url.

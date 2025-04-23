@@ -373,12 +373,16 @@ class TileCache {
                     "tileimage" + tileKey + "-" + _tileCacheVersion, // the hash is for the small tile request, not the big one (they will send the same physical request out, but again use 256 tilSize if your using external sources)
                     stringReplaceFirst(
                         stringReplaceFirst(
-                            stringReplaceFirst(_settings.tileUrl, "{x}", x.toString()),
-                            "{y}",
-                            y.toString()
+                            stringReplaceFirst(
+                                stringReplaceFirst(_settings.tileUrl, "{x}", x.toString()),
+                                "{y}",
+                                y.toString()
+                            ),
+                            "{z}",
+                            tileKey.z.toString()
                         ),
-                        "{z}",
-                        tileKey.z.toString()
+                        "{authToken}",
+                        _settings.authToken
                     ),
                     {},
                     new ImageWebTileRequestHandler(me, tileKey, _tileCacheVersion)
