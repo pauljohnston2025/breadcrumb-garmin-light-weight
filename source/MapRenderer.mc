@@ -71,6 +71,19 @@ class MapRenderer {
             return;
         }
 
+        if (_settings.authMissing()) {
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
+            dc.clear();    
+            dc.drawText(
+                _cachedValues.xHalf,
+                _cachedValues.yHalf,
+                Graphics.FONT_SYSTEM_MEDIUM,
+                "AUTH TOKEN\nMISSING",
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            );
+            return;
+        }
+
         // for debug its purple so we can see any issues, otherwise it should be black
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
@@ -117,6 +130,19 @@ class MapRenderer {
         }
 
         if (!_settings.mapEnabled) {
+            return;
+        }
+        
+        if (_settings.authMissing()) {
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
+            dc.clear();    
+            dc.drawText(
+                _cachedValues.xHalf,
+                _cachedValues.yHalf,
+                Graphics.FONT_SYSTEM_MEDIUM,
+                "AUTH TOKEN\nMISSING",
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            );
             return;
         }
 

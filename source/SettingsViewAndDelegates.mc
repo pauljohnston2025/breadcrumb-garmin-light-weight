@@ -390,6 +390,15 @@ class SettingsMap extends Rez.Menus.SettingsMap {
             case 25:
                 mapChoiceString = Rez.Strings.stadiaOSMBright;
                 break;
+            case 26:
+                mapChoiceString = Rez.Strings.cartoVoyager;
+                break;
+            case 27:
+                mapChoiceString = Rez.Strings.cartoDarkMatter;
+                break;
+            case 28:
+                mapChoiceString = Rez.Strings.cartoDarkLightAll;
+                break;
         }
         safeSetSubLabel(me, :settingsMapChoice, mapChoiceString);
         safeSetSubLabel(me, :settingsTileUrl, settings.tileUrl);
@@ -943,6 +952,15 @@ class SettingsMapChoiceDelegate extends WatchUi.Menu2InputDelegate {
             case :settingsMapChoiceStadiaOSMBright:
                 settings.setMapChoice(25);
                 break;
+            case :settingsMapChoiceCartoVoyager:
+                settings.setMapChoice(26);
+                break;
+            case :settingsMapChoiceCartoDarkMatter:
+                settings.setMapChoice(27);
+                break;
+            case :settingsMapChoiceCartoDarkLightAll:
+                settings.setMapChoice(28);
+                break;
         }
 
         parent.rerender();
@@ -971,6 +989,15 @@ class SettingsMapAttributionDelegate extends WatchUi.Menu2InputDelegate {
                 break;
             case :settingsMapAttributionOpenStreetmap:
                 Communications.openWebPage("https://openstreetmap.org/copyright", {}, {});
+                break;
+            case :settingsMapAttributionStadia:
+                Communications.openWebPage("https://stadiamaps.com/", {}, {});
+                break;
+            case :settingsMapAttributionOpenMapTiles:
+                Communications.openWebPage("https://openmaptiles.org/", {}, {});
+                break;
+            case :settingsMapAttributionCarto:
+                Communications.openWebPage("https://carto.com/attributions/", {}, {});
                 break;
         }
 

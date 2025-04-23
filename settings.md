@@ -129,35 +129,38 @@ How fast, in m/s, the user needs to be moving in order to trigger zoom changes.
 Enables the map tile rendering.
 Choose these values wisely. Too big = crash, too small = crash or slow performance.  
 note: Map support is disabled by default, this is because map tile loading is memory intensive and may cause crashes on some devices. You must set `Tile Cache Size` if using maps to avoid crashes.  
-Please ensure DND mode is off when using maps, I have encountered slow tile loads due to low bluetooth speeds (suspect DND mode was the reason).
 
 Best Guess for map settings:  
 Tile Cache Size if using zoom at pace: `2*<Tile Cache Size without zoom at pace>`  
 Tile Cache Size if NOT using zoom at pace: `((2 * ceil(<screen size>/<tile size>)) + 2 * <tile cache padding>)^2`  
 Tile Cache Size if using Restrict Scale To Tile Layers: `((ceil(<screen size>/<tile size>)) + 2 * <tile cache padding>)^2`  
-Max Pending Web Requests: `Tile Cache Size`  
+Max Pending Web Requests: Can be fairly low, map tile requests are queued up pretty fast.    
 eg. On my venu2s if scale is set to `0.075` it uses approximately 10\*10 tiles to fill the screen, this means the tile cache would need to be set to at least 100 (at 64 you can see the tiles loading and unloading)  
 The math above is worst case, if you pick a better fixed scale or `Meters Around User` then the tile cache size can be significantly reduced (by at least half). Layer min/max could also be used to specify a fixed layer and further reduce the need for tiles in memory (since we can zoom in and make a single tile cover the screen). All these settings are here so users can configure their own memory requirements for the best battery life and stability. I suggest settings the scale to one that you like, and then reducing the tile cache size until black squares appear to find the tile cache lower limit.
 
-You can also set <Scaled Tile Size> to reduce the cache requirements further, if <Scaled Tile Size> is set to 128, <Scaled Tile Size> and <Full Tile Size> is 256, then the tile cache size can be reduced by a factor of 4. ie. (<Full Tile Size>/<Scaled Tile Size>)^2.
+You can also set `<Scaled Tile Size>` to reduce the cache requirements further, if `<Scaled Tile Size>` is set to 128, `<Scaled Tile Size>` and `<Full Tile Size>` is 256, then the tile cache size can be reduced by a factor of 4. ie. `(<Full Tile Size>/<Scaled Tile Size>)^2`.
 
 ### Map Choice
 
-Pick from a list on tile servers, select custom if you wish to manually specify a tileUrl.
-Currently this dropdown is an override for
+Pick from a list on tile servers, select custom if you wish to manually specify a tileUrl.   
+Note: tiles that are more monochrome will download faster, as they have less and can be compressed further. Stadia's `Stamen Toner` or Carto's `Dark Matter` are good examples of this, i noticed 2X speed improvement on map tile downloads compared to full satellite tiles.
 
+Currently this dropdown is an override for:  
 * tileUrl
 * tileLayerMax
 * tileLayerMin
 * tileSize
 
-All other options in map settings can still be changed. Settings such as tile cache size should be set to something much smaller to avoid crashes.
-If you need to tweak the tileUrl or other controlled settings (such as tileSize for companion app)
+All other options in map settings can still be changed. Settings such as tile cache size should be set to something much smaller to avoid crashes.  
+
+If you need to tweak the tileUrl or other controlled settings (such as tileSize for companion app)  
 * first select the tile server that matches most closely eg. `companion app`
 * save settings
 * go back into settings and select `custom`
 * edit the settings that need to be changed
 * save settings
+
+Please note, some map choices require an auth token, see [Auth Token](#auth-token)
 
 ### Tile Url
 
@@ -190,7 +193,10 @@ Voyager: https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png
 Dark Matter: https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png  
 Light All: https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png
 
-The tile url can also include an auth token, that will be filled out from the Auth Token property eg. `?api_key={authToken}`
+### Auth Token
+
+The tile url can also include an auth token, that will be filled out from the Auth Token property eg. `?api_key={authToken}`. This is required for some map choices.  
+For details on creating an account and auth token for stadia map choices please see https://docs.stadiamaps.com/
 
 ### Tile Size
 

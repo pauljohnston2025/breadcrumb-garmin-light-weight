@@ -156,10 +156,17 @@
     <string id="stadiaStamenTerrain">Stadia - Stamen Terrain (auth required)</string>
     <string id="stadiaStamenWatercolor">Stadia - Stamen Watercolor (auth required)</string>
     <string id="stadiaOSMBright">Stadia - OSM Bright (auth required)</string>
+    <string id="cartoVoyager">Carto - Voyager</string>
+    <string id="cartoDarkMatter">Carto - Dark Matter</string>
+    <string id="cartoDarkLightAll">Carto - Light All</string>
 
     <string id="attribution">Attribution</string>
     <string id="openTopoMapAttribution">OpenTopoMap</string>
     <string id="googleAttribution">Google</string>
     <string id="esriAttribution">Powered by Esri</string>
     <string id="openStreetmapAttribution">OpenStreetMap</string>
+    <string id="stadiaAttribution">Stadia Maps</string>
+    <string id="openmaptilesAttribution">OpenMapTiles</string>
+    <string id="cartoAttribution">CARTO</string>
+    
 </strings>

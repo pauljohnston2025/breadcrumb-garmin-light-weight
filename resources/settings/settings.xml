@@ -94,6 +94,9 @@
                 <listEntry value="23">@Strings.stadiaStamenTerrain</listEntry>
                 <listEntry value="24">@Strings.stadiaStamenWatercolor</listEntry>
                 <listEntry value="25">@Strings.stadiaOSMBright</listEntry>
+                <listEntry value="26">@Strings.cartoVoyager</listEntry>
+                <listEntry value="27">@Strings.cartoDarkMatter</listEntry>
+                <listEntry value="28">@Strings.cartoDarkLightAll</listEntry>
             </settingConfig>
         </setting>
         <setting propertyKey="@Properties.tileUrl" title="@Strings.tileUrlTitle" prompt="@Strings.tileUrlPrompt">

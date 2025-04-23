@@ -353,7 +353,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 try {
                     dc.drawBitmap2(
                         _cachedValues.xHalf - attrib.getWidth() / 2,
-                        _cachedValues.screenHeight - 20,
+                        _cachedValues.screenHeight - 25,
                         attrib,
                         {
                             :tintColor => settings.uiColour,

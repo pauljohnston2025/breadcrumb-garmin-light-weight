@@ -134,7 +134,7 @@ class BreadcrumbRenderer {
 
         var foundName = SCALE_NAMES[distanceM];
 
-        var y = _cachedValues.screenHeight - 20;
+        var y = _cachedValues.screenHeight - 25;
         dc.setColor(settings.normalModeColour, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(4);
         dc.drawLine(

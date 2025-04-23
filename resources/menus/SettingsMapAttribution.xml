@@ -3,6 +3,9 @@
     <menu-item id="settingsMapAttributionGoogle" label="@Strings.googleAttribution"/>
     <menu-item id="settingsMapAttributionEsri" label="@Strings.esriAttribution"/>
     <menu-item id="settingsMapAttributionOpenStreetmap" label="@Strings.openStreetmapAttribution"/>
+    <menu-item id="settingsMapAttributionStadia" label="@Strings.stadiaAttribution"/>
+    <menu-item id="settingsMapAttributionOpenmaptiles" label="@Strings.openmaptilesAttribution"/>
+    <menu-item id="settingsMapAttributionCarto" label="@Strings.cartoAttribution"/>
 </menu2>
 
 

@@ -55,17 +55,20 @@ enum /*AttributionType*/ {
     ATTRIBUTION_ESRI,
     ATTRIBUTION_OPENSTREETMAP,
     ATTRIBUTION_STADIA,
+    ATTRIBUTION_CARTO,
 }
 
 enum /*UrlPrefix*/ {
     URL_PREFIX_NONE,
     URL_PREFIX_ESRI,
     URL_PREFIX_STADIA,
+    URL_PREFIX_CARTO,
 }
 
 enum /*AuthTokenType*/ {
     AUTH_TOKEN_TYPE_NONE,
     AUTH_TOKEN_TYPE_STADIA,
+    AUTH_TOKEN_TYPE_CARTO,
 }
 
 const COMPANION_APP_TILE_URL = "http://127.0.0.1:8080";
@@ -98,6 +101,7 @@ const URL_PREFIXES = {
     URL_PREFIX_NONE => "",
     URL_PREFIX_ESRI => "https://server.arcgisonline.com/arcgis/rest/services/",
     URL_PREFIX_STADIA => "https://tiles.stadiamaps.com/tiles/",
+    URL_PREFIX_CARTO => "https://a.basemaps.cartocdn.com/rastertiles/",
 };
 
 const AUTH_TOKEN_TYPES = {
@@ -148,14 +152,31 @@ const TILE_SERVERS = [
     new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, "stamen_terrain/{z}/{x}/{y}.png", 0, 20), // Stadia - Stamen Terrain (auth required)
     new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, "stamen_watercolor/{z}/{x}/{y}.jpg", 0, 16), // Stadia - Stamen Watercolor (auth required)
     new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, "osm_bright/{z}/{x}/{y}.png", 0, 20), // Stadia - OSM Bright (auth required)
+    // carto
+    new TileServerInfo(ATTRIBUTION_CARTO, URL_PREFIX_CARTO, AUTH_TOKEN_TYPE_NONE, "voyager/{z}/{x}/{y}.png", 0, 20), // Carto - Voyager
+    new TileServerInfo(ATTRIBUTION_CARTO, URL_PREFIX_CARTO, AUTH_TOKEN_TYPE_NONE, "dark_all/{z}/{x}/{y}.png", 0, 20), // Carto - Dark Matter
+    new TileServerInfo(ATTRIBUTION_CARTO, URL_PREFIX_CARTO, AUTH_TOKEN_TYPE_NONE, "light_all/{z}/{x}/{y}.png", 0, 20), // Carto - Light All
 ];
 
 class Settings {
-    var googleAttribution as WatchUi.BitmapResource = WatchUi.loadResource(Rez.Drawables.GoogleAttribution);
-    var openTopMapAttribution as WatchUi.BitmapResource = WatchUi.loadResource(Rez.Drawables.OpenTopMapAttribution);
-    var esriAttribution as WatchUi.BitmapResource = WatchUi.loadResource(Rez.Drawables.EsriAttribution);
-    var openStreetMapAttribution as WatchUi.BitmapResource = WatchUi.loadResource(Rez.Drawables.OpenStreetMapAttribution);
-    var stadiaAttribution as WatchUi.BitmapResource = WatchUi.loadResource(Rez.Drawables.StadiaAttribution);
+    var googleAttribution as WatchUi.BitmapResource = WatchUi.loadResource(
+        Rez.Drawables.GoogleAttribution
+    );
+    var openTopMapAttribution as WatchUi.BitmapResource = WatchUi.loadResource(
+        Rez.Drawables.OpenTopMapAttribution
+    );
+    var esriAttribution as WatchUi.BitmapResource = WatchUi.loadResource(
+        Rez.Drawables.EsriAttribution
+    );
+    var openStreetMapAttribution as WatchUi.BitmapResource = WatchUi.loadResource(
+        Rez.Drawables.OpenStreetMapAttribution
+    );
+    var stadiaAttribution as WatchUi.BitmapResource = WatchUi.loadResource(
+        Rez.Drawables.StadiaAttribution
+    );
+    var cartoAttribution as WatchUi.BitmapResource = WatchUi.loadResource(
+        Rez.Drawables.CartoAttribution
+    );
 
     // should be a multiple of 256 (since thats how tiles are stored, though the companion app will render them scaled for you)
     // we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes.
@@ -193,7 +214,6 @@ class Settings {
     // 95 64*64 tiles 180.0k (though sim was spitting out error saying it could not render) = ~ 0.684
     // so its ~0.000146484375k per pixel
     // there appears to be some overhead though
-
 
     // with render mode unbuffered roatations (no scratchpad bitmap)
     // 100 64*64 tiles 174.0k
@@ -245,9 +265,9 @@ class Settings {
     var normalModeColour as Number = Graphics.COLOR_BLUE;
     var uiColour as Number = Graphics.COLOR_DK_GRAY;
     var debugColour as Number = 0xfeffffff; // white, but colour_white results in FFFFFFFF (-1) when we parse it and that is fully transparent
-    // I did get up to 4 large routes working with off track alerts, but any more than that and watchdog catches us out, 3 is a safer limit. 
+    // I did get up to 4 large routes working with off track alerts, but any more than that and watchdog catches us out, 3 is a safer limit.
     // currently we still load disabled routes into memory, so its also not great having this larege and a heap of disabled routes
-    var routeMax as Number = 3; 
+    var routeMax as Number = 3;
 
     // note this only works if a single track is enabled (multiple tracks would always error)
     var enableOffTrackAlerts as Boolean = true;
@@ -270,14 +290,14 @@ class Settings {
 
     // more for debugging off track than anything else, should normally be disabled for a release
     // maybe expose this as a user setting?
-    var showPoints as Boolean = false; 
-    var drawLineToClosestTrack as Boolean = false; 
+    var showPoints as Boolean = false;
+    var drawLineToClosestTrack as Boolean = false;
 
     function setMode(_mode as Number) as Void {
         mode = _mode;
         setValue("mode", mode);
     }
-    
+
     function setElevationMode(value as Number) as Void {
         elevationMode = value;
         setValue("elevationMode", elevationMode);
@@ -342,9 +362,12 @@ class Settings {
         if (clearRequests) {
             clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
         }
-
     }
-    function setFixedPositionWithoutUpdate(lat as Float?, long as Float?, clearRequests as Boolean) as Void {
+    function setFixedPositionWithoutUpdate(
+        lat as Float?,
+        long as Float?,
+        clearRequests as Boolean
+    ) as Void {
         // System.println("moving to: " + lat + " " + long);
         // be very careful about putting null into properties, it breaks everything
         if (lat == null || !(lat instanceof Float)) {
@@ -395,6 +418,10 @@ class Settings {
         updateMapChoiceChange(mapChoice);
     }
 
+    function authMissing() as Boolean {
+        return mapChoice >= 18 && mapChoice <= 25 && authToken.equals("");
+    }
+
     function getAttribution() as WatchUi.BitmapResource? {
         if (mapChoice == 0) {
             // custom - no way to know which tile server
@@ -421,6 +448,8 @@ class Settings {
                 return openStreetMapAttribution;
             case ATTRIBUTION_STADIA:
                 return stadiaAttribution;
+            case ATTRIBUTION_CARTO:
+                return cartoAttribution;
         }
 
         return null;
@@ -429,17 +458,17 @@ class Settings {
     // this is a wild guess, its only used to try and protect users
     // they can set it higher after configuring the tile server choice, or custom mode is full hands off
     // this is just to ry and limit it for users when they ar simply selecting a new map choice
-    function maxTileCacheSizeGuess() as Number
-    {
+    function maxTileCacheSizeGuess() as Number {
         var ROUTE_SIZE_BYTES = 7000; // a large route loaded onto the device
         // var MAX_CACHE_SIZE_USER_PROTECT_BYTES = 80 /*tiles*/ *64*64 /*tile size*/ * BYTES_PER_PIXEL;
-        var availableMemBytes  = System.getSystemStats().totalMemory - 116000; // magic number we saw in testing with 0 routes loaded
+        var availableMemBytes = System.getSystemStats().totalMemory - 116000; // magic number we saw in testing with 0 routes loaded
         availableMemBytes -= ROUTE_SIZE_BYTES * routeMax;
         var OVERHEAD_PER_BITMAP_BYTES = 650; // larger image tiles seem to work better (we want smaller tiles to be effected by this more)
         // I pretty much want perfectSize to be ~20 for large image tiles (192*192) and ~90 for small buffered bitmap tiles (64*64)
         // so adjust OVERHEAD_PER_BITMAP_BYTES accordingly
         // all calcs done on venu2s, smaller memory watches will be smaller
-        var perfectSize = availableMemBytes / (tileSize*tileSize*BYTES_PER_PIXEL + OVERHEAD_PER_BITMAP_BYTES);
+        var perfectSize =
+            availableMemBytes / (tileSize * tileSize * BYTES_PER_PIXEL + OVERHEAD_PER_BITMAP_BYTES);
         return maxN(1, Math.floor(perfectSize * 0.85).toNumber()); // give ourselves a bit of a buffer
     }
 
@@ -451,34 +480,27 @@ class Settings {
             // companion app
             // setting back to defaults otherwise when we chose companion app we will not get the correct tilesize and it will crash
             var defaultSettings = new Settings();
-            if (tileLayerMax != defaultSettings.tileLayerMax)
-            {
+            if (tileLayerMax != defaultSettings.tileLayerMax) {
                 setTileLayerMax(defaultSettings.tileLayerMax);
             }
-            if (tileLayerMin != defaultSettings.tileLayerMin)
-            {
+            if (tileLayerMin != defaultSettings.tileLayerMin) {
                 setTileLayerMin(defaultSettings.tileLayerMin);
             }
-            if (fullTileSize != defaultSettings.fullTileSize)
-            {
+            if (fullTileSize != defaultSettings.fullTileSize) {
                 setFullTileSize(defaultSettings.fullTileSize);
             }
-            if (scaledTileSize != defaultSettings.scaledTileSize)
-            {
+            if (scaledTileSize != defaultSettings.scaledTileSize) {
                 setScaledTileSize(defaultSettings.scaledTileSize);
             }
-            if (tileSize != defaultSettings.tileSize)
-            {
+            if (tileSize != defaultSettings.tileSize) {
                 setTileSize(defaultSettings.tileSize);
             }
-            if (tileUrl != COMPANION_APP_TILE_URL)
-            {
+            if (tileUrl != COMPANION_APP_TILE_URL) {
                 setTileUrl(COMPANION_APP_TILE_URL);
             }
             var tileCacheMax = maxTileCacheSizeGuess();
-            if (tileCacheSize > tileCacheMax)
-            {
-                logD("limiting tile cache size to: "  + tileCacheMax);
+            if (tileCacheSize > tileCacheMax) {
+                logD("limiting tile cache size to: " + tileCacheMax);
                 setTileCacheSize(tileCacheMax);
             }
 
@@ -492,38 +514,34 @@ class Settings {
 
         var defaultSettings = new Settings();
         var tileServerInfo = TILE_SERVERS[tileServerIndex];
-        if (tileLayerMax != tileServerInfo.tileLayerMax)
-        {
+        if (tileLayerMax != tileServerInfo.tileLayerMax) {
             setTileLayerMax(tileServerInfo.tileLayerMax);
         }
-        if (tileLayerMin != tileServerInfo.tileLayerMin)
-        {
+        if (tileLayerMin != tileServerInfo.tileLayerMin) {
             setTileLayerMin(tileServerInfo.tileLayerMin);
         }
-        if (fullTileSize != 256)
-        {
+        if (fullTileSize != 256) {
             setFullTileSize(256);
         }
         // todo: reduce this to 128 for better results
-        if (scaledTileSize != defaultSettings.scaledTileSize)
-        {
+        if (scaledTileSize != defaultSettings.scaledTileSize) {
             setScaledTileSize(defaultSettings.scaledTileSize);
         }
-        if (tileSize != defaultSettings.scaledTileSize)
-        {
+        if (tileSize != defaultSettings.scaledTileSize) {
             setTileSize(defaultSettings.scaledTileSize);
         }
         // auth token added later
-        var newUrl = URL_PREFIXES[tileServerInfo.urlPrefix] + tileServerInfo.urlTemplate + AUTH_TOKEN_TYPES[tileServerInfo.authTokenType];
-        if (tileUrl != newUrl)
-        {
+        var newUrl =
+            URL_PREFIXES[tileServerInfo.urlPrefix] +
+            tileServerInfo.urlTemplate +
+            AUTH_TOKEN_TYPES[tileServerInfo.authTokenType];
+        if (tileUrl != newUrl) {
             // set url last to clear tile cache (if needed)
             setTileUrl(newUrl);
         }
         var tileCacheMax = maxTileCacheSizeGuess();
-        if (tileCacheSize > tileCacheMax)
-        {
-            logD("limiting tile cache size to: "  + tileCacheMax);
+        if (tileCacheSize > tileCacheMax) {
+            logD("limiting tile cache size to: " + tileCacheMax);
             setTileCacheSize(tileCacheMax);
         }
     }
@@ -541,7 +559,7 @@ class Settings {
             transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
         }
     }
-    
+
     function setAuthToken(value as String) as Void {
         authToken = value;
         setValue("authToken", authToken);
@@ -576,14 +594,14 @@ class Settings {
         clearPendingWebRequests();
         clearTileCache();
     }
-    
+
     function setFullTileSize(value as Number) as Void {
         fullTileSize = value;
         setValue("fullTileSize", fullTileSize);
         clearPendingWebRequests();
         clearTileCache();
     }
-    
+
     function setScaledTileSize(value as Number) as Void {
         scaledTileSize = value;
         setValue("scaledTileSize", scaledTileSize);
@@ -666,12 +684,12 @@ class Settings {
         setValue("drawLineToClosestPoint", drawLineToClosestPoint);
         updateViewSettings();
     }
-    
+
     function setDisplayLatLong(value as Boolean) as Void {
         displayLatLong = value;
         setValue("displayLatLong", displayLatLong);
     }
-    
+
     function setScaleRestrictedToTileLayers(value as Boolean) as Void {
         scaleRestrictedToTileLayers = value;
         setValue("scaleRestrictedToTileLayers", scaleRestrictedToTileLayers);
@@ -793,7 +811,7 @@ class Settings {
         routes = [];
         saveRoutes();
     }
-    
+
     function clearRoute(routeId as Number) as Void {
         var routeIndex = getRouteIndexById(routeId);
         if (routeIndex == null) {
@@ -869,7 +887,7 @@ class Settings {
 
         setDrawLineToClosestPoint(true);
     }
-    
+
     function toggleDisplayLatLong() as Void {
         if (displayLatLong) {
             setDisplayLatLong(false);
@@ -878,7 +896,7 @@ class Settings {
 
         setDisplayLatLong(true);
     }
-    
+
     function toggleScaleRestrictedToTileLayers() as Void {
         if (scaleRestrictedToTileLayers) {
             setScaleRestrictedToTileLayers(false);
@@ -1480,8 +1498,7 @@ class Settings {
         }
     }
 
-    function loadSettingsPart1() as Void
-    {
+    function loadSettingsPart1() as Void {
         tileSize = parseNumber("tileSize", tileSize);
         fullTileSize = parseNumber("fullTileSize", fullTileSize);
         scaledTileSize = parseNumber("scaledTileSize", scaledTileSize);
@@ -1512,7 +1529,10 @@ class Settings {
         setMapEnabledRaw(mapEnabled); // prompt for app to open if needed
         drawLineToClosestPoint = parseBool("drawLineToClosestPoint", drawLineToClosestPoint);
         displayLatLong = parseBool("displayLatLong", displayLatLong);
-        scaleRestrictedToTileLayers = parseBool("scaleRestrictedToTileLayers", scaleRestrictedToTileLayers);
+        scaleRestrictedToTileLayers = parseBool(
+            "scaleRestrictedToTileLayers",
+            scaleRestrictedToTileLayers
+        );
         displayRouteNames = parseBool("displayRouteNames", displayRouteNames);
         enableOffTrackAlerts = parseBool("enableOffTrackAlerts", enableOffTrackAlerts);
         routesEnabled = parseBool("routesEnabled", routesEnabled);
@@ -1522,8 +1542,7 @@ class Settings {
         normalModeColour = parseColour("normalModeColour", normalModeColour);
     }
 
-    function loadSettingsPart2() as Void
-    {
+    function loadSettingsPart2() as Void {
         routeMax = parseColour("routeMax", routeMax);
         uiColour = parseColour("uiColour", uiColour);
         debugColour = parseColour("debugColour", debugColour);
@@ -1581,7 +1600,7 @@ class Settings {
         System.println("loadSettings: Loading all settings");
         loadSettingsPart1();
         loadSettingsPart2();
-        
+
         // testing coordinates (piper-comanche-wreck)
         // setFixedPosition(-27.297773, 152.753883);
         // // cachedValues.setScale(0.39); // zoomed out a bit

@@ -25,6 +25,9 @@
     <menu-item id="settingsMapChoiceStadiaStamenTerrain" label="@Strings.stadiaStamenTerrain"/>
     <menu-item id="settingsMapChoiceStadiaStamenWatercolor" label="@Strings.stadiaStamenWatercolor"/>
     <menu-item id="settingsMapChoiceStadiaOSMBright" label="@Strings.stadiaOSMBright"/>
+    <menu-item id="settingsMapChoiceCartoVoyager" label="@Strings.cartoVoyager"/>
+    <menu-item id="settingsMapChoiceCartoDarkMatter" label="@Strings.cartoDarkMatter"/>
+    <menu-item id="settingsMapChoiceCartoDarkLightAll" label="@Strings.cartoDarkLightAll"/>
 </menu2>
 
 
