@@ -66,6 +66,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             actualOnLayout(dc);
         } catch (e) {
             logE("failed onLayout: " + e.getErrorMessage());
+            ++$.globalExceptionCounter;
         }
     }
 
@@ -90,6 +91,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             actualCompute(info);
         } catch (e) {
             logE("failed compute: " + e.getErrorMessage());
+            ++$.globalExceptionCounter;
         }
     }
 
@@ -282,6 +284,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             actualOnUpdate(dc);
         } catch (e) {
             logE("failed onUpdate: " + e.getErrorMessage());
+            ++$.globalExceptionCounter;
         }
     }
     function actualOnUpdate(dc as Dc) as Void {
@@ -361,6 +364,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     );
                 } catch (e) {
                     logE("failed drawBitmap2: " + e.getErrorMessage());
+                    ++$.globalExceptionCounter;
                 }
             }
         }
@@ -420,6 +424,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 }
             } catch (e) {
                 logE("failed drawBitmap2 or drawBitmap: " + e.getErrorMessage());
+                ++$.globalExceptionCounter;
             }
             return;
         }
@@ -561,7 +566,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "pending web: " + _breadcrumbContext.webRequestHandler().pendingCount(),
+            "except: " + $.globalExceptionCounter,
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -569,7 +574,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "pending transmit: " + _breadcrumbContext.webRequestHandler().pendingTransmitCount(),
+            "pending web: " + _breadcrumbContext.webRequestHandler().pendingCount() + " t: " + _breadcrumbContext.webRequestHandler().pendingTransmitCount(),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;

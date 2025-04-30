@@ -106,6 +106,7 @@ class WebRequestHandleWrapper {
             webHandler._lastResult = responseCode;
         } catch (e) {
             System.println("failed to handle web request: " + e.getErrorMessage());
+            ++$.globalExceptionCounter;
         } finally {
             // got some stack overflows, as handle can be called inline if it knows it will fail (eg. BLE_CONNECTION_UNAVAILABLE)
             // also saw alot of NETWORK_REQUEST_TIMED_OUT in the logs, but thnk it was when the BLE_CONNECTION_UNAVAILABLE happened
@@ -140,6 +141,7 @@ class ConnectionListenerWrapper extends Communications.ConnectionListener {
             handler.onComplete();
         } catch (e) {
             System.println("failed onComplete: " + e.getErrorMessage());
+            ++$.globalExceptionCounter;
         } finally {
             decOutstanding();
         }
@@ -150,6 +152,7 @@ class ConnectionListenerWrapper extends Communications.ConnectionListener {
             handler.onError();
         } catch (e) {
             System.println("failed onError: " + e.getErrorMessage());
+            ++$.globalExceptionCounter;
         } finally {
             decOutstanding();
         }

@@ -226,6 +226,7 @@ class MapRenderer {
                     // tileFromCache.bitmap.isCached() + " "
                     //  + " " + tileFromCache.bitmap
                     logE("failed drawBitmap2: " + e.getErrorMessage());
+                    ++$.globalExceptionCounter;
                 }
             }
             

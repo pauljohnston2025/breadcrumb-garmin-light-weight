@@ -204,6 +204,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
                     });
                 } catch (e) {
                     logE("failed drawBitmap2: " + e.getErrorMessage());
+                    ++$.globalExceptionCounter;
                 }
                 // System.println("scaled up to: " + upscaledBitmap.getWidth() + " " + upscaledBitmap.getHeight());
                 // System.println("from: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());

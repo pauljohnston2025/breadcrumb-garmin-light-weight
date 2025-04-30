@@ -5,6 +5,8 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 import Toybox.Communications;
 
+var globalExceptionCounter = 0;
+
 enum Protocol {
     PROTOCOL_ROUTE_DATA = 0,
     PROTOCOL_MAP_TILE = 1,
@@ -254,6 +256,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             System.println("Unknown message type: " + data[0]);
         } catch (e) {
             logE("failed onPhone: " + e.getErrorMessage());
+            ++$.globalExceptionCounter;
         }
     }
 }

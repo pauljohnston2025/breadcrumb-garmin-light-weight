@@ -165,6 +165,7 @@ function drawScaledBitmapHelper(
         });
     } catch (e) {
         logE("failed drawBitmap2: " + e.getErrorMessage());
+        ++$.globalExceptionCounter;
     }
 }
 

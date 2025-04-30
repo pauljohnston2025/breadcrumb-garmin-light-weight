@@ -723,6 +723,7 @@ class BreadcrumbRenderer {
             } catch (e) {
                 // not sure what this exception was see above
                 logE("failed drawBitmap2: " + e.getErrorMessage());
+                ++$.globalExceptionCounter;
             }
         }
 
@@ -790,6 +791,7 @@ class BreadcrumbRenderer {
             } catch (e) {
                 // not sure what this exception was see above
                 logE("failed drawBitmap2: " + e.getErrorMessage());
+                ++$.globalExceptionCounter;
             }
             return;
         }
