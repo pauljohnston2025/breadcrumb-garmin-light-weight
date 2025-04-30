@@ -562,8 +562,7 @@ class Settings {
         }
     }
 
-    function updateRequiresAuth() as Void
-    {
+    function updateRequiresAuth() as Void {
         requiresAuth = tileUrl.find("{authToken}") != null;
     }
 
@@ -649,10 +648,15 @@ class Settings {
     }
 
     function setTileCacheSize(value as Number) as Void {
+        var oldTileCacheSize = tileCacheSize;
         tileCacheSize = value;
         setValue("tileCacheSize", tileCacheSize);
-        clearPendingWebRequests();
-        clearTileCache();
+
+        if (oldTileCacheSize > tileCacheSize) {
+            // only nuke tile cache if we reduce the number of tiles we can store
+            clearPendingWebRequests();
+            clearTileCache();
+        }
     }
 
     function setTileCachePadding(value as Number) as Void {
@@ -1678,7 +1682,8 @@ class Settings {
         if (oldScaledTileSize != scaledTileSize) {
             setScaledTileSize(scaledTileSize);
         }
-        if (oldTileCacheSize != tileCacheSize) {
+        if (oldTileCacheSize > tileCacheSize) {
+            // only nuke tile cache if we reduce the number of tiles we can store
             setTileCacheSize(tileCacheSize);
         }
         if (oldMapEnabled != mapEnabled) {
