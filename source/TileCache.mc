@@ -2,6 +2,7 @@ import Toybox.Lang;
 import Toybox.Graphics;
 import Toybox.WatchUi;
 import Toybox.PersistedContent;
+import Toybox.StringUtil;
 using Toybox.Graphics;
 using Toybox.Lang;
 using Toybox.Math;
@@ -9,6 +10,12 @@ using Toybox.System;
 using Toybox.Communications;
 using Toybox.Application.Storage;
 using Toybox.Time;
+
+enum /*TileDataType*/ {
+    TILE_DATA_TYPE_64_COLOUR = 0,
+    TILE_DATA_TYPE_BASE64_FULL_COLOUR = 1,
+    TILE_DATA_TYPE_BLACK_AND_WHITE = 2,
+}
 
 // trying to improve perf of lookups
 // string might be slow to create and compare
@@ -117,10 +124,61 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             System.println("wrong data type, not string");
             return;
         }
+
+        var type = data.get("type");
+        if (type == null || !(type instanceof Number)) {
+            // back compat
+            System.println("bad type for type: falling back: " + type);
+            handle64ColourDataString(mapTile);
+            return;
+        }
+
+        if (type == TILE_DATA_TYPE_64_COLOUR) {
+            handle64ColourDataString(mapTile);
+            return;
+        } else if (type == TILE_DATA_TYPE_BASE64_FULL_COLOUR) {
+            handleBase64FullColourDataString(mapTile);
+            return;
+        } else if (type == TILE_DATA_TYPE_BLACK_AND_WHITE) {
+            handleBlackAndWhiteDataString(mapTile);
+            return;
+        }
+    }
+
+    function handle64ColourDataString(mapTile as String) as Void {
         var tile = new Tile();
-        var mapTileStr = mapTile as String;
-        // System.println("got tile string of length: " + mapTileStr.length());
-        var bitmap = _tileCache.tileDataToBitmap(mapTileStr.toCharArray());
+        // System.println("got tile string of length: " + mapTile.length());
+        var bitmap = _tileCache.tileDataToBitmap64ColourString(mapTile.toCharArray());
+        if (bitmap == null) {
+            System.println("failed to parse bitmap");
+            return;
+        }
+
+        tile.setBitmap(bitmap);
+        _tileCache.addTile(_tileKey, _tileCacheVersion, tile);
+    }
+
+    function handleBase64FullColourDataString(mapTile as String) as Void {
+        var tile = new Tile();
+        var mapTileBytes = StringUtil.convertEncodedString(mapTile, {
+            :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
+            :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
+        });
+        // System.println("got tile string of length: " + mapTile.length());
+        var bitmap = _tileCache.tileDataToBitmapFullColour(mapTileBytes);
+        if (bitmap == null) {
+            System.println("failed to parse bitmap");
+            return;
+        }
+
+        tile.setBitmap(bitmap);
+        _tileCache.addTile(_tileKey, _tileCacheVersion, tile);
+    }
+
+    function handleBlackAndWhiteDataString(mapTile as String) as Void {
+        var tile = new Tile();
+        // System.println("got tile string of length: " + mapTile.length());
+        var bitmap = _tileCache.tileDataToBitmapBlackAndWhite(mapTile.toCharArray());
         if (bitmap == null) {
             System.println("failed to parse bitmap");
             return;
@@ -486,7 +544,7 @@ class TileCache {
         }
     }
 
-    function tileDataToBitmap(charArr as Array<Char>) as Graphics.BufferedBitmap? {
+    function tileDataToBitmap64ColourString(charArr as Array<Char>) as Graphics.BufferedBitmap? {
         // System.println("tile data " + arr);
         var tileSize = _settings.tileSize;
         var requiredSize = tileSize * tileSize;
@@ -498,7 +556,7 @@ class TileCache {
         // - pc: 0x1000867c
         //     File: 'BreadcrumbDataField\source\TileCache.mc'
         //     Line: 479
-        //     Function: tileDataToBitmap
+        //     Function: tileDataToBitmap64ColourString
         // - pc: 0x1000158c
         //     File: 'BreadcrumbDataField\source\TileCache.mc'
         //     Line: 121
@@ -518,19 +576,19 @@ class TileCache {
             // not sure which is better, we are at our memory limits regardless, so
             // optimisation level seems to effect it (think it must garbage collect faster or inline things where it can)
             // slow optimisations are always good for relase, but make debugging harder when variables are optimised away (which is why i was running no optimisations).
-            System.println("got a bad type somehow?: " + charArr);
+            System.println("got a bad type somehow? 64colour: " + charArr);
             return null;
         }
 
         if (charArr.size() < requiredSize) {
-            System.println("tile length too short: " + charArr.size());
+            System.println("tile length too short 64colour: " + charArr.size());
             return null;
         }
 
         if (charArr.size() != requiredSize) {
             // we could load tile partially, but that would require checking each itteration of the for loop,
             // want to avoid any extra work for perf
-            System.println("bad tile length: " + charArr.size() + " best effort load");
+            System.println("bad tile length 64colour: " + charArr.size() + " best effort load");
         }
 
         // System.println("processing tile data, first colour is: " + arr[0]);
@@ -543,6 +601,122 @@ class TileCache {
             for (var j = 0; j < tileSize; ++j) {
                 var colour = _palette[charArr[it].toNumber() & 0x3f]; // charArr[it] as Char the toNumber is The UTF-32 representation of the Char interpreted as a Number
                 it++;
+                localDc.setColor(colour, colour);
+                localDc.drawPoint(i, j);
+            }
+        }
+
+        return localBitmap;
+    }
+
+    function tileDataToBitmapBlackAndWhite(charArr as Array<Char>) as Graphics.BufferedBitmap? {
+        // System.println("tile data " + arr);
+        var tileSize = _settings.tileSize;
+        var requiredSize = Math.ceil((tileSize * tileSize) / 6f).toNumber(); // 6 bits of colour per byte
+        if (!(charArr instanceof Array)) {
+            // managed to get this in the sim, it was a null (when using .toUtf8Array())
+            // docs do not say that it can ever be null though
+            // perhaps the colour string im sending is no good?
+            // seems to be random though. And it seems to get through on the next pass, might be memory related?
+            // it even occurs on a simple string (no special characters)
+            // resorting to using the string directly
+            // the toCharArray method im using now seems to throw OOM errors instead of returning null
+            // not sure which is better, we are at our memory limits regardless, so
+            // optimisation level seems to effect it (think it must garbage collect faster or inline things where it can)
+            // slow optimisations are always good for relase, but make debugging harder when variables are optimised away (which is why i was running no optimisations).
+            System.println("got a bad type somehow? b&w: " + charArr);
+            return null;
+        }
+
+        if (charArr.size() < requiredSize) {
+            System.println("tile length too short b&w: " + charArr.size());
+            return null;
+        }
+
+        if (charArr.size() != requiredSize) {
+            // we could load tile partially, but that would require checking each itteration of the for loop,
+            // want to avoid any extra work for perf
+            System.println("bad tile length b&w: " + charArr.size() + " best effort load");
+        }
+
+        // System.println("processing tile data, first colour is: " + arr[0]);
+
+        // todo check if setting the pallet actually reduces memory
+        var localBitmap = newBitmap(tileSize, tileSize);
+        var localDc = localBitmap.getDc();
+        var bit = 0;
+        var byte = 0;
+        for (var i = 0; i < tileSize; ++i) {
+            for (var j = 0; j < tileSize; ++j) {
+                var colour = (charArr[byte].toNumber() >> bit) & 0x01;
+                bit++;
+                if (bit >= 6) {
+                    bit = 0;
+                    byte++;
+                }
+
+                if (colour == 1) {
+                    localDc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_WHITE);
+                } else {
+                    localDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+                }
+
+                localDc.drawPoint(i, j);
+            }
+        }
+
+        return localBitmap;
+    }
+
+    function tileDataToBitmapFullColour(mapTileBytes as ByteArray) as Graphics.BufferedBitmap? {
+        // System.println("tile data " + arr);
+        var tileSize = _settings.tileSize;
+        var requiredSize = tileSize * tileSize * 3;
+
+        if (!(mapTileBytes instanceof ByteArray)) {
+            // managed to get this in the sim, it was a null (when using .toUtf8Array())
+            // docs do not say that it can ever be null though
+            // perhaps the colour string im sending is no good?
+            // seems to be random though. And it seems to get through on the next pass, might be memory related?
+            // it even occurs on a simple string (no special characters)
+            // resorting to using the string directly
+            // the toCharArray method im using now seems to throw OOM errors instead of returning null
+            // not sure which is better, we are at our memory limits regardless, so
+            // optimisation level seems to effect it (think it must garbage collect faster or inline things where it can)
+            // slow optimisations are always good for relase, but make debugging harder when variables are optimised away (which is why i was running no optimisations).
+            System.println("got a bad full colour type somehow?: " + mapTileBytes);
+            return null;
+        }
+
+        if (mapTileBytes.size() < requiredSize) {
+            System.println("tile length too short full colour: " + mapTileBytes.size());
+            return null;
+        }
+
+        if (mapTileBytes.size() != requiredSize) {
+            // we could load tile partially, but that would require checking each itteration of the for loop,
+            // want to avoid any extra work for perf
+            System.println("bad tile length full colour: " + mapTileBytes.size() + " best effort load");
+        }
+
+        mapTileBytes.add(0x00); // add a byte to the end so the last 24bit colour we parse still has 32 bits of data
+
+        // System.println("processing tile data, first colour is: " + arr[0]);
+
+        // todo check if setting the pallet actually reduces memory
+        var localBitmap = newBitmap(tileSize, tileSize);
+        var localDc = localBitmap.getDc();
+        var offset = 0;
+        for (var i = 0; i < tileSize; ++i) {
+            for (var j = 0; j < tileSize; ++j) {
+                // probbaly a faster way to do this
+                var colour = mapTileBytes.decodeNumber(Lang.NUMBER_FORMAT_UINT32, {
+                    :offset => offset,
+                    :endianness => Lang.ENDIAN_BIG,
+                });
+                colour = (colour >> 8) & 0x00FFFFFF; // 24 bit colour only
+                offset += 3;
+                // tried setFill and setStroke, neither seemed to work, so we can only support 24bit colour
                 localDc.setColor(colour, colour);
                 localDc.drawPoint(i, j);
             }

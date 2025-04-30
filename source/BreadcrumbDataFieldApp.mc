@@ -203,7 +203,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 var tileKey = new TileKey(x, y, z);
                 var tile = new Tile();
                 var _tileCache = _breadcrumbContext.mapRenderer()._tileCache;
-                var bitmap = _tileCache.tileDataToBitmap(tileDataStr.toCharArray());
+                var bitmap = _tileCache.tileDataToBitmap64ColourString(tileDataStr.toCharArray());
                 if (bitmap == null) {
                     System.println("failed to parse bitmap on set tile data");
                     return;
@@ -250,6 +250,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 // maybe we should go into a backoff period? or just allow manual purge from phone app for if something goes wrong
                 // currently tiles have no expiery
                 _breadcrumbContext.settings().clearTileCache();
+                _breadcrumbContext.settings().clearPendingWebRequests();
                 return;
             }
 
