@@ -143,7 +143,7 @@ You can also set `<Scaled Tile Size>` to reduce the cache requirements further, 
 ### Map Choice
 
 Pick from a list on tile servers, select custom if you wish to manually specify a tileUrl.   
-Note: tiles that are more monochrome will download faster, as they have less and can be compressed further. Stadia's `Stamen Toner` or Carto's `Dark Matter` are good examples of this, i noticed 2X speed improvement on map tile downloads compared to full satellite tiles.
+Note: tiles that are more monochrome will download faster, as they have less and can be compressed further. Stadia's `Stamen Toner`, Stadia's `Alidade Smooth Dark`, Esri's `World Dark Gray Base` or Carto's `Dark Matter` are good examples of this. I noticed 2X speed improvement on map tile downloads compared to full satellite tiles. Note: The tile load speed when using the companion app is a constant speed, as it can use a reduced palette. The companion app is often faster than full tile downloads when using the 64 colour mode, though the reduced colour palette may not appeal to some users. The faster tile loads alss have the benefit if draining the battery less, as less bytes are sent over bluetooth.  
 
 Currently this dropdown is an override for:  
 * tileUrl

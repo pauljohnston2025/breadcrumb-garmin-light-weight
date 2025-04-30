@@ -255,6 +255,7 @@ class Settings {
     // adb forward tcp:8080 tcp:8080
     var tileUrl as String = COMPANION_APP_TILE_URL;
     var authToken as String = "";
+    var requiresAuth as Boolean = false;
     var mapChoice as Number = 0;
     // see keys below in routes = getArraySchema(...)
     // see oddity with route name and route loading new in context.newRoute
@@ -419,7 +420,7 @@ class Settings {
     }
 
     function authMissing() as Boolean {
-        return mapChoice >= 18 && mapChoice <= 25 && authToken.equals("");
+        return requiresAuth && authToken.equals("");
     }
 
     function getAttribution() as WatchUi.BitmapResource? {
@@ -553,11 +554,17 @@ class Settings {
         clearTileCache();
         clearTileCacheStats();
         clearWebStats();
+        updateRequiresAuth();
 
         // prompts user to open the app
         if (tileUrl.equals(COMPANION_APP_TILE_URL)) {
             transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
         }
+    }
+
+    function updateRequiresAuth() as Void
+    {
+        requiresAuth = tileUrl.find("{authToken}") != null;
     }
 
     function setAuthToken(value as String) as Void {
@@ -1559,6 +1566,7 @@ class Settings {
         fixedLongitude = parseOptionalFloat("fixedLongitude", fixedLongitude);
         setFixedPositionWithoutUpdate(fixedLatitude, fixedLongitude, false);
         tileUrl = parseString("tileUrl", tileUrl);
+        updateRequiresAuth();
         authToken = parseString("authToken", authToken);
         mapChoice = parseNumber("mapChoice", mapChoice);
         routes = getArraySchema(
