@@ -17,6 +17,7 @@ class BreadcrumbRenderer {
     var settings as Settings;
     var _cachedValues as CachedValues;
     var _crosshair as BitmapResource;
+    var _nosmoking as BitmapResource;
     var _leftArrow as BitmapResource;
     var _rightArrow as BitmapResource;
     var _upArrow as BitmapResource;
@@ -85,6 +86,7 @@ class BreadcrumbRenderer {
         self.settings = settings;
         _cachedValues = cachedValues;
         _crosshair = WatchUi.loadResource(Rez.Drawables.Crosshair);
+        _nosmoking = WatchUi.loadResource(Rez.Drawables.NoSmoking);
         _leftArrow = WatchUi.loadResource(Rez.Drawables.LeftArrow);
         _rightArrow = WatchUi.loadResource(Rez.Drawables.RightArrow);
         _upArrow = WatchUi.loadResource(Rez.Drawables.UpArrow);
@@ -173,14 +175,18 @@ class BreadcrumbRenderer {
 
         var lastPointUnrotatedX = lastPoint.x - centerPosition.x;
         var lastPointUnrotatedY = lastPoint.y - centerPosition.y;
-        var lastPointRotatedX = xHalf + rotateCos * lastPointUnrotatedX - rotateSin * lastPointUnrotatedY;
-        var lastPointRotatedY = yHalf - (rotateSin * lastPointUnrotatedX + rotateCos * lastPointUnrotatedY);
-        
+        var lastPointRotatedX =
+            xHalf + rotateCos * lastPointUnrotatedX - rotateSin * lastPointUnrotatedY;
+        var lastPointRotatedY =
+            yHalf - (rotateSin * lastPointUnrotatedX + rotateCos * lastPointUnrotatedY);
+
         var offTrackPointUnrotatedX = offTrackPoint.x - centerPosition.x;
         var offTrackPointUnrotatedY = offTrackPoint.y - centerPosition.y;
-        var offTrackPointRotatedX = xHalf + rotateCos * offTrackPointUnrotatedX - rotateSin * offTrackPointUnrotatedY;
-        var offTrackPointRotatedY = yHalf - (rotateSin * offTrackPointUnrotatedX + rotateCos * offTrackPointUnrotatedY);
-        
+        var offTrackPointRotatedX =
+            xHalf + rotateCos * offTrackPointUnrotatedX - rotateSin * offTrackPointUnrotatedY;
+        var offTrackPointRotatedY =
+            yHalf - (rotateSin * offTrackPointUnrotatedX + rotateCos * offTrackPointUnrotatedY);
+
         dc.setPenWidth(4);
         dc.setColor(colour, Graphics.COLOR_BLACK);
         dc.drawLine(
@@ -190,7 +196,7 @@ class BreadcrumbRenderer {
             offTrackPointRotatedY
         );
     }
-    
+
     function renderLineFromLastPointToRouteUnrotated(
         dc as Dc,
         lastPoint as RectangularPoint,
@@ -797,17 +803,34 @@ class BreadcrumbRenderer {
         }
 
         // plus at the top of screen
-        dc.drawLine(xHalf - halfLineLength, lineFromEdge, xHalf + halfLineLength, lineFromEdge);
-        dc.drawLine(xHalf, lineFromEdge - halfLineLength, xHalf, lineFromEdge + halfLineLength);
+        if (_cachedValues.atMaxTileLayer()) {
+            dc.drawBitmap2(xHalf - _nosmoking.getWidth() / 2, 0, _nosmoking, {
+                :tintColor => settings.uiColour,
+            });
+        } else {
+            dc.drawLine(xHalf - halfLineLength, lineFromEdge, xHalf + halfLineLength, lineFromEdge);
+            dc.drawLine(xHalf, lineFromEdge - halfLineLength, xHalf, lineFromEdge + halfLineLength);
+        }
 
         if (settings.getAttribution() == null) {
             // minus at the bottom
-            dc.drawLine(
-                xHalf - halfLineLength,
-                dc.getHeight() - lineFromEdge,
-                xHalf + halfLineLength,
-                dc.getHeight() - lineFromEdge
-            );
+            if (_cachedValues.atMinTileLayer()) {
+                dc.drawBitmap2(
+                    xHalf - _nosmoking.getWidth() / 2,
+                    screenHeight - _nosmoking.getHeight() - 3, // small padding for physcial device clipping
+                    _nosmoking,
+                    {
+                        :tintColor => settings.uiColour,
+                    }
+                );
+            } else {
+                dc.drawLine(
+                    xHalf - halfLineLength,
+                    screenHeight - lineFromEdge,
+                    xHalf + halfLineLength,
+                    screenHeight - lineFromEdge
+                );
+            }
         }
 
         // M - default, moving is zoomed view, stopped if full view
@@ -834,7 +857,7 @@ class BreadcrumbRenderer {
         // var nPosY = 85;
     }
 
-    function getDecIncAmount(direction as Number) as Float {
+    function getScaleDecIncAmount(direction as Number) as Float {
         if (settings.scaleRestrictedToTileLayers && settings.mapEnabled) {
             var desiredScale = _cachedValues.nextTileLayerScale(direction);
             var toInc = desiredScale - _cachedValues.scale;
@@ -878,7 +901,7 @@ class BreadcrumbRenderer {
         if (_cachedValues.scale == null) {
             _cachedValues.setScale(_cachedValues.currentScale);
         }
-        _cachedValues.setScale(_cachedValues.scale + getDecIncAmount(1));
+        _cachedValues.setScale(_cachedValues.scale + getScaleDecIncAmount(1));
     }
 
     function decScale() as Void {
@@ -889,7 +912,7 @@ class BreadcrumbRenderer {
         if (_cachedValues.scale == null) {
             _cachedValues.setScale(_cachedValues.currentScale);
         }
-        _cachedValues.setScale(_cachedValues.scale + getDecIncAmount(-1));
+        _cachedValues.setScale(_cachedValues.scale + getScaleDecIncAmount(-1));
 
         // prevent negative values
         // may need to go to lower scales to display larger maps (maybe like 0.05?)

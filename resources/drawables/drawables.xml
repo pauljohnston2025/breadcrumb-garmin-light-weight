@@ -3,6 +3,7 @@
     <bitmap id="ColourIcon" class="ColourIcon" filename="launcher_icon.png" automaticPalette="true" dithering="none" scaleX="15%" scaleRelativeTo="screen" />
     <!-- online editor for svgs https://www.svgviewer.dev/ -->
     <bitmap id="Crosshair" filename="crosshair.svg" automaticPalette="false" dithering="none" scaleX="50" scaleY="50"/>
+    <bitmap id="NoSmoking" filename="nosmoking.svg" automaticPalette="false" dithering="none" scaleX="20" scaleY="20"/>
     <bitmap id="RightArrow" filename="rightarrow.svg" automaticPalette="false" dithering="none" scaleX="25" scaleY="25"/>
     <bitmap id="LeftArrow" filename="leftarrow.svg" automaticPalette="false" dithering="none" scaleX="25" scaleY="25"/>
     <bitmap id="UpArrow" filename="uparrow.svg" automaticPalette="false" dithering="none" scaleX="25" scaleY="25"/>

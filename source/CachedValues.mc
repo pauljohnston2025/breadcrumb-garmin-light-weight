@@ -59,6 +59,15 @@ class CachedValues {
     var tileCountY as Number = -1;
     var firstTileX as Number = -1;
     var firstTileY as Number = -1;
+    function atMinTileLayer() as Boolean 
+    {
+        return tileZ == _settings.tileLayerMin;
+    }
+
+    function atMaxTileLayer() as Boolean
+    {
+        return tileZ == _settings.tileLayerMax;
+    }
 
     function initialize(settings as Settings) {
         self._settings = settings;
@@ -322,7 +331,10 @@ class CachedValues {
 
         nextZ = minN(maxN(nextZ, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
         var tileWidthM2 = earthsCircumference / Math.pow(2, nextZ) / smallTilesPerFullTile;
-        return (_settings.tileSize / tileWidthM2).toFloat();
+        var ret = (_settings.tileSize / tileWidthM2).toFloat();
+        // atMinTileLayer = ret == _settings.tileLayerMin;
+        // atMaxTileLayer = ret == _settings.tileLayerMax;
+        return ret;
     }
 
     function tileLayerScale(maxDistanceM as Float) as Float {

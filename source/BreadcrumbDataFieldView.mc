@@ -62,6 +62,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     // see onUpdate explaqination for when each is called
     function onLayout(dc as Dc) as Void {
+        // logE("width: " + dc.getWidth());
+        // logE("height: " + dc.getHeight());
+        // logE("screen width: " + System.getDeviceSettings().screenWidth.toFloat());
+        // logE("screen height: " + System.getDeviceSettings().screenHeight.toFloat());
         try {
             actualOnLayout(dc);
         } catch (e) {
@@ -563,9 +567,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         dc.clear();
         // its only a debug menu that should probbaly be optimised out in release, hard code to venu2s screen coordinates
         // it is actually pretty nice info, best guess on string sizes down the screen
-        var fieldCount = 11;
-        var y = 10;
-        var spacing = (dc.getHeight() - y).toFloat() / fieldCount;
+        var fieldCount = 12;
+        var y = 5;
+        var bottomSpacing = 5; // physical devices seem to clip the bottom of the datafield
+        var spacing = (dc.getHeight() - y - bottomSpacing).toFloat() / fieldCount;
         var x = _cachedValues.xHalf;
         dc.drawText(
             x,
@@ -625,6 +630,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             y,
             Graphics.FONT_XTINY,
             "on track: " + (offTrackInfo.onTrack ? "Y" : "N") + " dist: " + distToLastStr,
+            Graphics.TEXT_JUSTIFY_CENTER
+        );
+        y += spacing;
+        dc.drawText(
+            x,
+            y,
+            Graphics.FONT_XTINY,
+            "tilelayer: " + _cachedValues.tileZ + " at min: " + (_cachedValues.atMinTileLayer() ? "Y" : "N") + " at max: " + (_cachedValues.atMaxTileLayer() ? "Y" : "N"),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
