@@ -61,13 +61,11 @@ class CachedValues {
     var tileCountY as Number = -1;
     var firstTileX as Number = -1;
     var firstTileY as Number = -1;
-    function atMinTileLayer() as Boolean 
-    {
+    function atMinTileLayer() as Boolean {
         return tileZ == _settings.tileLayerMin;
     }
 
-    function atMaxTileLayer() as Boolean
-    {
+    function atMaxTileLayer() as Boolean {
         return tileZ == _settings.tileLayerMax;
     }
 
@@ -318,16 +316,12 @@ class CachedValues {
     }
 
     function nextTileLayerScale(direction as Number) as Float {
-        if (smallTilesPerFullTile == 0) {
+        if (smallTilesPerFullTile == 0 || scale == null || scale == 0f) {
             return 0f;
         }
 
-        var currentZ = Math.round(
-            Math.log(
-                earthsCircumference / (_settings.tileSize / currentScale) / smallTilesPerFullTile,
-                2
-            )
-        ).toNumber();
+        var currentZF = calculateTileLevel(1 / scale);
+        var currentZ = Math.round(currentZF).toNumber();
         currentZ = minN(maxN(currentZ, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits, otherwise we can decreent/increment outside the range if we are already at a bad scale
         var nextZ = currentZ + direction;
 
@@ -443,17 +437,10 @@ class CachedValues {
 
     // Desired resolution (meters per pixel)
     function calculateTileLevel(desiredResolution as Float) as Float {
-        // Tile width in meters at zoom level 0
-        // var tileWidthAtZoom0 = earthsCircumference;
-
-        // Pixel resolution (meters per pixel) at zoom level 0
-        var resolutionAtZoom0 = earthsCircumference / _settings.fullTileSize; // big tile coordinates
-
-        // Calculate the tile level (Z)
-        var tileLevel = Math.ln(resolutionAtZoom0 / desiredResolution) / Math.ln(2);
-
-        // Round to the nearest integer zoom level
-        return tileLevel.toFloat();
+        return Math.log(
+            earthsCircumference / (_settings.tileSize * desiredResolution) / smallTilesPerFullTile,
+            2
+        );
     }
 
     function moveLatLong(
