@@ -218,6 +218,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     WatchUi.showToast("OFF TRACK", {});
                 }
 
+                if (Attention has :backlight) {
+                    // turn the screen on so we can see the alert, it does not resond to us gesturing to see the alert (think gesture controls are suppressed during vibration)
+                    Attention.backlight(true);
+                }
+
                 if (Attention has :vibrate) {
                     var vibeData = [
                         new Attention.VibeProfile(100, 500),
