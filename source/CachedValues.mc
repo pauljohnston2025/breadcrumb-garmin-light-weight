@@ -23,6 +23,8 @@ class CachedValues {
     // updated when user manually pans around screen
     var fixedPosition as RectangularPoint?; // NOT SCALED - raw meters
     var scale as Float? = null; // fixed map scale, when manually zooming or panning around map
+    var scaleCanInc as Boolean = true;
+    var scaleCanDec as Boolean = true;
 
     // updated whenever we change zoom level (speed changes, zoom at pace mode etc.)
     var centerPosition as RectangularPoint = new RectangularPoint(0f, 0f, 0f); // scaled to pixels

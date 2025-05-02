@@ -803,7 +803,7 @@ class BreadcrumbRenderer {
         }
 
         // plus at the top of screen
-        if (_cachedValues.atMaxTileLayer()) {
+        if (!_cachedValues.scaleCanInc) {
             dc.drawBitmap2(xHalf - _nosmoking.getWidth() / 2, 0, _nosmoking, {
                 :tintColor => settings.uiColour,
             });
@@ -814,7 +814,7 @@ class BreadcrumbRenderer {
 
         if (settings.getAttribution() == null) {
             // minus at the bottom
-            if (_cachedValues.atMinTileLayer()) {
+            if (!_cachedValues.scaleCanDec) {
                 dc.drawBitmap2(
                     xHalf - _nosmoking.getWidth() / 2,
                     screenHeight - _nosmoking.getHeight() - 3, // small padding for physcial device clipping
@@ -858,9 +858,15 @@ class BreadcrumbRenderer {
     }
 
     function getScaleDecIncAmount(direction as Number) as Float {
+        var scale = _cachedValues.scale;
+        if (scale == null) {
+            // wtf we never call this when its null
+            return 0f;
+        }
+
         if (settings.scaleRestrictedToTileLayers && settings.mapEnabled) {
             var desiredScale = _cachedValues.nextTileLayerScale(direction);
-            var toInc = desiredScale - _cachedValues.scale;
+            var toInc = desiredScale - scale;
             return toInc;
         }
 
@@ -885,7 +891,7 @@ class BreadcrumbRenderer {
                 var nextDistanceM = keys[nextScaleIndex] as Float;
                 // -2 since we need some fudge factor to make sure we are very close to desired length, but not past it
                 var desiredScale = (DESIRED_SCALE_PIXEL_WIDTH - 2) / nextDistanceM;
-                var toInc = desiredScale - _cachedValues.scale;
+                var toInc = desiredScale - scale;
                 return toInc;
             }
         }
@@ -901,7 +907,15 @@ class BreadcrumbRenderer {
         if (_cachedValues.scale == null) {
             _cachedValues.setScale(_cachedValues.currentScale);
         }
-        _cachedValues.setScale(_cachedValues.scale + getScaleDecIncAmount(1));
+        var scale = _cachedValues.scale;
+        if (scale == null) {
+            // wtf we just set it?
+            return;
+        }
+
+        _cachedValues.setScale(scale + getScaleDecIncAmount(1));
+        _cachedValues.scaleCanDec = true; // we can zoom out again
+        _cachedValues.scaleCanInc = getScaleDecIncAmount(1) != 0f; // get the next inc amount so that it does not require one extra click
     }
 
     function decScale() as Void {
@@ -912,12 +926,20 @@ class BreadcrumbRenderer {
         if (_cachedValues.scale == null) {
             _cachedValues.setScale(_cachedValues.currentScale);
         }
-        _cachedValues.setScale(_cachedValues.scale + getScaleDecIncAmount(-1));
+        var scale = _cachedValues.scale;
+        if (scale == null) {
+            // wtf we just set it?
+            return;
+        }
+        _cachedValues.setScale(scale + getScaleDecIncAmount(-1));
+        _cachedValues.scaleCanInc = true; // we can zoom in again
+        _cachedValues.scaleCanDec = getScaleDecIncAmount(-1) != 0f; // get the next dec amount so that it does not require one extra click
 
-        // prevent negative values
-        // may need to go to lower scales to display larger maps (maybe like 0.05?)
-        if (_cachedValues.scale < MIN_SCALE) {
+        // prevent negative values (dont think this ever gets hit, since we caluclate off of the predefined scales)
+        if (scale <= 0f) {
             _cachedValues.setScale(MIN_SCALE);
+            _cachedValues.scaleCanInc = true; // we can zoom in again
+            _cachedValues.scaleCanDec = getScaleDecIncAmount(-1) != 0f; // get the next dec amount so that it does not require one extra click
         }
     }
 
