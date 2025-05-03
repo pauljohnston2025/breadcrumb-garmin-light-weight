@@ -160,7 +160,7 @@
         <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle" prompt="@Strings.offTrackAlertsDistanceMPrompt">
             <settingConfig type="numeric" min="0"/>
         </setting>
-        <setting propertyKey="@Properties.offTrackAlertsMaxReportIntervalS" title="@Strings.offTrackAlertsMaxReportIntervalSTitle" prompt="@Strings.offTrackAlertsMaxReportIntervalSPrompt">
+        <setting propertyKey="@Properties.offTrackCheckIntervalS" title="@Strings.offTrackCheckIntervalSTitle" prompt="@Strings.offTrackCheckIntervalSPrompt">
             <settingConfig type="numeric" min="0"/>
         </setting>
         <setting propertyKey="@Properties.drawLineToClosestPoint" title="@Strings.drawLineToClosestPointTitle">
@@ -168,6 +168,9 @@
         </setting>
         <setting propertyKey="@Properties.enableOffTrackAlerts" title="@Strings.enableOffTrackAlertsTitle">
             <settingConfig type="boolean"/>
+        </setting>
+        <setting propertyKey="@Properties.offTrackAlertsMaxReportIntervalS" title="@Strings.offTrackAlertsMaxReportIntervalSTitle" prompt="@Strings.offTrackAlertsMaxReportIntervalSPrompt">
+            <settingConfig type="numeric" min="0"/>
         </setting>
         <setting propertyKey="@Properties.alertType" title="@Strings.alertTypeTitle">
             <settingConfig type="list">

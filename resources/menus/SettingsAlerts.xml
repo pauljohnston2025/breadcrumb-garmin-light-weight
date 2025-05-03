@@ -1,7 +1,8 @@
 <menu2 id="SettingsAlerts" title="@Strings.offTrackAlertsGroupTitle" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
     <menu-item id="settingsAlertsOffTrackDistanceM" label="@Strings.offTrackAlertsDistanceMTitle"/>
-    <menu-item id="settingsAlertsOffTrackAlertsMaxReportIntervalS" label="@Strings.offTrackAlertsMaxReportIntervalSTitle"/>
+    <menu-item id="settingsAlertsOffTrackCheckIntervalS" label="@Strings.offTrackCheckIntervalSTitle"/>
     <toggle-menu-item id="settingsAlertsDrawLineToClosestPoint" label="@Strings.drawLineToClosestPointTitle"/>
     <toggle-menu-item id="settingsAlertsEnabled" label="@Strings.enableOffTrackAlertsTitle"/>
+    <menu-item id="settingsAlertsOffTrackAlertsMaxReportIntervalS" label="@Strings.offTrackAlertsMaxReportIntervalSTitle"/>
     <menu-item id="settingsAlertsAlertType" label="@Strings.alertTypeTitle"/>
 </menu2>

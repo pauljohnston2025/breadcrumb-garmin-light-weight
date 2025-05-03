@@ -36,6 +36,7 @@
 
 	<property id="alertType" type="number">0</property>
 	<property id="offTrackAlertsDistanceM" type="number">20</property>
+	<property id="offTrackCheckIntervalS" type="number">30</property>
 	<property id="offTrackAlertsMaxReportIntervalS" type="number">60</property>
 	<property id="disableMapsFailureCount" type="number">200</property>
 	<property id="routeMax" type="number">3</property>

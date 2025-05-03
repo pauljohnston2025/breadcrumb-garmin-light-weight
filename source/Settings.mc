@@ -274,6 +274,7 @@ class Settings {
     var enableOffTrackAlerts as Boolean = true;
     var offTrackAlertsDistanceM as Number = 20;
     var offTrackAlertsMaxReportIntervalS as Number = 60;
+    var offTrackCheckIntervalS as Number = 30;
     var alertType as Number = ALERT_TYPE_TOAST;
 
     var drawLineToClosestPoint as Boolean = true;
@@ -639,6 +640,12 @@ class Settings {
     function setOffTrackAlertsMaxReportIntervalS(value as Number) as Void {
         offTrackAlertsMaxReportIntervalS = value;
         setValue("offTrackAlertsMaxReportIntervalS", offTrackAlertsMaxReportIntervalS);
+        updateViewSettings();
+    }
+    
+    function setOffTrackCheckIntervalS(value as Number) as Void {
+        offTrackCheckIntervalS = value;
+        setValue("offTrackCheckIntervalS", offTrackCheckIntervalS);
         updateViewSettings();
     }
 
@@ -1430,6 +1437,7 @@ class Settings {
         setEnableOffTrackAlerts(defaultSettings.enableOffTrackAlerts);
         setOffTrackAlertsDistanceM(defaultSettings.offTrackAlertsDistanceM);
         setOffTrackAlertsMaxReportIntervalS(defaultSettings.offTrackAlertsMaxReportIntervalS);
+        setOffTrackCheckIntervalS(defaultSettings.offTrackCheckIntervalS);
         setRouteMax(defaultSettings.routeMax);
         setNormalModeColour(defaultSettings.normalModeColour);
         setUiColour(defaultSettings.uiColour);
@@ -1489,6 +1497,7 @@ class Settings {
             "enableOffTrackAlerts" => enableOffTrackAlerts,
             "offTrackAlertsDistanceM" => offTrackAlertsDistanceM,
             "offTrackAlertsMaxReportIntervalS" => offTrackAlertsMaxReportIntervalS,
+            "offTrackCheckIntervalS" => offTrackCheckIntervalS,
             "normalModeColour" => normalModeColour.format("%X"),
             "routeMax" => routeMax,
             "uiColour" => uiColour.format("%X"),
@@ -1590,6 +1599,10 @@ class Settings {
         offTrackAlertsMaxReportIntervalS = parseNumber(
             "offTrackAlertsMaxReportIntervalS",
             offTrackAlertsMaxReportIntervalS
+        );
+        offTrackCheckIntervalS = parseNumber(
+            "offTrackCheckIntervalS",
+            offTrackCheckIntervalS
         );
     }
 

@@ -39,7 +39,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     var _scratchPadBitmap as BufferedBitmap?;
     var settings as Settings;
     var _cachedValues as CachedValues;
-    var lastOffTrackAlertCalculated = 0;
+    var lastOffTrackAlertNotified = 0;
+    var lastOffTrackAlertChecked = 0;
     var _computeCounter as Number = 0;
     var _lastFullRenderTime as Number = 0;
     var _lastFullRenderScale as Float = 0f;
@@ -175,12 +176,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // new point is already pre scaled
     function handleOffTrackAlerts(newPoint as RectangularPoint) as Void {
         var epoch = Time.now().value();
-        if (epoch - settings.offTrackAlertsMaxReportIntervalS < lastOffTrackAlertCalculated) {
+        if (epoch - settings.offTrackCheckIntervalS < lastOffTrackAlertChecked) {
             return;
         }
 
-        // Do not check again for hits long, prevents alerts retrigerring, as well as stopping the expensive off track calculation running constantly whilst we are on track.
-        lastOffTrackAlertCalculated = epoch;
+        // Do not check again for this long, prevents the expensive off track calculation running constantly whilst we are on track.
+        lastOffTrackAlertChecked = epoch;
 
         var atLeastOneEnabled = false;
         for (var i = 0; i < _breadcrumbContext.routes().size(); ++i) {
@@ -216,7 +217,15 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
         offTrackInfo.onTrack = false; // use the last pointWeLeftTrack from when we were on track
 
+        // do not trigger alerts often
+        if (epoch - settings.offTrackAlertsMaxReportIntervalS < lastOffTrackAlertNotified) {
+            return;
+        }
+
         if (settings.enableOffTrackAlerts) {
+
+            lastOffTrackAlertNotified = epoch; // if showAlert fails, we will still have vibrated and turned the screen on
+            
             try {
                 logD("trying to trigger alert");
                 if (settings.alertType == ALERT_TYPE_ALERT) {
@@ -243,8 +252,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     ];
                     Attention.vibrate(vibeData);
                 }
-
-                lastOffTrackAlertCalculated = epoch;
             } catch (e) {
                 // not sure there is a way to check that we can display or not, so just catch errors
                 System.println("failed to show alert: " + e.getErrorMessage());
@@ -255,7 +262,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     function onSettingsChanged() as Void {
         // they could have turned off off track alerts, changed the distance of anything, so let it all recalculate
         // or modified routes
-        lastOffTrackAlertCalculated = 0;
+        lastOffTrackAlertNotified = 0;
+        lastOffTrackAlertChecked = 0;
         offTrackInfo = new OffTrackInfo(true, null);
         // render mode could have changed
         updateScratchPadBitmap();
@@ -581,7 +589,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         dc.clear();
         // its only a debug menu that should probbaly be optimised out in release, hard code to venu2s screen coordinates
         // it is actually pretty nice info, best guess on string sizes down the screen
-        var fieldCount = 12;
+        var fieldCount = 13;
         var y = 5;
         var bottomSpacing = 5; // physical devices seem to clip the bottom of the datafield
         var spacing = (dc.getHeight() - y - bottomSpacing).toFloat() / fieldCount;
@@ -624,7 +632,15 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "last alert: " + (epoch - lastOffTrackAlertCalculated) + "s",
+            "last alert check: " + (epoch - lastOffTrackAlertChecked) + "s",
+            Graphics.TEXT_JUSTIFY_CENTER
+        );
+        y += spacing;
+        dc.drawText(
+            x,
+            y,
+            Graphics.FONT_XTINY,
+            "last alert: " + (epoch - lastOffTrackAlertNotified) + "s",
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;

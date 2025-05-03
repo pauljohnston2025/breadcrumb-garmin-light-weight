@@ -261,15 +261,15 @@ Only allow zooming in/out to the tile layer limits. Also all steps between scale
 ---
 # Off Track Alerts
 
-Calculating off track alerts (either Draw Line To Closest Point, or Off Track Alerts) is a computationally heavy task. This means if there are multiple large routes the watch can error out with a watchdog error if our code executes too long. I have tested with up to 3 large routes on my venu2s, and it seems to handle it. Only enabled routes are taken into consideration. For multiple enabled routes, you are considerred ontrack if you are on at least one of the tracks. See the [Routes](#routes) section for use cases of multiple routes, eg. triathlons. 
+Calculating off track alerts (either Draw Line To Closest Point, or Off Track Alerts) is a computationally heavy task. This means if there are multiple large routes the watch can error out with a watchdog error if our code executes too long. I have tested with up to 3 large routes on my venu2s, and it seems to handle it. Only enabled routes are taken into consideration. For multiple enabled routes, you are considered on-track if you are on at least one of the tracks. See the [Routes](#routes) section for use cases of multiple routes, eg. triathlons. 
 
 ### Off Track Distance
 
 The number of meters you need to be off track for an alert to be triggered or a line to be drawn back to the track.
 
-### Off Track Alerts Max Report Interval
+### Off Track Check Interval
 
-How often, in seconds, an alert should fire. Alerts will continue firing until you return to the planned route (or reach a section of another enabled route). This setting is also used to to slow down the calculation of off track alerts (since its expensive). Once you rejoin the track, a line will continue to be draw to the closest point  on the closests enabled route until we recalculate. eg. an interval of 60 will mean the line will still be drawn for up to 1minute after we rejoin the track, and alerts will only fire once a minute.
+How often, in seconds, to run the calculation of off track alerts (since its expensive). Once you rejoin the track, a line will continue to be draw to the closest point  on the closest enabled route until we recalculate. eg. an interval of 60 will mean the line will still be drawn for up to 1minute after we rejoin the track. This number should be set to multiple of [Off Track Alerts Max Report Interval](#off-track-alerts-max-report-interval) for best results, as an alert will only fire when we check if we are off track. eg. Set this to check once every 30 seconds, but set [Off Track Alerts Max Report Interval](#off-track-alerts-max-report-interval) to 60 so that we only get notified every minute when we are trying to rejoin the track. If this is set higher than [Off Track Alerts Max Report Interval](#off-track-alerts-max-report-interval) the alert interval effectively becomes the check interval. Note: alerts are only checked if the last track point changes, if you stand in the same spot after leaving the track, no further alerts will be triggered.          
 
 ### Draw Line To Closest Point
 
@@ -278,6 +278,10 @@ Draw a line to the closests point on the closest enabled route.
 ### Off Track Alerts
 
 Trigger an alert when you leave a route by `Off Track Distance`.
+
+### Off Track Alerts Max Report Interval
+
+How often, in seconds, an alert should fire. Alerts will continue firing until you return to the planned route (or reach a section of another enabled route).  
 
 ### Off Track Alerts Alert Type
 

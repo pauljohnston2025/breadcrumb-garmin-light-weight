@@ -462,6 +462,11 @@ class SettingsAlerts extends Rez.Menus.SettingsAlerts {
         );
         safeSetSubLabel(
             me,
+            :settingsAlertsOffTrackCheckIntervalS,
+            settings.offTrackCheckIntervalS.toString()
+        );
+        safeSetSubLabel(
+            me,
             :settingsAlertsOffTrackAlertsMaxReportIntervalS,
             settings.offTrackAlertsMaxReportIntervalS.toString()
         );
@@ -494,8 +499,8 @@ class SettingsAlertsDisabled extends Rez.Menus.SettingsAlertsDisabled {
         );
         safeSetSubLabel(
             me,
-            :settingsAlertsOffTrackAlertsMaxReportIntervalS,
-            settings.offTrackAlertsMaxReportIntervalS.toString()
+            :settingsAlertsOffTrackCheckIntervalS,
+            settings.offTrackCheckIntervalS.toString()
         );
         safeSetToggle(me, :settingsAlertsEnabled, false);
     }
@@ -1416,6 +1421,14 @@ class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
                 ),
                 view
             );
+        } else if (itemId == :settingsAlertsOffTrackCheckIntervalS) {
+            startPicker(
+                new SettingsNumberPicker(
+                    settings.method(:setOffTrackCheckIntervalS),
+                    settings.offTrackCheckIntervalS
+                ),
+                view
+            );
         } else if (itemId == :settingsAlertsAlertType) {
             WatchUi.pushView(
                 new $.Rez.Menus.SettingsAlertType(),
@@ -1451,11 +1464,11 @@ class SettingsAlertsDisabledDelegate extends WatchUi.Menu2InputDelegate {
                 ),
                 view
             );
-        } else if (itemId == :settingsAlertsOffTrackAlertsMaxReportIntervalS) {
+        } else if (itemId == :settingsAlertsOffTrackCheckIntervalS) {
             startPicker(
                 new SettingsNumberPicker(
-                    settings.method(:setOffTrackAlertsMaxReportIntervalS),
-                    settings.offTrackAlertsMaxReportIntervalS
+                    settings.method(:setOffTrackCheckIntervalS),
+                    settings.offTrackCheckIntervalS
                 ),
                 view
             );
