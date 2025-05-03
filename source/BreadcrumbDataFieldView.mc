@@ -60,13 +60,19 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
     }
 
-    // see onUpdate explaqination for when each is called
+    // see onUpdate explanation for when each is called
     function onLayout(dc as Dc) as Void {
         // logE("width: " + dc.getWidth());
         // logE("height: " + dc.getHeight());
         // logE("screen width: " + System.getDeviceSettings().screenWidth.toFloat());
         // logE("screen height: " + System.getDeviceSettings().screenHeight.toFloat());
         try {
+            // call parent so screen can be setup correctly or the screen can be slightly offset left/right/up/down.
+            // Usually on a pyhsical devices I see an offset to the right and down (leaving a black bar on the left and top), the venu3s simulator shows this.
+            // The venu3 simulator is offwset left and down, instead of right and down.
+            // Sometimes there is no offset though, very confusing.
+            // see code at the top of onUpdate, even just calling clear() with a colour does not remove the black bar offsets.
+            View.onLayout(dc); 
             actualOnLayout(dc);
         } catch (e) {
             logE("failed onLayout: " + e.getErrorMessage());
@@ -99,7 +105,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
     }
 
-    // see onUpdate explaqination for when each is called
+    // see onUpdate explanation for when each is called
     function actualCompute(info as Activity.Info) as Void {
         // logD("compute");
         // temp hack for debugging in simulator (since it seems altitude does not work when playing activity data from gpx file)
@@ -289,13 +295,21 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // in some other cases onUpdate is called interleaved with onCompute once a second each (think this might be when its the active screen but not currently renderring)
     // so we need to do all or heavy scaling code in compute, and make onUpdate just handle drawing, and possibly rotation (pre storing rotation could be slow/hard)
     function onUpdate(dc as Dc) as Void {
+        // dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
+        // dc.clear();
+
         try {
             actualOnUpdate(dc);
         } catch (e) {
             logE("failed onUpdate: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
         }
+
+        // template code for 'complex datafield' has this, but I just get a black screen if I do it (think it's only for when using layouts, but im directly drawing to dc)
+        // Call parent's onUpdate(dc) to redraw the layout
+        // View.onUpdate(dc);
     }
+
     function actualOnUpdate(dc as Dc) as Void {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();

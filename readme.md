@@ -83,6 +83,27 @@ A more thorough explaination for a different app can be found at: https://suppor
 
 ---
 
+# Known Issues
+
+Some screens appear to have an offset applied to the [dc](https://developer.garmin.com/connect-iq/api-docs/Toybox/Graphics/Dc.html), that I cannot find a way to correct. Sometimes this offset occurs on my own physical device, and other times there is no offset. If anyone knows how to solve this, please let me know.   
+
+Simplest reproduction example, it appears the device context for drawing is already offset (but only sometimes).
+
+```
+function onUpdate(dc as Dc) as Void {
+    dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
+    dc.clear();
+}
+```
+
+The white areas in the bellow images show the issue.
+
+![](images/screenoffsetvenu2.png)
+![](images/screenoffsetvenu3.png)
+![](images/screenoffsetvenu3s.png)
+
+---
+
 # Map Tiles
 
 Powered by Esri: https://www.esri.com  

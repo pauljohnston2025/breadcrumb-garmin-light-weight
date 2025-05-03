@@ -1,12 +1,2 @@
 <layouts>
-    <layout id="SettingsLayout" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
-        <label x="center" y="10" text="@Strings.AppName" font="Graphics.FONT_MEDIUM" color="Graphics.COLOR_BLUE" justification="Graphics.TEXT_JUSTIFY_CENTER" />
-        <label x="center" y="40" text="Home" font="Graphics.FONT_MEDIUM" color="Graphics.COLOR_WHITE" justification="Graphics.TEXT_JUSTIFY_CENTER" />
-        <label x="center" y="center" text="Prompt" font="Graphics.FONT_SMALL" color="Graphics.COLOR_WHITE" justification="Graphics.TEXT_JUSTIFY_CENTER" />
-    </layout>
-
-    <layout id="NumberPickerLayout" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
-        <label x="center" y="10" text="@Strings.AppName" font="Graphics.FONT_MEDIUM" color="Graphics.COLOR_BLUE" justification="Graphics.TEXT_JUSTIFY_CENTER" />
-        <label x="center" y="40" text="Home" font="Graphics.FONT_MEDIUM" color="Graphics.COLOR_WHITE" justification="Graphics.TEXT_JUSTIFY_CENTER" />
-    </layout>
 </layouts>

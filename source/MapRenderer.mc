@@ -34,9 +34,6 @@ class MapRenderer {
             return;
         }
 
-        var tileScalePixelSize = cachedValues.tileScalePixelSize; // local lookup faster
-        var tileOffsetX = cachedValues.tileOffsetX; // local lookup faster
-        var tileOffsetY = cachedValues.tileOffsetY; // local lookup faster
         var tileCountX = cachedValues.tileCountX; // local lookup faster
         var tileCountY = cachedValues.tileCountY; // local lookup faster
         var firstTileX = cachedValues.firstTileX; // local lookup faster
