@@ -1,6 +1,6 @@
 A garmin watch datafield that shows a breadcrumb trail. For watches that do not support breadcrumb navigation out of the box.
 
-Donations are always welcome, but not required: paypal.me/pauljohnston2025
+Donations are always welcome, but not required: https://www.paypal.com/paypalme/pauljohnston2025
 
 Information on all the settings can be found in [Settings](settings.md)  
 note: Map support is disabled by default, but can be turned on in app settings, this is because map tile loading is memory intensive and may cause crashes on some devices. You must set `Tile Cache Size` if using maps to avoid crashes.    
