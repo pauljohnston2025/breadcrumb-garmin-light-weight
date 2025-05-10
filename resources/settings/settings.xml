@@ -26,7 +26,7 @@
         </settingConfig>
     </setting>
 
-    <setting propertyKey="@Properties.recalculateItervalS" title="@Strings.recalculateItervalSTitle" prompt="@Strings.recalculateItervalSPrompt">
+    <setting propertyKey="@Properties.recalculateIntervalS" title="@Strings.recalculateIntervalSTitle" prompt="@Strings.recalculateIntervalSPrompt">
         <settingConfig type="numeric" min="0"/>
     </setting>
 

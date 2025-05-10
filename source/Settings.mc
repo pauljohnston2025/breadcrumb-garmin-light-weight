@@ -286,7 +286,7 @@ class Settings {
     var renderMode as Number = RENDER_MODE_BUFFERED_ROTATING;
     // how many seconds should we wait before even considerring the next point
     // changes in speed/angle/zoom are not effected by this number. Though maybe they should be?
-    var recalculateItervalS as Number = 5;
+    var recalculateIntervalS as Number = 5;
     // pre seed tiles on either side of the viewable area
     var tileCachePadding as Number = 0;
 
@@ -642,7 +642,7 @@ class Settings {
         setValue("offTrackAlertsMaxReportIntervalS", offTrackAlertsMaxReportIntervalS);
         updateViewSettings();
     }
-    
+
     function setOffTrackCheckIntervalS(value as Number) as Void {
         offTrackCheckIntervalS = value;
         setValue("offTrackCheckIntervalS", offTrackCheckIntervalS);
@@ -671,9 +671,9 @@ class Settings {
         setValue("tileCachePadding", tileCachePadding);
     }
 
-    function setRecalculateItervalS(value as Number) as Void {
-        recalculateItervalS = value;
-        setValue("recalculateItervalS", recalculateItervalS);
+    function setRecalculateIntervalS(value as Number) as Void {
+        recalculateIntervalS = value;
+        setValue("recalculateIntervalS", recalculateIntervalS);
     }
 
     function setMapEnabled(_mapEnabled as Boolean) as Void {
@@ -1407,7 +1407,7 @@ class Settings {
         setTileLayerMin(defaultSettings.tileLayerMin);
         setTileCacheSize(defaultSettings.tileCacheSize);
         setTileCachePadding(defaultSettings.tileCachePadding);
-        setRecalculateItervalS(defaultSettings.recalculateItervalS);
+        setRecalculateIntervalS(defaultSettings.recalculateIntervalS);
         setMode(defaultSettings.mode);
         setMapEnabled(defaultSettings.mapEnabled);
         setDrawLineToClosestPoint(defaultSettings.drawLineToClosestPoint);
@@ -1468,7 +1468,7 @@ class Settings {
             "tileLayerMin" => tileLayerMin,
             "tileCacheSize" => tileCacheSize,
             "tileCachePadding" => tileCachePadding,
-            "recalculateItervalS" => recalculateItervalS,
+            "recalculateIntervalS" => recalculateIntervalS,
             "mode" => mode,
             "mapEnabled" => mapEnabled,
             "drawLineToClosestPoint" => drawLineToClosestPoint,
@@ -1514,7 +1514,12 @@ class Settings {
             var value = settings[key];
             // for now just blindly trust the users
             // we do reload which sanitizes, but they could break garmins settings page with unexpected types
-            Application.Properties.setValue(key, value);
+            try {
+                Application.Properties.setValue(key, value);
+            } catch (e) {
+                logE("failed property save: " + e.getErrorMessage() + " " + key + ":" + value);
+                ++$.globalExceptionCounter;
+            }
         }
     }
 
@@ -1543,7 +1548,7 @@ class Settings {
 
         tileCacheSize = parseNumber("tileCacheSize", tileCacheSize);
         tileCachePadding = parseNumber("tileCachePadding", tileCachePadding);
-        recalculateItervalS = parseNumber("recalculateItervalS", recalculateItervalS);
+        recalculateIntervalS = parseNumber("recalculateIntervalS", recalculateIntervalS);
         mode = parseNumber("mode", mode);
         mapEnabled = parseBool("mapEnabled", mapEnabled);
         setMapEnabledRaw(mapEnabled); // prompt for app to open if needed
@@ -1600,10 +1605,7 @@ class Settings {
             "offTrackAlertsMaxReportIntervalS",
             offTrackAlertsMaxReportIntervalS
         );
-        offTrackCheckIntervalS = parseNumber(
-            "offTrackCheckIntervalS",
-            offTrackCheckIntervalS
-        );
+        offTrackCheckIntervalS = parseNumber("offTrackCheckIntervalS", offTrackCheckIntervalS);
     }
 
     // Load the values initially from storage

@@ -84,8 +84,8 @@
     <string id="fixedLatitudePrompt">0 - disabled, -90 to 90</string>
     <string id="fixedLongitude">Fixed Latitude</string>
     <string id="fixedLongitudePrompt">0 - disabled, -180 to 180</string>
-    <string id="recalculateItervalSTitle">Compute interval (s)</string>
-    <string id="recalculateItervalSPrompt"></string>
+    <string id="recalculateIntervalSTitle">Compute interval (s)</string>
+    <string id="recalculateIntervalSPrompt"></string>
     <string id="tileCachePaddingTitle">Tile cache padding (tiles)</string>
     <string id="tileCachePaddingPrompt"></string>
 

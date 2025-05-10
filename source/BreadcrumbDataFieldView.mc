@@ -132,7 +132,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         _computeCounter++;
         // slow down the calls to onActivityInfo as its a heavy operation checking
         // the distance we don't really need data much faster than this anyway
-        if (_computeCounter != settings.recalculateItervalS) {
+        if (_computeCounter != settings.recalculateIntervalS) {
             return;
         }
 
@@ -427,7 +427,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             // need to force rerender on scale change
             var epoch = Time.now().value();
             if (
-                epoch - _lastFullRenderTime > settings.recalculateItervalS ||
+                epoch - _lastFullRenderTime > settings.recalculateIntervalS ||
                 _lastFullRenderScale != _cachedValues.currentScale
             ) {
                 // FULL_RENDER_INTERVAL_S is only to take into accout user moving (which we are also backing off)

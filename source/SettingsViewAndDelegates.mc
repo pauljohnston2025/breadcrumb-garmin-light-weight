@@ -240,8 +240,8 @@ class SettingsMain extends Rez.Menus.SettingsMain {
         safeSetSubLabel(me, :settingsMainModeElevationMode, elevationModeString);
         safeSetSubLabel(
             me,
-            :settingsMainRecalculateItervalS,
-            settings.recalculateItervalS.toString()
+            :settingsMainRecalculateIntervalS,
+            settings.recalculateIntervalS.toString()
         );
         var renderModeString = "";
         switch (settings.renderMode) {
@@ -687,11 +687,11 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
                 new $.SettingsElevationModeDelegate(view),
                 WatchUi.SLIDE_IMMEDIATE
             );
-        } else if (itemId == :settingsMainRecalculateItervalS) {
+        } else if (itemId == :settingsMainRecalculateIntervalS) {
             startPicker(
                 new SettingsNumberPicker(
-                    settings.method(:setRecalculateItervalS),
-                    settings.recalculateItervalS
+                    settings.method(:setRecalculateIntervalS),
+                    settings.recalculateIntervalS
                 ),
                 view
             );

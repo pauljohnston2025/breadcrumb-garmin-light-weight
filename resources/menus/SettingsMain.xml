@@ -2,7 +2,7 @@
     <menu-item id="settingsMainMode" label="@Strings.modeTitle"/>
     <menu-item id="settingsMainModeUiMode" label="@Strings.uiModeTitle"/>
     <menu-item id="settingsMainModeElevationMode" label="@Strings.elevationModeTitle"/>
-    <menu-item id="settingsMainRecalculateItervalS" label="@Strings.recalculateItervalSTitle"/>
+    <menu-item id="settingsMainRecalculateIntervalS" label="@Strings.recalculateIntervalSTitle"/>
     <menu-item id="settingsMainRenderMode" label="@Strings.renderModeTitle"/>
     <toggle-menu-item id="settingsMainDisplayLatLong" label="@Strings.displayLatLongTitle"/>
     <menu-item id="settingsMainZoomAtPace" label="@Strings.zoomAtPaceTitle"/>
