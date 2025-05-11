@@ -509,14 +509,16 @@ class TileCache {
     }
 
     // loads a tile into the cache
-    function seedTile(tileKey as TileKey) as Void {
+    // reurns true if seed should stop and wait for next calculate (to prevent watchdog errors)
+    function seedTile(tileKey as TileKey) as Boolean {
         if (haveTile(tileKey)) {
-            return;
+            return false;
         }
-        startSeedTile(tileKey);
+        return startSeedTile(tileKey);
     }
 
-    private function startSeedTile(tileKey as TileKey) as Void {
+    // reurns true if seed should stop and wait for next calculate (to prevent watchdog errors)
+    private function startSeedTile(tileKey as TileKey) as Boolean {
         // System.println("starting load tile: " + x + " " + y + " " + z);
 
         if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
@@ -527,7 +529,8 @@ class TileCache {
             var tileFromStorage = _storageTileCache.get(new TileKey(x, y, tileKey.z));
             if (tileFromStorage != null) {
                 imageReqHandler.handle(200, tileFromStorage);
-                return;
+                logD("image tile loaded from storage: " + tileKey);
+                return true;
             }
             // logD("large tile: " + x + ", " + y + ", " + tileKey.z);
             _webRequestHandler.add(
@@ -550,7 +553,7 @@ class TileCache {
                     imageReqHandler
                 )
             );
-            return;
+            return false;
         }
 
         // logD("small tile (companion): " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
@@ -558,7 +561,8 @@ class TileCache {
         var tileFromStorage = _storageTileCache.get(tileKey);
         if (tileFromStorage != null) {
             jsonWebHandler.handle(200, tileFromStorage);
-            return;
+            logD("json tile loaded from storage: " + tileKey);
+            return true;
         }
         _webRequestHandler.add(
             new JsonRequest(
@@ -574,6 +578,7 @@ class TileCache {
                 jsonWebHandler
             )
         );
+        return false;
     }
 
     // puts a tile into the cache

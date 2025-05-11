@@ -73,7 +73,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             // The venu3 simulator is offwset left and down, instead of right and down.
             // Sometimes there is no offset though, very confusing.
             // see code at the top of onUpdate, even just calling clear() with a colour does not remove the black bar offsets.
-            View.onLayout(dc); 
+            View.onLayout(dc);
             actualOnLayout(dc);
         } catch (e) {
             logE("failed onLayout: " + e.getErrorMessage());
@@ -128,6 +128,18 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         // this is here due to stack overflow bug when requests trigger the next request
         while (_breadcrumbContext.webRequestHandler().startNextIfWeCan()) {}
 
+        // perf only seed tiles when we need to (zoom level changes or user moves)
+        // could possibly be moved into cached values when map data changes - though map data may not change but we nuked the pending web requests - safer here
+        // or we have to do multiple seeds if pending web requests is low
+        // needs to be before _computeCounter for when we load tiles from storage (we can only load 1 tile per second)
+        if (_breadcrumbContext.mapRenderer().seedTiles()) {
+            // we loadeed a tile from storage, which could be a significantly costly task,
+            // do not trip the watchdog, be safe and return
+            // if tile cacheSize is not large enough, this could result in no tracking, since all tiles could potentially be pulled from storage
+            // but black squares will appear on the screen, alerting the user that something is wrong
+            return;
+        }
+
         // System.println("computing data field");
         _computeCounter++;
         // slow down the calls to onActivityInfo as its a heavy operation checking
@@ -135,10 +147,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         if (_computeCounter < settings.recalculateIntervalS) {
             return;
         }
-
-        // perf only seed tiles when we need to (zoom level changes or user moves)
-        _breadcrumbContext.mapRenderer().seedTiles(); // could possibly be moved into cached values when map data changes - though map data may not change but we nuked the pending web requests - safer here
-        // or we have to do multiple seeds if pending web requests is low
 
         _computeCounter = 0;
 
@@ -223,9 +231,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
 
         if (settings.enableOffTrackAlerts) {
-
             lastOffTrackAlertNotified = epoch; // if showAlert fails, we will still have vibrated and turned the screen on
-            
+
             try {
                 logD("trying to trigger alert");
                 if (settings.alertType == ALERT_TYPE_ALERT) {
@@ -526,7 +533,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var lastPoint = _breadcrumbContext.track().lastPoint();
         var renderer = _breadcrumbContext.trackRenderer();
         if (lastPoint != null) {
-
             // only ever not null if feature enabled
             if (!offTrackInfo.onTrack && offTrackInfo.pointWeLeftTrack != null) {
                 // points need to be scaled and rotated :(
@@ -552,7 +558,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             }
         }
     }
-    
+
     function renderOffTrackPointUnrotated(dc as Dc) as Void {
         var lastPoint = _breadcrumbContext.track().lastPoint();
         var renderer = _breadcrumbContext.trackRenderer();
@@ -606,7 +612,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "pending web: " + _breadcrumbContext.webRequestHandler().pendingCount() + " t: " + _breadcrumbContext.webRequestHandler().pendingTransmitCount(),
+            "pending web: " +
+                _breadcrumbContext.webRequestHandler().pendingCount() +
+                " t: " +
+                _breadcrumbContext.webRequestHandler().pendingTransmitCount(),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -667,7 +676,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "tilelayer: " + _cachedValues.tileZ + " at min: " + (_cachedValues.atMinTileLayer() ? "Y" : "N") + " at max: " + (_cachedValues.atMaxTileLayer() ? "Y" : "N"),
+            "tilelayer: " +
+                _cachedValues.tileZ +
+                " at min: " +
+                (_cachedValues.atMinTileLayer() ? "Y" : "N") +
+                " at max: " +
+                (_cachedValues.atMaxTileLayer() ? "Y" : "N"),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -703,7 +717,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "mem: " + (System.getSystemStats().usedMemory / 1000f).format("%.1f") + "K f: " + (System.getSystemStats().freeMemory / 1000f).format("%.1f") + "K",
+            "mem: " +
+                (System.getSystemStats().usedMemory / 1000f).format("%.1f") +
+                "K f: " +
+                (System.getSystemStats().freeMemory / 1000f).format("%.1f") +
+                "K",
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;

@@ -22,16 +22,17 @@ class MapRenderer {
         _cachedValues = cachedValues;
     }
 
-    function seedTiles() as Void {
+    // returns true if tile was loaded from storage
+    function seedTiles() as Boolean {
         var cachedValues = _cachedValues; // local lookup faster
         if (!_cachedValues.mapDataCanBeUsed) {
             // do not divide by zero my good friends
             // we do not have a scale calculated yet
-            return;
+            return false;
         }
 
         if (!_settings.mapEnabled) {
-            return;
+            return false;
         }
 
         var tileCountX = cachedValues.tileCountX; // local lookup faster
@@ -51,9 +52,14 @@ class MapRenderer {
                 ++y
             ) {
                 var tileKey = new TileKey(firstTileX + x, firstTileY + y, tileZ);
-                _tileCache.seedTile(tileKey); // seed it for the next render
+                // seed it for the next render
+                if (_tileCache.seedTile(tileKey)) {
+                    return true; // we pulled from storage, or there is some other reason to stop seeding the tile
+                }
             }
         }
+
+        return false;
     }
 
     function renderMapUnrotated(dc as Dc) as Void {
@@ -70,7 +76,7 @@ class MapRenderer {
 
         if (_settings.authMissing()) {
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
-            dc.clear();    
+            dc.clear();
             dc.drawText(
                 _cachedValues.xHalf,
                 _cachedValues.yHalf,
@@ -129,10 +135,10 @@ class MapRenderer {
         if (!_settings.mapEnabled) {
             return;
         }
-        
+
         if (_settings.authMissing()) {
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
-            dc.clear();    
+            dc.clear();
             dc.drawText(
                 _cachedValues.xHalf,
                 _cachedValues.yHalf,
@@ -219,14 +225,13 @@ class MapRenderer {
                     // also worked fine with vivoactive 5 (that always renders the bitmaps through drawBitmap2), but failed with the venu2s (my normal test device).
                     // purged the tmp dir AppData\Local\Temp\com.garmin.connectiq
                     // it seems to be wehn loading from an external tile server - so Communications.PACKING_FORMAT_DEFAULT in makeImageRequest must be the culprit (possibly vivoactive is always a png?).
-                    // changing it to 
+                    // changing it to
                     // tileFromCache.bitmap.isCached() + " "
                     //  + " " + tileFromCache.bitmap
                     logE("failed drawBitmap2: " + e.getErrorMessage());
                     ++$.globalExceptionCounter;
                 }
             }
-            
         }
     }
 }
