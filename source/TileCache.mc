@@ -119,7 +119,8 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         }
 
         var settings = getApp()._breadcrumbContext.settings();
-        if (settings.cacheTilesInStorage) {
+        var cachedValues = getApp()._breadcrumbContext.cachedValues();
+        if (settings.cacheTilesInStorage || cachedValues.seedingZ > -1) {
             _tileCache.addToStorage(_tileKey, data);
         }
 
@@ -234,7 +235,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         var settings = getApp()._breadcrumbContext.settings();
         var cachedValues = getApp()._breadcrumbContext.cachedValues();
 
-        if (settings.cacheTilesInStorage) {
+        if (settings.cacheTilesInStorage || cachedValues.seedingZ > -1) {
             _tileCache.addToStorage(_tileKey, data);
         }
 
@@ -322,6 +323,10 @@ class StorageTileCache {
 
     function get(tileKey as TileKey) as Dictionary or WatchUi.BitmapResource or Null {
         return Storage.getValue(tileKey.toString());
+    }
+
+    function haveTile(tileKey as TileKey) as Boolean {
+        return _tilesInStorage.hasKey(tileKey.toString());
     }
 
     function addToStorage(
@@ -517,6 +522,17 @@ class TileCache {
         return startSeedTile(tileKey);
     }
 
+    // seedTile puts the tile into memory, either by pulling from storage, or by runnung a web request
+    // seedTileToStorage only puts the tile into storage
+    function seedTileToStorage(tileKey as TileKey) as Void {
+        if (_storageTileCache.haveTile(tileKey)) {
+            // we already have the tile
+            return;
+        }
+
+        startSeedTile(tileKey);
+    }
+
     // reurns true if seed should stop and wait for next calculate (to prevent watchdog errors)
     private function startSeedTile(tileKey as TileKey) as Boolean {
         // System.println("starting load tile: " + x + " " + y + " " + z);
@@ -529,7 +545,7 @@ class TileCache {
             var tileFromStorage = _storageTileCache.get(new TileKey(x, y, tileKey.z));
             if (tileFromStorage != null) {
                 imageReqHandler.handle(200, tileFromStorage);
-                logD("image tile loaded from storage: " + tileKey);
+                // logD("image tile loaded from storage: " + tileKey);
                 return true;
             }
             // logD("large tile: " + x + ", " + y + ", " + tileKey.z);
@@ -561,7 +577,7 @@ class TileCache {
         var tileFromStorage = _storageTileCache.get(tileKey);
         if (tileFromStorage != null) {
             jsonWebHandler.handle(200, tileFromStorage);
-            logD("json tile loaded from storage: " + tileKey);
+            // logD("json tile loaded from storage: " + tileKey);
             return true;
         }
         _webRequestHandler.add(

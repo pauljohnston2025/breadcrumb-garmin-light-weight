@@ -71,6 +71,7 @@ Map Enabled - See [Map Enabled](#map-enabled)
 
 `+` Button (top of screen) allows zooming into the current location  
 `-` Button (bottom of screen) allows zooming out of the current location
+`G` Button (right of screen) Get the current tiles for the currently viewed area and put them into app storage (all tile layers), this allows offline navigation without a phone connection. This is an incredibly slow process, but should imporve battery as all bluetooth can be done in advance before heading out the door, then the device can be fully charged.  
 
 Other Screens:  
 Map move allows you to pan around the map, clear routes and toggle the display mode.  

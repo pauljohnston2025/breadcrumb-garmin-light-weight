@@ -559,6 +559,28 @@ class BreadcrumbRenderer {
         }
     }
 
+    function renderTileSeedUi(dc as Dc) as Boolean {
+        var seedZ = _cachedValues.seedingZ;
+        if (seedZ <= -1) {
+            // not seeding, no ui
+            return false;
+        }
+
+        var xHalf = _cachedValues.xHalf; // local lookup faster
+        var yHalf = _cachedValues.yHalf; // local lookup faster
+        dc.setColor(settings.uiColour, Graphics.COLOR_ORANGE);
+        dc.clear();
+        dc.drawText(
+            xHalf,
+            yHalf,
+            Graphics.FONT_XTINY,
+            "Caching Tile Layer " + seedZ + " ...",
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+        );
+
+        return true;
+    }
+
     function renderClearTrackUi(dc as Dc) as Boolean {
         var xHalf = _cachedValues.xHalf; // local lookup faster
         var yHalf = _cachedValues.yHalf; // local lookup faster
@@ -850,11 +872,24 @@ class BreadcrumbRenderer {
             // zoom view
             fvText = "N";
         }
-        dc.drawText(lineFromEdge, yHalf, Graphics.FONT_XTINY, fvText, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(
+            lineFromEdge,
+            yHalf,
+            Graphics.FONT_XTINY,
+            fvText,
+            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
+        );
 
-        // north facing N with litle cross
-        // var nPosX = 295;
-        // var nPosY = 85;
+        if (settings.mapEnabled) {
+            // right of screen
+            dc.drawText(
+                screenWidth - lineFromEdge,
+                yHalf,
+                Graphics.FONT_XTINY,
+                "G",
+                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
+            );
+        }
     }
 
     function getScaleDecIncAmount(direction as Number) as Float {
@@ -1021,7 +1056,7 @@ class BreadcrumbRenderer {
     var returnToUserY as Float = -1f;
     var mapEnabledX as Float = -1f;
     var mapEnabledY as Float = -1f;
-    var hitboxSize as Float = 50f;
+    var hitboxSize as Float = 60f;
     var halfHitboxSize as Float = hitboxSize / 2.0f;
 
     function setElevationAndUiData(xElevationStart as Float) as Void {

@@ -61,6 +61,11 @@ class CachedValues {
     var tileCountY as Number = -1;
     var firstTileX as Number = -1;
     var firstTileY as Number = -1;
+
+    var seedingZ as Number = -1; // -1 means not seeding
+    var seedingRectanglarTopLeft as RectangularPoint = new RectangularPoint(0f, 0f, 0f);
+    var seedingRectanglarBottomRight as RectangularPoint = new RectangularPoint(0f, 0f, 0f);
+
     function atMinTileLayer() as Boolean {
         return tileZ == _settings.tileLayerMin;
     }
@@ -581,6 +586,11 @@ class CachedValues {
     }
 
     function setPositionAndScaleIfNotSet() as Void {
+        fixedPosition = getScreenCenter();
+        // System.println("new fixed pos: " + fixedPosition);
+    }
+
+    function getScreenCenter() as RectangularPoint {
         // we need to set a fixed scale so that a user moving does not change the zoom level randomly whilst they are viewing a map and panning
         if (scale == null) {
             var scaleToSet = currentScale;
@@ -612,8 +622,7 @@ class CachedValues {
         if (fixedLongitude == null) {
             fixedLongitude = lastRenderedLatLongCenter == null ? 0f : lastRenderedLatLongCenter[1];
         }
-        fixedPosition = RectangularPoint.latLon2xy(fixedLatitude, fixedLongitude, 0f);
-        // System.println("new fixed pos: " + fixedPosition);
+        return RectangularPoint.latLon2xy(fixedLatitude, fixedLongitude, 0f);
     }
 
     function setScale(_scale as Float?) as Void {
@@ -633,5 +642,120 @@ class CachedValues {
         if (getApp()._view != null) {
             getApp()._view.resetRenderTime();
         }
+    }
+
+    function startCacheCurrentMapArea() as Void {
+        if (!_settings.mapEnabled) {
+            return;
+        }
+        var centerRectangular = getScreenCenter();
+        seedingRectanglarTopLeft = new RectangularPoint(
+            centerRectangular.x - mapMoveDistanceM,
+            centerRectangular.y + mapMoveDistanceM,
+            0f
+        );
+        seedingRectanglarBottomRight = new RectangularPoint(
+            centerRectangular.x + mapMoveDistanceM,
+            centerRectangular.y - mapMoveDistanceM,
+            0f
+        );
+        // start at max, and move towards min.
+        // It's slower to do the lower layers first, but means if we run out of storage the higher layers will still be cached, so we will get a better experiece.
+        // Rather than having all the fine details, but no overview, we at least get the overview tiles. Users can set tileLayerMin and tileLayerMax if they would prefer to cache only a single layer.
+        seedingZ = _settings.tileLayerMax;
+        // todo store current x and y for the for loop, also need to store the max/min tile coords
+        // seedingX = ...
+        // seedingY = ...
+    }
+
+    function stepCacheCurrentMapArea() as Boolean {
+        if (seedingZ == -1) {
+            return false;
+        }
+
+        if (seedNextTilesToStorage()) {
+            seedingZ--;
+        }
+        
+        if (seedingZ < _settings.tileLayerMin) {
+            seedingZ = -1; // no more seeding
+            return false;
+        }
+
+        return true;
+    }
+
+    function seedNextTilesToStorage() as Boolean {
+        var tileWidthM = earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
+
+        // find which tile we are closest to
+        var firstTileX = ((seedingRectanglarTopLeft.x + originShift) / tileWidthM).toNumber();
+        var firstTileY = ((originShift - seedingRectanglarTopLeft.y) / tileWidthM).toNumber();
+
+        var lastTileX = ((seedingRectanglarBottomRight.x + originShift) / tileWidthM).toNumber();
+        var lastTileY = ((originShift - seedingRectanglarBottomRight.y) / tileWidthM).toNumber();
+
+        var tileCache = getApp()._breadcrumbContext.tileCache();
+
+        // we do not want to get a massive for loop that we then get killed by the watchdog
+        // we also might not even fetch a tile, we need to wait until the previous set have responded
+        // the we can move onto fetching the next set of tiles
+        // the storage could also be very small, so we need to keep this number small 
+        // otherwsie we will 
+        // * try and download 10 tile to storage
+        // * only fit the last 9 tiles in storage
+        // * then we do not have all 10, so we will start again
+        // ideally we would progress the storage seed based on the web handler responding with a tile
+        var maxTilesAtATime = 1000;
+
+        if (haveAllTiles(firstTileX, firstTileY, lastTileX, lastTileY, maxTilesAtATime)) {
+            return true;
+        }
+
+        var tileStarted = 0;
+        for (var x = firstTileX; x < lastTileX; ++x) {
+            for (var y = firstTileY; y < lastTileY; ++y) {
+                ++tileStarted;
+                var tileKey = new TileKey(x, y, seedingZ);
+                logD("seeding storage tile: " + tileKey);
+                tileCache.seedTileToStorage(tileKey);
+
+                if (tileStarted >= maxTilesAtATime) {
+                    return false;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    function haveAllTiles(
+        firstTileX as Number,
+        firstTileY as Number,
+        lastTileX as Number,
+        lastTileY as Number,
+        maxTilesAtATime as Number
+    ) as Boolean {
+        var tileChecked = 0;
+
+        var tileCache = getApp()._breadcrumbContext.tileCache();
+
+        for (var x = firstTileX; x < lastTileX; ++x) {
+            for (var y = firstTileY; y < lastTileY; ++y) {
+                ++tileChecked;
+                var tileKey = new TileKey(x, y, seedingZ);
+                if (!tileCache._storageTileCache.haveTile(tileKey)) {
+                    // we need to seed some more
+                    return false;
+                }
+
+                if (tileChecked >= maxTilesAtATime) {
+                    return true;
+                }
+            }
+        }
+
+        // got to the end of the for loop, we must have them all
+        return true;
     }
 }

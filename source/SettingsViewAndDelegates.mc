@@ -742,9 +742,7 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
             var view = new SettingsColours();
             WatchUi.pushView(view, new $.SettingsColoursDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainClearStorage) {
-            var dialog = new WatchUi.Confirmation(
-                "Clear all Storage (routes and cached tiles)?"
-            );
+            var dialog = new WatchUi.Confirmation("Clear all Storage (routes and cached tiles)?");
             WatchUi.pushView(dialog, new ClearStorageDelegate(), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainResetDefaults) {
             var dialog = new WatchUi.Confirmation("Reset all settings?");
@@ -1397,10 +1395,10 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
                 new $.SettingsMapAttributionDelegate(view),
                 WatchUi.SLIDE_IMMEDIATE
             );
+        } else if (itemId == :settingsMapCacheCurrentArea) {
+            getApp()._breadcrumbContext.cachedValues().startCacheCurrentMapArea();
         } else if (itemId == :settingsMapClearCachedTiles) {
-            var dialog = new WatchUi.Confirmation(
-                "Clear all cached tiles?"
-            );
+            var dialog = new WatchUi.Confirmation("Clear all cached tiles?");
             WatchUi.pushView(dialog, new ClearCachedTilesDelegate(), WatchUi.SLIDE_IMMEDIATE);
         }
     }

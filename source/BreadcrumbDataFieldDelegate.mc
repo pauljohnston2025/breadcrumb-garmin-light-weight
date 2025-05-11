@@ -108,8 +108,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
                 cachedValues.moveFixedPositionRight();
                 return true;
             }
-            // renderer.resetScale();// now contorlled purely by 'return to user'
-            // todo think of functionality to add to right of screen for track mode
+            cachedValues.startCacheCurrentMapArea();
             return true;
         } else if (x < hitboxSize) {
             // left of screen

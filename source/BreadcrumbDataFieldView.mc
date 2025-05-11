@@ -128,6 +128,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         // this is here due to stack overflow bug when requests trigger the next request
         while (_breadcrumbContext.webRequestHandler().startNextIfWeCan()) {}
 
+        if (_cachedValues.stepCacheCurrentMapArea()) {
+            return;
+        }
+
         // perf only seed tiles when we need to (zoom level changes or user moves)
         // could possibly be moved into cached values when map data changes - though map data may not change but we nuked the pending web requests - safer here
         // or we have to do multiple seeds if pending web requests is low
@@ -331,6 +335,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
         // logD("onUpdate");
         var renderer = _breadcrumbContext.trackRenderer();
+        if (renderer.renderTileSeedUi(dc)) {
+            return;
+        }
         if (renderer.renderClearTrackUi(dc)) {
             return;
         }
