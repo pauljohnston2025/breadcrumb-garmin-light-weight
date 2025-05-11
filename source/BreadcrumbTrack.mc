@@ -99,7 +99,7 @@ class BreadcrumbTrack {
         maxDistanceMScaled = maxDistanceMScaled * scaleFactor;
     }
 
-    function handleRouteV2(routeData as Array<Float>, cachedValues as CachedValues) as Void {
+    function handleRouteV2(routeData as Array<Float>, cachedValues as CachedValues) as Boolean {
         // trust the app completely
         coordinates._internalArrayBuffer = routeData;
         coordinates._size = routeData.size();
@@ -107,30 +107,40 @@ class BreadcrumbTrack {
         // but it makes it really hard to add any more cached data to the route, that the companion app then has to send
         // by making these rectangular coordinates, we skip a huge amount of math converting them from lat/long
         updatePointDataFromAllPoints();
-        writeToDisk(ROUTE_KEY); // write to disk before we scale, all routes on disk are unscaled
+        var wrote = writeToDisk(ROUTE_KEY); // write to disk before we scale, all routes on disk are unscaled
         var currentScale = cachedValues.currentScale;
         if (currentScale != 0f) {
             rescale(currentScale);
         }
         cachedValues.recalculateAll();
+        return wrote;
     }
 
     // writeToDisk should always be in raw meters coordinates // UNSCALED
-    function writeToDisk(key as String) as Void {
-        key = key + storageIndex;
-        Storage.setValue(key + "bb", boundingBox);
-        Storage.setValue(key + "bbc", [
-            boundingBoxCenter.x,
-            boundingBoxCenter.y,
-            boundingBoxCenter.altitude,
-        ]);
-        Storage.setValue(key + "coords", coordinates._internalArrayBuffer);
-        Storage.setValue(key + "coordsSize", coordinates._size);
-        Storage.setValue(key + "distanceTotal", distanceTotal);
-        Storage.setValue(key + "elevationMin", elevationMin);
-        Storage.setValue(key + "elevationMax", elevationMax);
-        Storage.setValue(key + "epoch", epoch);
-        Storage.setValue(key + "name", name);
+    function writeToDisk(key as String) as Boolean {
+        try {
+            key = key + storageIndex;
+            Storage.setValue(key + "bb", boundingBox);
+            Storage.setValue(key + "bbc", [
+                boundingBoxCenter.x,
+                boundingBoxCenter.y,
+                boundingBoxCenter.altitude,
+            ]);
+            Storage.setValue(key + "coords", coordinates._internalArrayBuffer);
+            Storage.setValue(key + "coordsSize", coordinates._size);
+            Storage.setValue(key + "distanceTotal", distanceTotal);
+            Storage.setValue(key + "elevationMin", elevationMin);
+            Storage.setValue(key + "elevationMax", elevationMax);
+            Storage.setValue(key + "epoch", epoch);
+            Storage.setValue(key + "name", name);
+        } catch (e) {
+            // it will still be in memory, just not persisted, this is bad as the user will think it worked, so return false to indicate error
+            logE("failed route save: " + e.getErrorMessage());
+            ++$.globalExceptionCounter;
+            return false;
+        }
+
+        return true;
     }
 
     static function clearRoute(key as String, storageIndex as Number) as Void {

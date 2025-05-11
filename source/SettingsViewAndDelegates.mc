@@ -741,6 +741,11 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
         } else if (itemId == :settingsMainColours) {
             var view = new SettingsColours();
             WatchUi.pushView(view, new $.SettingsColoursDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMainClearStorage) {
+            var dialog = new WatchUi.Confirmation(
+                "Clear all Storage (routes and cached tiles)?"
+            );
+            WatchUi.pushView(dialog, new ClearStorageDelegate(), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainResetDefaults) {
             var dialog = new WatchUi.Confirmation("Reset all settings?");
             WatchUi.pushView(dialog, new ResetSettingsDelegate(), WatchUi.SLIDE_IMMEDIATE);
@@ -781,6 +786,36 @@ class ResetSettingsDelegate extends WatchUi.ConfirmationDelegate {
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
             getApp()._breadcrumbContext.settings().resetDefaults();
+        }
+
+        return true; // we always handle it
+    }
+}
+
+class ClearStorageDelegate extends WatchUi.ConfirmationDelegate {
+    function initialize() {
+        WatchUi.ConfirmationDelegate.initialize();
+    }
+    function onResponse(response as Confirm) as Boolean {
+        if (response == WatchUi.CONFIRM_YES) {
+            Application.Storage.clearValues(); // purge the storage, but we have to clean up all our classes that load from storage too
+            getApp()._breadcrumbContext.tileCache()._storageTileCache.clearValues(); // reload our tile storage class
+            getApp()._breadcrumbContext.tileCache().clearValues(); // also clear the tile cache, it case it pulled from our storage
+            getApp()._breadcrumbContext.clearRoutes(); // also clear the routes to mimic storage being removed
+        }
+
+        return true; // we always handle it
+    }
+}
+
+class ClearCachedTilesDelegate extends WatchUi.ConfirmationDelegate {
+    function initialize() {
+        WatchUi.ConfirmationDelegate.initialize();
+    }
+    function onResponse(response as Confirm) as Boolean {
+        if (response == WatchUi.CONFIRM_YES) {
+            getApp()._breadcrumbContext.tileCache()._storageTileCache.clearValues();
+            getApp()._breadcrumbContext.tileCache().clearValues(); // also clear the tile cache, it case it pulled from our storage
         }
 
         return true; // we always handle it
@@ -1362,6 +1397,11 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
                 new $.SettingsMapAttributionDelegate(view),
                 WatchUi.SLIDE_IMMEDIATE
             );
+        } else if (itemId == :settingsMapClearCachedTiles) {
+            var dialog = new WatchUi.Confirmation(
+                "Clear all cached tiles?"
+            );
+            WatchUi.pushView(dialog, new ClearCachedTilesDelegate(), WatchUi.SLIDE_IMMEDIATE);
         }
     }
 }

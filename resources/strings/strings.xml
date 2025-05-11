@@ -51,6 +51,7 @@
     <string id="disableMapsFailureCountTitleShort">Disable After Failures</string>
     <string id="disableMapsFailureCountPrompt"></string>
     <string id="elevationColourTitle">Elevation Colour</string>
+    <string id="clearStorage">Clear Storage</string>
     <string id="resetDefaults">Restore Defaults</string>
     <string id="userColour">User Colour</string>
     <string id="maxPendingWebRequests">Max Pending Web Requests</string>
@@ -102,6 +103,7 @@
     <string id="colourPrompt">Colour in AARRGGBB format</string>
     <string id="displayLatLongTitle">Display Lat/Long</string>
     <string id="scaleRestrictedToTileLayersTitle">Restrict Scale To Tile Layers</string>
+    <string id="clearCachedTiles">Clear Cached Tiles</string>
 
     <string id="selectedRoute">Selected route</string>
     <string id="routesTitle">Routes</string>

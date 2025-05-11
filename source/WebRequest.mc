@@ -125,7 +125,7 @@ class WebRequestHandleWrapper {
 class ConnectionListenerWrapper extends Communications.ConnectionListener {
     var webHandler as WebRequestHandler;
     var handler as Communications.ConnectionListener;
-    var alreadyDecedWebHandler = false;
+    var alreadyDecedWebHandler as Boolean = false;
 
     function initialize(
         _webHandler as WebRequestHandler,
@@ -199,7 +199,7 @@ class WebRequestHandler {
         content as Application.PersistableType,
         options as Dictionary?,
         listener as Communications.ConnectionListener
-    ) {
+    ) as Void {
         pendingTransmit.add([content, options, listener]);
     }
 

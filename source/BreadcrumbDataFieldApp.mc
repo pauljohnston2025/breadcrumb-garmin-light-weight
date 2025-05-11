@@ -129,13 +129,17 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                         );
                     }
 
-                    route.writeToDisk(ROUTE_KEY);
+                    var routeWrote = route.writeToDisk(ROUTE_KEY);
                     var currentScale = _breadcrumbContext.cachedValues().currentScale;
                     if (currentScale != 0f) {
                         route.rescale(currentScale);
                     }
                     _breadcrumbContext.cachedValues().recalculateAll();
-                    logD("Parsing route data complete");
+                    logD("Parsing route data complete, wrote to storage: " + routeWrote);
+                    if (!routeWrote)
+                    {
+                        _breadcrumbContext.clearRoute(route.storageIndex);
+                    }
                     return;
                 }
 
@@ -165,8 +169,12 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 if (routeData.size() % ARRAY_POINT_SIZE == 0) {
                     logD("Parsing route data 2");
                     var route = _breadcrumbContext.newRoute(name);
-                    route.handleRouteV2(routeData, _breadcrumbContext.cachedValues());
-                    logD("Parsing route data 2 complete");
+                    var routeWrote = route.handleRouteV2(routeData, _breadcrumbContext.cachedValues());
+                    logD("Parsing route data 2 complete, wrote to storage: " + routeWrote);
+                    if (!routeWrote)
+                    {
+                        _breadcrumbContext.clearRoute(route.storageIndex);
+                    }
                     return;
                 }
 

@@ -73,7 +73,7 @@ class Tile {
     var storageIndex as Number?;
 
     function initialize() {
-        self.lastUsed = System.getTimer();
+        self.lastUsed = Time.now().value();
         self.bitmap = null;
         self.storageIndex = null;
     }
@@ -83,7 +83,7 @@ class Tile {
     }
 
     function markUsed() as Void {
-        lastUsed = System.getTimer();
+        lastUsed = Time.now().value();
     }
 
     function setStorageIndex(storageIndex as Number) as Void {
@@ -116,6 +116,11 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         if (!(data instanceof Dictionary)) {
             System.println("wrong data type, not dict: " + data);
             return;
+        }
+
+        var settings = getApp()._breadcrumbContext.settings();
+        if (settings.cacheTilesInStorage) {
+            _tileCache.addToStorage(_tileKey, data);
         }
 
         // System.print("data: " + data);
@@ -228,6 +233,11 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 
         var settings = getApp()._breadcrumbContext.settings();
         var cachedValues = getApp()._breadcrumbContext.cachedValues();
+
+        if (settings.cacheTilesInStorage) {
+            _tileCache.addToStorage(_tileKey, data);
+        }
+
         // we have to downsample the tile, not recomendedd, as this mean we will have to request the same tile multiple times (cant save big tiles around anywhere)
         // also means we have to use scratch space to draw the tile and downsample it
 
@@ -292,6 +302,90 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
     }
 }
 
+const TILES_KEY = "tiles";
+
+// raw we request tiles stored directly on the watch for future use
+class StorageTileCache {
+    // the Storage module does not allow  querying the current keys, so we would have to query every possible tile to get the oldest an be able to remove
+    // so we will store what tiles we know exist, and be able to purge them ourselves
+    // layout is:
+    // {<tilekeystring>: {"lastUsed": <epoch>}}
+    // value is a dictionary for forwards compat, we will likely add more than just "lastUsed"
+    var _tilesInStorage as Dictionary<String, Dictionary<String, Number>> = {};
+    
+    function initialize()
+    {
+        var tiles = Storage.getValue(TILES_KEY);
+        if (tiles != null)
+        {
+            _tilesInStorage = tiles as Dictionary<String, Dictionary<String, Number>>;
+        }
+    }
+
+    function addToStorage(
+        tileKey as TileKey,
+        data as Dictionary or WatchUi.BitmapResource
+    ) as Void {
+        try {
+            var tileKeyStr = tileKey.toString();
+            // update our tracking first, we do not want to loose tiles because we stored them, but could then not update the tracking
+            _tilesInStorage[tileKeyStr] = {"lastUsed" => Time.now().value()};
+            Storage.setValue(TILES_KEY, _tilesInStorage); 
+            Application.Storage.setValue(tileKeyStr, data);
+        } catch (e) {
+            if (e instanceof Lang.StorageFullException) {
+                // we expect storage to get full at some point, but there seems to be no way to get the size of the storage,
+                // or how much is remaining programatically
+                // we could allow the user to specify 'maxTileCache storage' but we will just fill it up untill there is no more space
+                // note: This means routes need to be loaded first, or there will be no space left for new routes
+
+                // todo: clear the oldest tile from storage and try again
+                logE("tile storage full: " + e.getErrorMessage());
+                evictLeastRecentlyUsedTile();
+                return;
+            }
+
+            logE("failed tile storage add: " + e.getErrorMessage());
+            ++$.globalExceptionCounter;
+        }
+    }
+
+    function evictLeastRecentlyUsedTile() as Void {
+        // todo put older tiles into disk, and store what tiles are on disk (storage class)
+        // it will be faster to load them from there than bluetooth
+        var oldestTime = null;
+        var oldestKey = null;
+
+        var keys = _tilesInStorage.keys();
+        for (var i = 0; i < keys.size(); i++) {
+            var key = keys[i];
+            var tile = _tilesInStorage[key];
+            var lastUsed = tile["lastUsed"];
+            if (oldestTime == null || oldestTime > lastUsed) {
+                oldestTime = lastUsed;
+                oldestKey = key;
+            }
+        }
+
+        if (oldestKey != null) {
+            Storage.deleteValue(oldestKey);
+            _tilesInStorage.remove(oldestKey);
+            System.println("Evicted tile " + oldestKey + " from storage cache");
+        }
+
+        Storage.setValue(TILES_KEY, _tilesInStorage);
+    }
+
+    function clearValues() as Void {
+        var keys = _tilesInStorage.keys();
+        for (var i = 0; i < keys.size(); i++) {
+            var key = keys[i];
+            Storage.deleteValue(key);
+        }
+        Storage.setValue(TILES_KEY, {});
+    }
+}
+
 class TileCache {
     var _internalCache as Dictionary<TileKey, Tile>;
     var _webRequestHandler as WebRequestHandler;
@@ -302,6 +396,7 @@ class TileCache {
     var _misses as Number = 0;
     // Ignore any tile adds that do not have this version (allows outstanding web requests to be ignored once they are handled)
     var _tileCacheVersion as Number = 0;
+    var _storageTileCache as StorageTileCache = new StorageTileCache();
 
     function initialize(
         webRequestHandler as WebRequestHandler,
@@ -469,6 +564,10 @@ class TileCache {
 
     // puts a tile into the cache
     function addTile(tileKey as TileKey, tileCacheVersion as Number, tile as Tile) as Void {
+        if (tile.bitmap == null) {
+            return;
+        }
+
         if (tileCacheVersion != _tileCacheVersion) {
             return;
         }
@@ -696,7 +795,9 @@ class TileCache {
         if (mapTileBytes.size() != requiredSize) {
             // we could load tile partially, but that would require checking each itteration of the for loop,
             // want to avoid any extra work for perf
-            System.println("bad tile length full colour: " + mapTileBytes.size() + " best effort load");
+            System.println(
+                "bad tile length full colour: " + mapTileBytes.size() + " best effort load"
+            );
         }
 
         mapTileBytes.add(0x00); // add a byte to the end so the last 24bit colour we parse still has 32 bits of data
@@ -714,7 +815,7 @@ class TileCache {
                     :offset => offset,
                     :endianness => Lang.ENDIAN_BIG,
                 });
-                colour = (colour >> 8) & 0x00FFFFFF; // 24 bit colour only
+                colour = (colour >> 8) & 0x00ffffff; // 24 bit colour only
                 offset += 3;
                 // tried setFill and setStroke, neither seemed to work, so we can only support 24bit colour
                 localDc.setColor(colour, colour);
@@ -728,6 +829,13 @@ class TileCache {
     function clearStats() as Void {
         _hits = 0;
         _misses = 0;
+    }
+
+    function addToStorage(
+        tileKey as TileKey,
+        data as Dictionary or WatchUi.BitmapResource
+    ) as Void {
+        _storageTileCache.addToStorage(tileKey, data);
     }
 }
 
