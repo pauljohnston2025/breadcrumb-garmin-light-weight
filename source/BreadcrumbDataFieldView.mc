@@ -132,7 +132,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         _computeCounter++;
         // slow down the calls to onActivityInfo as its a heavy operation checking
         // the distance we don't really need data much faster than this anyway
-        if (_computeCounter != settings.recalculateIntervalS) {
+        if (_computeCounter < settings.recalculateIntervalS) {
             return;
         }
 
