@@ -311,15 +311,17 @@ class StorageTileCache {
     // layout is:
     // {<tilekeystring>: {"lastUsed": <epoch>}}
     // value is a dictionary for forwards compat, we will likely add more than just "lastUsed"
-    var _tilesInStorage as Dictionary<String, Dictionary<String, Number>> = {};
-    
-    function initialize()
-    {
+    var _tilesInStorage as Dictionary<String, Dictionary<String, Number> > = {};
+
+    function initialize() {
         var tiles = Storage.getValue(TILES_KEY);
-        if (tiles != null)
-        {
-            _tilesInStorage = tiles as Dictionary<String, Dictionary<String, Number>>;
+        if (tiles != null) {
+            _tilesInStorage = tiles as Dictionary<String, Dictionary<String, Number> >;
         }
+    }
+
+    function get(tileKey as TileKey) as Dictionary or WatchUi.BitmapResource or Null {
+        return Storage.getValue(tileKey.toString());
     }
 
     function addToStorage(
@@ -329,8 +331,8 @@ class StorageTileCache {
         try {
             var tileKeyStr = tileKey.toString();
             // update our tracking first, we do not want to loose tiles because we stored them, but could then not update the tracking
-            _tilesInStorage[tileKeyStr] = {"lastUsed" => Time.now().value()};
-            Storage.setValue(TILES_KEY, _tilesInStorage); 
+            _tilesInStorage[tileKeyStr] = { "lastUsed" => Time.now().value() };
+            Storage.setValue(TILES_KEY, _tilesInStorage);
             Application.Storage.setValue(tileKeyStr, data);
         } catch (e) {
             if (e instanceof Lang.StorageFullException) {
@@ -521,6 +523,12 @@ class TileCache {
             // logD("small tile: " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
             var x = tileKey.x / _cachedValues.smallTilesPerScaledTile;
             var y = tileKey.y / _cachedValues.smallTilesPerScaledTile;
+            var imageReqHandler = new ImageWebTileRequestHandler(me, tileKey, _tileCacheVersion);
+            var tileFromStorage = _storageTileCache.get(new TileKey(x, y, tileKey.z));
+            if (tileFromStorage != null) {
+                imageReqHandler.handle(200, tileFromStorage);
+                return;
+            }
             // logD("large tile: " + x + ", " + y + ", " + tileKey.z);
             _webRequestHandler.add(
                 new ImageRequest(
@@ -539,13 +547,19 @@ class TileCache {
                         _settings.authToken
                     ),
                     {},
-                    new ImageWebTileRequestHandler(me, tileKey, _tileCacheVersion)
+                    imageReqHandler
                 )
             );
             return;
         }
 
         // logD("small tile (companion): " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
+        var jsonWebHandler = new JsonWebTileRequestHandler(me, tileKey, _tileCacheVersion);
+        var tileFromStorage = _storageTileCache.get(tileKey);
+        if (tileFromStorage != null) {
+            jsonWebHandler.handle(200, tileFromStorage);
+            return;
+        }
         _webRequestHandler.add(
             new JsonRequest(
                 "/loadtile" + tileKey + "-" + _tileCacheVersion,
@@ -557,7 +571,7 @@ class TileCache {
                     "scaledTileSize" => _settings.scaledTileSize,
                     "tileSize" => _settings.tileSize,
                 },
-                new JsonWebTileRequestHandler(me, tileKey, _tileCacheVersion)
+                jsonWebHandler
             )
         );
     }
