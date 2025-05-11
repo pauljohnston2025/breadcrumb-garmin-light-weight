@@ -574,7 +574,19 @@ class BreadcrumbRenderer {
             xHalf,
             yHalf,
             Graphics.FONT_XTINY,
-            "Caching Tile Layer " + seedZ + " ...",
+            "Caching Tile Layer " +
+                seedZ +
+                " ...\n" +
+                _cachedValues.seedingTilesProgressForThisLayer +
+                "/" +
+                _cachedValues.seedingTilesOnThisLayer +
+                "\nmem: " +
+                (System.getSystemStats().usedMemory / 1000f).format("%.1f") +
+                "K f: " +
+                (System.getSystemStats().freeMemory / 1000f).format("%.1f") +
+                "K" +
+                "\nstorage tiles: " +
+                getApp()._breadcrumbContext.tileCache()._storageTileCache._tilesInStorage.size() + "/" + settings.storageTileCacheSize,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
 

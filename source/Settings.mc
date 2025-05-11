@@ -239,7 +239,10 @@ class Settings {
     // cache the tiles in storage when they are loaded, allows for fully offline maps
     // unfortunately bufferred bitmaps cannot be stored into storage (resources and BitMapResources can be, but not the bufferred kind)
     // so we need to store the result of makeImageRequest or makeWebRequest
-    var cacheTilesInStorage as Boolean = true;
+    var cacheTilesInStorage as Boolean = true; // TODO add support to settings
+    // annoyingly we seem to run into oom errors before the storage is full (since we have to store the known tiles in a dictionary)
+    // max I tested too was ~400 caused OOM, then another test at 350 also failed, though later
+    var storageTileCacheSize as Number = 300; // TODO add support to settings (need to ensure this is guessed when tile cache size changes)
     var trackColour as Number = Graphics.COLOR_GREEN;
     var elevationColour as Number = Graphics.COLOR_ORANGE;
     var userColour as Number = Graphics.COLOR_ORANGE;

@@ -5,6 +5,7 @@ import Toybox.Time;
 
 const FLOAT_MIN = -340282346638528859811704183484516925440.0;
 const FLOAT_MAX = 340282346638528859811704183484516925440.0;
+const NUMBER_MAX = 0x7FFFFFFF;
 
 (:release)
 function isSimulator() as Boolean {

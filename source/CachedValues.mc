@@ -65,6 +65,10 @@ class CachedValues {
     var seedingZ as Number = -1; // -1 means not seeding
     var seedingRectanglarTopLeft as RectangularPoint = new RectangularPoint(0f, 0f, 0f);
     var seedingRectanglarBottomRight as RectangularPoint = new RectangularPoint(0f, 0f, 0f);
+    var seedingUpToTileX as Number = 0;
+    var seedingUpToTileY as Number = 0;
+    var seedingTilesOnThisLayer as Number = NUMBER_MAX;
+    var seedingTilesProgressForThisLayer as Number = 0;
 
     function atMinTileLayer() as Boolean {
         return tileZ == _settings.tileLayerMin;
@@ -675,8 +679,10 @@ class CachedValues {
 
         if (seedNextTilesToStorage()) {
             seedingZ--;
+            seedingUpToTileX = 0;
+            seedingUpToTileY = 0;
         }
-        
+
         if (seedingZ < _settings.tileLayerMin) {
             seedingZ = -1; // no more seeding
             return false;
@@ -691,33 +697,50 @@ class CachedValues {
         // find which tile we are closest to
         var firstTileX = ((seedingRectanglarTopLeft.x + originShift) / tileWidthM).toNumber();
         var firstTileY = ((originShift - seedingRectanglarTopLeft.y) / tileWidthM).toNumber();
+        // last tile is open ended range (+1)
+        var lastTileX =
+            ((seedingRectanglarBottomRight.x + originShift) / tileWidthM).toNumber() + 1;
+        var lastTileY =
+            ((originShift - seedingRectanglarBottomRight.y) / tileWidthM).toNumber() + 1;
+        var origFirstTileY = firstTileY;
 
-        var lastTileX = ((seedingRectanglarBottomRight.x + originShift) / tileWidthM).toNumber();
-        var lastTileY = ((originShift - seedingRectanglarBottomRight.y) / tileWidthM).toNumber();
+        var tilesPerXRow = lastTileX - firstTileX;
+        seedingTilesOnThisLayer = tilesPerXRow * (lastTileY - firstTileY);
+
+        // firstTileX = maxN(firstTileX, seedingUpToTileX); firstTileX cannot be capped, since it needs to start fresh on each row
+        firstTileY = maxN(firstTileY, seedingUpToTileY);
+
+        seedingTilesProgressForThisLayer =
+            tilesPerXRow * (firstTileY - origFirstTileY) + tilesPerXRow - (lastTileX - maxN(firstTileX, seedingUpToTileX));
 
         var tileCache = getApp()._breadcrumbContext.tileCache();
 
         // we do not want to get a massive for loop that we then get killed by the watchdog
         // we also might not even fetch a tile, we need to wait until the previous set have responded
         // the we can move onto fetching the next set of tiles
-        // the storage could also be very small, so we need to keep this number small 
-        // otherwsie we will 
+        // the storage could also be very small, so we need to keep this number small
+        // otherwsie we will
         // * try and download 10 tile to storage
         // * only fit the last 9 tiles in storage
         // * then we do not have all 10, so we will start again
         // ideally we would progress the storage seed based on the web handler responding with a tile
-        var maxTilesAtATime = 1000;
+        var maxTilesAtATime = 10;
+        maxTilesAtATime = minN(maxTilesAtATime, _settings.storageTileCacheSize);
 
-        if (haveAllTiles(firstTileX, firstTileY, lastTileX, lastTileY, maxTilesAtATime)) {
+        if (haveAllTilesForLayer(firstTileX, firstTileY, lastTileX, lastTileY, maxTilesAtATime)) {
             return true;
         }
 
         var tileStarted = 0;
-        for (var x = firstTileX; x < lastTileX; ++x) {
-            for (var y = firstTileY; y < lastTileY; ++y) {
+        for (var y = firstTileY; y < lastTileY; ++y) {
+            for (
+                var x = y == firstTileY ? maxN(firstTileX, seedingUpToTileX) : firstTileX;
+                x < lastTileX;
+                ++x
+            ) {
                 ++tileStarted;
                 var tileKey = new TileKey(x, y, seedingZ);
-                logD("seeding storage tile: " + tileKey);
+                // logD("seeding storage tile: " + tileKey);
                 tileCache.seedTileToStorage(tileKey);
 
                 if (tileStarted >= maxTilesAtATime) {
@@ -729,7 +752,7 @@ class CachedValues {
         return false;
     }
 
-    function haveAllTiles(
+    function haveAllTilesForLayer(
         firstTileX as Number,
         firstTileY as Number,
         lastTileX as Number,
@@ -740,8 +763,12 @@ class CachedValues {
 
         var tileCache = getApp()._breadcrumbContext.tileCache();
 
-        for (var x = firstTileX; x < lastTileX; ++x) {
-            for (var y = firstTileY; y < lastTileY; ++y) {
+        for (var y = firstTileY; y < lastTileY; ++y) {
+            for (
+                var x = y == firstTileY ? maxN(firstTileX, seedingUpToTileX) : firstTileX;
+                x < lastTileX;
+                ++x
+            ) {
                 ++tileChecked;
                 var tileKey = new TileKey(x, y, seedingZ);
                 if (!tileCache._storageTileCache.haveTile(tileKey)) {
@@ -749,8 +776,12 @@ class CachedValues {
                     return false;
                 }
 
+                // we have the tile, move our progress forward
+                seedingUpToTileX = x;
+                seedingUpToTileY = y;
+
                 if (tileChecked >= maxTilesAtATime) {
-                    return true;
+                    return false; // we have moved or progress, but still do not ahve all the tiles yet
                 }
             }
         }

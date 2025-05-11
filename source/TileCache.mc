@@ -70,12 +70,10 @@ class TileKey {
 class Tile {
     var lastUsed as Number;
     var bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource or Null;
-    var storageIndex as Number?;
 
     function initialize() {
         self.lastUsed = Time.now().value();
         self.bitmap = null;
-        self.storageIndex = null;
     }
 
     function setBitmap(bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource) as Void {
@@ -84,10 +82,6 @@ class Tile {
 
     function markUsed() as Void {
         lastUsed = Time.now().value();
-    }
-
-    function setStorageIndex(storageIndex as Number) as Void {
-        self.storageIndex = storageIndex;
     }
 }
 
@@ -310,19 +304,29 @@ class StorageTileCache {
     // the Storage module does not allow  querying the current keys, so we would have to query every possible tile to get the oldest an be able to remove
     // so we will store what tiles we know exist, and be able to purge them ourselves
     // layout is:
-    // {<tilekeystring>: {"lastUsed": <epoch>}}
-    // value is a dictionary for forwards compat, we will likely add more than just "lastUsed"
-    var _tilesInStorage as Dictionary<String, Dictionary<String, Number> > = {};
+    // {<tilekeystring>: <lastUsedEpoch>}
+    // we have to optimise this to just contain "lastUsed", otherwise it takes up too much memory, and we go over the 32KB limit for values
+    var _settings as Settings;
+    var _tilesInStorage as Dictionary<String, Number> = {};
 
-    function initialize() {
+    function initialize(settings as Settings) {
+        _settings = settings;
         var tiles = Storage.getValue(TILES_KEY);
         if (tiles != null) {
-            _tilesInStorage = tiles as Dictionary<String, Dictionary<String, Number> >;
+            _tilesInStorage = tiles as Dictionary<String, Number>;
         }
     }
 
     function get(tileKey as TileKey) as Dictionary or WatchUi.BitmapResource or Null {
-        return Storage.getValue(tileKey.toString());
+        var tileKeyStr = tileKey.toString();
+        
+        if (!_tilesInStorage.hasKey(tileKeyStr)) {
+            return null;
+        }
+
+        _tilesInStorage[tileKeyStr] = Time.now().value();
+        updateStorageValue(TILES_KEY, _tilesInStorage);
+        return Storage.getValue(tileKeyStr);
     }
 
     function haveTile(tileKey as TileKey) as Boolean {
@@ -336,9 +340,9 @@ class StorageTileCache {
         try {
             var tileKeyStr = tileKey.toString();
             // update our tracking first, we do not want to loose tiles because we stored them, but could then not update the tracking
-            _tilesInStorage[tileKeyStr] = { "lastUsed" => Time.now().value() };
-            Storage.setValue(TILES_KEY, _tilesInStorage);
-            Application.Storage.setValue(tileKeyStr, data);
+            _tilesInStorage[tileKeyStr] = Time.now().value();
+            updateStorageValue(TILES_KEY, _tilesInStorage);
+            updateStorageValue(tileKeyStr, data);
         } catch (e) {
             if (e instanceof Lang.StorageFullException) {
                 // we expect storage to get full at some point, but there seems to be no way to get the size of the storage,
@@ -355,6 +359,12 @@ class StorageTileCache {
             logE("failed tile storage add: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
         }
+
+        if (_tilesInStorage.size() > _settings.storageTileCacheSize) {
+            // Does this ever need to do more than one pass? Saw it in the sim early on where it was higher than storage cache size, but never again.
+            // do not wat to do a while loop, since it could go for a long time and trigger watchdog
+            evictLeastRecentlyUsedTile();
+        }
     }
 
     function evictLeastRecentlyUsedTile() as Void {
@@ -366,8 +376,7 @@ class StorageTileCache {
         var keys = _tilesInStorage.keys();
         for (var i = 0; i < keys.size(); i++) {
             var key = keys[i];
-            var tile = _tilesInStorage[key];
-            var lastUsed = tile["lastUsed"];
+            var lastUsed = _tilesInStorage[key];
             if (oldestTime == null || oldestTime > lastUsed) {
                 oldestTime = lastUsed;
                 oldestKey = key;
@@ -377,10 +386,10 @@ class StorageTileCache {
         if (oldestKey != null) {
             Storage.deleteValue(oldestKey);
             _tilesInStorage.remove(oldestKey);
-            System.println("Evicted tile " + oldestKey + " from storage cache");
+            // System.println("Evicted tile " + oldestKey + " from storage cache");
         }
 
-        Storage.setValue(TILES_KEY, _tilesInStorage);
+        updateStorageValue(TILES_KEY, _tilesInStorage);
     }
 
     function clearValues() as Void {
@@ -389,7 +398,16 @@ class StorageTileCache {
             var key = keys[i];
             Storage.deleteValue(key);
         }
-        Storage.setValue(TILES_KEY, {});
+        updateStorageValue(TILES_KEY, {});
+    }
+
+    function updateStorageValue(key as String, value)
+    {
+        // when just doing Storage.setValue I found I was getting OOM memory errors
+        // so clear the last value first (it hopefully gets garbage colected)
+        // then set the new value
+        Storage.deleteValue(key);
+        Storage.setValue(key, value);
     }
 }
 
@@ -403,7 +421,7 @@ class TileCache {
     var _misses as Number = 0;
     // Ignore any tile adds that do not have this version (allows outstanding web requests to be ignored once they are handled)
     var _tileCacheVersion as Number = 0;
-    var _storageTileCache as StorageTileCache = new StorageTileCache();
+    var _storageTileCache as StorageTileCache;
 
     function initialize(
         webRequestHandler as WebRequestHandler,
@@ -414,6 +432,7 @@ class TileCache {
         _cachedValues = cachedValues;
         _webRequestHandler = webRequestHandler;
         _internalCache = {};
+        _storageTileCache = new StorageTileCache(_settings);
 
         // note: these need to match whats in the app
         // would like tho use the bitmaps colour pallet, but we cannot :( because it erros with
@@ -511,6 +530,10 @@ class TileCache {
     public function clearValues() as Void {
         _internalCache = {};
         _tileCacheVersion++;
+        // whenever we purge the tile cache it is usually because the tile server properties have changed, safest to nuke the storage cache too
+        // though sme times its when the in memory tile cache size changes
+        // users should not be modifiying the tile settings in any way, otherwise the storage will also be out of date (eg. when tile size or tile url changes)
+        _storageTileCache.clearValues(); 
     }
 
     // loads a tile into the cache

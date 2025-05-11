@@ -257,6 +257,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 // this is not perfect, some web requests could be about to complete and add a tile to the cache
                 // maybe we should go into a backoff period? or just allow manual purge from phone app for if something goes wrong
                 // currently tiles have no expiery
+                _breadcrumbContext.tileCache()._storageTileCache.clearValues();
                 _breadcrumbContext.settings().clearTileCache();
                 _breadcrumbContext.settings().clearPendingWebRequests();
                 return;

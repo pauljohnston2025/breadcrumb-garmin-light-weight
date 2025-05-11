@@ -32,6 +32,12 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
             return false;
         }
 
+        if (cachedValues.seedingZ > -1)
+        {
+            // we are displaying the tile seed screen, do not allow any touch handling
+            return true;
+        }
+
         if (renderer.handleClearRoute(x, y)) {
             // returns true if it handles touches on top left
             // also blocks input if we are in the menu
