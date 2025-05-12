@@ -437,6 +437,30 @@ class SettingsMap extends Rez.Menus.SettingsMap {
     }
 }
 
+class SettingsMapStorage extends Rez.Menus.SettingsMapStorage {
+    function initialize() {
+        Rez.Menus.SettingsMapStorage.initialize();
+        rerender();
+    }
+
+    function rerender() as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        safeSetToggle(me, :settingsMapStorageCacheTilesInStorage, settings.cacheTilesInStorage);
+        safeSetToggle(me, :settingsMapStorageStorageMapTilesOnly, settings.storageMapTilesOnly);
+        safeSetSubLabel(
+            me,
+            :settingsMapStorageStorageTileCacheSize,
+            settings.storageTileCacheSize.toString()
+        );
+        var cacheSize =
+            "" +
+            getApp()._breadcrumbContext.tileCache()._storageTileCache._tilesInStorage.size() +
+            "/" +
+            settings.storageTileCacheSize;
+        safeSetSubLabel(me, :settingsMapStorageCacheCurrentArea, cacheSize);
+    }
+}
+
 class SettingsMapDisabled extends Rez.Menus.SettingsMapDisabled {
     function initialize() {
         Rez.Menus.SettingsMapDisabled.initialize();
@@ -817,6 +841,16 @@ class ClearCachedTilesDelegate extends WatchUi.ConfirmationDelegate {
         if (response == WatchUi.CONFIRM_YES) {
             getApp()._breadcrumbContext.tileCache()._storageTileCache.clearValues();
             getApp()._breadcrumbContext.tileCache().clearValues(); // also clear the tile cache, it case it pulled from our storage
+
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop confirmation
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop map storage view
+            var view = new $.SettingsMapStorage();
+            WatchUi.pushView(
+                view,
+                new $.SettingsMapStorageDelegate(view),
+                WatchUi.SLIDE_IMMEDIATE
+            ); // replace with new updated map storage view
+            WatchUi.pushView(new DummyView(), null, WatchUi.SLIDE_IMMEDIATE); // push dummy view for the confirmation to pop
         }
 
         return true; // we always handle it
@@ -1400,11 +1434,43 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
                 new $.SettingsMapAttributionDelegate(view),
                 WatchUi.SLIDE_IMMEDIATE
             );
-        } else if (itemId == :settingsMapCacheCurrentArea) {
+        } else if (itemId == :settingsMapStorageSettings) {
+            var view = new SettingsMapStorage();
+            WatchUi.pushView(view, new $.SettingsMapStorageDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        }
+    }
+}
+
+class SettingsMapStorageDelegate extends WatchUi.Menu2InputDelegate {
+    var view as SettingsMapStorage;
+    function initialize(view as SettingsMapStorage) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.view = view;
+    }
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var itemId = item.getId();
+        if (itemId == :settingsMapStorageCacheTilesInStorage) {
+            settings.toggleCacheTilesInStorage();
+            view.rerender();
+        } else if (itemId == :settingsMapStorageStorageMapTilesOnly) {
+            settings.toggleStorageMapTilesOnly();
+            view.rerender();
+        } else if (itemId == :settingsMapStorageStorageTileCacheSize) {
+            startPicker(
+                new SettingsNumberPicker(
+                    settings.method(:setStorageTileCacheSize),
+                    settings.storageTileCacheSize
+                ),
+                view
+            );
+        } else if (itemId == :settingsMapStorageCacheCurrentArea) {
             getApp()._breadcrumbContext.cachedValues().startCacheCurrentMapArea();
-        } else if (itemId == :settingsMapCancelCacheDownload) {
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMapStorageCancelCacheDownload) {
             getApp()._breadcrumbContext.cachedValues().cancelCacheCurrentMapArea();
-        } else if (itemId == :settingsMapClearCachedTiles) {
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMapStorageClearCachedTiles) {
             var dialog = new WatchUi.Confirmation("Clear all cached tiles?");
             WatchUi.pushView(dialog, new ClearCachedTilesDelegate(), WatchUi.SLIDE_IMMEDIATE);
         }

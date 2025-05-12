@@ -245,7 +245,7 @@ class Settings {
     // storage seems to fill up around 200 with 192*192 tiles from imagerequests
     // can be much larger for companion app is used, since the tiles can be much smaller with TILE_DATA_TYPE_BASE64_FULL_COLOUR
     // saw a crash around 513 tiles, which would be from our internal array StorageTileCache._tilesInStorage
-    var storageTileCacheSize as Number = 350; // TODO add support to settings
+    var storageTileCacheSize as Number = 350;
     var trackColour as Number = Graphics.COLOR_GREEN;
     var elevationColour as Number = Graphics.COLOR_ORANGE;
     var userColour as Number = Graphics.COLOR_ORANGE;

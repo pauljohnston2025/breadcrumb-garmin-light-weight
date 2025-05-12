@@ -156,6 +156,19 @@
             <settingConfig type="boolean"/>
         </setting>
     </group>
+    <group id="mapStorageSettings" title="@Strings.mapStorageSettingsTitle" enableIfTrue="@Properties.mapEnabled">
+        <setting propertyKey="@Properties.cacheTilesInStorage" title="@Strings.cacheTilesInStorageTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.storageMapTilesOnly" title="@Strings.storageMapTilesOnlyTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+
+        <setting propertyKey="@Properties.storageTileCacheSize" title="@Strings.storageTileCacheSizeTitle" prompt="@Strings.storageTileCacheSizePrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+    </group>
 
     <group id="offTrackAlertsGroup" title="@Strings.offTrackAlertsGroupTitle" description="@Strings.enableOffTrackAlertsDescription">
         <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle" prompt="@Strings.offTrackAlertsDistanceMPrompt">
