@@ -95,6 +95,8 @@ class WebRequestHandleWrapper {
                 webHandler._settings.tileUrl.equals(COMPANION_APP_TILE_URL)
             ) {
                 // todo only send this on certain errors, and only probbaly only after some limit?
+                // we could also send a toast, but the transmit allows us to open the app easier on the phone
+                // even though the phone side is a bit of a hack (ConnectIQMessageReceiver cannot parse the data), it's still better than having to manualy open the app.
                 webHandler.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
             }
 

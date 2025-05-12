@@ -587,6 +587,8 @@ class Settings {
 
         // prompts user to open the app
         if (tileUrl.equals(COMPANION_APP_TILE_URL)) {
+            // we could also send a toast, but the transmit allows us to open the app easier on the phone
+            // even though the phone side is a bit of a hack (ConnectIQMessageReceiver cannot parse the data), it's still better than having to manualy open the app.
             transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
         }
     }
@@ -720,7 +722,7 @@ class Settings {
         setMapEnabledRaw(_mapEnabled);
         setValue("mapEnabled", mapEnabled);
     }
-    
+
     function setMapEnabledRaw(_mapEnabled as Boolean) as Void {
         mapEnabled = _mapEnabled;
 
@@ -734,6 +736,8 @@ class Settings {
 
         // prompts user to open the app
         if (tileUrl.equals(COMPANION_APP_TILE_URL)) {
+            // we could also send a toast, but the transmit allows us to open the app easier on the phone
+            // even though the phone side is a bit of a hack (ConnectIQMessageReceiver cannot parse the data), it's still better than having to manualy open the app.
             transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
         }
     }
@@ -746,7 +750,7 @@ class Settings {
             clearStorageTiles();
         }
     }
-    
+
     function setStorageMapTilesOnly(value as Boolean) as Void {
         storageMapTilesOnly = value;
         setValue("storageMapTilesOnly", storageMapTilesOnly);
@@ -951,7 +955,7 @@ class Settings {
 
         setMapEnabled(true);
     }
-    
+
     function toggleCacheTilesInStorage() as Void {
         if (cacheTilesInStorage) {
             setCacheTilesInStorage(false);
@@ -960,7 +964,7 @@ class Settings {
 
         setCacheTilesInStorage(true);
     }
-    
+
     function toggleStorageMapTilesOnly() as Void {
         if (storageMapTilesOnly) {
             setStorageMapTilesOnly(false);
@@ -1067,7 +1071,7 @@ class Settings {
             context._tileCache.clearValues();
         }
     }
-    
+
     function clearStorageTiles() as Void {
         // symbol not found if the loadSettings method is called before we set tile cache
         // should n ot happen unless onsettingschange is called before initalise finishes
