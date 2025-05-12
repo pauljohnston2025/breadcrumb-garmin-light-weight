@@ -104,6 +104,7 @@
     <string id="displayLatLongTitle">Display Lat/Long</string>
     <string id="scaleRestrictedToTileLayersTitle">Restrict Scale To Tile Layers</string>
     <string id="cacheCurrentArea">Cache Current Area</string>
+    <string id="cancelCacheDownload">Cancel Cache Download</string>
     <string id="clearCachedTiles">Clear Cached Tiles</string>
 
     <string id="selectedRoute">Selected route</string>

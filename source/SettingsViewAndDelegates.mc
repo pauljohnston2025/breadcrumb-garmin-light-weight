@@ -1397,6 +1397,8 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
             );
         } else if (itemId == :settingsMapCacheCurrentArea) {
             getApp()._breadcrumbContext.cachedValues().startCacheCurrentMapArea();
+        } else if (itemId == :settingsMapCancelCacheDownload) {
+            getApp()._breadcrumbContext.cachedValues().cancelCacheCurrentMapArea();
         } else if (itemId == :settingsMapClearCachedTiles) {
             var dialog = new WatchUi.Confirmation("Clear all cached tiles?");
             WatchUi.pushView(dialog, new ClearCachedTilesDelegate(), WatchUi.SLIDE_IMMEDIATE);

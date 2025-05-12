@@ -16,6 +16,7 @@
     <menu-item id="settingsMapFixedLongitude" label="@Strings.fixedLongitude"/>
     <toggle-menu-item id="settingsMapScaleRestrictedToTileLayers" label="@Strings.scaleRestrictedToTileLayersTitle"/>
     <menu-item id="settingsMapCacheCurrentArea" label="@Strings.cacheCurrentArea"/>
+    <menu-item id="settingsMapCancelCacheDownload" label="@Strings.cancelCacheDownload"/>
     <menu-item id="settingsMapClearCachedTiles" label="@Strings.clearCachedTiles"/>
     <menu-item id="settingsMapAttribution" label="@Strings.attribution"/>
 </menu2>

@@ -568,8 +568,33 @@ class BreadcrumbRenderer {
 
         var xHalf = _cachedValues.xHalf; // local lookup faster
         var yHalf = _cachedValues.yHalf; // local lookup faster
-        dc.setColor(settings.uiColour, Graphics.COLOR_ORANGE);
+        var breadcrumbContext = getApp()._breadcrumbContext;
+        dc.setColor(settings.uiColour, Graphics.COLOR_DK_GREEN);
         dc.clear();
+
+        var lineLength = 20;
+        var halfLineLength = lineLength / 2;
+        var lineFromEdge = 10;
+
+        // cross at the top of the screen to cancel download
+        // could just do this with an X? but that looks a bit weird
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_DK_GREEN);
+        dc.setPenWidth(8);
+        dc.drawLine(
+            xHalf - halfLineLength,
+            lineFromEdge,
+            xHalf + halfLineLength,
+            lineFromEdge + lineLength
+        );
+        dc.drawLine(
+            xHalf - halfLineLength,
+            lineFromEdge + lineLength,
+            xHalf + halfLineLength,
+            lineFromEdge
+        );
+
+        dc.setColor(settings.uiColour, Graphics.COLOR_DK_GREEN);
+
         dc.drawText(
             xHalf,
             yHalf,
@@ -580,13 +605,31 @@ class BreadcrumbRenderer {
                 _cachedValues.seedingTilesProgressForThisLayer +
                 "/" +
                 _cachedValues.seedingTilesOnThisLayer +
+                "  (" +
+                (
+                    (_cachedValues.seedingTilesProgressForThisLayer /
+                    _cachedValues.seedingTilesOnThisLayer.toFloat()) * 100
+                ).format("%.1f") +
+                "%)" +
+                "\npending web: " +
+                breadcrumbContext.webRequestHandler().pendingCount() +
+                "\noutstanding: " +
+                breadcrumbContext.webRequestHandler().outstandingCount() +
+                "\nlast web res: " +
+                breadcrumbContext.webRequestHandler().lastResult() +
+                "\nweb err: " +
+                breadcrumbContext.webRequestHandler().errorCount() +
+                " web ok: " +
+                breadcrumbContext.webRequestHandler().successCount() +
                 "\nmem: " +
                 (System.getSystemStats().usedMemory / 1000f).format("%.1f") +
                 "K f: " +
                 (System.getSystemStats().freeMemory / 1000f).format("%.1f") +
                 "K" +
                 "\nstorage tiles: " +
-                getApp()._breadcrumbContext.tileCache()._storageTileCache._tilesInStorage.size() + "/" + settings.storageTileCacheSize,
+                breadcrumbContext.tileCache()._storageTileCache._tilesInStorage.size() +
+                "/" +
+                settings.storageTileCacheSize,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
 

@@ -601,7 +601,7 @@ class TileCache {
     // seedTileToStorage only puts the tile into storage
     function seedTileToStorage(tileKey as TileKey) as Void {
         if (_storageTileCache.haveTile(tileKey)) {
-            // we already have the tile
+            // we already have the tile (it might be errored, but we have it)
             return;
         }
 

@@ -28,13 +28,20 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
         var settings = _breadcrumbContext.settings();
         var cachedValues = _breadcrumbContext.cachedValues();
 
+        var hitboxSize = renderer.hitboxSize;
+        var halfHitboxSize = hitboxSize / 2.0f;
+
         if (settings.uiMode == UI_MODE_NONE) {
             return false;
         }
 
         if (cachedValues.seedingZ > -1)
         {
-            // we are displaying the tile seed screen, do not allow any touch handling
+            // we are displaying the tile seed screen, only allow cancel
+            if (y < hitboxSize) {
+                // top of screen
+                cachedValues.cancelCacheCurrentMapArea();
+            }
             return true;
         }
 
@@ -43,9 +50,6 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
             // also blocks input if we are in the menu
             return true;
         }
-
-        var hitboxSize = renderer.hitboxSize;
-        var halfHitboxSize = hitboxSize / 2.0f;
 
         // perhaps put this into new class to handle touch events, and have a
         // renderer for that ui would allow us to switch out ui and handle touched

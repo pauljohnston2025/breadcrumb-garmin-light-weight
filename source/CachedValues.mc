@@ -648,6 +648,16 @@ class CachedValues {
         }
     }
 
+    function cancelCacheCurrentMapArea() as Void {
+        seedingZ = -1;
+        seedingRectanglarTopLeft = new RectangularPoint(0f, 0f, 0f);
+        seedingRectanglarBottomRight = new RectangularPoint(0f, 0f, 0f);
+        seedingUpToTileX = 0;
+        seedingUpToTileY = 0;
+        seedingTilesOnThisLayer = NUMBER_MAX;
+        seedingTilesProgressForThisLayer = 0;
+    }
+
     function startCacheCurrentMapArea() as Void {
         if (!_settings.mapEnabled) {
             return;
@@ -684,7 +694,8 @@ class CachedValues {
         }
 
         if (seedingZ < _settings.tileLayerMin) {
-            seedingZ = -1; // no more seeding
+            // no more seeding
+            cancelCacheCurrentMapArea();
             return false;
         }
 
