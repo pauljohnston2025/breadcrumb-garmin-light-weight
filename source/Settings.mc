@@ -243,7 +243,7 @@ class Settings {
     // storage seems to fill up around 200 with 192*192 tiles from imagerequests
     // can be much larger for companion app is used, since the tiles can be much smaller with TILE_DATA_TYPE_BASE64_FULL_COLOUR
     // saw a crash around 513 tiles, which would be from our internal array StorageTileCache._tilesInStorage
-    var storageTileCacheSize as Number = 450; // TODO add support to settings (need to ensure this is guessed when tile cache size changes)
+    var storageTileCacheSize as Number = 350; // TODO add support to settings
     var trackColour as Number = Graphics.COLOR_GREEN;
     var elevationColour as Number = Graphics.COLOR_ORANGE;
     var userColour as Number = Graphics.COLOR_ORANGE;
@@ -482,6 +482,14 @@ class Settings {
         return maxN(1, Math.floor(perfectSize * 0.85).toNumber()); // give ourselves a bit of a buffer
     }
 
+    function maxStorageTileCacheSizeGuess() as Number {
+        // StorageTileCache._tilesInStorage is the limiting factor for companion app tiles when using TILE_DATA_TYPE_BASE64_FULL_COLOUR
+        // but storage size is the limiting factor for 192*192 image tiles
+        // since there is no way to know if we are using TILE_DATA_TYPE_BASE64_FULL_COLOUR or some other mode we will just assume its that
+        // see notes above on storageTileCacheSize variable
+        return maxTileCacheSizeGuess() * 4; // this will result in ~64 for image tiles and ~324 for companion app 64*64 tiles
+    }
+
     function updateMapChoiceChange(value as Number) as Void {
         if (value == 0) {
             // custom - leave everything alone
@@ -512,6 +520,11 @@ class Settings {
             if (tileCacheSize > tileCacheMax) {
                 logD("limiting tile cache size to: " + tileCacheMax);
                 setTileCacheSize(tileCacheMax);
+            }
+            var storageTileCacheSizeMax = maxStorageTileCacheSizeGuess();
+            if (storageTileCacheSize > storageTileCacheSizeMax) {
+                logD("limiting storage tile cache size to: " + storageTileCacheSizeMax);
+                setStorageTileCacheSize(storageTileCacheSizeMax);
             }
 
             return;
@@ -553,6 +566,11 @@ class Settings {
         if (tileCacheSize > tileCacheMax) {
             logD("limiting tile cache size to: " + tileCacheMax);
             setTileCacheSize(tileCacheMax);
+        }
+        var storageTileCacheSizeMax = maxStorageTileCacheSizeGuess();
+        if (storageTileCacheSize > storageTileCacheSizeMax) {
+            logD("limiting storage tile cache size to: " + storageTileCacheSizeMax);
+            setStorageTileCacheSize(storageTileCacheSizeMax);
         }
     }
 
@@ -674,6 +692,18 @@ class Settings {
         }
     }
 
+    function setStorageTileCacheSize(value as Number) as Void {
+        var oldStorageTileCacheSize = storageTileCacheSize;
+        storageTileCacheSize = value;
+        setValue("storageTileCacheSize", storageTileCacheSize);
+
+        if (oldStorageTileCacheSize > storageTileCacheSize) {
+            // only nuke storage tile cache if we reduce the number of tiles we can store
+            clearPendingWebRequests();
+            clearStorageTiles(); // clears the tile storage for us
+        }
+    }
+
     function setTileCachePadding(value as Number) as Void {
         tileCachePadding = value;
         setValue("tileCachePadding", tileCachePadding);
@@ -688,6 +718,7 @@ class Settings {
         setMapEnabledRaw(_mapEnabled);
         setValue("mapEnabled", mapEnabled);
     }
+    
     function setMapEnabledRaw(_mapEnabled as Boolean) as Void {
         mapEnabled = _mapEnabled;
 
@@ -702,6 +733,15 @@ class Settings {
         // prompts user to open the app
         if (tileUrl.equals(COMPANION_APP_TILE_URL)) {
             transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
+        }
+    }
+
+    function setCacheTilesInStorage(value as Boolean) as Void {
+        cacheTilesInStorage = value;
+        setValue("cacheTilesInStorage", cacheTilesInStorage);
+
+        if (!cacheTilesInStorage) {
+            clearStorageTiles();
         }
     }
 
@@ -904,6 +944,15 @@ class Settings {
 
         setMapEnabled(true);
     }
+    
+    function toggleCacheTilesInStorage() as Void {
+        if (cacheTilesInStorage) {
+            setCacheTilesInStorage(false);
+            return;
+        }
+
+        setCacheTilesInStorage(true);
+    }
 
     function toggleDrawLineToClosestPoint() as Void {
         if (drawLineToClosestPoint) {
@@ -1000,6 +1049,22 @@ class Settings {
             context._tileCache instanceof TileCache
         ) {
             context._tileCache.clearValues();
+        }
+    }
+    
+    function clearStorageTiles() as Void {
+        // symbol not found if the loadSettings method is called before we set tile cache
+        // should n ot happen unless onsettingschange is called before initalise finishes
+        // it alwasys has the symbol, but it might not be initalised yet
+        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
+        var context = getApp()._breadcrumbContext;
+        if (
+            (context != null and context instanceof BreadcrumbContext) &&
+            context has :_tileCache &&
+            context._tileCache != null &&
+            context._tileCache instanceof TileCache
+        ) {
+            context._tileCache._storageTileCache.clearValues();
         }
     }
 
@@ -1414,10 +1479,12 @@ class Settings {
         setTileLayerMax(defaultSettings.tileLayerMax);
         setTileLayerMin(defaultSettings.tileLayerMin);
         setTileCacheSize(defaultSettings.tileCacheSize);
+        setStorageTileCacheSize(defaultSettings.storageTileCacheSize);
         setTileCachePadding(defaultSettings.tileCachePadding);
         setRecalculateIntervalS(defaultSettings.recalculateIntervalS);
         setMode(defaultSettings.mode);
         setMapEnabled(defaultSettings.mapEnabled);
+        setCacheTilesInStorage(defaultSettings.cacheTilesInStorage);
         setDrawLineToClosestPoint(defaultSettings.drawLineToClosestPoint);
         setDisplayLatLong(defaultSettings.displayLatLong);
         setScaleRestrictedToTileLayers(defaultSettings.scaleRestrictedToTileLayers);
@@ -1475,10 +1542,12 @@ class Settings {
             "tileLayerMax" => tileLayerMax,
             "tileLayerMin" => tileLayerMin,
             "tileCacheSize" => tileCacheSize,
+            "storageTileCacheSize" => storageTileCacheSize,
             "tileCachePadding" => tileCachePadding,
             "recalculateIntervalS" => recalculateIntervalS,
             "mode" => mode,
             "mapEnabled" => mapEnabled,
+            "cacheTilesInStorage" => cacheTilesInStorage,
             "drawLineToClosestPoint" => drawLineToClosestPoint,
             "displayLatLong" => displayLatLong,
             "scaleRestrictedToTileLayers" => scaleRestrictedToTileLayers,
@@ -1555,11 +1624,13 @@ class Settings {
         }
 
         tileCacheSize = parseNumber("tileCacheSize", tileCacheSize);
+        storageTileCacheSize = parseNumber("storageTileCacheSize", storageTileCacheSize);
         tileCachePadding = parseNumber("tileCachePadding", tileCachePadding);
         recalculateIntervalS = parseNumber("recalculateIntervalS", recalculateIntervalS);
         mode = parseNumber("mode", mode);
         mapEnabled = parseBool("mapEnabled", mapEnabled);
         setMapEnabledRaw(mapEnabled); // prompt for app to open if needed
+        cacheTilesInStorage = parseBool("cacheTilesInStorage", cacheTilesInStorage);
         drawLineToClosestPoint = parseBool("drawLineToClosestPoint", drawLineToClosestPoint);
         displayLatLong = parseBool("displayLatLong", displayLatLong);
         scaleRestrictedToTileLayers = parseBool(
@@ -1671,7 +1742,9 @@ class Settings {
         var oldFullTileSize = fullTileSize;
         var oldScaledTileSize = scaledTileSize;
         var oldTileCacheSize = tileCacheSize;
+        var oldStorageTileCacheSize = storageTileCacheSize;
         var oldMapEnabled = mapEnabled;
+        var oldCacheTilesInStorage = cacheTilesInStorage;
         loadSettings();
         updateCachedValues();
         updateViewSettings();
@@ -1709,10 +1782,16 @@ class Settings {
             // only nuke tile cache if we reduce the number of tiles we can store
             setTileCacheSize(tileCacheSize);
         }
+        if (oldStorageTileCacheSize > storageTileCacheSize) {
+            // only nuke tile cache if we reduce the number of tiles we can store
+            setStorageTileCacheSize(storageTileCacheSize);
+        }
         if (oldMapEnabled != mapEnabled) {
             setMapEnabled(mapEnabled);
         }
-
+        if (oldCacheTilesInStorage != cacheTilesInStorage) {
+            setCacheTilesInStorage(cacheTilesInStorage);
+        }
         if (oldMapChoice != mapChoice) {
             setMapChoice(mapChoice);
         }
