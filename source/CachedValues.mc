@@ -776,12 +776,13 @@ class CachedValues {
                     return false;
                 }
 
-                // we have the tile, move our progress forward
+                // we have the tile (may be a bad response, but we have attempted it in the past), move our progress forward
+                // users should remove tile cache and start from scratch if they want to retry failed tiles
                 seedingUpToTileX = x;
                 seedingUpToTileY = y;
 
                 if (tileChecked >= maxTilesAtATime) {
-                    return false; // we have moved or progress, but still do not ahve all the tiles yet
+                    return false; // we have moved our progress, but still do not have all the tiles yet
                 }
             }
         }

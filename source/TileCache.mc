@@ -36,6 +36,35 @@ class TileKey {
         return x.toString() + "-" + y + "-" + z;
     }
 
+    function optimisedHashKey() as String {
+        var string = toString();
+
+        // we can base64 encode and get a shorter unique string
+        // toString() contains '-' characters, and base64 does not have hyphens
+        if (string.length() <= 12) {
+            return string;
+        }
+
+        var byteArr = new [9]b;
+        byteArr.encodeNumber(x, Lang.NUMBER_FORMAT_SINT32, {
+            :offset => 0,
+            :endianness => Lang.ENDIAN_BIG,
+        });
+        byteArr.encodeNumber(y, Lang.NUMBER_FORMAT_SINT32, {
+            :offset => 4,
+            :endianness => Lang.ENDIAN_BIG,
+        });
+        byteArr.encodeNumber(z, Lang.NUMBER_FORMAT_UINT8, {
+            :offset => 8,
+            :endianness => Lang.ENDIAN_BIG,
+        });
+        return StringUtil.convertEncodedString(byteArr, {
+            :fromRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
+            :toRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
+            :encoding => StringUtil.CHAR_ENCODING_UTF8,
+        });
+    }
+
     function hashCode() as Number {
         return x + y + z;
     }
@@ -101,9 +130,15 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         responseCode as Number,
         data as Dictionary or String or Iterator or Null
     ) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var cachedValues = getApp()._breadcrumbContext.cachedValues();
+
         if (responseCode != 200) {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
             System.println("failed with: " + responseCode);
+            if (settings.cacheTilesInStorage || cachedValues.seedingZ > -1) {
+                _tileCache.addToStorage(_tileKey, responseCode, null);
+            }
             return;
         }
 
@@ -112,10 +147,8 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             return;
         }
 
-        var settings = getApp()._breadcrumbContext.settings();
-        var cachedValues = getApp()._breadcrumbContext.cachedValues();
         if (settings.cacheTilesInStorage || cachedValues.seedingZ > -1) {
-            _tileCache.addToStorage(_tileKey, data);
+            _tileCache.addToStorage(_tileKey, responseCode, data);
         }
 
         // System.print("data: " + data);
@@ -205,9 +238,15 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         responseCode as Number,
         data as WatchUi.BitmapResource or Graphics.BitmapReference or Null
     ) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var cachedValues = getApp()._breadcrumbContext.cachedValues();
+
         if (responseCode != 200) {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
             System.println("failed with: " + responseCode);
+            if (settings.cacheTilesInStorage || cachedValues.seedingZ > -1) {
+                _tileCache.addToStorage(_tileKey, responseCode, null);
+            }
             return;
         }
 
@@ -226,11 +265,8 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             data = data.get();
         }
 
-        var settings = getApp()._breadcrumbContext.settings();
-        var cachedValues = getApp()._breadcrumbContext.cachedValues();
-
         if (settings.cacheTilesInStorage || cachedValues.seedingZ > -1) {
-            _tileCache.addToStorage(_tileKey, data);
+            _tileCache.addToStorage(_tileKey, responseCode, data);
         }
 
         // we have to downsample the tile, not recomendedd, as this mean we will have to request the same tile multiple times (cant save big tiles around anywhere)
@@ -298,51 +334,65 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 }
 
 const TILES_KEY = "tiles";
+const TILES_VERION_KEY = "tilesVersion";
+const TILES_STORAGE_VERSION = 0; // udate this every time the tile format on disk changes, so we can purge of the old tiles on startup
+
+// tile format on disk is [<lastUsedEpoch>, <httpReponseCode>, <tileData>]
+typedef StorageTileDataType as [Number, Number, Dictionary or WatchUi.BitmapResource or Null];
 
 // raw we request tiles stored directly on the watch for future use
 class StorageTileCache {
     // the Storage module does not allow  querying the current keys, so we would have to query every possible tile to get the oldest an be able to remove
     // so we will store what tiles we know exist, and be able to purge them ourselves
-    // layout is:
-    // {<tilekeystring>: <lastUsedEpoch>}
-    // we have to optimise this to just contain "lastUsed", otherwise it takes up too much memory, and we go over the 32KB limit for values
+    // we have to optimise this to just contain a list of tile keys, otherwise it takes up too much memory
+    // all the metadata about a tile is stored in the tile key
     var _settings as Settings;
-    var _tilesInStorage as Dictionary<String, Number> = {};
+    var _tilesInStorage as Array<String> = [];
 
     function initialize(settings as Settings) {
         _settings = settings;
         var tiles = Storage.getValue(TILES_KEY);
         if (tiles != null) {
-            _tilesInStorage = tiles as Dictionary<String, Number>;
+            _tilesInStorage = tiles as Array<String>;
         }
+
+        var tilesVersion = Storage.getValue(TILES_VERION_KEY);
+        if (tilesVersion != null && (tilesVersion as Number) != TILES_STORAGE_VERSION) {
+            clearValues();
+        }
+        Storage.setValue(TILES_VERION_KEY, TILES_STORAGE_VERSION);
     }
 
-    function get(tileKey as TileKey) as Dictionary or WatchUi.BitmapResource or Null {
-        var tileKeyStr = tileKey.toString();
-        
-        if (!_tilesInStorage.hasKey(tileKeyStr)) {
+    function get(tileKey as TileKey) as StorageTileDataType? {
+        var tileKeyStr = tileKey.optimisedHashKey();
+
+        if (_tilesInStorage.indexOf(tileKeyStr) < 0) {
+            // we do not have the tile key
             return null;
         }
 
-        _tilesInStorage[tileKeyStr] = Time.now().value();
-        updateStorageValue(TILES_KEY, _tilesInStorage);
-        return Storage.getValue(tileKeyStr);
+        var tile = Storage.getValue(tileKeyStr);
+        tile[0] = Time.now().value();
+        Storage.setValue(tileKeyStr, tile);
+        return tile as StorageTileDataType;
     }
 
     function haveTile(tileKey as TileKey) as Boolean {
-        return _tilesInStorage.hasKey(tileKey.toString());
+        return _tilesInStorage.indexOf(tileKey.optimisedHashKey()) >= 0;
     }
 
     function addToStorage(
         tileKey as TileKey,
-        data as Dictionary or WatchUi.BitmapResource
+        responseCode as Number,
+        data as Dictionary or WatchUi.BitmapResource or Null
     ) as Void {
         try {
-            var tileKeyStr = tileKey.toString();
+            var tileKeyStr = tileKey.optimisedHashKey();
             // update our tracking first, we do not want to loose tiles because we stored them, but could then not update the tracking
-            _tilesInStorage[tileKeyStr] = Time.now().value();
-            updateStorageValue(TILES_KEY, _tilesInStorage);
-            updateStorageValue(tileKeyStr, data);
+            _tilesInStorage.add(tileKeyStr);
+            var tile = [Time.now().value(), responseCode, data];
+            Storage.setValue(TILES_KEY, _tilesInStorage);
+            Storage.setValue(tileKeyStr, tile);
         } catch (e) {
             if (e instanceof Lang.StorageFullException) {
                 // we expect storage to get full at some point, but there seems to be no way to get the size of the storage,
@@ -359,7 +409,6 @@ class StorageTileCache {
             logE("failed tile storage add: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
         }
-
         if (_tilesInStorage.size() > _settings.storageTileCacheSize) {
             // Does this ever need to do more than one pass? Saw it in the sim early on where it was higher than storage cache size, but never again.
             // do not wat to do a while loop, since it could go for a long time and trigger watchdog
@@ -373,10 +422,21 @@ class StorageTileCache {
         var oldestTime = null;
         var oldestKey = null;
 
-        var keys = _tilesInStorage.keys();
+        var keys = _tilesInStorage;
         for (var i = 0; i < keys.size(); i++) {
             var key = keys[i];
-            var lastUsed = _tilesInStorage[key];
+            // this is not ideal that we have to load all tiles in order to check when they were last used,
+            // but its better than keeping the last used time in memory and causing OOM (when we have lots of tiles in storage).
+            // this is slower, but better for memory.
+            // we could have another key where we store the array of last used times, but that is harder to manage.
+            var tile = Storage.getValue(key);
+            if (tile == null) {
+                // we do not have it in storage anymore somehow, remove this tile
+                oldestKey = key;
+                break;
+            }
+
+            var lastUsed = (tile as StorageTileDataType)[0];
             if (oldestTime == null || oldestTime > lastUsed) {
                 oldestTime = lastUsed;
                 oldestKey = key;
@@ -389,25 +449,17 @@ class StorageTileCache {
             // System.println("Evicted tile " + oldestKey + " from storage cache");
         }
 
-        updateStorageValue(TILES_KEY, _tilesInStorage);
+        Storage.setValue(TILES_KEY, _tilesInStorage);
     }
 
     function clearValues() as Void {
-        var keys = _tilesInStorage.keys();
+        var keys = _tilesInStorage;
         for (var i = 0; i < keys.size(); i++) {
             var key = keys[i];
             Storage.deleteValue(key);
         }
-        updateStorageValue(TILES_KEY, {});
-    }
-
-    function updateStorageValue(key as String, value)
-    {
-        // when just doing Storage.setValue I found I was getting OOM memory errors
-        // so clear the last value first (it hopefully gets garbage colected)
-        // then set the new value
-        Storage.deleteValue(key);
-        Storage.setValue(key, value);
+        _tilesInStorage = [];
+        Storage.setValue(TILES_KEY, _tilesInStorage);
     }
 }
 
@@ -533,7 +585,7 @@ class TileCache {
         // whenever we purge the tile cache it is usually because the tile server properties have changed, safest to nuke the storage cache too
         // though sme times its when the in memory tile cache size changes
         // users should not be modifiying the tile settings in any way, otherwise the storage will also be out of date (eg. when tile size or tile url changes)
-        _storageTileCache.clearValues(); 
+        _storageTileCache.clearValues();
     }
 
     // loads a tile into the cache
@@ -566,8 +618,9 @@ class TileCache {
             var y = tileKey.y / _cachedValues.smallTilesPerScaledTile;
             var imageReqHandler = new ImageWebTileRequestHandler(me, tileKey, _tileCacheVersion);
             var tileFromStorage = _storageTileCache.get(new TileKey(x, y, tileKey.z));
-            if (tileFromStorage != null) {
-                imageReqHandler.handle(200, tileFromStorage);
+            if (tileFromStorage != null && tileFromStorage[1] == 200) {
+                // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
+                imageReqHandler.handle(tileFromStorage[1], tileFromStorage[2]);
                 // logD("image tile loaded from storage: " + tileKey);
                 return true;
             }
@@ -598,8 +651,9 @@ class TileCache {
         // logD("small tile (companion): " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
         var jsonWebHandler = new JsonWebTileRequestHandler(me, tileKey, _tileCacheVersion);
         var tileFromStorage = _storageTileCache.get(tileKey);
-        if (tileFromStorage != null) {
-            jsonWebHandler.handle(200, tileFromStorage);
+        if (tileFromStorage != null && tileFromStorage[1] == 200) {
+            // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
+            jsonWebHandler.handle(tileFromStorage[1], tileFromStorage[2]);
             // logD("json tile loaded from storage: " + tileKey);
             return true;
         }
@@ -891,9 +945,10 @@ class TileCache {
 
     function addToStorage(
         tileKey as TileKey,
-        data as Dictionary or WatchUi.BitmapResource
+        responseCode as Number,
+        data as Dictionary or WatchUi.BitmapResource or Null
     ) as Void {
-        _storageTileCache.addToStorage(tileKey, data);
+        _storageTileCache.addToStorage(tileKey, responseCode, data);
     }
 }
 
