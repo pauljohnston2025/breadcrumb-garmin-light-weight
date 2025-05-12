@@ -136,7 +136,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         if (responseCode != 200) {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
             System.println("failed with: " + responseCode);
-            if (settings.cacheTilesInStorage || cachedValues.seedingZ > -1) {
+            if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                 _tileCache.addToStorage(_tileKey, responseCode, null);
             }
             return;
@@ -147,7 +147,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             return;
         }
 
-        if (settings.cacheTilesInStorage || cachedValues.seedingZ > -1) {
+        if (settings.cacheTilesInStorage || cachedValues.seeding()) {
             _tileCache.addToStorage(_tileKey, responseCode, data);
         }
 
@@ -244,7 +244,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         if (responseCode != 200) {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
             System.println("failed with: " + responseCode);
-            if (settings.cacheTilesInStorage || cachedValues.seedingZ > -1) {
+            if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                 _tileCache.addToStorage(_tileKey, responseCode, null);
             }
             return;
@@ -265,7 +265,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             data = data.get();
         }
 
-        if (settings.cacheTilesInStorage || cachedValues.seedingZ > -1) {
+        if (settings.cacheTilesInStorage || cachedValues.seeding()) {
             _tileCache.addToStorage(_tileKey, responseCode, data);
         }
 
@@ -622,6 +622,9 @@ class TileCache {
                 // logD("image tile loaded from storage: " + tileKey);
                 return true;
             }
+            if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
+                return false;
+            }
             var x = tileKey.x / _cachedValues.smallTilesPerScaledTile;
             var y = tileKey.y / _cachedValues.smallTilesPerScaledTile;
             // logD("large tile: " + x + ", " + y + ", " + tileKey.z);
@@ -656,6 +659,9 @@ class TileCache {
             jsonWebHandler.handle(tileFromStorage[1], tileFromStorage[2]);
             // logD("json tile loaded from storage: " + tileKey);
             return true;
+        }
+        if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
+            return false;
         }
         _webRequestHandler.add(
             new JsonRequest(

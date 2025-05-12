@@ -560,8 +560,7 @@ class BreadcrumbRenderer {
     }
 
     function renderTileSeedUi(dc as Dc) as Boolean {
-        var seedZ = _cachedValues.seedingZ;
-        if (seedZ <= -1) {
+        if (!_cachedValues.seeding()) {
             // not seeding, no ui
             return false;
         }
@@ -600,7 +599,7 @@ class BreadcrumbRenderer {
             yHalf,
             Graphics.FONT_XTINY,
             "Caching Tile Layer " +
-                seedZ +
+                _cachedValues.seedingZ +
                 " ...\n" +
                 _cachedValues.seedingTilesProgressForThisLayer +
                 "/" +
@@ -919,13 +918,17 @@ class BreadcrumbRenderer {
             // zoom view
             fvText = "S";
         }
+        if (settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_NEVER_ZOOM) {
+            // zoom view
+            fvText = "N";
+        }
         if (settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_ALWAYS_ZOOM) {
             // zoom view
             fvText = "A";
         }
-        if (settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_NEVER_ZOOM) {
+        if (settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK) {
             // zoom view
-            fvText = "N";
+            fvText = "R";
         }
         dc.drawText(
             lineFromEdge,

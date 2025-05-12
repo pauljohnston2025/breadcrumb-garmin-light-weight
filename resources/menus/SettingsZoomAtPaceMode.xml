@@ -3,4 +3,5 @@
     <menu-item id="settingsZoomAtPaceModeStopped" label="@Strings.zoomAtPaceModeStopped"/>
     <menu-item id="settingsZoomAtPaceModeNever" label="@Strings.zoomAtPaceModeNever"/>
     <menu-item id="settingsZoomAtPaceModeAlways" label="@Strings.zoomAtPaceModeAlways"/>
+    <menu-item id="settingsZoomAtPaceModeRoutesWithoutTrack" label="@Strings.zoomAtPaceModeRoutesWithoutTrack"/>
 </menu2>

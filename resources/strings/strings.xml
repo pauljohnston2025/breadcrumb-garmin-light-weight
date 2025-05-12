@@ -68,6 +68,7 @@
     <string id="zoomAtPaceModePace">Zoom When Moving</string>
     <string id="zoomAtPaceModeStopped">Zoom When Stopped</string>
     <string id="zoomAtPaceModeNever">Never Zoom</string>
+    <string id="zoomAtPaceModeRoutesWithoutTrack">Routes Without Track</string>
     <string id="zoomAtPaceModeAlways">Always Zoom</string>
     <string id="zoomAtPaceSpeedMPS">Speed (m/s)</string>
     <string id="zoomAtPaceSpeedMPSPrompt">1.0</string>

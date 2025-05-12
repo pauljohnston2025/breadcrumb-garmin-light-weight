@@ -25,6 +25,7 @@ enum /*ZoomMode*/ {
     ZOOM_AT_PACE_MODE_STOPPED,
     ZOOM_AT_PACE_MODE_NEVER_ZOOM,
     ZOOM_AT_PACE_MODE_ALWAYS_ZOOM,
+    ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK,
     ZOOM_AT_PACE_MODE_MAX,
 }
 
@@ -240,6 +241,7 @@ class Settings {
     // unfortunately bufferred bitmaps cannot be stored into storage (resources and BitMapResources can be, but not the bufferred kind)
     // so we need to store the result of makeImageRequest or makeWebRequest
     var cacheTilesInStorage as Boolean = true; // TODO add support to settings
+    var storageMapTilesOnly as Boolean = false; // TODO add support to settings
     // storage seems to fill up around 200 with 192*192 tiles from imagerequests
     // can be much larger for companion app is used, since the tiles can be much smaller with TILE_DATA_TYPE_BASE64_FULL_COLOUR
     // saw a crash around 513 tiles, which would be from our internal array StorageTileCache._tilesInStorage
@@ -744,6 +746,11 @@ class Settings {
             clearStorageTiles();
         }
     }
+    
+    function setStorageMapTilesOnly(value as Boolean) as Void {
+        storageMapTilesOnly = value;
+        setValue("storageMapTilesOnly", storageMapTilesOnly);
+    }
 
     function setDrawLineToClosestPoint(value as Boolean) as Void {
         drawLineToClosestPoint = value;
@@ -952,6 +959,15 @@ class Settings {
         }
 
         setCacheTilesInStorage(true);
+    }
+    
+    function toggleStorageMapTilesOnly() as Void {
+        if (storageMapTilesOnly) {
+            setStorageMapTilesOnly(false);
+            return;
+        }
+
+        setStorageMapTilesOnly(true);
     }
 
     function toggleDrawLineToClosestPoint() as Void {
@@ -1485,6 +1501,7 @@ class Settings {
         setMode(defaultSettings.mode);
         setMapEnabled(defaultSettings.mapEnabled);
         setCacheTilesInStorage(defaultSettings.cacheTilesInStorage);
+        setStorageMapTilesOnly(defaultSettings.storageMapTilesOnly);
         setDrawLineToClosestPoint(defaultSettings.drawLineToClosestPoint);
         setDisplayLatLong(defaultSettings.displayLatLong);
         setScaleRestrictedToTileLayers(defaultSettings.scaleRestrictedToTileLayers);
@@ -1548,6 +1565,7 @@ class Settings {
             "mode" => mode,
             "mapEnabled" => mapEnabled,
             "cacheTilesInStorage" => cacheTilesInStorage,
+            "storageMapTilesOnly" => storageMapTilesOnly,
             "drawLineToClosestPoint" => drawLineToClosestPoint,
             "displayLatLong" => displayLatLong,
             "scaleRestrictedToTileLayers" => scaleRestrictedToTileLayers,
@@ -1631,6 +1649,7 @@ class Settings {
         mapEnabled = parseBool("mapEnabled", mapEnabled);
         setMapEnabledRaw(mapEnabled); // prompt for app to open if needed
         cacheTilesInStorage = parseBool("cacheTilesInStorage", cacheTilesInStorage);
+        storageMapTilesOnly = parseBool("storageMapTilesOnly", storageMapTilesOnly);
         drawLineToClosestPoint = parseBool("drawLineToClosestPoint", drawLineToClosestPoint);
         displayLatLong = parseBool("displayLatLong", displayLatLong);
         scaleRestrictedToTileLayers = parseBool(

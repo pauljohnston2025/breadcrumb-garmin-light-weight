@@ -58,6 +58,7 @@ Zoom at Pace Mode - See [Zoom At Pace Mode](#zoom-at-pace-mode)
 - S - zoom when stopped
 - N - Never zoom
 - A - Always zoom
+- R - Routes Without Track
 
 Return To User - Allows you to return to the users location, and resume using Zoom at Pace Mode to determine the scale and zoom level. It is only shown when the map has been panned or zoomed away from the users location.  
 Display Mode - See [Display Mode](#display-mode)
@@ -111,9 +112,10 @@ No Buffer No Rotations - Same as Unbuffered Rotations mode but does not rotate t
 Controls the zoom level at different speeds
 
 Zoom When Moving - Typically used for a running/hiking so you can see the next upcoming turn whilst you are moving. When stopped the map will return to fully zoomed out so you can investigate your position on the overall route.  
-Zoom When Stopped - Inverse of Zoom When Moving  
-Never Zoom - Always shows the full route/track overview  
-Always Zoom - Always shows `Zoom At Pace Meters` regardless of the speed
+Zoom When Stopped - Inverse of Zoom When Moving.  
+Never Zoom - Always shows the full route/track overview.  
+Always Zoom - Always shows `Zoom At Pace Meters` regardless of the speed.  
+Routes Without Tack - Same as `Never Zoom` but does not include the track in the bounding box. Useful for caching a route, Can view the route without the curent location changin the map zoom. Also handly for users that do not care about venturing outside the route area.  
 
 ### Zoom At Pace Meters Around User
 

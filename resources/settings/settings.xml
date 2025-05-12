@@ -50,6 +50,7 @@
                 <listEntry value="1">@Strings.zoomAtPaceModeStopped</listEntry>
                 <listEntry value="2">@Strings.zoomAtPaceModeNever</listEntry>
                 <listEntry value="3">@Strings.zoomAtPaceModeAlways</listEntry>
+                <listEntry value="4">@Strings.zoomAtPaceModeRoutesWithoutTrack</listEntry>
             </settingConfig>
         </setting>
 

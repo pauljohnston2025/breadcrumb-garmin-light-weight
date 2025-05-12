@@ -35,7 +35,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
             return false;
         }
 
-        if (cachedValues.seedingZ > -1)
+        if (cachedValues.seeding())
         {
             // we are displaying the tile seed screen, only allow cancel
             if (y < hitboxSize) {

@@ -160,11 +160,16 @@ class CachedValues {
             return calculateScale(renderDistanceM.toFloat());
         }
 
-        var boundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
-            getApp()._breadcrumbContext.routes(),
+        var trackBoundingBox =
             getApp()._breadcrumbContext.track().coordinates.lastPoint() == null
                 ? null
-                : getApp()._breadcrumbContext.track().boundingBox
+                : getApp()._breadcrumbContext.track().boundingBox;
+        if (_settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK) {
+            trackBoundingBox = null;
+        }
+        var boundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
+            getApp()._breadcrumbContext.routes(),
+            trackBoundingBox
         );
         calcCenterPointForBoundingBox(boundingBox);
         return getNewScaleFromBoundingBox(boundingBox);
@@ -682,6 +687,10 @@ class CachedValues {
         // seedingY = ...
     }
 
+    function seeding() as Boolean {
+        return seedingZ >= 0;
+    }
+
     function stepCacheCurrentMapArea() as Boolean {
         if (seedingZ == -1) {
             return false;
@@ -722,7 +731,9 @@ class CachedValues {
         firstTileY = maxN(firstTileY, seedingUpToTileY);
 
         seedingTilesProgressForThisLayer =
-            tilesPerXRow * (firstTileY - origFirstTileY) + tilesPerXRow - (lastTileX - maxN(firstTileX, seedingUpToTileX));
+            tilesPerXRow * (firstTileY - origFirstTileY) +
+            tilesPerXRow -
+            (lastTileX - maxN(firstTileX, seedingUpToTileX));
 
         var tileCache = getApp()._breadcrumbContext.tileCache();
 

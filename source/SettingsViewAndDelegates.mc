@@ -285,6 +285,9 @@ class SettingsZoomAtPace extends Rez.Menus.SettingsZoomAtPace {
             case ZOOM_AT_PACE_MODE_ALWAYS_ZOOM:
                 modeString = Rez.Strings.zoomAtPaceModeAlways;
                 break;
+            case ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK:
+                modeString = Rez.Strings.zoomAtPaceModeRoutesWithoutTrack;
+                break;
         }
         safeSetSubLabel(me, :settingsZoomAtPaceMode, modeString);
         safeSetSubLabel(
@@ -1265,6 +1268,8 @@ class SettingsZoomAtPaceModeDelegate extends WatchUi.Menu2InputDelegate {
             settings.setZoomAtPaceMode(ZOOM_AT_PACE_MODE_NEVER_ZOOM);
         } else if (itemId == :settingsZoomAtPaceModeAlways) {
             settings.setZoomAtPaceMode(ZOOM_AT_PACE_MODE_ALWAYS_ZOOM);
+        } else if (itemId == :settingsZoomAtPaceModeRoutesWithoutTrack) {
+            settings.setZoomAtPaceMode(ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK);
         }
 
         parent.rerender();

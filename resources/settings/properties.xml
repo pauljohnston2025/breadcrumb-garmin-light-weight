@@ -22,6 +22,7 @@
 	<property id="tileCacheSize" type="number">64</property>
 	<property id="tileCachePadding" type="number">0</property>
 	<property id="maxPendingWebRequests" type="number">100</property>
+	<property id="storageTileCacheSize" type="number">350</property>
 
 	<property id="trackColour" type="string">00FF00</property>
 	<property id="routeColour" type="string">0000FF</property>
@@ -54,5 +55,7 @@
 	<property id="haveDoneFirstLoadSetup" type="boolean">false</property>
 	<property id="displayLatLong" type="boolean">false</property>
 	<property id="scaleRestrictedToTileLayers" type="boolean">false</property>
+	<property id="cacheTilesInStorage" type="boolean">false</property>
+	<property id="storageMapTilesOnly" type="boolean">false</property>
 
 </properties>
