@@ -71,8 +71,8 @@ Display Mode - See [Display Mode](#display-mode)
 Map Enabled - See [Map Enabled](#map-enabled)
 
 `+` Button (top of screen) allows zooming into the current location  
-`-` Button (bottom of screen) allows zooming out of the current location
-`G` Button (right of screen) Get the current tiles for the currently viewed area and put them into app storage (all tile layers), this allows offline navigation without a phone connection. This is an incredibly slow process, but should imporve battery as all bluetooth can be done in advance before heading out the door, then the device can be fully charged.  
+`-` Button (bottom of screen) allows zooming out of the current location  
+`G` Button (right of screen) Get the current tiles for the currently viewed area and put them into app storage (all tile layers), this allows offline navigation without a phone connection. This is an incredibly slow process, but should improve battery as all bluetooth can be done in advance before heading out the door, then the device can be fully charged. note: this will cache tiles regardless of the [Store Tiles For Offline Use](#store-tiles-for-offline-use) setting. For more details see [Offline Tile Storage](#offline-tile-storage)     
 
 Other Screens:  
 Map move allows you to pan around the map, clear routes and toggle the display mode.  
@@ -238,6 +238,8 @@ The number of tiles to store locally in memory. The maximum value for this can b
 
 On the venu2s with full size tiles (256pixels) the max tile cache is ~23, so we probbaly do not want to exceed 15 tiles in our cache to be safe. The more tiles in the cache, the more memory that will be used and the sytem will slow to a crawl. For smaller tiles the cache size will be larger, as each tile takes up less space in memory.
 
+See [Storage Tile Cache Size (tiles)](#storage-tile-cache-size-tiles) for a way to increase the available tiles without setting the in memory tile limit to a huge value.  
+
 
 ### Max Pending Web Requests
 
@@ -260,6 +262,32 @@ Set both latitude and longitude to 0 to disable fixed position and use the curre
 ### Restrict Scale To Tile Layers
 
 Only allow zooming in/out to the tile layer limits. Also all steps between scales will be the next tile layer (no tile scaling).
+
+---
+# Offline Tile Storage
+
+A small number of tiles can be saved for complete offline use (no phone connection required). This is limited by the storage capacity of each device (the app storage, not the full storage capacity for music etc.). This is normally on the order of Mb, not Gb so only a small number of tiles can be stored, but for small routes enough tiles can be stored so that we can not take a phone, and save battery power by not having to download map tiles over the bluetooth connection.  
+
+Tiles can be cleared from storage through the on device settings `Map Settings -> Offline Tile Storage -> Clear Cached Tiles`.  
+Tile caching for the current map area can be started by `Map Settings -> Offline Tile Storage -> Cache Current Area`, or by clicking the right side of the screen in [track view](#ui-mode) . This also shows the current number of tiles in the cache.    
+Tile caching can be stopped by `Map Settings -> Offline Tile Storage -> Cancel Cache Download`.  
+
+Once the cache is full, older tiles will be removed and newer ones added. This means some of the higher resolution tiles might be missing if caching a large area (since we cache from the most zoomed in tiles out to the lowest zoom levels). The tile cache should be cleared to remove errored tiles. The tile cache will automatically be cleared when some map settings change, take care to ensure the tile cache is populated if you are going to use it to navigate offline (do not change map settings before heading out the door).
+
+![](images/settings/cache-tiles-view.png)
+
+
+### Store Tiles For Offline Use
+
+If enabled, allows map tiles to be stored on the device when they are queried from the web or companion app. Enabling this can extend the capacity of [Tile Cache Size](#tile-cache-size) and allows for extra tiles to be stored on device if the same part of the route is visited twice. It is generally a good idea to have this setting on, since it should save battery power and improve performance.  
+
+### Only Use Stored Tiles (no ble data)
+
+Only used the stored tiles from the watch, no ble data will be used to fetch tiles.
+
+### Storage Tile Cache Size (tiles)
+
+How many tiles to store on the watch. Take care with this settings, large values can cause crashes. Similar to [Tile Cache Size](#tile-cache-size), ensure you test the limits of your device and set this value with a reasonable buffer in mind.   
 
 ---
 # Off Track Alerts
