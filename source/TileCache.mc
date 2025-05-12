@@ -446,7 +446,7 @@ class StorageTileCache {
         if (oldestKey != null) {
             Storage.deleteValue(oldestKey);
             _tilesInStorage.remove(oldestKey);
-            // System.println("Evicted tile " + oldestKey + " from storage cache");
+            System.println("Evicted tile " + oldestKey + " from storage cache");
         }
 
         Storage.setValue(TILES_KEY, _tilesInStorage);
@@ -614,16 +614,16 @@ class TileCache {
 
         if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
             // logD("small tile: " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
-            var x = tileKey.x / _cachedValues.smallTilesPerScaledTile;
-            var y = tileKey.y / _cachedValues.smallTilesPerScaledTile;
             var imageReqHandler = new ImageWebTileRequestHandler(me, tileKey, _tileCacheVersion);
-            var tileFromStorage = _storageTileCache.get(new TileKey(x, y, tileKey.z));
+            var tileFromStorage = _storageTileCache.get(tileKey);
             if (tileFromStorage != null && tileFromStorage[1] == 200) {
                 // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
                 imageReqHandler.handle(tileFromStorage[1], tileFromStorage[2]);
                 // logD("image tile loaded from storage: " + tileKey);
                 return true;
             }
+            var x = tileKey.x / _cachedValues.smallTilesPerScaledTile;
+            var y = tileKey.y / _cachedValues.smallTilesPerScaledTile;
             // logD("large tile: " + x + ", " + y + ", " + tileKey.z);
             _webRequestHandler.add(
                 new ImageRequest(

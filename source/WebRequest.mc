@@ -65,6 +65,7 @@ class WebRequestHandleWrapper {
     var webHandler as WebRequestHandler;
     var hash as String;
     var handler as JsonWebHandler or ImageWebHandler;
+    var alreadyDecedWebHandler as Boolean = false;
 
     function initialize(
         _webHandler as WebRequestHandler,
@@ -117,7 +118,14 @@ class WebRequestHandleWrapper {
             // or at least I would do this if the timer task was available to datafields :(
             // so we might have to call 'startNext' every time the compute method runs :(
             // new Timer.Timer(); Error: Permission Required ; Details: Module 'Toybox.Timer' not available to 'Data Field'
-            webHandler.decrementOutstanding(hash);
+            if (!alreadyDecedWebHandler) {
+                // try and prevent double decrement (only noticed on sim which was probably in bad state)
+                // it also only seemed to be when it errored with 404 - companion app server was not running
+                // perhaps it was from the webHandler.transmit, which is meant to prevent the `Communications transmit queue full` error
+                // maybe all web requests need to finish before we can transmit? Or perhaps the web handler is still active when we are in this function?
+                webHandler.decrementOutstanding(hash);
+            }
+            alreadyDecedWebHandler = true;
         }
     }
 }
@@ -334,7 +342,7 @@ class WebRequestHandler {
                     // PACKING_FORMAT_JPG - Image data is encoded in JPG format. This is a lossy encoding that is compressed, and is reasonably fast to load. It is ideal for photographic imagery.
                     // PACKING_FORMAT_YUV seems the fastest, compressed and fast to load
                     // should perf test the others on real device, eg. perhaps jpg is faser download but slightly slower draw
-                    :packingFormat => Communications.PACKING_FORMAT_YUV // do not specify a pallete, as we cannot draw directly to dc on some devices
+                    :packingFormat => Communications.PACKING_FORMAT_YUV, // do not specify a pallete, as we cannot draw directly to dc on some devices
                     // from android code
                     // val osName = "Garmin"
                     // val osVersion = Build.VERSION.RELEASE ?: "Unknown"
