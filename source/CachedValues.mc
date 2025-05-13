@@ -272,7 +272,8 @@ class CachedValues {
         // (rather than having to manually zoom in from the outer level) once zoomed
         // in we lock onto the user position anyway
         var weShouldZoomAroundUser =
-            scale != null ||
+            (scale != null &&
+                _settings.zoomAtPaceMode != ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK) ||
             (currentSpeed > _settings.zoomAtPaceSpeedMPS &&
                 _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_PACE) ||
             (currentSpeed <= _settings.zoomAtPaceSpeedMPS &&
@@ -566,7 +567,7 @@ class CachedValues {
         // when the scale is locked, we need to be where the user is, otherwise we
         // could see a blank part of the map, when we are zoomed in and have no
         // context
-        if (scale != null) {
+        if (scale != null && _settings.zoomAtPaceMode != ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK) {
             // the hacks begin
             var lastPoint = getApp()._breadcrumbContext.track().coordinates.lastPoint();
             if (lastPoint != null) {
@@ -669,12 +670,12 @@ class CachedValues {
         }
 
         var tileCache = getApp()._breadcrumbContext.tileCache();
-        // If we do not clear the in memory tile cache the image tiles sometimes cause us to crash. 
-        // Think its because the graphics pool runs out of memory, and makeImageRequest fails with 
+        // If we do not clear the in memory tile cache the image tiles sometimes cause us to crash.
+        // Think its because the graphics pool runs out of memory, and makeImageRequest fails with
         // Error: System Error
         // Details: failed inside handle_image_callback
-        tileCache.clearValuesWithoutStorage(); 
-        
+        tileCache.clearValuesWithoutStorage();
+
         var centerRectangular = getScreenCenter();
         seedingRectanglarTopLeft = new RectangularPoint(
             centerRectangular.x - mapMoveDistanceM,
