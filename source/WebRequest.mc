@@ -257,7 +257,14 @@ class WebRequestHandler {
             return false;
         }
 
-        if (_outstandingCount < 3) {
+        // kept getting errors with 
+        // Error: System Error
+        // Details: failed inside handle_image_callback
+        // only happened on real rdevice when using makeImageREquest, and having tiles put into storage. 
+        // Not sure if its an issue with storage thats propagating to the image handler 
+        // (eg. maye its larger than 32Kb and that makes a system error rather than a storage exception)
+        // trying to reduce parallel requests to 1 at a time to see if that helps
+        if (_outstandingCount < 1) {
             // we could get real crazy and start some tile requests through makeWebRequest
             // and some others through pushing tiles from the companion app
             // seems really hard to maintain though, and ble connection probably already saturated
