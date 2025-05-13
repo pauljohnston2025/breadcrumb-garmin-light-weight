@@ -146,13 +146,23 @@ You can also set `<Scaled Tile Size>` to reduce the cache requirements further, 
 ### Map Choice
 
 Pick from a list on tile servers, select custom if you wish to manually specify a tileUrl.   
-Note: tiles that are more monochrome will download faster, as they have less and can be compressed further. Stadia's `Stamen Toner`, Stadia's `Alidade Smooth Dark`, Esri's `World Dark Gray Base` or Carto's `Dark Matter` are good examples of this. I noticed 2X speed improvement on map tile downloads compared to full satellite tiles. Note: The tile load speed when using the companion app is a constant speed, as it can use a reduced palette. The companion app is often faster than full tile downloads when using the 64 colour mode, though the reduced colour palette may not appeal to some users. The faster tile loads alss have the benefit if draining the battery less, as less bytes are sent over bluetooth.  
+Note: tiles that are more monochrome will download faster, as they have less colour variance and can be compressed further. Stadia's `Stamen Toner`, Stadia's `Alidade Smooth Dark`, Esri's `World Dark Gray Base` or Carto's `Dark Matter` are good examples of this. I noticed a 2X speed improvement on map tile downloads compared to full satellite tiles. Note: The tile load speed when using the companion app is a constant speed, as it can use a reduced palette. The companion app is often faster than full tile downloads when using the 64 colour mode, though the reduced colour palette may not appeal to some users. The faster tile loads also have the benefit if draining the battery less, as less bytes are sent over bluetooth.  
 
-Currently this dropdown is an override for:  
+Currently this dropdown is an override for:
+
 * tileUrl
 * tileLayerMax
 * tileLayerMin
 * tileSize
+
+Due to how garmins settings work, to see changes in the above fields you need to.  
+
+* Open settings
+* Pick map choice
+* Save settings
+* Open settings
+
+This is the same for the companion app, and means you should probably only change map choice (and not any other settings) in the one settings save. Modifying the settings directly from the watch does no suffer this issue, and the properties should update immediately.   
 
 All other options in map settings can still be changed. Settings such as tile cache size should be set to something much smaller to avoid crashes.  
 
@@ -266,7 +276,9 @@ Only allow zooming in/out to the tile layer limits. Also all steps between scale
 ---
 # Offline Tile Storage
 
-A small number of tiles can be saved for complete offline use (no phone connection required). This is limited by the storage capacity of each device (the app storage, not the full storage capacity for music etc.). This is normally on the order of Mb, not Gb so only a small number of tiles can be stored, but for small routes enough tiles can be stored so that we can not take a phone, and save battery power by not having to download map tiles over the bluetooth connection.  
+A small number of tiles can be saved for complete offline use (no phone connection required). This is limited by the storage capacity of each device (the app storage, not the full storage capacity for music etc.). This is normally on the order of Mb, not Gb so only a small number of tiles can be stored, but for small routes enough tiles can be stored so that we can not take a phone, and save battery power by not having to download map tiles over the bluetooth connection.
+
+Note: I had some issues when different tile servers crashing the app with a system failure 'failed inside handle_image_callback' when using the tile server directly from the watch. The companion app did not seem to suffer this issue (likely because the tiles are much smaller). I tried a few preventative measures, but the issue still persists. If you have issues with offline maps, its best to change the tile server, or turn them off entirely (they are disabled by default).    
 
 Tiles can be cleared from storage through the on device settings `Map Settings -> Offline Tile Storage -> Clear Cached Tiles`.  
 Tile caching for the current map area can be started by `Map Settings -> Offline Tile Storage -> Cache Current Area`, or by clicking the right side of the screen in [track view](#ui-mode) . This also shows the current number of tiles in the cache.    

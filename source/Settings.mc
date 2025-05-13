@@ -184,7 +184,6 @@ class Settings {
     // so math.ceil should be used what figuring out how many meters a tile is.
     // eg. maybe we cannot do 128 but we can do 120 (this would limit the number of tiles, but the resolution would be slightly off)
     var tileSize as Number = 64; // The smaller tile size, mainly for use with companion app, allows slicing scaledTileSize into smaller tiles
-    // todo: impl support for these
     var fullTileSize as Number = 256; // The tile size on the tile server
     // The tile size to scale images to, results in significantly smaller downloads (and faster speeds) but makes image slightly blurry.
     // 190 seems to be a good compromise between speed and crisp images. it does not effect the image too much, but gives us about 2X the speed.
@@ -235,13 +234,12 @@ class Settings {
     var tileCacheSize as Number = 64;
     var mode as Number = MODE_NORMAL;
     var elevationMode as Number = ELEVATION_MODE_STACKED;
-    // todo clear tile cache when this changes
     var mapEnabled as Boolean = false;
     // cache the tiles in storage when they are loaded, allows for fully offline maps
     // unfortunately bufferred bitmaps cannot be stored into storage (resources and BitMapResources can be, but not the bufferred kind)
     // so we need to store the result of makeImageRequest or makeWebRequest
-    var cacheTilesInStorage as Boolean = true; // TODO add support to settings
-    var storageMapTilesOnly as Boolean = false; // TODO add support to settings
+    var cacheTilesInStorage as Boolean = false;
+    var storageMapTilesOnly as Boolean = false;
     // storage seems to fill up around 200 with 192*192 tiles from imagerequests
     // can be much larger for companion app is used, since the tiles can be much smaller with TILE_DATA_TYPE_BASE64_FULL_COLOUR
     // saw a crash around 513 tiles, which would be from our internal array StorageTileCache._tilesInStorage
