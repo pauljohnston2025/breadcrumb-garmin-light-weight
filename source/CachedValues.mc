@@ -667,6 +667,14 @@ class CachedValues {
         if (!_settings.mapEnabled) {
             return;
         }
+
+        var tileCache = getApp()._breadcrumbContext.tileCache();
+        // If we do not clear the in memory tile cache the image tiles sometimes cause us to crash. 
+        // Think its because the graphics pool runs out of memory, and makeImageRequest fails with 
+        // Error: System Error
+        // Details: failed inside handle_image_callback
+        tileCache.clearValuesWithoutStorage(); 
+        
         var centerRectangular = getScreenCenter();
         seedingRectanglarTopLeft = new RectangularPoint(
             centerRectangular.x - mapMoveDistanceM,

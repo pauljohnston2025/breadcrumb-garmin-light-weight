@@ -35,6 +35,10 @@ class MapRenderer {
             return false;
         }
 
+        if (_cachedValues.seeding()) {
+            return false;
+        }
+
         var tileCountX = cachedValues.tileCountX; // local lookup faster
         var tileCountY = cachedValues.tileCountY; // local lookup faster
         var firstTileX = cachedValues.firstTileX; // local lookup faster

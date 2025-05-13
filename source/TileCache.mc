@@ -118,12 +118,19 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
     var _tileCache as TileCache;
     var _tileKey as TileKey;
     var _tileCacheVersion as Number;
+    var _onlySeedStorage as Boolean;
 
-    function initialize(tileCache as TileCache, tileKey as TileKey, tileCacheVersion as Number) {
+    function initialize(
+        tileCache as TileCache,
+        tileKey as TileKey,
+        tileCacheVersion as Number,
+        onlySeedStorage as Boolean
+    ) {
         JsonWebHandler.initialize();
         _tileCache = tileCache;
         _tileKey = tileKey;
         _tileCacheVersion = tileCacheVersion;
+        _onlySeedStorage = onlySeedStorage;
     }
 
     function handleErroredTile(responseCode as Number) as Void {}
@@ -140,6 +147,9 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             System.println("failed with: " + responseCode);
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                 _tileCache._storageTileCache.addErroredTile(_tileKey, responseCode);
+            }
+            if (_onlySeedStorage) {
+                return;
             }
             handleErroredTile(responseCode);
             return;
@@ -164,6 +174,10 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                 _tileCache._storageTileCache.addJsonData(_tileKey, data);
             }
+        }
+
+        if (_onlySeedStorage) {
+            return;
         }
 
         // System.print("data: " + data);
@@ -241,12 +255,19 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
     var _tileCache as TileCache;
     var _tileKey as TileKey;
     var _tileCacheVersion as Number;
+    var _onlySeedStorage as Boolean;
 
-    function initialize(tileCache as TileCache, tileKey as TileKey, tileCacheVersion as Number) {
+    function initialize(
+        tileCache as TileCache,
+        tileKey as TileKey,
+        tileCacheVersion as Number,
+        onlySeedStorage as Boolean
+    ) {
         ImageWebHandler.initialize();
         _tileCache = tileCache;
         _tileKey = tileKey;
         _tileCacheVersion = tileCacheVersion;
+        _onlySeedStorage = onlySeedStorage;
     }
 
     function handleErroredTile(responseCode as Number) as Void {}
@@ -263,6 +284,9 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             System.println("failed with: " + responseCode);
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                 _tileCache._storageTileCache.addErroredTile(_tileKey, responseCode);
+            }
+            if (_onlySeedStorage) {
+                return;
             }
             handleErroredTile(responseCode);
             return;
@@ -302,6 +326,10 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                 _tileCache._storageTileCache.addBitmap(_tileKey, data);
             }
+        }
+
+        if (_onlySeedStorage) {
+            return;
         }
 
         // we have to downsample the tile, not recomendedd, as this mean we will have to request the same tile multiple times (cant save big tiles around anywhere)
@@ -743,12 +771,16 @@ class TileCache {
     }
 
     public function clearValues() as Void {
-        _internalCache = {};
-        _tileCacheVersion++;
+        clearValuesWithoutStorage();
         // whenever we purge the tile cache it is usually because the tile server properties have changed, safest to nuke the storage cache too
         // though sme times its when the in memory tile cache size changes
         // users should not be modifiying the tile settings in any way, otherwise the storage will also be out of date (eg. when tile size or tile url changes)
         _storageTileCache.clearValues();
+    }
+
+    public function clearValuesWithoutStorage() as Void {
+        _internalCache = {};
+        _tileCacheVersion++;
     }
 
     // loads a tile into the cache
@@ -757,7 +789,7 @@ class TileCache {
         if (haveTile(tileKey)) {
             return false;
         }
-        return startSeedTile(tileKey);
+        return startSeedTile(tileKey, false);
     }
 
     // seedTile puts the tile into memory, either by pulling from storage, or by runnung a web request
@@ -768,16 +800,21 @@ class TileCache {
             return;
         }
 
-        startSeedTile(tileKey);
+        startSeedTile(tileKey, true);
     }
 
     // reurns true if seed should stop and wait for next calculate (to prevent watchdog errors)
-    private function startSeedTile(tileKey as TileKey) as Boolean {
+    private function startSeedTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
         // System.println("starting load tile: " + x + " " + y + " " + z);
 
         if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
             // logD("small tile: " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
-            var imageReqHandler = new ImageWebTileRequestHandler(me, tileKey, _tileCacheVersion);
+            var imageReqHandler = new ImageWebTileRequestHandler(
+                me,
+                tileKey,
+                _tileCacheVersion,
+                onlySeedStorage
+            );
             var tileFromStorage = _storageTileCache.get(tileKey);
             if (tileFromStorage != null) {
                 var responseCode = tileFromStorage[0];
@@ -820,7 +857,12 @@ class TileCache {
         }
 
         // logD("small tile (companion): " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
-        var jsonWebHandler = new JsonWebTileRequestHandler(me, tileKey, _tileCacheVersion);
+        var jsonWebHandler = new JsonWebTileRequestHandler(
+            me,
+            tileKey,
+            _tileCacheVersion,
+            onlySeedStorage
+        );
         var tileFromStorage = _storageTileCache.get(tileKey);
         if (tileFromStorage != null) {
             var responseCode = tileFromStorage[0];
@@ -883,16 +925,6 @@ class TileCache {
         // System.println("cache miss: " + x  + " " + y + " " + z);
         // System.println("have tiles: " + _internalCache.keys());
         _misses++;
-        return null;
-    }
-
-    function getOrSeedTile(tileKey as TileKey) as Tile? {
-        var tile = getTile(tileKey);
-        if (tile != null) {
-            return tile;
-        }
-
-        startSeedTile(tileKey);
         return null;
     }
 
