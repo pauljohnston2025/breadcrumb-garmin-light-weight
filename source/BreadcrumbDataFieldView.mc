@@ -108,6 +108,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
     // see onUpdate explanation for when each is called
     function actualCompute(info as Activity.Info) as Void {
+        _computeCounter++;
+
         // logD("compute");
         // temp hack for debugging in simulator (since it seems altitude does not work when playing activity data from gpx file)
         // var route = _breadcrumbContext.routes()[0];
@@ -117,35 +119,37 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         //     info.altitude = nextPoint.altitude;
         // }
 
-        // store rotations and speed every time
-        var rescaleOccurred = _cachedValues.onActivityInfo(info);
-        if (rescaleOccurred) {
-            // rescaling is an expensive operatioj, f we have multiple large routes rescale and then try and recalculate off track alerts (or anything else expensive)
-            // we could hit watchdog errors. Best to not attempt anything else.
-            logD("rescale occurred, skipping remaining calculate");
-            return;
-        }
-        // this is here due to stack overflow bug when requests trigger the next request
-        while (_breadcrumbContext.webRequestHandler().startNextIfWeCan()) {}
+        // make sure tile seed or anything else does not stop our computes completely
+        var weReallyNeedACompute = _computeCounter > 3 * settings.recalculateIntervalS;
+        if (!weReallyNeedACompute) {
+            // store rotations and speed every time
+            var rescaleOccurred = _cachedValues.onActivityInfo(info);
+            if (rescaleOccurred) {
+                // rescaling is an expensive operatioj, f we have multiple large routes rescale and then try and recalculate off track alerts (or anything else expensive)
+                // we could hit watchdog errors. Best to not attempt anything else.
+                logD("rescale occurred, skipping remaining calculate");
+                return;
+            }
+            // this is here due to stack overflow bug when requests trigger the next request
+            while (_breadcrumbContext.webRequestHandler().startNextIfWeCan()) {}
 
-        if (_cachedValues.stepCacheCurrentMapArea()) {
-            return;
+            if (_cachedValues.stepCacheCurrentMapArea()) {
+                return;
+            }
+
+            // perf only seed tiles when we need to (zoom level changes or user moves)
+            // could possibly be moved into cached values when map data changes - though map data may not change but we nuked the pending web requests - safer here
+            // or we have to do multiple seeds if pending web requests is low
+            // needs to be before _computeCounter for when we load tiles from storage (we can only load 1 tile per second)
+            if (_breadcrumbContext.mapRenderer().seedTiles()) {
+                // we loadeed a tile from storage, which could be a significantly costly task,
+                // do not trip the watchdog, be safe and return
+                // if tile cacheSize is not large enough, this could result in no tracking, since all tiles could potentially be pulled from storage
+                // but black squares will appear on the screen, alerting the user that something is wrong
+                return;
+            }
         }
 
-        // perf only seed tiles when we need to (zoom level changes or user moves)
-        // could possibly be moved into cached values when map data changes - though map data may not change but we nuked the pending web requests - safer here
-        // or we have to do multiple seeds if pending web requests is low
-        // needs to be before _computeCounter for when we load tiles from storage (we can only load 1 tile per second)
-        if (_breadcrumbContext.mapRenderer().seedTiles()) {
-            // we loadeed a tile from storage, which could be a significantly costly task,
-            // do not trip the watchdog, be safe and return
-            // if tile cacheSize is not large enough, this could result in no tracking, since all tiles could potentially be pulled from storage
-            // but black squares will appear on the screen, alerting the user that something is wrong
-            return;
-        }
-
-        // System.println("computing data field");
-        _computeCounter++;
         // slow down the calls to onActivityInfo as its a heavy operation checking
         // the distance we don't really need data much faster than this anyway
         if (_computeCounter < settings.recalculateIntervalS) {
@@ -642,7 +646,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             _breadcrumbContext.webRequestHandler().lastResult() +
             "  tiles: " +
             _breadcrumbContext.tileCache().tileCount() +
-            " s: " + _breadcrumbContext.tileCache()._storageTileCache._tilesInStorage.size();
+            " s: " +
+            _breadcrumbContext.tileCache()._storageTileCache._tilesInStorage.size();
         dc.drawText(x, y, Graphics.FONT_XTINY, combined, Graphics.TEXT_JUSTIFY_CENTER);
         y += spacing;
         dc.drawText(

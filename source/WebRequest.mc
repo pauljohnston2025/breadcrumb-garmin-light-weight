@@ -309,8 +309,8 @@ class WebRequestHandler {
         }
         outstandingHashes.add(jsonOrImageReq.hash);
 
-        System.println("url: " + jsonOrImageReq.url);
-        System.println("params: "  + jsonOrImageReq.params);
+        // System.println("url: " + jsonOrImageReq.url);
+        // System.println("params: "  + jsonOrImageReq.params);
 
         if (jsonOrImageReq instanceof ImageRequest) {
             // System.println("sending image request");
