@@ -139,7 +139,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
             System.println("failed with: " + responseCode);
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-                _tileCache.addToStorage(_tileKey, responseCode, null);
+                _tileCache._storageTileCache.addErroredTile(_tileKey, responseCode);
             }
             handleErroredTile(responseCode);
             return;
@@ -162,7 +162,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
 
         if (addToCache) {
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-                _tileCache.addToStorage(_tileKey, 200, data);
+                _tileCache._storageTileCache.addJsonData(_tileKey, data);
             }
         }
 
@@ -262,7 +262,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
             System.println("failed with: " + responseCode);
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-                _tileCache.addToStorage(_tileKey, responseCode, null);
+                _tileCache._storageTileCache.addErroredTile(_tileKey, responseCode);
             }
             handleErroredTile(responseCode);
             return;
@@ -300,7 +300,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 
         if (addToCache) {
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-                _tileCache.addToStorage(_tileKey, 200, data);
+                _tileCache._storageTileCache.addBitmap(_tileKey, data);
             }
         }
 
@@ -368,12 +368,30 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
     }
 }
 
-const TILES_KEY = "tiles";
+const TILES_KEY = "tileKeys";
 const TILES_VERION_KEY = "tilesVersion";
-const TILES_STORAGE_VERSION = 0; // udate this every time the tile format on disk changes, so we can purge of the old tiles on startup
+const TILES_STORAGE_VERSION = 2; // udate this every time the tile format on disk changes, so we can purge of the old tiles on startup
+const TILES_TILE_PREFIX = "tileData";
+const TILES_META_PREFIX = "tileMeta";
 
-// tile format on disk is [<lastUsedEpoch>, <httpReponseCode>, <tileData>]
-typedef StorageTileDataType as [Number, Number, Dictionary or WatchUi.BitmapResource or Null];
+enum /* StorageTileType */ {
+    STORAGE_TILE_TYPE_DICT = 0,
+    STORAGE_TILE_TYPE_BITMAP = 1,
+    STORAGE_TILE_TYPE_ERRORED = 2,
+}
+
+// tiles are stored as
+// TILES_KEY => list of all known tile keys in storage, this is kept in memory so we can do quick lookups and know what to delete
+// <TILES_TILE_PREFIX><TILEKEY> => the raw tile data
+// <TILES_META_PREFIX><TILEKEY> => [<lastUsed>, <tileType>, <type specific data>] only used when fetching tile, or when trying to find out which tile to remove based on lastUsed
+
+// <type specific data> for
+// STORAGE_TILE_TYPE_DICT -> nothing
+// STORAGE_TILE_TYPE_BITMAP -> <tileCount>, <tileWidth>, <tileHeight> (we have to split the bitmap up into multiple images sometimes)
+// STORAGE_TILE_TYPE_ERRORED -> the error code
+
+// tile format returned is [<httpresponseCode>, <tileData>]
+typedef StorageTileDataType as [Number, Dictionary or WatchUi.BitmapResource or Null];
 
 // raw we request tiles stored directly on the watch for future use
 class StorageTileCache {
@@ -385,20 +403,28 @@ class StorageTileCache {
     var _tilesInStorage as Array<String> = [];
 
     function initialize(settings as Settings) {
+        var tilesVersion = Storage.getValue(TILES_VERION_KEY);
+        if (tilesVersion != null && (tilesVersion as Number) != TILES_STORAGE_VERSION) {
+            Storage.clearValues(); // we have to purge all storage (even our routes, since we have no way of cleanly removing the old storage keys (without having back comapt for each format))
+        }
+        Storage.setValue(TILES_VERION_KEY, TILES_STORAGE_VERSION);
+
         _settings = settings;
         var tiles = Storage.getValue(TILES_KEY);
         if (tiles != null) {
             _tilesInStorage = tiles as Array<String>;
         }
-
-        var tilesVersion = Storage.getValue(TILES_VERION_KEY);
-        if (tilesVersion != null && (tilesVersion as Number) != TILES_STORAGE_VERSION) {
-            clearValues();
-        }
-        Storage.setValue(TILES_VERION_KEY, TILES_STORAGE_VERSION);
     }
 
-    function get(tileKey as TileKey) as StorageTileDataType? {
+    private function metaKey(tileKeyStr as String) as String {
+        return TILES_META_PREFIX + tileKeyStr;
+    }
+
+    private function tileKey(tileKeyStr as String) as String {
+        return TILES_TILE_PREFIX + tileKeyStr;
+    }
+
+    function get(tileKey as TileKey) as StorageTileDataType or Null {
         var tileKeyStr = tileKey.optimisedHashKey();
 
         if (_tilesInStorage.indexOf(tileKeyStr) < 0) {
@@ -406,28 +432,72 @@ class StorageTileCache {
             return null;
         }
 
-        var tile = Storage.getValue(tileKeyStr);
-        tile[0] = Time.now().value();
-        Storage.setValue(tileKeyStr, tile);
-        return tile as StorageTileDataType;
+        var metaKeyStr = metaKey(tileKeyStr);
+        var tileMeta = Storage.getValue(metaKeyStr);
+        tileMeta[0] = Time.now().value();
+        Storage.setValue(metaKeyStr, tileMeta);
+
+        switch (tileMeta[1]) {
+            case STORAGE_TILE_TYPE_DICT:
+                return [200, loadBitmap(tileKeyStr, tileMeta[2], tileMeta[3], tileMeta[4])];
+            case STORAGE_TILE_TYPE_BITMAP:
+                return [200, Storage.getValue(tileKey(tileKeyStr))]; // should always fit into the 32Kb size
+            case STORAGE_TILE_TYPE_ERRORED:
+                return [tileMeta[2], null];
+        }
+
+        return null;
     }
 
     function haveTile(tileKey as TileKey) as Boolean {
         return _tilesInStorage.indexOf(tileKey.optimisedHashKey()) >= 0;
     }
 
-    function addToStorage(
-        tileKey as TileKey,
-        responseCode as Number,
-        data as Dictionary or WatchUi.BitmapResource or Null
-    ) as Void {
+    function addErroredTile(tileKey as TileKey, responseCode as Number) as Void {
+        var tileKeyStr = tileKey.optimisedHashKey();
+        addMetaData(tileKeyStr, [Time.now().value(), STORAGE_TILE_TYPE_ERRORED, responseCode]);
+    }
+
+    function addJsonData(tileKey as TileKey, data as Dictionary) as Void {
+        var tileKeyStr = tileKey.optimisedHashKey();
+        if (addMetaData(tileKeyStr, [Time.now().value(), STORAGE_TILE_TYPE_DICT])) {
+            safeAdd(tileKey(tileKeyStr), data);
+        }
+    }
+
+    private function loadBitmap(
+        tileKeyStr as String,
+        tileCount as Number,
+        tileWidth as Number,
+        tileHeight as Number
+    ) as WatchUi.BitmapResource? {
+        // todo load from chunks
+        return Storage.getValue(tileKey(tileKeyStr));
+    }
+
+    function addBitmap(tileKey as TileKey, bitmap as WatchUi.BitmapResource) as Void {
+        var tileKeyStr = tileKey.optimisedHashKey();
+        if (
+            addMetaData(tileKeyStr, [
+                Time.now().value(),
+                STORAGE_TILE_TYPE_BITMAP,
+                4,
+                bitmap.getWidth(),
+                bitmap.getHeight(),
+            ])
+        ) {
+            // bitmaps can be larger than the allowed 32kb limit, we must store it as 4 smaller bitmaps
+            // todo slice the bitmap into small chunks (4 should always be enough, hard code for now)
+            safeAdd(tileKey(tileKeyStr), bitmap);
+        }
+    }
+
+    function addMetaData(tileKeyStr as String, metaData as Array<Number>) as Boolean {
         try {
-            var tileKeyStr = tileKey.optimisedHashKey();
             // update our tracking first, we do not want to loose tiles because we stored them, but could then not update the tracking
             _tilesInStorage.add(tileKeyStr);
-            var tile = [Time.now().value(), responseCode, data];
             Storage.setValue(TILES_KEY, _tilesInStorage);
-            Storage.setValue(tileKeyStr, tile);
+            Storage.setValue(metaKey(tileKeyStr), metaData);
         } catch (e) {
             if (e instanceof Lang.StorageFullException) {
                 // we expect storage to get full at some point, but there seems to be no way to get the size of the storage,
@@ -438,7 +508,7 @@ class StorageTileCache {
                 // todo: clear the oldest tile from storage and try again
                 logE("tile storage full: " + e.getErrorMessage());
                 evictLeastRecentlyUsedTile();
-                return;
+                return false;
             }
 
             logE("failed tile storage add: " + e.getErrorMessage());
@@ -449,6 +519,30 @@ class StorageTileCache {
             // do not wat to do a while loop, since it could go for a long time and trigger watchdog
             evictLeastRecentlyUsedTile();
         }
+
+        return true;
+    }
+
+    function safeAdd(key as String, data) as Boolean {
+        try {
+            Storage.setValue(key, data);
+        } catch (e) {
+            if (e instanceof Lang.StorageFullException) {
+                // we expect storage to get full at some point, but there seems to be no way to get the size of the storage,
+                // or how much is remaining programatically
+                // we could allow the user to specify 'maxTileCache storage' but we will just fill it up untill there is no more space
+                // note: This means routes need to be loaded first, or there will be no space left for new routes
+
+                // todo: clear the oldest tile from storage and try again
+                logE("tile storage full: " + e.getErrorMessage());
+                evictLeastRecentlyUsedTile();
+                return false;
+            }
+
+            logE("failed tile storage add: " + e.getErrorMessage());
+            ++$.globalExceptionCounter;
+        }
+        return true;
     }
 
     function evictLeastRecentlyUsedTile() as Void {
@@ -651,10 +745,15 @@ class TileCache {
             // logD("small tile: " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
             var imageReqHandler = new ImageWebTileRequestHandler(me, tileKey, _tileCacheVersion);
             var tileFromStorage = _storageTileCache.get(tileKey);
-            if (tileFromStorage != null && tileFromStorage[1] == 200) {
+            if (tileFromStorage != null) {
+                var responseCode = tileFromStorage[0];
+                // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
+                if (responseCode != 200) {
+                    imageReqHandler.handleErroredTile(responseCode);
+                    return true;
+                }
                 // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
-                imageReqHandler.handleSuccessfulTile(tileFromStorage[2], false);
-                // logD("image tile loaded from storage: " + tileKey);
+                imageReqHandler.handleSuccessfulTile(tileFromStorage[1], false);
                 return true;
             }
             if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
@@ -689,10 +788,15 @@ class TileCache {
         // logD("small tile (companion): " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
         var jsonWebHandler = new JsonWebTileRequestHandler(me, tileKey, _tileCacheVersion);
         var tileFromStorage = _storageTileCache.get(tileKey);
-        if (tileFromStorage != null && tileFromStorage[1] == 200) {
+        if (tileFromStorage != null) {
+            var responseCode = tileFromStorage[0];
+            // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
+            if (responseCode != 200) {
+                jsonWebHandler.handleErroredTile(responseCode);
+                return true;
+            }
             // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
-            jsonWebHandler.handleSuccessfulTile(tileFromStorage[2], false);
-            // logD("json tile loaded from storage: " + tileKey);
+            jsonWebHandler.handleSuccessfulTile(tileFromStorage[1], false);
             return true;
         }
         if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
@@ -982,14 +1086,6 @@ class TileCache {
     function clearStats() as Void {
         _hits = 0;
         _misses = 0;
-    }
-
-    function addToStorage(
-        tileKey as TileKey,
-        responseCode as Number,
-        data as Dictionary or WatchUi.BitmapResource or Null
-    ) as Void {
-        _storageTileCache.addToStorage(tileKey, responseCode, data);
     }
 }
 
