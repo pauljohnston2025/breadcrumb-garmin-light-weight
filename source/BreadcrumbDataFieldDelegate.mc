@@ -45,6 +45,10 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
             return true;
         }
 
+        if (renderer.handleStartCacheRoute(x, y)) {
+            return true;
+        }
+
         if (renderer.handleClearRoute(x, y)) {
             // returns true if it handles touches on top left
             // also blocks input if we are in the menu
@@ -118,7 +122,8 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
                 cachedValues.moveFixedPositionRight();
                 return true;
             }
-            cachedValues.startCacheCurrentMapArea();
+            // handled by handleStartCacheRoute
+            // cachedValues.startCacheCurrentMapArea();
             return true;
         } else if (x < hitboxSize) {
             // left of screen

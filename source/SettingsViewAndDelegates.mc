@@ -857,6 +857,19 @@ class ClearCachedTilesDelegate extends WatchUi.ConfirmationDelegate {
     }
 }
 
+class StartCachedTilesDelegate extends WatchUi.ConfirmationDelegate {
+    function initialize() {
+        WatchUi.ConfirmationDelegate.initialize();
+    }
+    function onResponse(response as Confirm) as Boolean {
+        if (response == WatchUi.CONFIRM_YES) {
+            getApp()._breadcrumbContext.cachedValues().startCacheCurrentMapArea();
+        }
+
+        return true; // we always handle it
+    }
+}
+
 class DeleteRouteDelegate extends WatchUi.ConfirmationDelegate {
     var routeId as Number;
     var settings as Settings;
@@ -1465,8 +1478,8 @@ class SettingsMapStorageDelegate extends WatchUi.Menu2InputDelegate {
                 view
             );
         } else if (itemId == :settingsMapStorageCacheCurrentArea) {
-            getApp()._breadcrumbContext.cachedValues().startCacheCurrentMapArea();
-            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+            var dialog = new WatchUi.Confirmation("Start Caching tiles? This breaks on some devices.");
+            WatchUi.pushView(dialog, new StartCachedTilesDelegate(), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMapStorageCancelCacheDownload) {
             getApp()._breadcrumbContext.cachedValues().cancelCacheCurrentMapArea();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);

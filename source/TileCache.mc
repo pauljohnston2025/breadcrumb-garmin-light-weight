@@ -499,6 +499,7 @@ class StorageTileCache {
             // todo slice the bitmap into small chunks (4 should always be enough, hard code for now)
             // this is not currently possible, since we can only draw to a bufferred bitmap, but cannot save the buffered bitmap to storage
             // so we have to hope the tile size fits into storage
+            logD("storing tile " + tileKey(tileKeyStr));
             safeAdd(tileKey(tileKeyStr), bitmap);
         }
     }

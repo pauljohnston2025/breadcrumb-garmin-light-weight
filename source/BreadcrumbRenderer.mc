@@ -14,6 +14,7 @@ const MIN_SCALE as Float = DESIRED_SCALE_PIXEL_WIDTH / 1000000000.0f;
 class BreadcrumbRenderer {
     // todo put into ui class
     var _clearRouteProgress as Number = 0;
+    var _starCacheTilesProgress as Number = 0;
     var settings as Settings;
     var _cachedValues as CachedValues;
     var _crosshair as BitmapResource;
@@ -560,13 +561,89 @@ class BreadcrumbRenderer {
     }
 
     function renderTileSeedUi(dc as Dc) as Boolean {
+        var xHalf = _cachedValues.xHalf; // local lookup faster
+        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var screenHeight = _cachedValues.screenHeight; // local lookup faster
+
+        // should be using Toybox.WatchUi.Confirmation and Toybox.WatchUi.ConfirmationDelegate for questions
+        var padding = xHalf / 2.0f;
+        var topText = yHalf / 2.0f;
+        switch (_starCacheTilesProgress) {
+            case 0:
+                break;
+            case 1:
+            case 3: {
+                // press right to confirm, left cancels
+                dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
+                dc.fillRectangle(0, 0, xHalf, screenHeight);
+                dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_GREEN);
+                dc.fillRectangle(xHalf, 0, xHalf, screenHeight);
+                dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
+                dc.drawText(
+                    xHalf - padding,
+                    yHalf,
+                    Graphics.FONT_XTINY,
+                    "N",
+                    Graphics.TEXT_JUSTIFY_CENTER
+                );
+                dc.drawText(
+                    xHalf + padding,
+                    yHalf,
+                    Graphics.FONT_XTINY,
+                    "Y",
+                    Graphics.TEXT_JUSTIFY_CENTER
+                );
+                var text =
+                    _starCacheTilesProgress == 1
+                        ? "Start tile caching\n(this breaks some devices)\nare you sure?"
+                        : "Start tile caching, LAST CHANCE!!!";
+                dc.drawText(
+                    xHalf,
+                    topText,
+                    Graphics.FONT_XTINY,
+                    text,
+                    Graphics.TEXT_JUSTIFY_CENTER
+                );
+                return true;
+            }
+            case 2: {
+                // press left to confirm, right cancels
+                dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_GREEN);
+                dc.fillRectangle(0, 0, xHalf, screenHeight);
+                dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
+                dc.fillRectangle(xHalf, 0, xHalf, screenHeight);
+                dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
+                dc.drawText(
+                    xHalf - padding,
+                    yHalf,
+                    Graphics.FONT_XTINY,
+                    "Y",
+                    Graphics.TEXT_JUSTIFY_CENTER
+                );
+                dc.drawText(
+                    xHalf + padding,
+                    yHalf,
+                    Graphics.FONT_XTINY,
+                    "N",
+                    Graphics.TEXT_JUSTIFY_CENTER
+                );
+                var text = "Confirm start tile caching";
+                dc.drawText(
+                    xHalf,
+                    topText,
+                    Graphics.FONT_XTINY,
+                    text,
+                    Graphics.TEXT_JUSTIFY_CENTER
+                );
+                return true;
+            }
+        }
+
         if (!_cachedValues.seeding()) {
             // not seeding, no ui
             return false;
         }
 
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
         var breadcrumbContext = getApp()._breadcrumbContext;
         dc.setColor(settings.uiColour, Graphics.COLOR_DK_GREEN);
         dc.clear();
@@ -607,7 +684,8 @@ class BreadcrumbRenderer {
                 "  (" +
                 (
                     (_cachedValues.seedingTilesProgressForThisLayer /
-                    _cachedValues.seedingTilesOnThisLayer.toFloat()) * 100
+                        _cachedValues.seedingTilesOnThisLayer.toFloat()) *
+                    100
                 ).format("%.1f") +
                 "%)" +
                 "\npending web: " +
@@ -1084,6 +1162,50 @@ class BreadcrumbRenderer {
                     getApp()._breadcrumbContext.clearRoutes();
                 }
                 _clearRouteProgress = 0;
+                return true;
+        }
+
+        return false;
+    }
+
+    function handleStartCacheRoute(x as Number, y as Number) as Boolean {
+        var xHalf = _cachedValues.xHalf; // local lookup faster
+        var yHalf = _cachedValues.yHalf; // local lookup faster
+
+        if (settings.mode != MODE_NORMAL) {
+            return false; // only normal mode can start a tile cache download
+        }
+        switch (_starCacheTilesProgress) {
+            case 0:
+                // press right of the screen to start tile cache download
+                if (x > _cachedValues.screenWidth - hitboxSize) {
+                    _starCacheTilesProgress = 1;
+                    return true;
+                }
+                return false;
+            case 1:
+                // press right to confirm, left cancels
+                if (x > xHalf) {
+                    _starCacheTilesProgress = 2;
+                    return true;
+                }
+                _starCacheTilesProgress = 0;
+                return true;
+
+            case 2:
+                // press left to confirm, right cancels
+                if (x < xHalf) {
+                    _starCacheTilesProgress = 3;
+                    return true;
+                }
+                _starCacheTilesProgress = 0;
+                return true;
+            case 3:
+                // press right to confirm, left cancels
+                if (x > xHalf) {
+                    _cachedValues.startCacheCurrentMapArea();
+                }
+                _starCacheTilesProgress = 0;
                 return true;
         }
 
