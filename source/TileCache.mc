@@ -126,6 +126,8 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         _tileCacheVersion = tileCacheVersion;
     }
 
+    function handleErroredTile(responseCode as Number) as Void {}
+
     function handle(
         responseCode as Number,
         data as Dictionary or String or Iterator or Null
@@ -139,16 +141,29 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                 _tileCache.addToStorage(_tileKey, responseCode, null);
             }
+            handleErroredTile(responseCode);
             return;
         }
+
+        handleSuccessfulTile(data, true);
+    }
+
+    function handleSuccessfulTile(
+        data as Dictionary or String or Iterator or Null,
+        addToCache as Boolean
+    ) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var cachedValues = getApp()._breadcrumbContext.cachedValues();
 
         if (!(data instanceof Dictionary)) {
             System.println("wrong data type, not dict: " + data);
             return;
         }
 
-        if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-            _tileCache.addToStorage(_tileKey, responseCode, data);
+        if (addToCache) {
+            if (settings.cacheTilesInStorage || cachedValues.seeding()) {
+                _tileCache.addToStorage(_tileKey, 200, data);
+            }
         }
 
         // System.print("data: " + data);
@@ -234,6 +249,8 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         _tileCacheVersion = tileCacheVersion;
     }
 
+    function handleErroredTile(responseCode as Number) as Void {}
+
     function handle(
         responseCode as Number,
         data as WatchUi.BitmapResource or Graphics.BitmapReference or Null
@@ -247,8 +264,19 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                 _tileCache.addToStorage(_tileKey, responseCode, null);
             }
+            handleErroredTile(responseCode);
             return;
         }
+
+        handleSuccessfulTile(data, true);
+    }
+
+    function handleSuccessfulTile(
+        data as WatchUi.BitmapResource or Graphics.BitmapReference or Null,
+        addToCache as Boolean
+    ) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var cachedValues = getApp()._breadcrumbContext.cachedValues();
 
         if (
             data == null ||
@@ -265,8 +293,15 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             data = data.get();
         }
 
-        if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-            _tileCache.addToStorage(_tileKey, responseCode, data);
+        if (data == null || !(data instanceof WatchUi.BitmapResource)) {
+            System.println("data bitmap was null or not a bitmap");
+            return;
+        }
+
+        if (addToCache) {
+            if (settings.cacheTilesInStorage || cachedValues.seeding()) {
+                _tileCache.addToStorage(_tileKey, 200, data);
+            }
         }
 
         // we have to downsample the tile, not recomendedd, as this mean we will have to request the same tile multiple times (cant save big tiles around anywhere)
@@ -618,7 +653,7 @@ class TileCache {
             var tileFromStorage = _storageTileCache.get(tileKey);
             if (tileFromStorage != null && tileFromStorage[1] == 200) {
                 // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
-                imageReqHandler.handle(tileFromStorage[1], tileFromStorage[2]);
+                imageReqHandler.handleSuccessfulTile(tileFromStorage[2], false);
                 // logD("image tile loaded from storage: " + tileKey);
                 return true;
             }
@@ -656,7 +691,7 @@ class TileCache {
         var tileFromStorage = _storageTileCache.get(tileKey);
         if (tileFromStorage != null && tileFromStorage[1] == 200) {
             // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
-            jsonWebHandler.handle(tileFromStorage[1], tileFromStorage[2]);
+            jsonWebHandler.handleSuccessfulTile(tileFromStorage[2], false);
             // logD("json tile loaded from storage: " + tileKey);
             return true;
         }
