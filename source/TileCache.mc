@@ -424,7 +424,7 @@ class StorageTileCache {
         return TILES_TILE_PREFIX + tileKeyStr;
     }
 
-    function get(tileKey as TileKey) as StorageTileDataType or Null {
+    function get(tileKey as TileKey) as StorageTileDataType? {
         var tileKeyStr = tileKey.optimisedHashKey();
 
         if (_tilesInStorage.indexOf(tileKeyStr) < 0) {
@@ -471,8 +471,17 @@ class StorageTileCache {
         tileWidth as Number,
         tileHeight as Number
     ) as WatchUi.BitmapResource? {
-        // todo load from chunks
+        // bitmap has to just load as a single image, but it could be over the 32Kb limit
         return Storage.getValue(tileKey(tileKeyStr));
+    }
+
+    private function deleteBitmap(tileKeyStr as String, tileCount as Number) as Void {
+        // for (var i = 0; i < tileCount; ++i) {
+        //     var key = tileKey(tileKeyStr) +;
+        //     Storage.deleteValue(key);
+        // }
+        // bitmap has to just load as a single image, but it could be over the 32Kb limit
+        Storage.deleteValue(tileKey(tileKeyStr));
     }
 
     function addBitmap(tileKey as TileKey, bitmap as WatchUi.BitmapResource) as Void {
@@ -481,13 +490,15 @@ class StorageTileCache {
             addMetaData(tileKeyStr, [
                 Time.now().value(),
                 STORAGE_TILE_TYPE_BITMAP,
-                4,
+                1,
                 bitmap.getWidth(),
                 bitmap.getHeight(),
             ])
         ) {
             // bitmaps can be larger than the allowed 32kb limit, we must store it as 4 smaller bitmaps
             // todo slice the bitmap into small chunks (4 should always be enough, hard code for now)
+            // this is not currently possible, since we can only draw to a bufferred bitmap, but cannot save the buffered bitmap to storage
+            // so we have to hope the tile size fits into storage
             safeAdd(tileKey(tileKeyStr), bitmap);
         }
     }
@@ -550,6 +561,8 @@ class StorageTileCache {
         // it will be faster to load them from there than bluetooth
         var oldestTime = null;
         var oldestKey = null;
+        var oldestMetaKeyStr = null;
+        var oldestMetaData = null;
 
         var keys = _tilesInStorage;
         for (var i = 0; i < keys.size(); i++) {
@@ -558,22 +571,42 @@ class StorageTileCache {
             // but its better than keeping the last used time in memory and causing OOM (when we have lots of tiles in storage).
             // this is slower, but better for memory.
             // we could have another key where we store the array of last used times, but that is harder to manage.
-            var tile = Storage.getValue(key);
-            if (tile == null) {
+            var metaKeyStr = metaKey(key);
+            var tileMetaData = Storage.getValue(metaKeyStr);
+            if (tileMetaData == null) {
                 // we do not have it in storage anymore somehow, remove this tile
                 oldestKey = key;
+                oldestMetaKeyStr = metaKeyStr;
+                oldestMetaData = null;
                 break;
             }
 
-            var lastUsed = (tile as StorageTileDataType)[0];
+            var lastUsed = tileMetaData[0];
             if (oldestTime == null || oldestTime > lastUsed) {
                 oldestTime = lastUsed;
                 oldestKey = key;
+                oldestMetaKeyStr = metaKeyStr;
+                oldestMetaData = tileMetaData;
             }
         }
 
         if (oldestKey != null) {
-            Storage.deleteValue(oldestKey);
+            if (oldestMetaKeyStr != null) {
+                Storage.deleteValue(oldestMetaKeyStr);
+            }
+            if (oldestMetaData != null) {
+                switch (oldestMetaData[1]) {
+                    case STORAGE_TILE_TYPE_DICT:
+                        deleteBitmap(oldestKey, oldestMetaData[2]);
+                        break;
+                    case STORAGE_TILE_TYPE_BITMAP:
+                        Storage.deleteValue(tileKey(oldestKey));
+                        break;
+                    case STORAGE_TILE_TYPE_ERRORED:
+                        // noop its just the meta key
+                        break;
+                }
+            }
             _tilesInStorage.remove(oldestKey);
             System.println("Evicted tile " + oldestKey + " from storage cache");
         }
