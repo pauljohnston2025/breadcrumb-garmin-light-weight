@@ -748,6 +748,14 @@ class CachedValues {
         // firstTileX = maxN(firstTileX, seedingUpToTileX); firstTileX cannot be capped, since it needs to start fresh on each row
         firstTileY = maxN(firstTileY, seedingUpToTileY);
 
+        updateSeedingProgress(firstTileX, firstTileY, lastTileX, lastTileY);
+        if (seedingUpToTileX == lastTileX - 1 && seedingUpToTileY == lastTileY - 1) {
+            return true;
+        }
+
+        // our progress might have changed
+        firstTileY = maxN(firstTileY, seedingUpToTileY);
+
         seedingTilesProgressForThisLayer =
             tilesPerXRow * (firstTileY - origFirstTileY) +
             tilesPerXRow -
@@ -767,10 +775,6 @@ class CachedValues {
         var maxTilesAtATime = 10;
         maxTilesAtATime = minN(maxTilesAtATime, _settings.storageTileCacheSize);
 
-        if (haveAllTilesForLayer(firstTileX, firstTileY, lastTileX, lastTileY, maxTilesAtATime)) {
-            return true;
-        }
-
         var tileStarted = 0;
         for (var y = firstTileY; y < lastTileY; ++y) {
             for (
@@ -780,8 +784,13 @@ class CachedValues {
             ) {
                 ++tileStarted;
                 var tileKey = new TileKey(x, y, seedingZ);
-                // logD("seeding storage tile: " + tileKey);
-                tileCache.seedTileToStorage(tileKey);
+                if (!tileCache._storageTileCache.haveTile(tileKey)) {
+                    // should we check if this tile is a 404/403 response?
+                    // problem is we will keep trying to get it even if its a new tile that we just got
+                    // we should probably store a 'downloadedAt' time on each tile in the cache so we can calculate a TTL
+                    // logD("seeding storage tile: " + tileKey);
+                    tileCache.seedTileToStorage(tileKey);
+                }
 
                 if (tileStarted >= maxTilesAtATime) {
                     return false;
@@ -792,15 +801,12 @@ class CachedValues {
         return false;
     }
 
-    function haveAllTilesForLayer(
+    function updateSeedingProgress(
         firstTileX as Number,
         firstTileY as Number,
         lastTileX as Number,
-        lastTileY as Number,
-        maxTilesAtATime as Number
-    ) as Boolean {
-        var tileChecked = 0;
-
+        lastTileY as Number
+    ) {
         var tileCache = getApp()._breadcrumbContext.tileCache();
 
         for (var y = firstTileY; y < lastTileY; ++y) {
@@ -809,25 +815,17 @@ class CachedValues {
                 x < lastTileX;
                 ++x
             ) {
-                ++tileChecked;
                 var tileKey = new TileKey(x, y, seedingZ);
                 if (!tileCache._storageTileCache.haveTile(tileKey)) {
                     // we need to seed some more
-                    return false;
+                    return;
                 }
 
                 // we have the tile (may be a bad response, but we have attempted it in the past), move our progress forward
                 // users should remove tile cache and start from scratch if they want to retry failed tiles
                 seedingUpToTileX = x;
                 seedingUpToTileY = y;
-
-                if (tileChecked >= maxTilesAtATime) {
-                    return false; // we have moved our progress, but still do not have all the tiles yet
-                }
             }
         }
-
-        // got to the end of the for loop, we must have them all
-        return true;
     }
 }
