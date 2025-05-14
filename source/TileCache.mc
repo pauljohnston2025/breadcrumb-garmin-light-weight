@@ -467,9 +467,9 @@ class StorageTileCache {
 
         switch (tileMeta[1]) {
             case STORAGE_TILE_TYPE_DICT:
-                return [200, loadBitmap(tileKeyStr, tileMeta[2], tileMeta[3], tileMeta[4])];
-            case STORAGE_TILE_TYPE_BITMAP:
                 return [200, Storage.getValue(tileKey(tileKeyStr))]; // should always fit into the 32Kb size
+            case STORAGE_TILE_TYPE_BITMAP:
+                return [200, loadBitmap(tileKeyStr, tileMeta[2], tileMeta[3], tileMeta[4])];
             case STORAGE_TILE_TYPE_ERRORED:
                 return [tileMeta[2], null];
         }
@@ -626,10 +626,10 @@ class StorageTileCache {
             if (oldestMetaData != null) {
                 switch (oldestMetaData[1]) {
                     case STORAGE_TILE_TYPE_DICT:
-                        deleteBitmap(oldestKey, oldestMetaData[2]);
+                        Storage.deleteValue(tileKey(oldestKey));
                         break;
                     case STORAGE_TILE_TYPE_BITMAP:
-                        Storage.deleteValue(tileKey(oldestKey));
+                        deleteBitmap(oldestKey, oldestMetaData[2]); 
                         break;
                     case STORAGE_TILE_TYPE_ERRORED:
                         // noop its just the meta key

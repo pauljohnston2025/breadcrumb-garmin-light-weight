@@ -441,6 +441,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
             settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
         ) {
+            if (_scratchPadBitmap == null) {
+                return; // should never happen, but be safe
+            }
+
             // only render once to buffer then back off for a bit
             // need to force rerender on scale change
             var epoch = Time.now().value();
