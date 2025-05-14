@@ -249,6 +249,12 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 return;
             } else if (type == PROTOCOL_SAVE_SETTINGS) {
                 System.println("got save settings req: " + rawData);
+                if (rawData.size() < 1) {
+                    System.println(
+                        "Failed to parse save settings request, bad length: " + rawData.size()
+                    );
+                    return;
+                }
                 _breadcrumbContext.settings().saveSettings(rawData[0] as Dictionary);
                 _breadcrumbContext.settings().onSettingsChanged(); // reload anything that has changed
                 return;

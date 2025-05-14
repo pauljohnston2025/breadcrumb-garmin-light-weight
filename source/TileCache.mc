@@ -437,24 +437,28 @@ class StorageTileCache {
         }
         Storage.setValue(TILES_VERION_KEY, TILES_STORAGE_VERSION);
 
-        var newKey = "newkey";
-        Storage.setValue(newKey, { "test" => "value" });
-        var val1 = Storage.getValue(newKey);
-        Storage.setValue(newKey, { "test" => "value2" });
-        var val2 = Storage.getValue(newKey);
-        if (val2 instanceof Dictionary) {
-            System.println("val was dict");
-            val2["test"] = "val2mod";
-        }
-        var val3 = Storage.getValue(newKey);
+        // test storage does not cache values in memory
+        // var newKey = "newkey";
+        // Storage.setValue(newKey, { "test" => "value" });
+        // var val1 = Storage.getValue(newKey);
+        // Storage.setValue(newKey, { "test" => "value2" });
+        // var val2 = Storage.getValue(newKey);
+        // if (val2 instanceof Dictionary) {
+        //     System.println("val was dict");
+        //     val2["test"] = "val2mod";
+        //     val2["test2"] = "val2test"; // new keys should be created
+        // }
+        // var val3 = Storage.getValue(newKey);
 
-        System.println("val1: " + val1);
-        System.println("val2: " + val2);
-        System.println("val3: " + val3);
+        // System.println("val1: " + val1);
+        // System.println("val2: " + val2);
+        // System.println("val3: " + val3);
+        // System.println("val3 test bad dict key access: " + (val3 as Dictionary)["badkey"]);
 
         _settings = settings;
         var tiles = Storage.getValue(TILES_KEY);
-        if (tiles != null) {
+        if (tiles != null || !(tiles instanceof Array)) {
+            // todo validate its an array of strings?
             _tilesInStorage = tiles as Array<String>;
         }
     }
@@ -477,15 +481,29 @@ class StorageTileCache {
 
         var metaKeyStr = metaKey(tileKeyStr);
         var tileMeta = Storage.getValue(metaKeyStr);
+        if (tileMeta == null || !(tileMeta instanceof Array) || tileMeta.size() < 2) {
+            logE("bad tile metadata in storage" + tileMeta);
+            return null;
+        }
         tileMeta[0] = Time.now().value();
         Storage.setValue(metaKeyStr, tileMeta);
 
         switch (tileMeta[1]) {
             case STORAGE_TILE_TYPE_DICT:
+                // no need to check type of the getValue call, handling code checks it
                 return [200, Storage.getValue(tileKey(tileKeyStr))]; // should always fit into the 32Kb size
             case STORAGE_TILE_TYPE_BITMAP:
+                if (tileMeta.size() < 5) {
+                    logE("bad tile metadata in storage for bitmap tile" + tileMeta);
+                    return null;
+                }
+                // no need to check type of loadBitmap, handling code checks it
                 return [200, loadBitmap(tileKeyStr, tileMeta[2], tileMeta[3], tileMeta[4])];
             case STORAGE_TILE_TYPE_ERRORED:
+                if (tileMeta.size() < 3) {
+                    logE("bad tile metadata in storage for error tile" + tileMeta);
+                    return null;
+                }
                 return [tileMeta[2], null];
         }
 
@@ -617,11 +635,15 @@ class StorageTileCache {
             // we could have another key where we store the array of last used times, but that is harder to manage.
             var metaKeyStr = metaKey(key);
             var tileMetaData = Storage.getValue(metaKeyStr);
-            if (tileMetaData == null) {
+            if (
+                tileMetaData == null ||
+                !(tileMetaData instanceof Array) ||
+                tileMetaData.size() < 2
+            ) {
                 // we do not have it in storage anymore somehow, remove this tile
                 oldestKey = key;
                 oldestMetaKeyStr = metaKeyStr;
-                oldestMetaData = null;
+                oldestMetaData = null; // we cannot parse the metadata
                 break;
             }
 
@@ -639,11 +661,16 @@ class StorageTileCache {
                 Storage.deleteValue(oldestMetaKeyStr);
             }
             if (oldestMetaData != null) {
+                oldestMetaData = oldestMetaData as Array<Number>;
                 switch (oldestMetaData[1]) {
                     case STORAGE_TILE_TYPE_DICT:
                         Storage.deleteValue(tileKey(oldestKey));
                         break;
                     case STORAGE_TILE_TYPE_BITMAP:
+                        if (oldestMetaData.size() < 3) {
+                            logE("bad tile metadata in storage for bitmap tile remove" + oldestMetaData);
+                            return null;
+                        }
                         deleteBitmap(oldestKey, oldestMetaData[2]);
                         break;
                     case STORAGE_TILE_TYPE_ERRORED:
@@ -1036,6 +1063,7 @@ class TileCache {
         var it = 0;
         for (var i = 0; i < tileSize; ++i) {
             for (var j = 0; j < tileSize; ++j) {
+                // _palette should have all values that are possible, not checking size for perf reasons
                 var colour = _palette[charArr[it].toNumber() & 0x3f]; // charArr[it] as Char the toNumber is The UTF-32 representation of the Char interpreted as a Number
                 it++;
                 localDc.setColor(colour, colour);

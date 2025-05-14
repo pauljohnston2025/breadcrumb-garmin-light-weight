@@ -165,7 +165,7 @@ class BreadcrumbTrack {
                 return null;
             }
             var bbc = Storage.getValue(key + "bbc");
-            if (bbc == null) {
+            if (bbc == null || bbc.size() != 3) {
                 return null;
             }
             var coords = Storage.getValue(key + "coords");
