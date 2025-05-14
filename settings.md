@@ -276,6 +276,8 @@ Only allow zooming in/out to the tile layer limits. Also all steps between scale
 ---
 # Offline Tile Storage
 
+***WARNING***, use at own risk. Several isues were encounterred when trying to develop and use this feature. I had issues with the graphics memory filling up the system and had to reboot the watch to clear it. It seems mostly stable now, but some users may encounter issues.  
+
 A small number of tiles can be saved for complete offline use (no phone connection required). This is limited by the storage capacity of each device (the app storage, not the full storage capacity for music etc.). This is normally on the order of Mb, not Gb so only a small number of tiles can be stored, but for small routes enough tiles can be stored so that we can not take a phone, and save battery power by not having to download map tiles over the bluetooth connection.
 
 Note: I had some issues when different tile servers crashing the app with a system failure 'failed inside handle_image_callback' when using the tile server directly from the watch. The companion app did not seem to suffer this issue (likely because the tiles are much smaller). I tried a few preventative measures, but the issue still persists. If you have issues with offline maps, its best to change the tile server, or turn them off entirely (they are disabled by default).    

@@ -254,18 +254,21 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
 class ImageWebTileRequestHandler extends ImageWebHandler {
     var _tileCache as TileCache;
     var _tileKey as TileKey;
+    var _fullSizeTile as TileKey;
     var _tileCacheVersion as Number;
     var _onlySeedStorage as Boolean;
 
     function initialize(
         tileCache as TileCache,
         tileKey as TileKey,
+        fullSizeTile as TileKey,
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
     ) {
         ImageWebHandler.initialize();
         _tileCache = tileCache;
         _tileKey = tileKey;
+        _fullSizeTile = fullSizeTile;
         _tileCacheVersion = tileCacheVersion;
         _onlySeedStorage = onlySeedStorage;
     }
@@ -283,7 +286,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
             System.println("failed with: " + responseCode);
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-                _tileCache._storageTileCache.addErroredTile(_tileKey, responseCode);
+                _tileCache._storageTileCache.addErroredTile(_fullSizeTile, responseCode);
             }
             if (_onlySeedStorage) {
                 return;
@@ -324,7 +327,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 
         if (addToCache) {
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-                _tileCache._storageTileCache.addBitmap(_tileKey, data);
+                _tileCache._storageTileCache.addBitmap(_fullSizeTile, data);
             }
         }
 
@@ -672,7 +675,7 @@ class StorageTileCache {
                                 "bad tile metadata in storage for bitmap tile remove" +
                                     oldestMetaData
                             );
-                            return null;
+                            break;
                         }
                         deleteBitmap(oldestKey, oldestMetaData[2]);
                         break;
@@ -854,13 +857,18 @@ class TileCache {
 
         if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
             // logD("small tile: " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
+            var x = tileKey.x / _cachedValues.smallTilesPerScaledTile;
+            var y = tileKey.y / _cachedValues.smallTilesPerScaledTile;
+            var fullSizeTile = new TileKey(x, y, tileKey.z);
+            // logD("fullSizeTile tile: " + fullSizeTile);
             var imageReqHandler = new ImageWebTileRequestHandler(
                 me,
                 tileKey,
+                fullSizeTile,
                 _tileCacheVersion,
                 onlySeedStorage
             );
-            var tileFromStorage = _storageTileCache.get(tileKey);
+            var tileFromStorage = _storageTileCache.get(fullSizeTile);
             if (tileFromStorage != null) {
                 var responseCode = tileFromStorage[0];
                 // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
@@ -873,11 +881,10 @@ class TileCache {
                 return true;
             }
             if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
+                // we are running in storage only mode, but the tile is not in the cache
+                imageReqHandler.handleErroredTile(404);
                 return false;
             }
-            var x = tileKey.x / _cachedValues.smallTilesPerScaledTile;
-            var y = tileKey.y / _cachedValues.smallTilesPerScaledTile;
-            // logD("large tile: " + x + ", " + y + ", " + tileKey.z);
             _webRequestHandler.add(
                 new ImageRequest(
                     "tileimage" + tileKey + "-" + _tileCacheVersion, // the hash is for the small tile request, not the big one (they will send the same physical request out, but again use 256 tilSize if your using external sources)
@@ -921,6 +928,8 @@ class TileCache {
             return true;
         }
         if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
+            // we are running in storage only mode, but the tile is not in the cache
+            jsonWebHandler.handleErroredTile(404);
             return false;
         }
         _webRequestHandler.add(
