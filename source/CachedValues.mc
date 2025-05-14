@@ -641,6 +641,11 @@ class CachedValues {
         if (scale == null) {
             _settings.clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
             updateScaleCenterAndMap();
+            // this is not the best guess, but will onyl require the user to tap zoom once to see that it cannot zoom
+            // getScaleDecIncAmount() only works when the scale is not null. We could update it to use the currentScale if scale is null?
+            // they are not acutally in a user scale in this case though, so makes sense to show that we are tracking the users desired zoom instead of ours
+            scaleCanInc = true; 
+            scaleCanDec = true;
             if (getApp()._view != null) {
                 getApp()._view.resetRenderTime();
             }
