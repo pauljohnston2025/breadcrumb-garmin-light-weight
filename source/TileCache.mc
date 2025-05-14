@@ -133,7 +133,9 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         _onlySeedStorage = onlySeedStorage;
     }
 
-    function handleErroredTile(responseCode as Number) as Void {}
+    function handleErroredTile(responseCode as Number) as Void {
+        _tileCache.addErroredTile(_tileKey, _tileCacheVersion, responseCode.toString());
+    }
 
     function handle(
         responseCode as Number,
@@ -184,6 +186,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var mapTile = data["data"];
         if (!(mapTile instanceof String)) {
             System.println("wrong data type, not string");
+            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "WD");
             return;
         }
 
@@ -213,6 +216,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var bitmap = _tileCache.tileDataToBitmap64ColourString(mapTile.toCharArray());
         if (bitmap == null) {
             System.println("failed to parse bitmap");
+            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP");
             return;
         }
 
@@ -230,6 +234,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var bitmap = _tileCache.tileDataToBitmapFullColour(mapTileBytes);
         if (bitmap == null) {
             System.println("failed to parse bitmap");
+            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP");
             return;
         }
 
@@ -243,6 +248,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var bitmap = _tileCache.tileDataToBitmapBlackAndWhite(mapTile.toCharArray());
         if (bitmap == null) {
             System.println("failed to parse bitmap");
+            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP");
             return;
         }
 
@@ -273,7 +279,9 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         _onlySeedStorage = onlySeedStorage;
     }
 
-    function handleErroredTile(responseCode as Number) as Void {}
+    function handleErroredTile(responseCode as Number) as Void {
+        _tileCache.addErroredTile(_tileKey, _tileCacheVersion, responseCode.toString());
+    }
 
     function handle(
         responseCode as Number,
@@ -311,6 +319,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
                 !(data instanceof Graphics.BitmapReference))
         ) {
             System.println("wrong data type not image");
+            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "WD");
             return;
         }
 
@@ -322,6 +331,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 
         if (data == null || !(data instanceof WatchUi.BitmapResource)) {
             System.println("data bitmap was null or not a bitmap");
+            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "NB");
             return;
         }
 
@@ -959,10 +969,55 @@ class TileCache {
             return;
         }
 
-        if (_internalCache.size() == getApp()._breadcrumbContext.settings().tileCacheSize) {
+        if (_internalCache.size() == _settings.tileCacheSize) {
             evictLeastRecentlyUsedTile();
         }
 
+        if (_settings.showTileBorders && tile.bitmap instanceof Graphics.BufferedBitmap) {
+            // todo handle image tiles that are not bufferred bitmap
+            var dc = tile.bitmap.getDc();
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(4);
+            dc.drawRectangle(0, 0, dc.getWidth(), dc.getHeight());
+        }
+
+        _internalCache[tileKey] = tile;
+    }
+
+    function addErroredTile(tileKey as TileKey, tileCacheVersion as Number, msg as String) as Void {
+        if (tileCacheVersion != _tileCacheVersion) {
+            return;
+        }
+
+        if (_internalCache.size() == _settings.tileCacheSize) {
+            evictLeastRecentlyUsedTile();
+        }
+
+        var tileSize = _settings.tileSize;
+        // todo perf: only draw each message once, and cache the result (since they are generally 404,403 etc.), still need the tile object though to track last used
+        // this is especially important for larger tiles (image tiles are usually compressed and do not take up the full tile size in pixels)
+        var bitmap = newBitmap(tileSize, tileSize); 
+        var dc = bitmap.getDc();
+        var halfHeight = tileSize / 2;
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
+        dc.clear();
+        // cache the tile as errored, but do not chow the error message
+        if (_settings.showErrorTiles) {
+            dc.drawText(
+                halfHeight,
+                halfHeight,
+                Graphics.FONT_XTINY,
+                msg,
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            );
+        }
+        if (_settings.showTileBorders) {
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(4);
+            dc.drawRectangle(0, 0, tileSize, tileSize);
+        }
+        var tile = new Tile();
+        tile.setBitmap(bitmap);
         _internalCache[tileKey] = tile;
     }
 

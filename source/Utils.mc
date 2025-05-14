@@ -5,7 +5,7 @@ import Toybox.Time;
 
 const FLOAT_MIN = -340282346638528859811704183484516925440.0;
 const FLOAT_MAX = 340282346638528859811704183484516925440.0;
-const NUMBER_MAX = 0x7FFFFFFF;
+const NUMBER_MAX = 0x7fffffff;
 
 (:release)
 function isSimulator() as Boolean {
@@ -69,22 +69,29 @@ function isnan(a as Float) as Boolean {
     return a != a;
 }
 
+class BitmapCreateError extends Lang.Exception {
+    function initialize() {
+        Exception.initialize();
+    }
+
+    function getErrorMessage() as String? {
+        return "failed btmap create";
+    }
+}
+
 // https://developer.garmin.com/connect-iq/core-topics/graphics/#graphics
 // we must call get and keep the reference otherwise it can get cleanup up from under us
 // not too bad for temporaries, but terrible for tiles (they can not be garbage collected)
-function newBitmap(
-    width as Number,
-    height as Number
-) as Graphics.BufferedBitmap {
+function newBitmap(width as Number, height as Number) as Graphics.BufferedBitmap {
     var options = {
         :width => width,
-        :height => height
+        :height => height,
     };
 
     var bitmap = Graphics.createBufferedBitmap(options).get();
     if (!(bitmap instanceof BufferedBitmap)) {
         System.println("Could not allocate buffered bitmap");
-        throw new Exception();
+        throw new BitmapCreateError();
     }
 
     return bitmap;

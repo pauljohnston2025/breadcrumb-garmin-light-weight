@@ -100,13 +100,14 @@ class WebRequestHandleWrapper {
                 webHandler.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
             }
 
-            if (responseCode == 200) {
+            // data can be null even when we mae a json request and get 200 response
+            if (responseCode == 200 && data != null) {
                 webHandler._successCount++;
             } else {
                 // System.println("got web error: " + responseCode);
                 webHandler._errorCount++;
             }
-            webHandler._lastResult = responseCode;
+            webHandler._lastResult = data == null ? null : responseCode;
         } catch (e) {
             System.println("failed to handle web request: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
@@ -192,7 +193,7 @@ class WebRequestHandler {
     var _settings as Settings;
     var _errorCount as Number = 0;
     var _successCount as Number = 0;
-    var _lastResult as Number = 0;
+    var _lastResult as Number? = null;
 
     function initialize(settings as Settings) {
         _settings = settings;
@@ -437,7 +438,7 @@ class WebRequestHandler {
         return _successCount;
     }
 
-    function lastResult() as Number {
+    function lastResult() as Number? {
         return _lastResult;
     }
 

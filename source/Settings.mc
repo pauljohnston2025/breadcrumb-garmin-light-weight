@@ -302,6 +302,8 @@ class Settings {
     // maybe expose this as a user setting?
     var showPoints as Boolean = false;
     var drawLineToClosestTrack as Boolean = false;
+    var showTileBorders as Boolean = true;
+    var showErrorTiles as Boolean = true;
 
     function setMode(_mode as Number) as Void {
         mode = _mode;
