@@ -437,6 +437,21 @@ class StorageTileCache {
         }
         Storage.setValue(TILES_VERION_KEY, TILES_STORAGE_VERSION);
 
+        var newKey = "newkey";
+        Storage.setValue(newKey, { "test" => "value" });
+        var val1 = Storage.getValue(newKey);
+        Storage.setValue(newKey, { "test" => "value2" });
+        var val2 = Storage.getValue(newKey);
+        if (val2 instanceof Dictionary) {
+            System.println("val was dict");
+            val2["test"] = "val2mod";
+        }
+        var val3 = Storage.getValue(newKey);
+
+        System.println("val1: " + val1);
+        System.println("val2: " + val2);
+        System.println("val3: " + val3);
+
         _settings = settings;
         var tiles = Storage.getValue(TILES_KEY);
         if (tiles != null) {
@@ -629,7 +644,7 @@ class StorageTileCache {
                         Storage.deleteValue(tileKey(oldestKey));
                         break;
                     case STORAGE_TILE_TYPE_BITMAP:
-                        deleteBitmap(oldestKey, oldestMetaData[2]); 
+                        deleteBitmap(oldestKey, oldestMetaData[2]);
                         break;
                     case STORAGE_TILE_TYPE_ERRORED:
                         // noop its just the meta key
