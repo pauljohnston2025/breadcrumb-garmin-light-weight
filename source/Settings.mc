@@ -414,6 +414,10 @@ class Settings {
 
     function setValue(key as String, value) as Void {
         Application.Properties.setValue(key, value);
+        setValueSideEffect();
+    }
+
+    function setValueSideEffect() as Void {
         updateCachedValues();
     }
 
@@ -426,6 +430,8 @@ class Settings {
         mapChoice = value;
         setValue("mapChoice", mapChoice);
         updateMapChoiceChange(mapChoice);
+        updateCachedValues();
+        updateViewSettings();
     }
 
     function authMissing() as Boolean {
@@ -490,68 +496,58 @@ class Settings {
         return maxTileCacheSizeGuess() * 4; // this will result in ~64 for image tiles and ~324 for companion app 64*64 tiles
     }
 
-    function updateMapChoiceChange(value as Number) as Void {
-        if (value == 0) {
-            // custom - leave everything alone
-            return;
-        } else if (value == 1) {
-            // companion app
-            // setting back to defaults otherwise when we chose companion app we will not get the correct tilesize and it will crash
-            var defaultSettings = new Settings();
-            if (tileLayerMax != defaultSettings.tileLayerMax) {
-                setTileLayerMax(defaultSettings.tileLayerMax);
-            }
-            if (tileLayerMin != defaultSettings.tileLayerMin) {
-                setTileLayerMin(defaultSettings.tileLayerMin);
-            }
-            if (fullTileSize != defaultSettings.fullTileSize) {
-                setFullTileSize(defaultSettings.fullTileSize);
-            }
-            if (scaledTileSize != defaultSettings.scaledTileSize) {
-                setScaledTileSize(defaultSettings.scaledTileSize);
-            }
-            if (tileSize != defaultSettings.tileSize) {
-                setTileSize(defaultSettings.tileSize);
-            }
-            if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
-                setTileUrl(COMPANION_APP_TILE_URL);
-            }
-            var tileCacheMax = maxTileCacheSizeGuess();
-            if (tileCacheSize > tileCacheMax) {
-                logD("limiting tile cache size to: " + tileCacheMax);
-                setTileCacheSize(tileCacheMax);
-            }
-            var storageTileCacheSizeMax = maxStorageTileCacheSizeGuess();
-            if (storageTileCacheSize > storageTileCacheSizeMax) {
-                logD("limiting storage tile cache size to: " + storageTileCacheSizeMax);
-                setStorageTileCacheSize(storageTileCacheSizeMax);
-            }
-
-            return;
-        }
-
-        var tileServerIndex = value - 2;
-        if (tileServerIndex >= TILE_SERVERS.size()) {
-            return; // invalid selection
-        }
-
+    function updateCompanionAppMapChoiceChange() as Void {
+        // setting back to defaults otherwise when we chose companion app we will not get the correct tilesize and it will crash
         var defaultSettings = new Settings();
-        var tileServerInfo = TILE_SERVERS[tileServerIndex];
+        if (tileLayerMax != defaultSettings.tileLayerMax) {
+            setTileLayerMaxWithoutSideEffect(defaultSettings.tileLayerMax);
+        }
+        if (tileLayerMin != defaultSettings.tileLayerMin) {
+            setTileLayerMinWithoutSideEffect(defaultSettings.tileLayerMin);
+        }
+        if (fullTileSize != defaultSettings.fullTileSize) {
+            setFullTileSizeWithoutSideEffect(defaultSettings.fullTileSize);
+        }
+        if (scaledTileSize != defaultSettings.scaledTileSize) {
+            setScaledTileSizeWithoutSideEffect(defaultSettings.scaledTileSize);
+        }
+        if (tileSize != defaultSettings.tileSize) {
+            setTileSizeWithoutSideEffect(defaultSettings.tileSize);
+        }
+        if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
+            setTileUrlWithoutSideEffect(COMPANION_APP_TILE_URL);
+        }
+        var tileCacheMax = maxTileCacheSizeGuess();
+        if (tileCacheSize > tileCacheMax) {
+            logD("limiting tile cache size to: " + tileCacheMax);
+            setTileCacheSizeWithoutSideEffect(tileCacheMax);
+        }
+        var storageTileCacheSizeMax = maxStorageTileCacheSizeGuess();
+        if (storageTileCacheSize > storageTileCacheSizeMax) {
+            logD("limiting storage tile cache size to: " + storageTileCacheSizeMax);
+            setStorageTileCacheSizeWithoutSideEffect(storageTileCacheSizeMax);
+        }
+
+        return;
+    }
+
+    function updateTileServerMapChoiceChange(tileServerInfo as TileServerInfo) as Void {
+        var defaultSettings = new Settings();
         if (tileLayerMax != tileServerInfo.tileLayerMax) {
-            setTileLayerMax(tileServerInfo.tileLayerMax);
+            setTileLayerMaxWithoutSideEffect(tileServerInfo.tileLayerMax);
         }
         if (tileLayerMin != tileServerInfo.tileLayerMin) {
-            setTileLayerMin(tileServerInfo.tileLayerMin);
+            setTileLayerMinWithoutSideEffect(tileServerInfo.tileLayerMin);
         }
         if (fullTileSize != 256) {
-            setFullTileSize(256);
+            setFullTileSizeWithoutSideEffect(256);
         }
         // todo: reduce this to 128 for better results
         if (scaledTileSize != defaultSettings.scaledTileSize) {
-            setScaledTileSize(defaultSettings.scaledTileSize);
+            setScaledTileSizeWithoutSideEffect(defaultSettings.scaledTileSize);
         }
         if (tileSize != defaultSettings.scaledTileSize) {
-            setTileSize(defaultSettings.scaledTileSize);
+            setTileSizeWithoutSideEffect(defaultSettings.scaledTileSize);
         }
         // auth token added later
         var newUrl =
@@ -560,23 +556,51 @@ class Settings {
             AUTH_TOKEN_TYPES[tileServerInfo.authTokenType];
         if (!tileUrl.equals(newUrl)) {
             // set url last to clear tile cache (if needed)
-            setTileUrl(newUrl);
+            setTileUrlWithoutSideEffect(newUrl);
         }
         var tileCacheMax = maxTileCacheSizeGuess();
         if (tileCacheSize > tileCacheMax) {
             logD("limiting tile cache size to: " + tileCacheMax);
-            setTileCacheSize(tileCacheMax);
+            setTileCacheSizeWithoutSideEffect(tileCacheMax);
         }
         var storageTileCacheSizeMax = maxStorageTileCacheSizeGuess();
         if (storageTileCacheSize > storageTileCacheSizeMax) {
             logD("limiting storage tile cache size to: " + storageTileCacheSizeMax);
-            setStorageTileCacheSize(storageTileCacheSizeMax);
+            setStorageTileCacheSizeWithoutSideEffect(storageTileCacheSizeMax);
         }
     }
 
+    function updateMapChoiceChange(value as Number) as Void {
+        if (value == 0) {
+            // custom - leave everything alone
+            return;
+        } else if (value == 1) {
+            // companion app
+            updateCompanionAppMapChoiceChange();
+            return;
+        }
+
+        var tileServerIndex = value - 2;
+        if (tileServerIndex < 0 || tileServerIndex >= TILE_SERVERS.size()) {
+            return; // invalid selection
+        }
+
+        var tileServerInfo = TILE_SERVERS[tileServerIndex];
+        updateTileServerMapChoiceChange(tileServerInfo);
+    }
+
     function setTileUrl(_tileUrl as String) as Void {
+        setTileUrlWithoutSideEffect(_tileUrl);
+        setValueSideEffect();
+    }
+
+    function setTileUrlWithoutSideEffect(_tileUrl as String) as Void {
         tileUrl = _tileUrl;
-        setValue("tileUrl", tileUrl);
+        Application.Properties.setValue("tileUrl", tileUrl);
+        tileUrlChanged();
+    }
+
+    function tileUrlChanged() as Void {
         clearPendingWebRequests();
         clearTileCache();
         clearTileCacheStats();
@@ -624,34 +648,66 @@ class Settings {
     }
 
     function setTileSize(value as Number) as Void {
+        setTileSizeWithoutSideEffect(value);
+        setValueSideEffect();
+    }
+    function setTileSizeWithoutSideEffect(value as Number) as Void {
         tileSize = value;
-        setValue("tileSize", tileSize);
+        Application.Properties.setValue("tileSize", tileSize);
+        tileSizeChanged();
+    }
+
+    function tileSizeChanged() as Void {
         clearPendingWebRequests();
         clearTileCache();
     }
 
     function setFullTileSize(value as Number) as Void {
+        setFullTileSizeWithoutSideEffect(value);
+        setValueSideEffect();
+    }
+    function setFullTileSizeWithoutSideEffect(value as Number) as Void {
         fullTileSize = value;
-        setValue("fullTileSize", fullTileSize);
+        Application.Properties.setValue("fullTileSize", fullTileSize);
+        fullTileSizeChanged();
+    }
+
+    function fullTileSizeChanged() as Void {
         clearPendingWebRequests();
         clearTileCache();
     }
 
     function setScaledTileSize(value as Number) as Void {
+        setScaledTileSizeWithoutSideEffect(value);
+        setValueSideEffect();
+    }
+    function setScaledTileSizeWithoutSideEffect(value as Number) as Void {
         scaledTileSize = value;
-        setValue("scaledTileSize", scaledTileSize);
+        Application.Properties.setValue("scaledTileSize", scaledTileSize);
+        scaledTileSizeChanged();
+    }
+
+    function scaledTileSizeChanged() as Void {
         clearPendingWebRequests();
         clearTileCache();
     }
 
     function setTileLayerMax(value as Number) as Void {
+        setTileLayerMaxWithoutSideEffect(value);
+        setValueSideEffect();
+    }
+    function setTileLayerMaxWithoutSideEffect(value as Number) as Void {
         tileLayerMax = value;
-        setValue("tileLayerMax", tileLayerMax);
+        Application.Properties.setValue("tileLayerMax", tileLayerMax);
     }
 
     function setTileLayerMin(value as Number) as Void {
+        setTileLayerMinWithoutSideEffect(value);
+        setValueSideEffect();
+    }
+    function setTileLayerMinWithoutSideEffect(value as Number) as Void {
         tileLayerMin = value;
-        setValue("tileLayerMin", tileLayerMin);
+        Application.Properties.setValue("tileLayerMin", tileLayerMin);
     }
 
     function setDisableMapsFailureCount(value as Number) as Void {
@@ -683,27 +739,43 @@ class Settings {
     }
 
     function setTileCacheSize(value as Number) as Void {
+        setTileCacheSizeWithoutSideEffect(value);
+        setValueSideEffect();
+    }
+    function setTileCacheSizeWithoutSideEffect(value as Number) as Void {
         var oldTileCacheSize = tileCacheSize;
         tileCacheSize = value;
-        setValue("tileCacheSize", tileCacheSize);
+        Application.Properties.setValue("tileCacheSize", tileCacheSize);
 
         if (oldTileCacheSize > tileCacheSize) {
             // only nuke tile cache if we reduce the number of tiles we can store
-            clearPendingWebRequests();
-            clearTileCache();
+            tileCacheSizeReduced();
         }
     }
 
+    function tileCacheSizeReduced() as Void {
+        clearPendingWebRequests();
+        clearTileCache();
+    }
+
     function setStorageTileCacheSize(value as Number) as Void {
+        setStorageTileCacheSizeWithoutSideEffect(value);
+        setValueSideEffect();
+    }
+    function setStorageTileCacheSizeWithoutSideEffect(value as Number) as Void {
         var oldStorageTileCacheSize = storageTileCacheSize;
         storageTileCacheSize = value;
-        setValue("storageTileCacheSize", storageTileCacheSize);
+        Application.Properties.setValue("storageTileCacheSize", storageTileCacheSize);
 
         if (oldStorageTileCacheSize > storageTileCacheSize) {
             // only nuke storage tile cache if we reduce the number of tiles we can store
-            clearPendingWebRequests();
-            clearStorageTiles(); // clears the tile storage for us
+            storageTileCacheSizeReduced();
         }
+    }
+
+    function storageTileCacheSizeReduced() as Void {
+        clearPendingWebRequests();
+        clearStorageTiles(); // clears the tile storage for us
     }
 
     function setTileCachePadding(value as Number) as Void {
@@ -723,7 +795,10 @@ class Settings {
 
     function setMapEnabledRaw(_mapEnabled as Boolean) as Void {
         mapEnabled = _mapEnabled;
+        mapEnabledChanged();
+    }
 
+    function mapEnabledChanged() as Void {
         if (!mapEnabled) {
             clearTileCache();
             clearPendingWebRequests();
@@ -745,8 +820,12 @@ class Settings {
         setValue("cacheTilesInStorage", cacheTilesInStorage);
 
         if (!cacheTilesInStorage) {
-            clearStorageTiles();
+            cacheTilesInStorageChanged();
         }
+    }
+
+    function cacheTilesInStorageChanged() as Void {
+        clearStorageTiles();
     }
 
     function setStorageMapTilesOnly(value as Boolean) as Void {
@@ -1767,8 +1846,6 @@ class Settings {
         var oldMapEnabled = mapEnabled;
         var oldCacheTilesInStorage = cacheTilesInStorage;
         loadSettings();
-        updateCachedValues();
-        updateViewSettings();
         // route settins do not work because garmins setting spage cannot edit them
         // when any property is modified, so we have to explain to users not to touch the settings, but we cannot because it looks
         // like garmmins settings are not rendering desciptions anymore :(
@@ -1788,33 +1865,103 @@ class Settings {
 
         // run any tile cache clearing that we need to when map features change
         if (!oldTileUrl.equals(tileUrl)) {
-            setTileUrl(tileUrl);
+            tileUrlChanged();
         }
         if (oldTileSize != tileSize) {
-            setTileSize(tileSize);
+            tileSizeChanged();
         }
         if (oldFullTileSize != fullTileSize) {
-            setFullTileSize(fullTileSize);
+            fullTileSizeChanged();
         }
         if (oldScaledTileSize != scaledTileSize) {
-            setScaledTileSize(scaledTileSize);
+            scaledTileSizeChanged();
         }
         if (oldTileCacheSize > tileCacheSize) {
             // only nuke tile cache if we reduce the number of tiles we can store
-            setTileCacheSize(tileCacheSize);
+            tileCacheSizeReduced();
         }
         if (oldStorageTileCacheSize > storageTileCacheSize) {
             // only nuke tile cache if we reduce the number of tiles we can store
-            setStorageTileCacheSize(storageTileCacheSize);
+            storageTileCacheSizeReduced();
         }
         if (oldMapEnabled != mapEnabled) {
-            setMapEnabled(mapEnabled);
+            mapEnabledChanged();
         }
         if (oldCacheTilesInStorage != cacheTilesInStorage) {
-            setCacheTilesInStorage(cacheTilesInStorage);
+            cacheTilesInStorageChanged();
         }
         if (oldMapChoice != mapChoice) {
-            setMapChoice(mapChoice);
+            updateMapChoiceChange(mapChoice);
         }
+
+        updateCachedValues();
+        updateViewSettings();
     }
 }
+
+// As the number of settings and number of cached variables updated are increasing stack overflows are becoming more common
+// I think the main issue is the setBlah methods are meant to be used for on app settings, so they all call into setValue()
+// but we need to not do that when we are comming from the context of onSettingsChanged, since we manually call the updateCachedValues at the end of onSettingsChanged
+
+// Error: Stack Overflow Error
+// Details: 'Failed invoking <symbol>'
+// Time: 2025-05-14T11:00:57Z
+// Part-Number: 006-B3704-00
+// Firmware-Version: '19.05'
+// Language-Code: eng
+// ConnectIQ-Version: 5.1.1
+// Filename: BreadcrumbDataField
+// Appname: BreadcrumbDataField
+// Stack:
+//   - pc: 0x10002541
+//     File: 'BreadcrumbDataField\source\Settings.mc'
+//     Line: 875
+//     Function: getRouteIndexById
+//   - pc: 0x100024ef
+//     File: 'BreadcrumbDataField\source\Settings.mc'
+//     Line: 813
+//     Function: routeEnabled
+//   - pc: 0x10008ec0
+//     File: 'BreadcrumbDataField\source\CachedValues.mc'
+//     Line: 114
+//     Function: calcOuterBoundingBoxFromTrackAndRoutes
+//   - pc: 0x1000833a
+//     File: 'BreadcrumbDataField\source\CachedValues.mc'
+//     Line: 170
+//     Function: getNewScaleAndUpdateCenter
+//   - pc: 0x100092f2
+//     File: 'BreadcrumbDataField\source\CachedValues.mc'
+//     Line: 128
+//     Function: updateScaleCenterAndMap
+//   - pc: 0x100093c8
+//     File: 'BreadcrumbDataField\source\CachedValues.mc'
+//     Line: 440
+//     Function: recalculateAll
+//   - pc: 0x100043d6
+//     File: 'BreadcrumbDataField\source\Settings.mc'
+//     Line: 1169
+//     Function: updateCachedValues
+//   - pc: 0x10004359
+//     File: 'BreadcrumbDataField\source\Settings.mc'
+//     Line: 417
+//     Function: setValue
+//   - pc: 0x10002a86
+//     File: 'BreadcrumbDataField\source\Settings.mc'
+//     Line: 649
+//     Function: setTileLayerMax
+//   - pc: 0x10003948
+//     File: 'BreadcrumbDataField\source\Settings.mc'
+//     Line: 541
+//     Function: updateMapChoiceChange
+//   - pc: 0x10003ff6
+//     File: 'BreadcrumbDataField\source\Settings.mc'
+//     Line: 428
+//     Function: setMapChoice
+//   - pc: 0x10001e3e
+//     File: 'BreadcrumbDataField\source\Settings.mc'
+//     Line: 1817
+//     Function: onSettingsChanged
+//   - pc: 0x10006d39
+//     File: 'BreadcrumbDataField\source\BreadcrumbDataFieldApp.mc'
+//     Line: 253
+//     Function: onPhone

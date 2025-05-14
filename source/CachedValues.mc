@@ -160,19 +160,20 @@ class CachedValues {
             return calculateScale(renderDistanceM.toFloat());
         }
 
-        var trackBoundingBox =
-            getApp()._breadcrumbContext.track().coordinates.lastPoint() == null
-                ? null
-                : getApp()._breadcrumbContext.track().boundingBox;
-        if (_settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK) {
-            trackBoundingBox = null;
-        }
         var boundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
             getApp()._breadcrumbContext.routes(),
-            trackBoundingBox
+            _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK
+                ? null
+                : optionalTrackBoundingBox()
         );
         calcCenterPointForBoundingBox(boundingBox);
         return getNewScaleFromBoundingBox(boundingBox);
+    }
+
+    function optionalTrackBoundingBox() as [Float, Float, Float, Float]? {
+        return getApp()._breadcrumbContext.track().coordinates.lastPoint() == null
+            ? null
+            : getApp()._breadcrumbContext.track().boundingBox;
     }
 
     // needs to be called whenever the screen moves to a new bounding box

@@ -239,10 +239,12 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 return;
             } else if (type == PROTOCOL_REQUEST_SETTINGS) {
                 System.println("got send settings req: " + rawData);
+                var settings = _breadcrumbContext.settings().asDict();
+                // logD("sending settings"+ settings);
                 _breadcrumbContext
                     .webRequestHandler()
                     .transmit(
-                        [PROTOCOL_SEND_SETTINGS, _breadcrumbContext.settings().asDict()],
+                        [PROTOCOL_SEND_SETTINGS, settings],
                         {},
                         new SettingsSent()
                     );
