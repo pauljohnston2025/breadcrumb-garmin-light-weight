@@ -290,25 +290,30 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
 
     function updateScratchPadBitmap() as Void {
-        if (
-            settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
-            settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
-        ) {
-            // make sure we are at the correct size (settings/layout change at any point)
-            // could optimise this to be done in cached values rather than every render
-            var width = _cachedValues.screenWidth.toNumber();
-            var height = _cachedValues.screenHeight.toNumber();
+        try {
             if (
-                _scratchPadBitmap == null ||
-                _scratchPadBitmap.getWidth() != width ||
-                _scratchPadBitmap.getHeight() != height
+                settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
+                settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
             ) {
-                _scratchPadBitmap = null; // null out the old one first, otherwise we have 2 bit bitmaps allocated at the same time
-                // assuming garbage collection will run immediately, or when trying to allocate the next it will clean up the old one
-                _scratchPadBitmap = newBitmap(width, height);
+                // make sure we are at the correct size (settings/layout change at any point)
+                // could optimise this to be done in cached values rather than every render
+                var width = _cachedValues.screenWidth.toNumber();
+                var height = _cachedValues.screenHeight.toNumber();
+                if (
+                    _scratchPadBitmap == null ||
+                    _scratchPadBitmap.getWidth() != width ||
+                    _scratchPadBitmap.getHeight() != height
+                ) {
+                    _scratchPadBitmap = null; // null out the old one first, otherwise we have 2 bit bitmaps allocated at the same time
+                    // assuming garbage collection will run immediately, or when trying to allocate the next it will clean up the old one
+                    _scratchPadBitmap = newBitmap(width, height);
+                }
+            } else {
+                _scratchPadBitmap = null; // settigns have disabled it - clean up after ourselves on next render
             }
-        } else {
-            _scratchPadBitmap = null; // settigns have disabled it - clean up after ourselves on next render
+        } catch (e) {
+            logE("failed to allocate buffered bitmap: " + e.getErrorMessage());
+            ++$.globalExceptionCounter;
         }
     }
 
@@ -442,6 +447,21 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
         ) {
             if (_scratchPadBitmap == null) {
+                // we somehow have not allocated it yet, eg. onLayout could be called but throw beause the bitmap is not available yet
+                // we should probbaly track this and auto matically switch modes
+                updateScratchPadBitmap();
+            }
+            if (_scratchPadBitmap == null) {
+                // if its still null, we were unable to create the bitmap in the graphics pool
+                dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
+                dc.clear();
+                dc.drawText(
+                    _cachedValues.xHalf,
+                    _cachedValues.yHalf,
+                    Graphics.FONT_SYSTEM_MEDIUM,
+                    "COULD NOT ALLOCATE BUFFER\nSWITCH RENDER MODE",
+                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+                );
                 return; // should never happen, but be safe
             }
 
