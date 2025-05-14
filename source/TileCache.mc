@@ -668,7 +668,10 @@ class StorageTileCache {
                         break;
                     case STORAGE_TILE_TYPE_BITMAP:
                         if (oldestMetaData.size() < 3) {
-                            logE("bad tile metadata in storage for bitmap tile remove" + oldestMetaData);
+                            logE(
+                                "bad tile metadata in storage for bitmap tile remove" +
+                                    oldestMetaData
+                            );
                             return null;
                         }
                         deleteBitmap(oldestKey, oldestMetaData[2]);

@@ -567,7 +567,10 @@ class CachedValues {
         // when the scale is locked, we need to be where the user is, otherwise we
         // could see a blank part of the map, when we are zoomed in and have no
         // context
-        if (scale != null && _settings.zoomAtPaceMode != ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK) {
+        if (
+            scale != null &&
+            _settings.zoomAtPaceMode != ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK
+        ) {
             // the hacks begin
             var lastPoint = getApp()._breadcrumbContext.track().coordinates.lastPoint();
             if (lastPoint != null) {
@@ -644,7 +647,7 @@ class CachedValues {
             // this is not the best guess, but will onyl require the user to tap zoom once to see that it cannot zoom
             // getScaleDecIncAmount() only works when the scale is not null. We could update it to use the currentScale if scale is null?
             // they are not acutally in a user scale in this case though, so makes sense to show that we are tracking the users desired zoom instead of ours
-            scaleCanInc = true; 
+            scaleCanInc = true;
             scaleCanDec = true;
             if (getApp()._view != null) {
                 getApp()._view.resetRenderTime();

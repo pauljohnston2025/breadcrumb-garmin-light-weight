@@ -513,7 +513,7 @@ class Settings {
             if (tileSize != defaultSettings.tileSize) {
                 setTileSize(defaultSettings.tileSize);
             }
-            if (tileUrl != COMPANION_APP_TILE_URL) {
+            if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
                 setTileUrl(COMPANION_APP_TILE_URL);
             }
             var tileCacheMax = maxTileCacheSizeGuess();
@@ -558,7 +558,7 @@ class Settings {
             URL_PREFIXES[tileServerInfo.urlPrefix] +
             tileServerInfo.urlTemplate +
             AUTH_TOKEN_TYPES[tileServerInfo.authTokenType];
-        if (tileUrl != newUrl) {
+        if (!tileUrl.equals(newUrl)) {
             // set url last to clear tile cache (if needed)
             setTileUrl(newUrl);
         }
