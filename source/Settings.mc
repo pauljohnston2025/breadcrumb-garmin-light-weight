@@ -303,7 +303,10 @@ class Settings {
     var showPoints as Boolean = false;
     var drawLineToClosestTrack as Boolean = false;
     var showTileBorders as Boolean = true;
-    var showErrorTiles as Boolean = true;
+    var showErrorTileMessages as Boolean = true;
+    var tileErrorColour as Number = Graphics.COLOR_BLACK;
+    var httpErrorTileTTLS as Number = 60;
+    var errorTileTTLS as Number = 20; // other errors are from garmin ble connection issues, retry faster by default
 
     function setMode(_mode as Number) as Void {
         mode = _mode;

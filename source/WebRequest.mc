@@ -107,7 +107,7 @@ class WebRequestHandleWrapper {
                 // System.println("got web error: " + responseCode);
                 webHandler._errorCount++;
             }
-            webHandler._lastResult = data == null ? null : responseCode;
+            webHandler._lastResult = (responseCode == 200 && data == null) ? null : responseCode;
         } catch (e) {
             System.println("failed to handle web request: " + e.getErrorMessage());
             ++$.globalExceptionCounter;

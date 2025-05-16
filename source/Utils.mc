@@ -216,3 +216,8 @@ function stringReplaceFirst(
 
     return newString;
 }
+
+function isHttpResponseCode(responseCode as Number) as Boolean
+{
+    return responseCode > 0;
+}

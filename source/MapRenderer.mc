@@ -131,7 +131,7 @@ class MapRenderer {
     function renderMap(dc as Dc) as Void {
         var cachedValues = _cachedValues; // local lookup faster
         if (!_cachedValues.mapDataCanBeUsed) {
-            // do not divide by zero my good friends
+
             // we do not have a scale calculated yet
             return;
         }

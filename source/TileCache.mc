@@ -96,8 +96,15 @@ class TileKey {
     }
 }
 
+const NO_EXPIRY = -1;
+const WRONG_DATA_TILE = -6000;
+function expired(expiresAt as Number, now as Number) as Boolean {
+    return expiresAt != NO_EXPIRY && expiresAt < now;
+}
+
 class Tile {
     var lastUsed as Number;
+    var expiresAt as Number = NO_EXPIRY;
     var bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource or Null;
 
     function initialize() {
@@ -107,6 +114,14 @@ class Tile {
 
     function setBitmap(bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource) as Void {
         self.bitmap = bitmap;
+    }
+
+    function setExpiresAt(expiresAt as Number) as Void {
+        self.expiresAt = expiresAt;
+    }
+
+    function expiredAlready(now as Number) as Void {
+        expired(self.expiresAt, now);
     }
 
     function markUsed() as Void {
@@ -134,13 +149,23 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
     }
 
     function handleErroredTile(responseCode as Number) as Void {
-        _tileCache.addErroredTile(_tileKey, _tileCacheVersion, responseCode.toString());
+        _tileCache.addErroredTile(
+            _tileKey,
+            _tileCacheVersion,
+            responseCode.toString(),
+            isHttpResponseCode(responseCode)
+        );
     }
 
     function handle(
         responseCode as Number,
         data as Dictionary or String or Iterator or Null
     ) as Void {
+        // do not store tiles in storage if the tile cache version does not match
+        if (_tileCacheVersion != _tileCache._tileCacheVersion) {
+            return;
+        }
+
         var settings = getApp()._breadcrumbContext.settings();
         var cachedValues = getApp()._breadcrumbContext.cachedValues();
 
@@ -169,6 +194,15 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
 
         if (!(data instanceof Dictionary)) {
             System.println("wrong data type, not dict: " + data);
+            if (addToCache) {
+                if (settings.cacheTilesInStorage || cachedValues.seeding()) {
+                    _tileCache._storageTileCache.addWrongDataTile(_tileKey);
+                }
+            }
+            if (_onlySeedStorage) {
+                return;
+            }
+            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "WD", false);
             return;
         }
 
@@ -186,7 +220,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var mapTile = data["data"];
         if (!(mapTile instanceof String)) {
             System.println("wrong data type, not string");
-            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "WD");
+            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "WD", false);
             return;
         }
 
@@ -208,6 +242,8 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             handleBlackAndWhiteDataString(mapTile);
             return;
         }
+
+        _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "UT", false);
     }
 
     function handle64ColourDataString(mapTile as String) as Void {
@@ -216,7 +252,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var bitmap = _tileCache.tileDataToBitmap64ColourString(mapTile.toCharArray());
         if (bitmap == null) {
             System.println("failed to parse bitmap");
-            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP");
+            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP", false);
             return;
         }
 
@@ -234,7 +270,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var bitmap = _tileCache.tileDataToBitmapFullColour(mapTileBytes);
         if (bitmap == null) {
             System.println("failed to parse bitmap");
-            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP");
+            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP", false);
             return;
         }
 
@@ -248,7 +284,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var bitmap = _tileCache.tileDataToBitmapBlackAndWhite(mapTile.toCharArray());
         if (bitmap == null) {
             System.println("failed to parse bitmap");
-            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP");
+            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP", false);
             return;
         }
 
@@ -280,13 +316,23 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
     }
 
     function handleErroredTile(responseCode as Number) as Void {
-        _tileCache.addErroredTile(_tileKey, _tileCacheVersion, responseCode.toString());
+        _tileCache.addErroredTile(
+            _tileKey,
+            _tileCacheVersion,
+            responseCode.toString(),
+            isHttpResponseCode(responseCode)
+        );
     }
 
     function handle(
         responseCode as Number,
         data as WatchUi.BitmapResource or Graphics.BitmapReference or Null
     ) as Void {
+        // do not store tiles in storage if the tile cache version does not match
+        if (_tileCacheVersion != _tileCache._tileCacheVersion) {
+            return;
+        }
+
         var settings = getApp()._breadcrumbContext.settings();
         var cachedValues = getApp()._breadcrumbContext.cachedValues();
 
@@ -319,7 +365,15 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
                 !(data instanceof Graphics.BitmapReference))
         ) {
             System.println("wrong data type not image");
-            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "WD");
+            if (addToCache) {
+                if (settings.cacheTilesInStorage || cachedValues.seeding()) {
+                    _tileCache._storageTileCache.addWrongDataTile(_tileKey);
+                }
+            }
+            if (_onlySeedStorage) {
+                return;
+            }
+            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "WD", false);
             return;
         }
 
@@ -331,7 +385,15 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 
         if (data == null || !(data instanceof WatchUi.BitmapResource)) {
             System.println("data bitmap was null or not a bitmap");
-            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "NB");
+            if (addToCache) {
+                if (settings.cacheTilesInStorage || cachedValues.seeding()) {
+                    _tileCache._storageTileCache.addWrongDataTile(_tileKey);
+                }
+            }
+            if (_onlySeedStorage) {
+                return;
+            }
+            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "WD", false);
             return;
         }
 
@@ -411,7 +473,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 
 const TILES_KEY = "tileKeys";
 const TILES_VERION_KEY = "tilesVersion";
-const TILES_STORAGE_VERSION = 2; // udate this every time the tile format on disk changes, so we can purge of the old tiles on startup
+const TILES_STORAGE_VERSION = 3; // udate this every time the tile format on disk changes, so we can purge of the old tiles on startup
 const TILES_TILE_PREFIX = "tileData";
 const TILES_META_PREFIX = "tileMeta";
 
@@ -424,7 +486,7 @@ enum /* StorageTileType */ {
 // tiles are stored as
 // TILES_KEY => list of all known tile keys in storage, this is kept in memory so we can do quick lookups and know what to delete
 // <TILES_TILE_PREFIX><TILEKEY> => the raw tile data
-// <TILES_META_PREFIX><TILEKEY> => [<lastUsed>, <tileType>, <type specific data>] only used when fetching tile, or when trying to find out which tile to remove based on lastUsed
+// <TILES_META_PREFIX><TILEKEY> => [<lastUsed>, <tileType>, <expiresAt>, <type specific data>] only used when fetching tile, or when trying to find out which tile to remove based on lastUsed
 
 // <type specific data> for
 // STORAGE_TILE_TYPE_DICT -> nothing
@@ -470,7 +532,7 @@ class StorageTileCache {
 
         _settings = settings;
         var tiles = Storage.getValue(TILES_KEY);
-        if (tiles != null || !(tiles instanceof Array)) {
+        if (tiles != null && tiles instanceof Array) {
             // todo validate its an array of strings?
             _tilesInStorage = tiles as Array<String>;
         }
@@ -494,30 +556,42 @@ class StorageTileCache {
 
         var metaKeyStr = metaKey(tileKeyStr);
         var tileMeta = Storage.getValue(metaKeyStr);
-        if (tileMeta == null || !(tileMeta instanceof Array) || tileMeta.size() < 2) {
+        if (tileMeta == null || !(tileMeta instanceof Array) || tileMeta.size() < 3) {
             logE("bad tile metadata in storage" + tileMeta);
             return null;
         }
         tileMeta[0] = Time.now().value();
         Storage.setValue(metaKeyStr, tileMeta);
 
+        var epoch = Time.now().value();
+        var expiresAt = tileMeta[2];
+        if (expired(expiresAt, epoch)) {
+            logE("tile expired" + tileMeta);
+            // todo should we exict the tile now?
+            return null;
+        }
+
         switch (tileMeta[1]) {
             case STORAGE_TILE_TYPE_DICT:
                 // no need to check type of the getValue call, handling code checks it
                 return [200, Storage.getValue(tileKey(tileKeyStr))]; // should always fit into the 32Kb size
             case STORAGE_TILE_TYPE_BITMAP:
-                if (tileMeta.size() < 5) {
+                if (tileMeta.size() < 6) {
                     logE("bad tile metadata in storage for bitmap tile" + tileMeta);
                     return null;
                 }
                 // no need to check type of loadBitmap, handling code checks it
-                return [200, loadBitmap(tileKeyStr, tileMeta[2], tileMeta[3], tileMeta[4])];
+                return [200, loadBitmap(tileKeyStr, tileMeta[3], tileMeta[4], tileMeta[5])];
             case STORAGE_TILE_TYPE_ERRORED:
-                if (tileMeta.size() < 3) {
+                if (tileMeta.size() < 4) {
                     logE("bad tile metadata in storage for error tile" + tileMeta);
                     return null;
                 }
-                return [tileMeta[2], null];
+                var responseCode = tileMeta[3];
+                if (responseCode == WRONG_DATA_TILE) {
+                    return [200, null]; // they normally come from 200 responses, with null data
+                }
+                return [responseCode, null];
         }
 
         return null;
@@ -529,12 +603,27 @@ class StorageTileCache {
 
     function addErroredTile(tileKey as TileKey, responseCode as Number) as Void {
         var tileKeyStr = tileKey.optimisedHashKey();
-        addMetaData(tileKeyStr, [Time.now().value(), STORAGE_TILE_TYPE_ERRORED, responseCode]);
+        var epoch = Time.now().value();
+        var settings = getApp()._breadcrumbContext.settings();
+        var expiresAt =
+            epoch +
+            (isHttpResponseCode(responseCode)
+                ? settings.httpErrorTileTTLS
+                : settings.errorTileTTLS);
+        addMetaData(tileKeyStr, [epoch, STORAGE_TILE_TYPE_ERRORED, expiresAt, responseCode]);
+    }
+
+    function addWrongDataTile(tileKey as TileKey) as Void {
+        var tileKeyStr = tileKey.optimisedHashKey();
+        var epoch = Time.now().value();
+        var settings = getApp()._breadcrumbContext.settings();
+        var expiresAt = epoch + settings.errorTileTTLS;
+        addMetaData(tileKeyStr, [epoch, STORAGE_TILE_TYPE_ERRORED, expiresAt, WRONG_DATA_TILE]);
     }
 
     function addJsonData(tileKey as TileKey, data as Dictionary) as Void {
         var tileKeyStr = tileKey.optimisedHashKey();
-        if (addMetaData(tileKeyStr, [Time.now().value(), STORAGE_TILE_TYPE_DICT])) {
+        if (addMetaData(tileKeyStr, [Time.now().value(), STORAGE_TILE_TYPE_DICT, NO_EXPIRY])) {
             safeAdd(tileKey(tileKeyStr), data);
         }
     }
@@ -564,6 +653,7 @@ class StorageTileCache {
             addMetaData(tileKeyStr, [
                 Time.now().value(),
                 STORAGE_TILE_TYPE_BITMAP,
+                NO_EXPIRY,
                 1,
                 bitmap.getWidth(),
                 bitmap.getHeight(),
@@ -639,6 +729,8 @@ class StorageTileCache {
         var oldestMetaKeyStr = null;
         var oldestMetaData = null;
 
+        var epoch = Time.now().value();
+
         var keys = _tilesInStorage;
         for (var i = 0; i < keys.size(); i++) {
             var key = keys[i];
@@ -651,12 +743,20 @@ class StorageTileCache {
             if (
                 tileMetaData == null ||
                 !(tileMetaData instanceof Array) ||
-                tileMetaData.size() < 2
+                tileMetaData.size() < 3
             ) {
                 // we do not have it in storage anymore somehow, remove this tile
                 oldestKey = key;
                 oldestMetaKeyStr = metaKeyStr;
                 oldestMetaData = null; // we cannot parse the metadata
+                break;
+            }
+
+            var expiresAt = tileMetaData[2];
+            if (expired(expiresAt, epoch)) {
+                oldestKey = key;
+                oldestMetaKeyStr = metaKeyStr;
+                oldestMetaData = tileMetaData;
                 break;
             }
 
@@ -680,14 +780,14 @@ class StorageTileCache {
                         Storage.deleteValue(tileKey(oldestKey));
                         break;
                     case STORAGE_TILE_TYPE_BITMAP:
-                        if (oldestMetaData.size() < 3) {
+                        if (oldestMetaData.size() < 4) {
                             logE(
                                 "bad tile metadata in storage for bitmap tile remove" +
                                     oldestMetaData
                             );
                             break;
                         }
-                        deleteBitmap(oldestKey, oldestMetaData[2]);
+                        deleteBitmap(oldestKey, oldestMetaData[3]);
                         break;
                     case STORAGE_TILE_TYPE_ERRORED:
                         // noop its just the meta key
@@ -723,6 +823,7 @@ class TileCache {
     // Ignore any tile adds that do not have this version (allows outstanding web requests to be ignored once they are handled)
     var _tileCacheVersion as Number = 0;
     var _storageTileCache as StorageTileCache;
+    var _errorBitmaps as Dictionary<String, WeakReference<Graphics.BufferedBitmap> > = {};
 
     function initialize(
         webRequestHandler as WebRequestHandler,
@@ -838,6 +939,7 @@ class TileCache {
 
     public function clearValuesWithoutStorage() as Void {
         _internalCache = {};
+        _errorBitmaps = {};
         _tileCacheVersion++;
     }
 
@@ -969,22 +1071,36 @@ class TileCache {
             return;
         }
 
+        tile.setExpiresAt(NO_EXPIRY); // be explicit that there is no expiry
+
         if (_internalCache.size() == _settings.tileCacheSize) {
             evictLeastRecentlyUsedTile();
         }
 
-        if (_settings.showTileBorders && tile.bitmap instanceof Graphics.BufferedBitmap) {
-            // todo handle image tiles that are not bufferred bitmap
-            var dc = tile.bitmap.getDc();
-            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-            dc.setPenWidth(4);
-            dc.drawRectangle(0, 0, dc.getWidth(), dc.getHeight());
+        if (_settings.showTileBorders) {
+            var oldBitmap = tile.bitmap;
+            if (oldBitmap instanceof WatchUi.BitmapResource) {
+                tile.bitmap = newBitmap(oldBitmap.getWidth(), oldBitmap.getHeight());
+                tile.bitmap.getDc().drawBitmap(0, 0, oldBitmap);
+            }
+            var newBitmap = tile.bitmap;
+            if (newBitmap instanceof Graphics.BufferedBitmap) {
+                var dc = newBitmap.getDc();
+                dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+                dc.setPenWidth(4);
+                dc.drawRectangle(0, 0, dc.getWidth(), dc.getHeight());
+            }
         }
 
         _internalCache[tileKey] = tile;
     }
 
-    function addErroredTile(tileKey as TileKey, tileCacheVersion as Number, msg as String) as Void {
+    function addErroredTile(
+        tileKey as TileKey,
+        tileCacheVersion as Number,
+        msg as String,
+        isHttpResponseCode as Boolean
+    ) as Void {
         if (tileCacheVersion != _tileCacheVersion) {
             return;
         }
@@ -993,31 +1109,50 @@ class TileCache {
             evictLeastRecentlyUsedTile();
         }
 
+        var epoch = Time.now().value();
+        var expiresAt =
+            epoch + (isHttpResponseCode ? _settings.httpErrorTileTTLS : _settings.errorTileTTLS);
+
+        var weakRefToErrorBitmap = _errorBitmaps[msg];
+        if (weakRefToErrorBitmap != null) {
+            var errorBitmap = weakRefToErrorBitmap.get();
+            if (errorBitmap != null) {
+                var tile = new Tile();
+                tile.setBitmap(errorBitmap);
+                tile.setExpiresAt(expiresAt);
+                _internalCache[tileKey] = tile;
+                return;
+            }
+        }
+
         var tileSize = _settings.tileSize;
         // todo perf: only draw each message once, and cache the result (since they are generally 404,403 etc.), still need the tile object though to track last used
         // this is especially important for larger tiles (image tiles are usually compressed and do not take up the full tile size in pixels)
-        var bitmap = newBitmap(tileSize, tileSize); 
+        var bitmap = newBitmap(tileSize, tileSize);
         var dc = bitmap.getDc();
         var halfHeight = tileSize / 2;
-        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
+        dc.setColor(Graphics.COLOR_RED, _settings.tileErrorColour);
         dc.clear();
         // cache the tile as errored, but do not chow the error message
-        if (_settings.showErrorTiles) {
+        if (_settings.showErrorTileMessages) {
             dc.drawText(
                 halfHeight,
                 halfHeight,
-                Graphics.FONT_XTINY,
+                tileSize < 100 ? Graphics.FONT_XTINY : Graphics.FONT_LARGE, // could get text width and see which one covers more of the tile
                 msg,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
             );
         }
         if (_settings.showTileBorders) {
-            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(Graphics.COLOR_RED, _settings.tileErrorColour);
             dc.setPenWidth(4);
             dc.drawRectangle(0, 0, tileSize, tileSize);
         }
+
+        _errorBitmaps[msg] = bitmap.weak(); // store in our cache for later use
         var tile = new Tile();
         tile.setBitmap(bitmap);
+        tile.setExpiresAt(expiresAt);
         _internalCache[tileKey] = tile;
     }
 
@@ -1059,10 +1194,17 @@ class TileCache {
         var oldestTime = null;
         var oldestKey = null;
 
+        var epoch = Time.now().value();
+
         var keys = _internalCache.keys();
         for (var i = 0; i < keys.size(); i++) {
             var key = keys[i];
             var tile = self._internalCache[key];
+            if (tile.expiredAlready(epoch)) {
+                oldestKey = key;
+                break;
+            }
+
             if (oldestTime == null || oldestTime > tile.lastUsed) {
                 oldestTime = tile.lastUsed;
                 oldestKey = key;

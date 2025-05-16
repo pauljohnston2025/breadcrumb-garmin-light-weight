@@ -796,7 +796,7 @@ class BreadcrumbRenderer {
     }
 
     function renderUi(dc as Dc) as Void {
-        dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
+
         dc.setPenWidth(1);
 
         var currentScale = _cachedValues.currentScale; // local lookup faster

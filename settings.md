@@ -374,6 +374,28 @@ Name - Defaults to the route name that was added, but can be modified to anythin
 Enabled - If this route appears on any of the device screens, routes can be disabled so that multiple routes can be pre loaded and enabled when needed. eg. Day 1, Day 2.  
 Route Colour - The colour of the route.
 
+---
+
+### Debug Settings
+
+* WD - wrong data for tile (this may be null, or we got a string instead of a dictionary)
+* UT - unknown tile type (should be very rare, only occurs on outdated watches when we update supported tile format types in the companion app)
+* FP - failed to parse bitmap from the companion app tile response
+
+negative error codes: https://developer.garmin.com/connect-iq/api-docs/Toybox/Communications.html#Error-module  
+all other error codes should follow the http spec, eg. 404 - Not Found, 403 - Forbidden
+
+
+Fixed a few issues with tile storage cache, added better support for debug settings (borders, error messages), added ttl on tiles
+
+* ensure all response code paths add to storage cache and/or to tile cache
+* Add ttl to tiles so we do not query errored tiles constantly
+* Handle drawing borders for image tiles
+* Cache error bitmaps
+
+
+---
+
 # On Device
 
 It is much easier to configure the settings from the ConnectIQ store, or through the companion app, but it is possible to use the on device settings. All of the settings should have the same names, see above for explanation on each setting.
