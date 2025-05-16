@@ -1742,7 +1742,7 @@ class Settings {
     }
 
     function asDict() as Dictionary {
-        // all thse return values should bnebe identical to the storage value
+        // all these return values should be identical to the storage value
         // eg. nulls are exposed as 0
         // colours are strings
 

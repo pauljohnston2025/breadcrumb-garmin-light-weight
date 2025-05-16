@@ -1077,21 +1077,6 @@ class TileCache {
             evictLeastRecentlyUsedTile();
         }
 
-        if (_settings.showTileBorders) {
-            var oldBitmap = tile.bitmap;
-            if (oldBitmap instanceof WatchUi.BitmapResource) {
-                tile.bitmap = newBitmap(oldBitmap.getWidth(), oldBitmap.getHeight());
-                tile.bitmap.getDc().drawBitmap(0, 0, oldBitmap);
-            }
-            var newBitmap = tile.bitmap;
-            if (newBitmap instanceof Graphics.BufferedBitmap) {
-                var dc = newBitmap.getDc();
-                dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-                dc.setPenWidth(4);
-                dc.drawRectangle(0, 0, dc.getWidth(), dc.getHeight());
-            }
-        }
-
         _internalCache[tileKey] = tile;
     }
 
@@ -1170,11 +1155,6 @@ class TileCache {
                     Graphics.TEXT_JUSTIFY_RIGHT
                 );
             }
-        }
-        if (_settings.showTileBorders) {
-            dc.setColor(Graphics.COLOR_RED, _settings.tileErrorColour);
-            dc.setPenWidth(4);
-            dc.drawRectangle(0, 0, tileSize, tileSize);
         }
 
         _errorBitmaps[msg] = bitmap.weak(); // store in our cache for later use

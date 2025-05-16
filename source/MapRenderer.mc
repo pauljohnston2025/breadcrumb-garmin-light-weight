@@ -116,14 +116,22 @@ class MapRenderer {
                 // cant rotate individual tiles as you can see the seams between tiles
                 // one large one then rotate looks much better, and is possibly faster
                 // we must scale as the tile we picked is only close to the resolution we need
+                var xPixel = tileOffsetX + x * tileScalePixelSize;
+                var yPixel = tileOffsetY + y * tileScalePixelSize;
                 $.drawScaledBitmapHelper(
                     dc,
-                    tileOffsetX + x * tileScalePixelSize,
-                    tileOffsetY + y * tileScalePixelSize,
+                    xPixel,
+                    yPixel,
                     tileScalePixelSize,
                     tileScalePixelSize,
                     tileFromCache.bitmap
                 );
+
+                if (_settings.showTileBorders) {
+                    dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+                    dc.setPenWidth(4);
+                    dc.drawRectangle(xPixel, yPixel, tileScalePixelSize, tileScalePixelSize);
+                }
             }
         }
     }
@@ -131,7 +139,6 @@ class MapRenderer {
     function renderMap(dc as Dc) as Void {
         var cachedValues = _cachedValues; // local lookup faster
         if (!_cachedValues.mapDataCanBeUsed) {
-
             // we do not have a scale calculated yet
             return;
         }
@@ -166,6 +173,18 @@ class MapRenderer {
         var firstTileX = cachedValues.firstTileX; // local lookup faster
         var firstTileY = cachedValues.firstTileY; // local lookup faster
         var tileZ = cachedValues.tileZ; // local lookup faster
+        var xHalf = cachedValues.xHalf; // local lookup faster
+        var yHalf = cachedValues.yHalf; // local lookup faster
+
+        // perhaps we should draw all tiles then draw all border lines in second for loop?
+        var rotateCosNeg = 0f; // only calculate if we need it
+        var rotateSinNeg = 0f; // only calculate if we need it
+        if (_settings.showTileBorders) {
+            rotateCosNeg = Math.cos(-cachedValues.rotationRad); // local lookup faster
+            rotateSinNeg = Math.sin(-cachedValues.rotationRad); // local lookup faster
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(4);
+        }
 
         for (var x = 0; x < tileCountX; ++x) {
             for (var y = 0; y < tileCountY; ++y) {
@@ -234,6 +253,46 @@ class MapRenderer {
                     //  + " " + tileFromCache.bitmap
                     logE("failed drawBitmap2: " + e.getErrorMessage());
                     ++$.globalExceptionCounter;
+                }
+                if (_settings.showTileBorders) {
+                    // we have to manually draw rotated lines, since we cannot draw to a buffered bitmap (taking up too much memory)
+                    // we could probably avoid drawing 2 wher ethe tiles overlap, but then have to handle the outer tiles diferently
+                    // its only a debug settings in a rarely used mode, so fine to do multiple draws
+                    var tlX = tileOffsetX + x * tileScalePixelSize;
+                    var tlY = tileOffsetY + y * tileScalePixelSize;
+                    var trX = tlX + tileScalePixelSize;
+                    var trY = tlY;
+
+                    var blX = tlX;
+                    var blY = tlY + tileScalePixelSize;
+                    var brX = trX;
+                    var brY = blY;
+
+                    var tlUnrotatedX = tlX - xHalf;
+                    var tlUnrotatedY = tlY - yHalf;
+                    var tlRotatedX = xHalf + rotateCosNeg * tlUnrotatedX - rotateSinNeg * tlUnrotatedY;
+                    var tlRotatedY = yHalf + (rotateSinNeg * tlUnrotatedX + rotateCosNeg * tlUnrotatedY);
+
+                    var trUnrotatedX = trX - xHalf;
+                    var trUnrotatedY = trY - yHalf;
+                    var trRotatedX = xHalf + rotateCosNeg * trUnrotatedX - rotateSinNeg * trUnrotatedY;
+                    var trRotatedY = yHalf + (rotateSinNeg * trUnrotatedX + rotateCosNeg * trUnrotatedY);
+
+                    var blUnrotatedX = blX - xHalf;
+                    var blUnrotatedY = blY - yHalf;
+                    var blRotatedX = xHalf + rotateCosNeg * blUnrotatedX - rotateSinNeg * blUnrotatedY;
+                    var blRotatedY = yHalf + (rotateSinNeg * blUnrotatedX + rotateCosNeg * blUnrotatedY);
+
+                    var brUnrotatedX = brX - xHalf;
+                    var brUnrotatedY = brY - yHalf;
+                    var brRotatedX = xHalf + rotateCosNeg * brUnrotatedX - rotateSinNeg * brUnrotatedY;
+                    var brRotatedY = yHalf + (rotateSinNeg * brUnrotatedX + rotateCosNeg * brUnrotatedY);
+
+                    // draw our 4 lines
+                    dc.drawLine(tlRotatedX, tlRotatedY, trRotatedX, trRotatedY);
+                    dc.drawLine(trRotatedX, trRotatedY, brRotatedX, brRotatedY);
+                    dc.drawLine(brRotatedX, brRotatedY, blRotatedX, blRotatedY);
+                    dc.drawLine(blRotatedX, blRotatedY, tlRotatedX, tlRotatedY);
                 }
             }
         }
