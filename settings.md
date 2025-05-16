@@ -107,6 +107,10 @@ No Buffer No Rotations - Same as Unbuffered Rotations mode but does not rotate t
 
 ---
 
+# Zoom At Pace
+
+Controls how the app zooms around the user, ie. it changes the viewport (based on speed or not).
+
 ### Zoom At Pace Mode
 
 Controls the zoom level at different speeds
@@ -126,6 +130,8 @@ How far, in meters, to render around the user when zoomed in.
 How fast, in m/s, the user needs to be moving in order to trigger zoom changes.
 
 ---
+
+# Map Settings
 
 ### Map Enabled
 
@@ -274,12 +280,21 @@ Set both latitude and longitude to 0 to disable fixed position and use the curre
 
 Only allow zooming in/out to the tile layer limits. Also all steps between scales will be the next tile layer (no tile scaling).
 
+### Http Error Tile TTL (s)
+
+How long to wait before querying errored tiles again, this is for valid htp errors such as 404 - Not Found or 403 - Forbidden.     
+
+### Error Tile TTL (s)
+
+How long to wait before querying errored tiles again, this is for garmin errors (ble unavailable, etc.)  
+garmin error codes are documented [here](https://developer.garmin.com/connect-iq/api-docs/Toybox/Communications.html#Error-module)
+
 ---
 # Offline Tile Storage
 
-***WARNING***, use at own risk. Several isues were encounterred when trying to develop and use this feature. I had issues with the graphics memory filling up the system and had to reboot the watch to clear it. It seems mostly stable now, but some users may encounter issues.  
+***WARNING*** Several issues were encountered when trying to develop and use this feature. I had issues with the graphics memory filling up the system and had to reboot the watch to clear it. It seems mostly stable now, but some users may encounter issues.  
 
-A small number of tiles can be saved for complete offline use (no phone connection required). This is limited by the storage capacity of each device (the app storage, not the full storage capacity for music etc.). This is normally on the order of Mb, not Gb so only a small number of tiles can be stored, but for small routes enough tiles can be stored so that we can not take a phone, and save battery power by not having to download map tiles over the bluetooth connection.
+A small number of tiles can be saved for complete offline use (no phone connection required). This is limited by the storage capacity of each device (the app storage, not the full storage capacity for music etc.). This is normally on the order of Mb, **NOT** Gb, so only a small number of tiles can be stored. For small routes enough tiles can be stored so that we can leave the phone at home. Storing tiles in this cache can also save battery power by not having to download map tiles over the bluetooth connection.
 
 Note: I had some issues when different tile servers crashing the app with a system failure 'failed inside handle_image_callback' when using the tile server directly from the watch. The companion app did not seem to suffer this issue (likely because the tiles are much smaller). I tried a few preventative measures, but the issue still persists. If you have issues with offline maps, its best to change the tile server, or turn them off entirely (they are disabled by default).    
 
@@ -294,7 +309,7 @@ Once the cache is full, older tiles will be removed and newer ones added. This m
 
 ### Store Tiles For Offline Use
 
-If enabled, allows map tiles to be stored on the device when they are queried from the web or companion app. Enabling this can extend the capacity of [Tile Cache Size](#tile-cache-size) and allows for extra tiles to be stored on device if the same part of the route is visited twice. It is generally a good idea to have this setting on, since it should save battery power and improve performance.  
+If enabled, allows map tiles to be stored on the device when they are queried from the web or companion app. Enabling this can extend the capacity of [Tile Cache Size](#tile-cache-size) and allows for extra tiles to be stored on device if the same part of the route is visited twice. It is generally a good idea to have this setting on, since it should save battery power and improve performance. You should set `Store Tiles For Offline Use` to false if you want to have an area of the map downloaded, and do not want any new tile downloads to overwrite the stored tiles.          
 
 ### Only Use Stored Tiles (no ble data)
 
@@ -302,7 +317,7 @@ Only used the stored tiles from the watch, no ble data will be used to fetch til
 
 ### Storage Tile Cache Size (tiles)
 
-How many tiles to store on the watch. Take care with this settings, large values can cause crashes. Similar to [Tile Cache Size](#tile-cache-size), ensure you test the limits of your device and set this value with a reasonable buffer in mind.   
+How many tiles to store on the watch. Take care with this settings, large values can cause crashes. Similar to [Tile Cache Size](#tile-cache-size), ensure you test the limits of your device and set this value with a reasonable buffer in mind. The storage cache (like the in memory cache) is a LRU (last recently used) cache, the least used tiles will be removed once the cache is full and a new tile needs to be added.      
 
 ---
 # Off Track Alerts
@@ -377,14 +392,56 @@ Route Colour - The colour of the route.
 
 ---
 
-### Debug Settings
+# Debug Settings
+
+The watch app has a bunch of debug data to aid in development and help with bug reporting. Most users will not need to touch these settings, but some users may find it useful or like the look of the additional detail it provides.  The debug settings and exactly what they control (and how they are displayed) can change at any time, some of them may be moved into other settings sections once they are stable.   
+
+### Show Points
+
+Shows points at each latitude/longitude on the routes and track.
+
+![](images/settings/debug-points.png)
+![](images/settings/debug-points-zoomed.png)
+
+### Draw Line To Closest Point On Track
+
+Similar to the off track alerts line, but draws the line to the closest point on the track. This is not always the current location, as 
+
+### Show Tile Borders
+
+Shows borders for the map tiles
+
+![](images/settings/debug-tile-borders.png)
+
+### Show Error Tile Messages
+
+Shows error codes on the errored map tiles
+
+Some custom error message are
 
 * WD - wrong data for tile (this may be null, or we got a string instead of a dictionary)
 * UT - unknown tile type (should be very rare, only occurs on outdated watches when we update supported tile format types in the companion app)
 * FP - failed to parse bitmap from the companion app tile response
 
-negative error codes: https://developer.garmin.com/connect-iq/api-docs/Toybox/Communications.html#Error-module  
-all other error codes should follow the http spec, eg. 404 - Not Found, 403 - Forbidden
+Negative error codes are documented by garmin: https://developer.garmin.com/connect-iq/api-docs/Toybox/Communications.html#Error-module    
+All other error codes should follow the http spec, eg. 404 - Not Found, 403 - Forbidden
+
+The black tiles in the following images are errored, and will be queried again based on the [Http Error Tile TTTL (s)](#http-error-tile-ttl-s) or [Error Tile TTTL (s)](#error-tile-ttl-s) settings.  
+
+![](images/settings/debug-tile-errors-hidden.png)
+![](images/settings/debug-tile-errors-shown.png)
+
+### Tile Error Colour
+
+The colour to show in the background of errored tiles.
+
+![](images/settings/debug-tile-errors-colour.png)
+![](images/settings/debug-tile-errors.png)
+
+
+### Include Debug Page In On Screen Ui
+
+Include the debug page when navigating between pages in the on screen ui.  
 
 ---
 

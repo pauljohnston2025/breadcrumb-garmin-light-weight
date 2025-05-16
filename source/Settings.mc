@@ -297,16 +297,16 @@ class Settings {
     var recalculateIntervalS as Number = 5;
     // pre seed tiles on either side of the viewable area
     var tileCachePadding as Number = 0;
+    var httpErrorTileTTLS as Number = 60;
+    var errorTileTTLS as Number = 20; // other errors are from garmin ble connection issues, retry faster by default
 
     // bunch of debug settings
     var showPoints as Boolean = false;
     var drawLineToClosestTrack as Boolean = false;
-    var showTileBorders as Boolean = true;
-    var showErrorTileMessages as Boolean = true;
+    var showTileBorders as Boolean = false;
+    var showErrorTileMessages as Boolean = false;
     var tileErrorColour as Number = Graphics.COLOR_BLACK;
-    var httpErrorTileTTLS as Number = 60;
-    var errorTileTTLS as Number = 20; // other errors are from garmin ble connection issues, retry faster by default
-    var includeDebugPageInOnScreenUi as Boolean = true;
+    var includeDebugPageInOnScreenUi as Boolean = false;
 
     function setMode(_mode as Number) as Void {
         mode = _mode;

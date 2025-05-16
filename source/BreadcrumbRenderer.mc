@@ -573,40 +573,6 @@ class BreadcrumbRenderer {
                 break;
             case 1:
             case 3: {
-                // press right to confirm, left cancels
-                dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
-                dc.fillRectangle(0, 0, xHalf, screenHeight);
-                dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_GREEN);
-                dc.fillRectangle(xHalf, 0, xHalf, screenHeight);
-                dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(
-                    xHalf - padding,
-                    yHalf,
-                    Graphics.FONT_XTINY,
-                    "N",
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                dc.drawText(
-                    xHalf + padding,
-                    yHalf,
-                    Graphics.FONT_XTINY,
-                    "Y",
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                var text =
-                    _starCacheTilesProgress == 1
-                        ? "Start tile caching\n(this breaks some devices)\nare you sure?"
-                        : "Start tile caching, LAST CHANCE!!!";
-                dc.drawText(
-                    xHalf,
-                    topText,
-                    Graphics.FONT_XTINY,
-                    text,
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                return true;
-            }
-            case 2: {
                 // press left to confirm, right cancels
                 dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_GREEN);
                 dc.fillRectangle(0, 0, xHalf, screenHeight);
@@ -625,6 +591,40 @@ class BreadcrumbRenderer {
                     yHalf,
                     Graphics.FONT_XTINY,
                     "N",
+                    Graphics.TEXT_JUSTIFY_CENTER
+                );
+                var text =
+                    _starCacheTilesProgress == 1
+                        ? "Start tile caching\n(this breaks on some devices)\nare you sure?"
+                        : "Start tile caching, LAST CHANCE!!!";
+                dc.drawText(
+                    xHalf,
+                    topText,
+                    Graphics.FONT_XTINY,
+                    text,
+                    Graphics.TEXT_JUSTIFY_CENTER
+                );
+                return true;
+            }
+            case 2: {
+                // press left to confirm, right cancels
+                dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
+                dc.fillRectangle(0, 0, xHalf, screenHeight);
+                dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_GREEN);
+                dc.fillRectangle(xHalf, 0, xHalf, screenHeight);
+                dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
+                dc.drawText(
+                    xHalf - padding,
+                    yHalf,
+                    Graphics.FONT_XTINY,
+                    "N",
+                    Graphics.TEXT_JUSTIFY_CENTER
+                );
+                dc.drawText(
+                    xHalf + padding,
+                    yHalf,
+                    Graphics.FONT_XTINY,
+                    "Y",
                     Graphics.TEXT_JUSTIFY_CENTER
                 );
                 var text = "Confirm start tile caching";
@@ -1184,8 +1184,8 @@ class BreadcrumbRenderer {
                 }
                 return false;
             case 1:
-                // press right to confirm, left cancels
-                if (x > xHalf) {
+                // press left to confirm, right cancels
+                if (x < xHalf) {
                     _starCacheTilesProgress = 2;
                     return true;
                 }
@@ -1193,16 +1193,16 @@ class BreadcrumbRenderer {
                 return true;
 
             case 2:
-                // press left to confirm, right cancels
-                if (x < xHalf) {
+                // press right to confirm, left cancels
+                if (x > xHalf) {
                     _starCacheTilesProgress = 3;
                     return true;
                 }
                 _starCacheTilesProgress = 0;
                 return true;
             case 3:
-                // press right to confirm, left cancels
-                if (x > xHalf) {
+                // press left to confirm, right cancels
+                if (x < xHalf) {
                     _cachedValues.startCacheCurrentMapArea();
                 }
                 _starCacheTilesProgress = 0;
