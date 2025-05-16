@@ -166,4 +166,8 @@ class BreadcrumbContext {
             }
         }
     }
+    
+    function purgeRoutes() as Void {
+        _routes = [];
+    }
 }

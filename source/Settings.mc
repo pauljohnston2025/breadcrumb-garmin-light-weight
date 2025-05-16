@@ -1378,6 +1378,17 @@ class Settings {
             context.clearRouteId(routeId);
         }
     }
+    
+    function purgeRoutesFromContext() as Void {
+        // symbol not found if the loadSettings method is called before we set tile cache
+        // should n ot happen unless onsettingschange is called before initalise finishes
+        // it alwasys has the symbol, but it might not be initalised yet
+        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
+        var context = getApp()._breadcrumbContext;
+        if (context != null and context instanceof BreadcrumbContext) {
+            context.purgeRoutes();
+        }
+    }
 
     // some times these parserswere throwing when it was an empty strings seem to result in, or wrong type
     //
@@ -1660,72 +1671,74 @@ class Settings {
         // clear the flag first thing in case of crash we do not want to try clearing over and over
         setValue("resetDefaults", false);
 
-        // note: this pulls the defaults from whatever we have at the top of the filem these may differ from the defaults in properties.xml
+        // note: this pulls the defaults from whatever we have at the top of the file these may differ from the defaults in properties.xml
         var defaultSettings = new Settings();
-        setTileSize(defaultSettings.tileSize);
-        setHttpErrorTileTTLS(defaultSettings.httpErrorTileTTLS);
-        setErrorTileTTLS(defaultSettings.errorTileTTLS);
-        setFullTileSize(defaultSettings.fullTileSize);
-        setScaledTileSize(defaultSettings.scaledTileSize);
-        setTileLayerMax(defaultSettings.tileLayerMax);
-        setTileLayerMin(defaultSettings.tileLayerMin);
-        setTileCacheSize(defaultSettings.tileCacheSize);
-        setStorageTileCacheSize(defaultSettings.storageTileCacheSize);
-        setTileCachePadding(defaultSettings.tileCachePadding);
-        setRecalculateIntervalS(defaultSettings.recalculateIntervalS);
-        setMode(defaultSettings.mode);
-        setMapEnabled(defaultSettings.mapEnabled);
-        setCacheTilesInStorage(defaultSettings.cacheTilesInStorage);
-        setStorageMapTilesOnly(defaultSettings.storageMapTilesOnly);
-        setDrawLineToClosestPoint(defaultSettings.drawLineToClosestPoint);
-        setShowPoints(defaultSettings.showPoints);
-        setDrawLineToClosestTrack(defaultSettings.drawLineToClosestTrack);
-        setShowTileBorders(defaultSettings.showTileBorders);
-        setShowErrorTileMessages(defaultSettings.showErrorTileMessages);
-        setIncludeDebugPageInOnScreenUi(defaultSettings.includeDebugPageInOnScreenUi);
-        setDisplayLatLong(defaultSettings.displayLatLong);
-        setScaleRestrictedToTileLayers(defaultSettings.scaleRestrictedToTileLayers);
-        setTrackColour(defaultSettings.trackColour);
-        setTileErrorColour(defaultSettings.tileErrorColour);
-        setElevationColour(defaultSettings.elevationColour);
-        setUserColour(defaultSettings.userColour);
-        setMaxPendingWebRequests(defaultSettings.maxPendingWebRequests);
-        setMetersAroundUser(defaultSettings.metersAroundUser);
-        setZoomAtPaceMode(defaultSettings.zoomAtPaceMode);
-        setZoomAtPaceSpeedMPS(defaultSettings.zoomAtPaceSpeedMPS);
-        setUiMode(defaultSettings.uiMode);
-        setElevationMode(defaultSettings.elevationMode);
-        setAlertType(defaultSettings.alertType);
-        setRenderMode(defaultSettings.renderMode);
-        setFixedLatitude(defaultSettings.fixedLatitude);
-        setFixedLongitude(defaultSettings.fixedLongitude);
-        setTileUrl(defaultSettings.tileUrl);
-        setAuthToken(defaultSettings.authToken);
-        setMapChoice(defaultSettings.mapChoice);
+        tileSize = defaultSettings.tileSize;
+        httpErrorTileTTLS = defaultSettings.httpErrorTileTTLS;
+        errorTileTTLS = defaultSettings.errorTileTTLS;
+        fullTileSize = defaultSettings.fullTileSize;
+        scaledTileSize = defaultSettings.scaledTileSize;
+        tileLayerMax = defaultSettings.tileLayerMax;
+        tileLayerMin = defaultSettings.tileLayerMin;
+        tileCacheSize = defaultSettings.tileCacheSize;
+        storageTileCacheSize = defaultSettings.storageTileCacheSize;
+        tileCachePadding = defaultSettings.tileCachePadding;
+        recalculateIntervalS = defaultSettings.recalculateIntervalS;
+        mode = defaultSettings.mode;
+        mapEnabled = defaultSettings.mapEnabled;
+        cacheTilesInStorage = defaultSettings.cacheTilesInStorage;
+        storageMapTilesOnly = defaultSettings.storageMapTilesOnly;
+        drawLineToClosestPoint = defaultSettings.drawLineToClosestPoint;
+        showPoints = defaultSettings.showPoints;
+        drawLineToClosestTrack = defaultSettings.drawLineToClosestTrack;
+        showTileBorders = defaultSettings.showTileBorders;
+        showErrorTileMessages = defaultSettings.showErrorTileMessages;
+        includeDebugPageInOnScreenUi = defaultSettings.includeDebugPageInOnScreenUi;
+        displayLatLong = defaultSettings.displayLatLong;
+        scaleRestrictedToTileLayers = defaultSettings.scaleRestrictedToTileLayers;
+        trackColour = defaultSettings.trackColour;
+        tileErrorColour = defaultSettings.tileErrorColour;
+        elevationColour = defaultSettings.elevationColour;
+        userColour = defaultSettings.userColour;
+        maxPendingWebRequests = defaultSettings.maxPendingWebRequests;
+        metersAroundUser = defaultSettings.metersAroundUser;
+        zoomAtPaceMode = defaultSettings.zoomAtPaceMode;
+        zoomAtPaceSpeedMPS = defaultSettings.zoomAtPaceSpeedMPS;
+        uiMode = defaultSettings.uiMode;
+        elevationMode = defaultSettings.elevationMode;
+        alertType = defaultSettings.alertType;
+        renderMode = defaultSettings.renderMode;
+        fixedLatitude = defaultSettings.fixedLatitude;
+        fixedLongitude = defaultSettings.fixedLongitude;
+        tileUrl = defaultSettings.tileUrl;
+        authToken = defaultSettings.authToken;
+        mapChoice = defaultSettings.mapChoice;
         routes = defaultSettings.routes;
-        saveRoutes();
-        setRoutesEnabled(defaultSettings.routesEnabled);
-        setDisplayRouteNames(defaultSettings.displayRouteNames);
-        setDisableMapsFailureCount(defaultSettings.disableMapsFailureCount);
-        setEnableOffTrackAlerts(defaultSettings.enableOffTrackAlerts);
-        setOffTrackAlertsDistanceM(defaultSettings.offTrackAlertsDistanceM);
-        setOffTrackAlertsMaxReportIntervalS(defaultSettings.offTrackAlertsMaxReportIntervalS);
-        setOffTrackCheckIntervalS(defaultSettings.offTrackCheckIntervalS);
-        setRouteMax(defaultSettings.routeMax);
-        setNormalModeColour(defaultSettings.normalModeColour);
-        setUiColour(defaultSettings.uiColour);
-        setDebugColour(defaultSettings.debugColour);
+        routesEnabled = defaultSettings.routesEnabled;
+        displayRouteNames = defaultSettings.displayRouteNames;
+        disableMapsFailureCount = defaultSettings.disableMapsFailureCount;
+        enableOffTrackAlerts = defaultSettings.enableOffTrackAlerts;
+        offTrackAlertsDistanceM = defaultSettings.offTrackAlertsDistanceM;
+        offTrackAlertsMaxReportIntervalS = defaultSettings.offTrackAlertsMaxReportIntervalS;
+        offTrackCheckIntervalS = defaultSettings.offTrackCheckIntervalS;
+        routeMax = defaultSettings.routeMax;
+        normalModeColour = defaultSettings.normalModeColour;
+        uiColour = defaultSettings.uiColour;
+        debugColour = defaultSettings.debugColour;
 
-        // purge storage too on reset
+        // raw write the settings to disk
+        var dict = asDict();
+        saveSettings(dict);
+
+        // purge storage, all routes and caches
         Application.Storage.clearValues();
         clearTileCache();
         clearPendingWebRequests();
         clearTileCacheStats();
         clearWebStats();
-        clearContextRoutes();
-        // load all the settings we just wrote
-        loadSettings();
+        purgeRoutesFromContext();
         updateCachedValues();
+        updateViewSettings();
     }
 
     function asDict() as Dictionary {
