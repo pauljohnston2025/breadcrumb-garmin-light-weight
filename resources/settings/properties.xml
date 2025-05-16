@@ -46,6 +46,15 @@
 
 	<property id="cacheTilesInStorage" type="boolean">false</property>
 	<property id="storageMapTilesOnly" type="boolean">false</property>
+	<property id="httpErrorTileTTLS" type="number">60</property>
+	<property id="errorTileTTLS" type="number">20</property>
+	<property id="showPoints" type="boolean">false</property>
+	<property id="drawLineToClosestTrack" type="boolean">false</property>
+	<property id="showTileBorders" type="boolean">false</property>
+	<property id="showErrorTileMessages" type="boolean">false</property>
+	<property id="tileErrorColour" type="string">00000000</property>
+	<property id="includeDebugPageInOnScreenUi" type="boolean">false</property>
+
 
 	<property id="routes" type="array"></property>
     <!-- https://forums.garmin.com/developer/connect-iq/i/bug-reports/bug-boolean-properties-with-default-value-true-can-t-be-changed-in-simulator -->

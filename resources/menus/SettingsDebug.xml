@@ -1,0 +1,8 @@
+<menu2 id="SettingsDebug" title="@Strings.debugSettingsTitle" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <toggle-menu-item id="settingsDebugShowPoints" label="@Strings.showPointsTitle"/>
+    <toggle-menu-item id="settingsDebugDrawLineToClosestTrack" label="@Strings.drawLineToClosestTrackTitle"/>
+    <toggle-menu-item id="settingsDebugShowTileBorders" label="@Strings.showTileBordersTitle"/>
+    <toggle-menu-item id="settingsDebugShowErrorTileMessages" label="@Strings.showErrorTileMessagesTitle"/>
+    <icon-menu-item id="settingsDebugTileErrorColour" label="@Strings.tileErrorColourTitle" icon="@Drawables.LauncherIcon"/>
+    <toggle-menu-item id="settingsDebugIncludeDebugPageInOnScreenUi" label="@Strings.includeDebugPageInOnScreenUiTitle"/>
+</menu2>

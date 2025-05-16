@@ -667,6 +667,22 @@ class Settings {
         clearTileCache();
     }
 
+    function setHttpErrorTileTTLS(value as Number) as Void {
+        httpErrorTileTTLS = value;
+        setValue("httpErrorTileTTLS", httpErrorTileTTLS);
+    }
+    function httpErrorTileTTLSChanged() as Void {
+        clearTileCache();
+    }
+
+    function setErrorTileTTLS(value as Number) as Void {
+        errorTileTTLS = value;
+        setValue("errorTileTTLS", errorTileTTLS);
+    }
+    function errorTileTTLSChanged() as Void {
+        clearTileCache();
+    }
+
     function setFullTileSize(value as Number) as Void {
         setFullTileSizeWithoutSideEffect(value);
         setValueSideEffect();
@@ -844,6 +860,27 @@ class Settings {
         updateViewSettings();
     }
 
+    function setShowPoints(value as Boolean) as Void {
+        showPoints = value;
+        setValue("showPoints", showPoints);
+    }
+    function setDrawLineToClosestTrack(value as Boolean) as Void {
+        drawLineToClosestTrack = value;
+        setValue("drawLineToClosestTrack", drawLineToClosestTrack);
+    }
+    function setShowTileBorders(value as Boolean) as Void {
+        showTileBorders = value;
+        setValue("showTileBorders", showTileBorders);
+    }
+    function setShowErrorTileMessages(value as Boolean) as Void {
+        showErrorTileMessages = value;
+        setValue("showErrorTileMessages", showErrorTileMessages);
+    }
+    function setIncludeDebugPageInOnScreenUi(value as Boolean) as Void {
+        includeDebugPageInOnScreenUi = value;
+        setValue("includeDebugPageInOnScreenUi", includeDebugPageInOnScreenUi);
+    }
+
     function setDisplayLatLong(value as Boolean) as Void {
         displayLatLong = value;
         setValue("displayLatLong", displayLatLong);
@@ -1004,6 +1041,11 @@ class Settings {
         setValue("trackColour", trackColour.format("%X"));
     }
 
+    function setTileErrorColour(value as Number) as Void {
+        tileErrorColour = value;
+        setValue("tileErrorColour", tileErrorColour.format("%X"));
+    }
+
     function setUserColour(value as Number) as Void {
         userColour = value;
         setValue("userColour", userColour.format("%X"));
@@ -1065,6 +1107,47 @@ class Settings {
         setDrawLineToClosestPoint(true);
     }
 
+    function toggleShowPoints() as Void {
+        if (showPoints) {
+            setShowPoints(false);
+            return;
+        }
+
+        setShowPoints(true);
+    }
+    function toggleDrawLineToClosestTrack() as Void {
+        if (drawLineToClosestTrack) {
+            setDrawLineToClosestTrack(false);
+            return;
+        }
+
+        setDrawLineToClosestTrack(true);
+    }
+    function toggleShowTileBorders() as Void {
+        if (showTileBorders) {
+            setShowTileBorders(false);
+            return;
+        }
+
+        setShowTileBorders(true);
+    }
+    function toggleShowErrorTileMessages() as Void {
+        if (showErrorTileMessages) {
+            setShowErrorTileMessages(false);
+            return;
+        }
+
+        setShowErrorTileMessages(true);
+    }
+    function toggleIncludeDebugPageInOnScreenUi() as Void {
+        if (includeDebugPageInOnScreenUi) {
+            setIncludeDebugPageInOnScreenUi(false);
+            return;
+        }
+
+        setIncludeDebugPageInOnScreenUi(true);
+    }
+
     function toggleDisplayLatLong() as Void {
         if (displayLatLong) {
             setDisplayLatLong(false);
@@ -1121,7 +1204,7 @@ class Settings {
         if (mode == MODE_MAP_MOVE && !mapEnabled) {
             nextMode();
         }
-        
+
         if (mode == MODE_DEBUG && !includeDebugPageInOnScreenUi) {
             nextMode();
         }
@@ -1580,6 +1663,8 @@ class Settings {
         // note: this pulls the defaults from whatever we have at the top of the filem these may differ from the defaults in properties.xml
         var defaultSettings = new Settings();
         setTileSize(defaultSettings.tileSize);
+        setHttpErrorTileTTLS(defaultSettings.httpErrorTileTTLS);
+        setErrorTileTTLS(defaultSettings.errorTileTTLS);
         setFullTileSize(defaultSettings.fullTileSize);
         setScaledTileSize(defaultSettings.scaledTileSize);
         setTileLayerMax(defaultSettings.tileLayerMax);
@@ -1593,9 +1678,15 @@ class Settings {
         setCacheTilesInStorage(defaultSettings.cacheTilesInStorage);
         setStorageMapTilesOnly(defaultSettings.storageMapTilesOnly);
         setDrawLineToClosestPoint(defaultSettings.drawLineToClosestPoint);
+        setShowPoints(defaultSettings.showPoints);
+        setDrawLineToClosestTrack(defaultSettings.drawLineToClosestTrack);
+        setShowTileBorders(defaultSettings.showTileBorders);
+        setShowErrorTileMessages(defaultSettings.showErrorTileMessages);
+        setIncludeDebugPageInOnScreenUi(defaultSettings.includeDebugPageInOnScreenUi);
         setDisplayLatLong(defaultSettings.displayLatLong);
         setScaleRestrictedToTileLayers(defaultSettings.scaleRestrictedToTileLayers);
         setTrackColour(defaultSettings.trackColour);
+        setTileErrorColour(defaultSettings.tileErrorColour);
         setElevationColour(defaultSettings.elevationColour);
         setUserColour(defaultSettings.userColour);
         setMaxPendingWebRequests(defaultSettings.maxPendingWebRequests);
@@ -1644,6 +1735,8 @@ class Settings {
 
         return {
             "tileSize" => tileSize,
+            "httpErrorTileTTLS" => httpErrorTileTTLS,
+            "errorTileTTLS" => errorTileTTLS,
             "fullTileSize" => fullTileSize,
             "scaledTileSize" => scaledTileSize,
             "tileLayerMax" => tileLayerMax,
@@ -1657,9 +1750,15 @@ class Settings {
             "cacheTilesInStorage" => cacheTilesInStorage,
             "storageMapTilesOnly" => storageMapTilesOnly,
             "drawLineToClosestPoint" => drawLineToClosestPoint,
+            "showPoints" => showPoints,
+            "drawLineToClosestTrack" => drawLineToClosestTrack,
+            "showTileBorders" => showTileBorders,
+            "showErrorTileMessages" => showErrorTileMessages,
+            "includeDebugPageInOnScreenUi" => includeDebugPageInOnScreenUi,
             "displayLatLong" => displayLatLong,
             "scaleRestrictedToTileLayers" => scaleRestrictedToTileLayers,
             "trackColour" => trackColour.format("%X"),
+            "tileErrorColour" => tileErrorColour.format("%X"),
             "elevationColour" => elevationColour.format("%X"),
             "userColour" => userColour.format("%X"),
             "maxPendingWebRequests" => maxPendingWebRequests,
@@ -1710,6 +1809,8 @@ class Settings {
 
     function loadSettingsPart1() as Void {
         tileSize = parseNumber("tileSize", tileSize);
+        httpErrorTileTTLS = parseNumber("httpErrorTileTTLS", httpErrorTileTTLS);
+        errorTileTTLS = parseNumber("errorTileTTLS", errorTileTTLS);
         fullTileSize = parseNumber("fullTileSize", fullTileSize);
         scaledTileSize = parseNumber("scaledTileSize", scaledTileSize);
         tileLayerMax = parseNumber("tileLayerMax", tileLayerMax);
@@ -1741,6 +1842,14 @@ class Settings {
         cacheTilesInStorage = parseBool("cacheTilesInStorage", cacheTilesInStorage);
         storageMapTilesOnly = parseBool("storageMapTilesOnly", storageMapTilesOnly);
         drawLineToClosestPoint = parseBool("drawLineToClosestPoint", drawLineToClosestPoint);
+        showPoints = parseBool("showPoints", showPoints);
+        drawLineToClosestTrack = parseBool("drawLineToClosestTrack", drawLineToClosestTrack);
+        showTileBorders = parseBool("showTileBorders", showTileBorders);
+        showErrorTileMessages = parseBool("showErrorTileMessages", showErrorTileMessages);
+        includeDebugPageInOnScreenUi = parseBool(
+            "includeDebugPageInOnScreenUi",
+            includeDebugPageInOnScreenUi
+        );
         displayLatLong = parseBool("displayLatLong", displayLatLong);
         scaleRestrictedToTileLayers = parseBool(
             "scaleRestrictedToTileLayers",
@@ -1750,6 +1859,7 @@ class Settings {
         enableOffTrackAlerts = parseBool("enableOffTrackAlerts", enableOffTrackAlerts);
         routesEnabled = parseBool("routesEnabled", routesEnabled);
         trackColour = parseColour("trackColour", trackColour);
+        tileErrorColour = parseColour("tileErrorColour", tileErrorColour);
         elevationColour = parseColour("elevationColour", elevationColour);
         userColour = parseColour("userColour", userColour);
         normalModeColour = parseColour("normalModeColour", normalModeColour);
@@ -1848,6 +1958,8 @@ class Settings {
         var oldMapChoice = mapChoice;
         var oldTileUrl = tileUrl;
         var oldTileSize = tileSize;
+        var oldHttpErrorTileTTLS = httpErrorTileTTLS;
+        var oldErrorTileTTLS = errorTileTTLS;
         var oldFullTileSize = fullTileSize;
         var oldScaledTileSize = scaledTileSize;
         var oldTileCacheSize = tileCacheSize;
@@ -1878,6 +1990,12 @@ class Settings {
         }
         if (oldTileSize != tileSize) {
             tileSizeChanged();
+        }
+        if (oldHttpErrorTileTTLS != httpErrorTileTTLS) {
+            httpErrorTileTTLSChanged();
+        }
+        if (oldErrorTileTTLS != errorTileTTLS) {
+            errorTileTTLSChanged();
         }
         if (oldFullTileSize != fullTileSize) {
             fullTileSizeChanged();

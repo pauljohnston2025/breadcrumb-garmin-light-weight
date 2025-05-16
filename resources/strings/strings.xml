@@ -104,6 +104,8 @@
     <string id="coloursTitle">Colours</string>
     <string id="coloursDescription"></string>
     <string id="mapsettingsTitle">Map Settings</string>
+    <string id="tileServerSettingsTitle">Tile Server Settings</string>
+    <string id="debugSettingsTitle">Debug Settings</string>
 
     <string id="tileSizePrompt">Pixels per tile x and y</string>
     <string id="fullTileSizeTitle">Full Tile Size</string>
@@ -176,6 +178,24 @@
     <string id="cartoVoyager">Carto - Voyager</string>
     <string id="cartoDarkMatter">Carto - Dark Matter</string>
     <string id="cartoDarkLightAll">Carto - Light All</string>
+
+    <string id="httpErrorTileTTLSTitle">Http Error Tile TTL (s)</string>
+    <string id="httpErrorTileTTLSPrompt"></string>
+    <string id="errorTileTTLSTitle">Error Tile TTL (s)</string>
+    <string id="errorTileTTLSPrompt"></string>
+    <string id="showPointsTitle">Show Points</string>
+    <string id="showPointsPrompt"></string>
+    <string id="drawLineToClosestTrackTitle">Draw Line To Closest Track</string>
+    <string id="drawLineToClosestTrackPrompt"></string>
+    <string id="showTileBordersTitle">Show Tile Borders</string>
+    <string id="showTileBordersPrompt"></string>
+    <string id="showErrorTileMessagesTitle">Show Error Tile Messages</string>
+    <string id="showErrorTileMessagesPrompt"></string>
+    <string id="tileErrorColourTitle">Tile Error Colour</string>
+    <string id="tileErrorColourPrompt"></string>
+    <string id="includeDebugPageInOnScreenUiTitle">Include Debug Page In On Screen Ui</string>
+    <string id="includeDebugPageInOnScreenUiPrompt"></string>
+
 
     <string id="attribution">Attribution</string>
     <string id="openTopoMapAttribution">OpenTopoMap</string>

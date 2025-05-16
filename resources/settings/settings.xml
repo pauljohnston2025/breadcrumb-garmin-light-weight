@@ -67,6 +67,43 @@
         <settingConfig type="boolean"/>
     </setting>
     <group id="mapSettings" title="@Strings.mapsettingsTitle" description="@Strings.mapSettingsDescription" enableIfTrue="@Properties.mapEnabled">
+        <setting propertyKey="@Properties.tileCacheSize" title="@Strings.tileCacheSizeTitle" prompt="@Strings.tileCacheSizePrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+
+        <setting propertyKey="@Properties.tileCachePadding" title="@Strings.tileCachePaddingTitle" prompt="@Strings.tileCachePaddingPrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.maxPendingWebRequests" title="@Strings.maxPendingWebRequests" prompt="@Strings.maxPendingWebRequestsPrompt">
+            <settingConfig type="numeric" min="0" max="100"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.disableMapsFailureCount" title="@Strings.disableMapsFailureCountTitle" prompt="@Strings.disableMapsFailureCountPrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+
+        <setting propertyKey="@Properties.httpErrorTileTTLS" title="@Strings.httpErrorTileTTLSTitle" prompt="@Strings.httpErrorTileTTLSPrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+
+        <setting propertyKey="@Properties.errorTileTTLS" title="@Strings.errorTileTTLSTitle" prompt="@Strings.errorTileTTLSPrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+
+        <setting propertyKey="@Properties.fixedLatitude" title="@Strings.fixedLatitude" prompt="@Strings.fixedLatitudePrompt">
+            <settingConfig type="numeric" min="-90" max="90"/>
+        </setting>
+
+        <setting propertyKey="@Properties.fixedLongitude" title="@Strings.fixedLongitude" prompt="@Strings.fixedLongitudePrompt">
+            <settingConfig type="numeric" min="-180" max="180"/>
+        </setting>
+
+        <setting propertyKey="@Properties.scaleRestrictedToTileLayers" title="@Strings.scaleRestrictedToTileLayersTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+    </group>
+    <group id="tileServerSettings" title="@Strings.tileServerSettingsTitle" description="@Strings.mapSettingsDescription" enableIfTrue="@Properties.mapEnabled">
         <setting propertyKey="@Properties.mapChoice" title="@Strings.mapChoice">
             <settingConfig type="list">
                 <listEntry value="0">@Strings.custom</listEntry>
@@ -103,19 +140,15 @@
         <setting propertyKey="@Properties.tileUrl" title="@Strings.tileUrlTitle" prompt="@Strings.tileUrlPrompt">
             <settingConfig type="alphaNumeric"/>
         </setting>
-        
+
         <setting propertyKey="@Properties.authToken" title="@Strings.authTokenTitle" prompt="@Strings.authTokenPrompt">
             <settingConfig type="alphaNumeric"/>
         </setting>
-        
+
         <setting propertyKey="@Properties.tileSize" title="@Strings.layerTileSize" prompt="@Strings.tileSizePrompt">
             <settingConfig type="numeric" min="2" max="256"/>
         </setting>
-        
-        <setting propertyKey="@Properties.fullTileSize" title="@Strings.fullTileSizeTitle" prompt="@Strings.fullTileSizePrompt">
-            <settingConfig type="numeric" min="2" max="256"/>
-        </setting>
-        
+
         <setting propertyKey="@Properties.scaledTileSize" title="@Strings.scaledTileSizeTitle" prompt="@Strings.scaledTileSizePrompt">
             <settingConfig type="numeric" min="2" max="256"/>
         </setting>
@@ -123,37 +156,13 @@
         <setting propertyKey="@Properties.tileLayerMax" title="@Strings.tileLayerMaxTitle" prompt="@Strings.tileLayerMaxPrompt">
             <settingConfig type="numeric" min="0"/>
         </setting>
-        
+
         <setting propertyKey="@Properties.tileLayerMin" title="@Strings.tileLayerMinTitle" prompt="@Strings.tileLayerMinPrompt">
             <settingConfig type="numeric" min="0"/>
         </setting>
-        
-        <setting propertyKey="@Properties.tileCacheSize" title="@Strings.tileCacheSizeTitle" prompt="@Strings.tileCacheSizePrompt">
-            <settingConfig type="numeric" min="0"/>
-        </setting>
 
-        <setting propertyKey="@Properties.tileCachePadding" title="@Strings.tileCachePaddingTitle" prompt="@Strings.tileCachePaddingPrompt">
-            <settingConfig type="numeric" min="0"/>
-        </setting>
-        
-        <setting propertyKey="@Properties.maxPendingWebRequests" title="@Strings.maxPendingWebRequests" prompt="@Strings.maxPendingWebRequestsPrompt">
-            <settingConfig type="numeric" min="0" max="100"/>
-        </setting>
-        
-        <setting propertyKey="@Properties.disableMapsFailureCount" title="@Strings.disableMapsFailureCountTitle" prompt="@Strings.disableMapsFailureCountPrompt">
-            <settingConfig type="numeric"/>
-        </setting>
-
-        <setting propertyKey="@Properties.fixedLatitude" title="@Strings.fixedLatitude" prompt="@Strings.fixedLatitudePrompt">
-            <settingConfig type="numeric" min="-90" max="90"/>
-        </setting>
-
-        <setting propertyKey="@Properties.fixedLongitude" title="@Strings.fixedLongitude" prompt="@Strings.fixedLongitudePrompt">
-            <settingConfig type="numeric" min="-180" max="180"/>
-        </setting>
-
-        <setting propertyKey="@Properties.scaleRestrictedToTileLayers" title="@Strings.scaleRestrictedToTileLayersTitle">
-            <settingConfig type="boolean"/>
+        <setting propertyKey="@Properties.fullTileSize" title="@Strings.fullTileSizeTitle" prompt="@Strings.fullTileSizePrompt">
+            <settingConfig type="numeric" min="2" max="256"/>
         </setting>
     </group>
     <group id="mapStorageSettings" title="@Strings.mapStorageSettingsTitle" enableIfTrue="@Properties.mapEnabled">
@@ -256,6 +265,32 @@
             <settingConfig id="colour" type="alphaNumeric"/>
         </setting>
     </setting>
+
+    <group id="debugSettings" title="@Strings.debugSettingsTitle">
+        <setting propertyKey="@Properties.showPoints" title="@Strings.showPointsTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+
+        <setting propertyKey="@Properties.drawLineToClosestTrack" title="@Strings.drawLineToClosestTrackTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+
+        <setting propertyKey="@Properties.showTileBorders" title="@Strings.showTileBordersTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+
+        <setting propertyKey="@Properties.showErrorTileMessages" title="@Strings.showErrorTileMessagesTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+
+        <setting propertyKey="@Properties.tileErrorColour" title="@Strings.tileErrorColourTitle" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+
+        <setting propertyKey="@Properties.includeDebugPageInOnScreenUi" title="@Strings.includeDebugPageInOnScreenUiTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+    </group>
 
     <setting propertyKey="@Properties.resetDefaults" title="@Strings.resetDefaults">
         <settingConfig type="boolean"/>

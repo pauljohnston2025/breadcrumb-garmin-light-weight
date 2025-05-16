@@ -149,95 +149,6 @@ The math above is worst case, if you pick a better fixed scale or `Meters Around
 
 You can also set `<Scaled Tile Size>` to reduce the cache requirements further, if `<Scaled Tile Size>` is set to 128, `<Scaled Tile Size>` and `<Full Tile Size>` is 256, then the tile cache size can be reduced by a factor of 4. ie. `(<Full Tile Size>/<Scaled Tile Size>)^2`.
 
-### Map Choice
-
-Pick from a list on tile servers, select custom if you wish to manually specify a tileUrl.   
-Note: tiles that are more monochrome will download faster, as they have less colour variance and can be compressed further. Stadia's `Stamen Toner`, Stadia's `Alidade Smooth Dark`, Esri's `World Dark Gray Base` or Carto's `Dark Matter` are good examples of this. I noticed a 2X speed improvement on map tile downloads compared to full satellite tiles. Note: The tile load speed when using the companion app is a constant speed, as it can use a reduced palette. The companion app is often faster than full tile downloads when using the 64 colour mode, though the reduced colour palette may not appeal to some users. The faster tile loads also have the benefit if draining the battery less, as less bytes are sent over bluetooth.  
-
-Currently this dropdown is an override for:
-
-* tileUrl
-* tileLayerMax
-* tileLayerMin
-* tileSize
-* tileCacheSize - note this is only capped at an upper limit (guess per device), lower numbers will not be changed
-
-Due to how garmins settings work, to see changes in the above fields you need to.  
-
-* Open settings
-* Pick map choice
-* Save settings
-* Open settings
-
-This is the same for the companion app, and means you should probably only change map choice (and not any other settings) in the one settings save. Modifying the settings directly from the watch does no suffer this issue, and the properties should update immediately.   
-
-All other options in map settings can still be changed. Settings such as tile cache size should be set to something much smaller to avoid crashes.  
-
-If you need to tweak the tileUrl or other controlled settings (such as tileSize for companion app)  
-* First select the tile server that matches most closely eg. `companion app`
-* Save settings
-* Go back into settings and select `custom`
-* Edit the settings that need to be changed
-* Save settings
-
-Please note, some map choices require an auth token, see [Auth Token](#auth-token)
-
-### Tile Url
-
-Should be 'http://127.0.0.1:8080' for companion app (which supports offline maps) or template eg. 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png'.
-
-For online maps (requested directly from the watch), the tile server url can be set to something like:
-
-Open Topo Map:  
-Terain: https://a.tile.opentopomap.org/{z}/{x}/{y}.png
-
-OpenStreetMap will not work as a templated tile server on the watch because makeImageRequest does not allow headers to be sent. OpenStreetMap requires that the User-Agent header be sent or it will respond with 403. Use the tile server hosted on the companion app if you wish to use OpenStreetMap.  
-~~OpenStreetMap:~~  
-~~Standard: https://tile.openstreetmap.org/{z}/{x}/{y}.png~~
-
-Google:  
-Hybrid: https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}  
-Satellite: https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}  
-Road: https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}
-
-Esri:  
-View available tiles at https://server.arcgisonline.com/arcgis/rest/services/
-
-World Imagery (Satellite): https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}  
-World Street Map: https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}  
-World Topo Map: https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}  
-World Hillshade Base: https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}
-
-Carto:  
-Voyager: https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png  
-Dark Matter: https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png  
-Light All: https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png
-
-### Auth Token
-
-The tile url can also include an auth token, that will be filled out from the Auth Token property eg. `?api_key={authToken}`. This is required for some map choices.  
-For details on creating an account and auth token for stadia map choices please see https://docs.stadiamaps.com/
-
-### Tile Size
-
-Tile size should be a multiple of Scaled Tile Size for best results. The tile size in pixels loaded from the companion app or other source. Should be equal to Scaled Tile Size if using a template url.
-
-### Full Tile Size
-
-The full tile size of the server, if using the companion app as the tile server, this is still the full size of the server the companion app is using. eg. opentopomaps. Normally this will be 256. 
-
-### Scaled Tile Size
-
-The tile size to fetch images from the web (or companion app). Setting this to something like 128 will result in 4 times the performance (compared to 256), since the images we need to download are much smaller. Smaller sizes such as 128 come at the cost of resolution as each pixel of the downloaded tile will be 4 pixels on the screen (at full resolution). Smaller values are much faster, but may not look as nice (slightly blurry). Setting the scaled tile size also reduces the size of the tile cache, see the calculations in the maps description above. For perfect resolution this should be set to Full Tile Size, along with setting Restrict Scale To Tile Layers to true.
-
-### Tile Layer Max
-
-The maximum tile layer that can be fetched.
-
-### Tile Layer Min
-
-The minimum tile layer that can be fetched.
-
 ### Tile Cache Padding
 
 The maximum tiles to grab around the user 0 means no more than the screen size. 1 will give you one extra layer of tiles as a buffer (so they are pre loaded when we move into that area)
@@ -290,6 +201,102 @@ How long to wait before querying errored tiles again, this is for garmin errors 
 garmin error codes are documented [here](https://developer.garmin.com/connect-iq/api-docs/Toybox/Communications.html#Error-module)
 
 ---
+
+# Tile Server Settings
+
+### Map Choice
+
+Pick from a list on tile servers, select custom if you wish to manually specify a tileUrl.   
+Note: tiles that are more monochrome will download faster, as they have less colour variance and can be compressed further. Stadia's `Stamen Toner`, Stadia's `Alidade Smooth Dark`, Esri's `World Dark Gray Base` or Carto's `Dark Matter` are good examples of this. I noticed a 2X speed improvement on map tile downloads compared to full satellite tiles. Note: The tile load speed when using the companion app is a constant speed, as it can use a reduced palette. The companion app is often faster than full tile downloads when using the 64 colour mode, though the reduced colour palette may not appeal to some users. The faster tile loads also have the benefit if draining the battery less, as less bytes are sent over bluetooth.
+
+Currently this dropdown is an override for:
+
+* tileUrl
+* tileLayerMax
+* tileLayerMin
+* tileSize
+* tileCacheSize - note this is only capped at an upper limit (guess per device), lower numbers will not be changed
+
+Due to how garmins settings work, to see changes in the above fields you need to.
+
+* Open settings
+* Pick map choice
+* Save settings
+* Open settings
+
+This is the same for the companion app, and means you should probably only change map choice (and not any other settings) in the one settings save. Modifying the settings directly from the watch does no suffer this issue, and the properties should update immediately.
+
+All other options in map settings can still be changed. Settings such as tile cache size should be set to something much smaller to avoid crashes.
+
+If you need to tweak the tileUrl or other controlled settings (such as tileSize for companion app)
+* First select the tile server that matches most closely eg. `companion app`
+* Save settings
+* Go back into settings and select `custom`
+* Edit the settings that need to be changed
+* Save settings
+
+Please note, some map choices require an auth token, see [Auth Token](#auth-token)
+
+### Tile Url
+
+Should be 'http://127.0.0.1:8080' for companion app (which supports offline maps) or template eg. 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png'.
+
+For online maps (requested directly from the watch), the tile server url can be set to something like:
+
+Open Topo Map:  
+Terain: https://a.tile.opentopomap.org/{z}/{x}/{y}.png
+
+OpenStreetMap will not work as a templated tile server on the watch because makeImageRequest does not allow headers to be sent. OpenStreetMap requires that the User-Agent header be sent or it will respond with 403. Use the tile server hosted on the companion app if you wish to use OpenStreetMap.  
+~~OpenStreetMap:~~  
+~~Standard: https://tile.openstreetmap.org/{z}/{x}/{y}.png~~
+
+Google:  
+Hybrid: https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}  
+Satellite: https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}  
+Road: https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}
+
+Esri:  
+View available tiles at https://server.arcgisonline.com/arcgis/rest/services/
+
+World Imagery (Satellite): https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}  
+World Street Map: https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}  
+World Topo Map: https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}  
+World Hillshade Base: https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}
+
+Carto:  
+Voyager: https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png  
+Dark Matter: https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png  
+Light All: https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png
+
+### Auth Token
+
+The tile url can also include an auth token, that will be filled out from the Auth Token property eg. `?api_key={authToken}`. This is required for some map choices.  
+For details on creating an account and auth token for stadia map choices please see https://docs.stadiamaps.com/
+
+### Tile Size
+
+Tile size should be a multiple of Scaled Tile Size for best results. The tile size in pixels loaded from the companion app or other source. Should be equal to Scaled Tile Size if using a template url.
+
+### Full Tile Size
+
+The full tile size of the server, if using the companion app as the tile server, this is still the full size of the server the companion app is using. eg. opentopomaps. Normally this will be 256.
+
+### Scaled Tile Size
+
+The tile size to fetch images from the web (or companion app). Setting this to something like 128 will result in 4 times the performance (compared to 256), since the images we need to download are much smaller. Smaller sizes such as 128 come at the cost of resolution as each pixel of the downloaded tile will be 4 pixels on the screen (at full resolution). Smaller values are much faster, but may not look as nice (slightly blurry). Setting the scaled tile size also reduces the size of the tile cache, see the calculations in the maps description above. For perfect resolution this should be set to Full Tile Size, along with setting Restrict Scale To Tile Layers to true.
+
+### Tile Layer Max
+
+The maximum tile layer that can be fetched.
+
+### Tile Layer Min
+
+The minimum tile layer that can be fetched.
+
+---
+
+
+
 # Offline Tile Storage
 
 ***WARNING*** Several issues were encountered when trying to develop and use this feature. I had issues with the graphics memory filling up the system and had to reboot the watch to clear it. It seems mostly stable now, but some users may encounter issues.  

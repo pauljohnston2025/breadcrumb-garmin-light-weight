@@ -10,6 +10,7 @@
     <menu-item id="settingsMainMap" label="@Strings.mapsettingsTitle"/>
     <menu-item id="settingsMainAlerts" label="@Strings.offTrackAlertsGroupTitle"/>
     <menu-item id="settingsMainColours" label="@Strings.coloursTitle"/>
+    <menu-item id="settingsMainDebug" label="@Strings.debugSettingsTitle"/>
     <menu-item id="settingsMainClearStorage" label="@Strings.clearStorage"/>
     <menu-item id="settingsMainResetDefaults" label="@Strings.resetDefaults"/>
 </menu2>

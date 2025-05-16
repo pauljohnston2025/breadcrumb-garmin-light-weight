@@ -313,6 +313,43 @@ class SettingsMap extends Rez.Menus.SettingsMap {
         var settings = getApp()._breadcrumbContext.settings();
         safeSetToggle(me, :settingsMapEnabled, true);
 
+        safeSetSubLabel(me, :settingsMapTileCacheSize, settings.tileCacheSize.toString());
+        safeSetSubLabel(me, :settingsMapTileCachePadding, settings.tileCachePadding.toString());
+        safeSetSubLabel(
+            me,
+            :settingsMapMaxPendingWebRequests,
+            settings.maxPendingWebRequests.toString()
+        );
+        safeSetSubLabel(
+            me,
+            :settingsMapDisableMapsFailureCount,
+            settings.disableMapsFailureCount.toString()
+        );
+        var latString =
+            settings.fixedLatitude == null ? "Disabled" : settings.fixedLatitude.format("%.5f");
+        safeSetSubLabel(me, :settingsMapFixedLatitude, latString);
+        var longString =
+            settings.fixedLongitude == null ? "Disabled" : settings.fixedLongitude.format("%.5f");
+        safeSetSubLabel(me, :settingsMapFixedLongitude, longString);
+        safeSetToggle(
+            me,
+            :settingsMapScaleRestrictedToTileLayers,
+            settings.scaleRestrictedToTileLayers
+        );
+        safeSetSubLabel(me, :settingsMapHttpErrorTileTTLS, settings.httpErrorTileTTLS.toString());
+        safeSetSubLabel(me, :settingsMapErrorTileTTLS, settings.errorTileTTLS.toString());
+    }
+}
+
+class SettingsTileServer extends Rez.Menus.SettingsTileServer {
+    function initialize() {
+        Rez.Menus.SettingsTileServer.initialize();
+        rerender();
+    }
+
+    function rerender() as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+
         var mapChoiceString = "";
         switch (settings.mapChoice) {
             case 0:
@@ -411,29 +448,6 @@ class SettingsMap extends Rez.Menus.SettingsMap {
         safeSetSubLabel(me, :settingsMapScaledTileSize, settings.scaledTileSize.toString());
         safeSetSubLabel(me, :settingsMapTileLayerMax, settings.tileLayerMax.toString());
         safeSetSubLabel(me, :settingsMapTileLayerMin, settings.tileLayerMin.toString());
-        safeSetSubLabel(me, :settingsMapTileCacheSize, settings.tileCacheSize.toString());
-        safeSetSubLabel(me, :settingsMapTileCachePadding, settings.tileCachePadding.toString());
-        safeSetSubLabel(
-            me,
-            :settingsMapMaxPendingWebRequests,
-            settings.maxPendingWebRequests.toString()
-        );
-        safeSetSubLabel(
-            me,
-            :settingsMapDisableMapsFailureCount,
-            settings.disableMapsFailureCount.toString()
-        );
-        var latString =
-            settings.fixedLatitude == null ? "Disabled" : settings.fixedLatitude.format("%.5f");
-        safeSetSubLabel(me, :settingsMapFixedLatitude, latString);
-        var longString =
-            settings.fixedLongitude == null ? "Disabled" : settings.fixedLongitude.format("%.5f");
-        safeSetSubLabel(me, :settingsMapFixedLongitude, longString);
-        safeSetToggle(
-            me,
-            :settingsMapScaleRestrictedToTileLayers,
-            settings.scaleRestrictedToTileLayers
-        );
     }
 }
 
@@ -551,6 +565,27 @@ class SettingsColours extends Rez.Menus.SettingsColours {
         );
         safeSetIcon(me, :settingsColoursUiColour, new ColourIcon(settings.uiColour));
         safeSetIcon(me, :settingsColoursDebugColour, new ColourIcon(settings.debugColour));
+    }
+}
+
+class SettingsDebug extends Rez.Menus.SettingsDebug {
+    function initialize() {
+        Rez.Menus.SettingsDebug.initialize();
+        rerender();
+    }
+
+    function rerender() as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        safeSetIcon(me, :settingsDebugTileErrorColour, new ColourIcon(settings.tileErrorColour));
+        safeSetToggle(me, :settingsDebugShowPoints, settings.showPoints);
+        safeSetToggle(me, :settingsDebugDrawLineToClosestTrack, settings.drawLineToClosestTrack);
+        safeSetToggle(me, :settingsDebugShowTileBorders, settings.showTileBorders);
+        safeSetToggle(me, :settingsDebugShowErrorTileMessages, settings.showErrorTileMessages);
+        safeSetToggle(
+            me,
+            :settingsDebugIncludeDebugPageInOnScreenUi,
+            settings.includeDebugPageInOnScreenUi
+        );
     }
 }
 
@@ -768,6 +803,9 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
         } else if (itemId == :settingsMainColours) {
             var view = new SettingsColours();
             WatchUi.pushView(view, new $.SettingsColoursDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMainDebug) {
+            var view = new SettingsDebug();
+            WatchUi.pushView(view, new $.SettingsDebugDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainClearStorage) {
             var dialog = new WatchUi.Confirmation("Clear all Storage (routes and cached tiles)?");
             WatchUi.pushView(dialog, new ClearStorageDelegate(), WatchUi.SLIDE_IMMEDIATE);
@@ -845,11 +883,7 @@ class ClearCachedTilesDelegate extends WatchUi.ConfirmationDelegate {
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop confirmation
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop map storage view
             var view = new $.SettingsMapStorage();
-            WatchUi.pushView(
-                view,
-                new $.SettingsMapStorageDelegate(view),
-                WatchUi.SLIDE_IMMEDIATE
-            ); // replace with new updated map storage view
+            WatchUi.pushView(view, new $.SettingsMapStorageDelegate(view), WatchUi.SLIDE_IMMEDIATE); // replace with new updated map storage view
             WatchUi.pushView(new DummyView(), null, WatchUi.SLIDE_IMMEDIATE); // push dummy view for the confirmation to pop
         }
 
@@ -953,8 +987,8 @@ class SettingsModeDelegate extends WatchUi.Menu2InputDelegate {
 }
 
 class SettingsMapChoiceDelegate extends WatchUi.Menu2InputDelegate {
-    var parent as SettingsMap;
-    function initialize(parent as SettingsMap) {
+    var parent as SettingsTileServer;
+    function initialize(parent as SettingsTileServer) {
         WatchUi.Menu2InputDelegate.initialize();
         me.parent = parent;
     }
@@ -1342,7 +1376,99 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
                 new $.SettingsMapDisabledDelegate(view),
                 WatchUi.SLIDE_IMMEDIATE
             );
-        } else if (itemId == :settingsMapChoice) {
+        } else if (itemId == :settingsMapTileCacheSize) {
+            startPicker(
+                new SettingsNumberPicker(
+                    settings.method(:setTileCacheSize),
+                    settings.tileCacheSize
+                ),
+                view
+            );
+        } else if (itemId == :settingsMapTileCachePadding) {
+            startPicker(
+                new SettingsNumberPicker(
+                    settings.method(:setTileCachePadding),
+                    settings.tileCachePadding
+                ),
+                view
+            );
+        } else if (itemId == :settingsMapMaxPendingWebRequests) {
+            startPicker(
+                new SettingsNumberPicker(
+                    settings.method(:setMaxPendingWebRequests),
+                    settings.maxPendingWebRequests
+                ),
+                view
+            );
+        } else if (itemId == :settingsMapDisableMapsFailureCount) {
+            startPicker(
+                new SettingsNumberPicker(
+                    settings.method(:setDisableMapsFailureCount),
+                    settings.disableMapsFailureCount
+                ),
+                view
+            );
+        } else if (itemId == :settingsMapHttpErrorTileTTLS) {
+            startPicker(
+                new SettingsNumberPicker(
+                    settings.method(:setHttpErrorTileTTLS),
+                    settings.httpErrorTileTTLS
+                ),
+                view
+            );
+        } else if (itemId == :settingsMapErrorTileTTLS) {
+            startPicker(
+                new SettingsNumberPicker(
+                    settings.method(:setErrorTileTTLS),
+                    settings.errorTileTTLS
+                ),
+                view
+            );
+        } else if (itemId == :settingsMapFixedLatitude) {
+            startPicker(
+                new SettingsFloatPicker(
+                    settings.method(:setFixedLatitude),
+                    settings.fixedLatitude != null ? settings.fixedLatitude : 0f
+                ),
+                view
+            );
+        } else if (itemId == :settingsMapFixedLongitude) {
+            startPicker(
+                new SettingsFloatPicker(
+                    settings.method(:setFixedLongitude),
+                    settings.fixedLongitude != null ? settings.fixedLongitude : 0f
+                ),
+                view
+            );
+        } else if (itemId == :settingsMapScaleRestrictedToTileLayers) {
+            settings.toggleScaleRestrictedToTileLayers();
+            view.rerender();
+        } else if (itemId == :settingsMapAttribution) {
+            WatchUi.pushView(
+                new $.Rez.Menus.SettingsMapAttribution(),
+                new $.SettingsMapAttributionDelegate(view),
+                WatchUi.SLIDE_IMMEDIATE
+            );
+        } else if (itemId == :settingsMapStorageSettings) {
+            var view = new SettingsMapStorage();
+            WatchUi.pushView(view, new $.SettingsMapStorageDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMapTileServerSettings) {
+            var view = new SettingsTileServer();
+            WatchUi.pushView(view, new $.SettingsTileServerDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        }
+    }
+}
+
+class SettingsTileServerDelegate extends WatchUi.Menu2InputDelegate {
+    var view as SettingsTileServer;
+    function initialize(view as SettingsTileServer) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.view = view;
+    }
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var itemId = item.getId();
+        if (itemId == :settingsMapChoice) {
             WatchUi.pushView(
                 new $.Rez.Menus.SettingsMapChoice(),
                 new $.SettingsMapChoiceDelegate(view),
@@ -1390,66 +1516,6 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
                 new SettingsNumberPicker(settings.method(:setTileLayerMin), settings.tileLayerMin),
                 view
             );
-        } else if (itemId == :settingsMapTileCacheSize) {
-            startPicker(
-                new SettingsNumberPicker(
-                    settings.method(:setTileCacheSize),
-                    settings.tileCacheSize
-                ),
-                view
-            );
-        } else if (itemId == :settingsMapTileCachePadding) {
-            startPicker(
-                new SettingsNumberPicker(
-                    settings.method(:setTileCachePadding),
-                    settings.tileCachePadding
-                ),
-                view
-            );
-        } else if (itemId == :settingsMapMaxPendingWebRequests) {
-            startPicker(
-                new SettingsNumberPicker(
-                    settings.method(:setMaxPendingWebRequests),
-                    settings.maxPendingWebRequests
-                ),
-                view
-            );
-        } else if (itemId == :settingsMapDisableMapsFailureCount) {
-            startPicker(
-                new SettingsNumberPicker(
-                    settings.method(:setDisableMapsFailureCount),
-                    settings.disableMapsFailureCount
-                ),
-                view
-            );
-        } else if (itemId == :settingsMapFixedLatitude) {
-            startPicker(
-                new SettingsFloatPicker(
-                    settings.method(:setFixedLatitude),
-                    settings.fixedLatitude != null ? settings.fixedLatitude : 0f
-                ),
-                view
-            );
-        } else if (itemId == :settingsMapFixedLongitude) {
-            startPicker(
-                new SettingsFloatPicker(
-                    settings.method(:setFixedLongitude),
-                    settings.fixedLongitude != null ? settings.fixedLongitude : 0f
-                ),
-                view
-            );
-        } else if (itemId == :settingsMapScaleRestrictedToTileLayers) {
-            settings.toggleScaleRestrictedToTileLayers();
-            view.rerender();
-        } else if (itemId == :settingsMapAttribution) {
-            WatchUi.pushView(
-                new $.Rez.Menus.SettingsMapAttribution(),
-                new $.SettingsMapAttributionDelegate(view),
-                WatchUi.SLIDE_IMMEDIATE
-            );
-        } else if (itemId == :settingsMapStorageSettings) {
-            var view = new SettingsMapStorage();
-            WatchUi.pushView(view, new $.SettingsMapStorageDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         }
     }
 }
@@ -1478,7 +1544,9 @@ class SettingsMapStorageDelegate extends WatchUi.Menu2InputDelegate {
                 view
             );
         } else if (itemId == :settingsMapStorageCacheCurrentArea) {
-            var dialog = new WatchUi.Confirmation("Start Caching tiles? This breaks on some devices.");
+            var dialog = new WatchUi.Confirmation(
+                "Start Caching tiles? This breaks on some devices."
+            );
             WatchUi.pushView(dialog, new StartCachedTilesDelegate(), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMapStorageCancelCacheDownload) {
             getApp()._breadcrumbContext.cachedValues().cancelCacheCurrentMapArea();
@@ -1680,6 +1748,42 @@ class SettingsColoursDelegate extends WatchUi.Menu2InputDelegate {
                 new SettingsColourPicker(settings.method(:setDebugColour), settings.debugColour),
                 view
             );
+        }
+    }
+}
+
+class SettingsDebugDelegate extends WatchUi.Menu2InputDelegate {
+    var view as SettingsDebug;
+    function initialize(view as SettingsDebug) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.view = view;
+    }
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var settings = getApp()._breadcrumbContext.settings();
+        var itemId = item.getId();
+        if (itemId == :settingsDebugTileErrorColour) {
+            startPicker(
+                new SettingsColourPicker(
+                    settings.method(:setTileErrorColour),
+                    settings.tileErrorColour
+                ),
+                view
+            );
+        } else if (itemId == :settingsDebugShowPoints) {
+            settings.toggleShowPoints();
+            view.rerender();
+        } else if (itemId == :settingsDebugDrawLineToClosestTrack) {
+            settings.toggleDrawLineToClosestTrack();
+            view.rerender();
+        } else if (itemId == :settingsDebugShowTileBorders) {
+            settings.toggleShowTileBorders();
+            view.rerender();
+        } else if (itemId == :settingsDebugShowErrorTileMessages) {
+            settings.toggleShowErrorTileMessages();
+            view.rerender();
+        } else if (itemId == :settingsDebugIncludeDebugPageInOnScreenUi) {
+            settings.toggleIncludeDebugPageInOnScreenUi();
+            view.rerender();
         }
     }
 }
