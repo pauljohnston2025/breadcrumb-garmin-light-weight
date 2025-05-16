@@ -298,8 +298,7 @@ class Settings {
     // pre seed tiles on either side of the viewable area
     var tileCachePadding as Number = 0;
 
-    // more for debugging off track than anything else, should normally be disabled for a release
-    // maybe expose this as a user setting?
+    // bunch of debug settings
     var showPoints as Boolean = false;
     var drawLineToClosestTrack as Boolean = false;
     var showTileBorders as Boolean = true;
@@ -307,6 +306,7 @@ class Settings {
     var tileErrorColour as Number = Graphics.COLOR_BLACK;
     var httpErrorTileTTLS as Number = 60;
     var errorTileTTLS as Number = 20; // other errors are from garmin ble connection issues, retry faster by default
+    var includeDebugPageInOnScreenUi as Boolean = true;
 
     function setMode(_mode as Number) as Void {
         mode = _mode;
@@ -1119,6 +1119,10 @@ class Settings {
         }
 
         if (mode == MODE_MAP_MOVE && !mapEnabled) {
+            nextMode();
+        }
+        
+        if (mode == MODE_DEBUG && !includeDebugPageInOnScreenUi) {
             nextMode();
         }
 
