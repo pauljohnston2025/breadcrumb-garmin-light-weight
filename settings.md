@@ -154,6 +154,7 @@ Currently this dropdown is an override for:
 * tileLayerMax
 * tileLayerMin
 * tileSize
+* tileCacheSize - note this is only capped at an upper limit (guess per device), lower numbers will not be changed
 
 Due to how garmins settings work, to see changes in the above fields you need to.  
 
@@ -167,11 +168,11 @@ This is the same for the companion app, and means you should probably only chang
 All other options in map settings can still be changed. Settings such as tile cache size should be set to something much smaller to avoid crashes.  
 
 If you need to tweak the tileUrl or other controlled settings (such as tileSize for companion app)  
-* first select the tile server that matches most closely eg. `companion app`
-* save settings
-* go back into settings and select `custom`
-* edit the settings that need to be changed
-* save settings
+* First select the tile server that matches most closely eg. `companion app`
+* Save settings
+* Go back into settings and select `custom`
+* Edit the settings that need to be changed
+* Save settings
 
 Please note, some map choices require an auth token, see [Auth Token](#auth-token)
 
@@ -384,15 +385,6 @@ Route Colour - The colour of the route.
 
 negative error codes: https://developer.garmin.com/connect-iq/api-docs/Toybox/Communications.html#Error-module  
 all other error codes should follow the http spec, eg. 404 - Not Found, 403 - Forbidden
-
-
-Fixed a few issues with tile storage cache, added better support for debug settings (borders, error messages), added ttl on tiles
-
-* ensure all response code paths add to storage cache and/or to tile cache
-* Add ttl to tiles so we do not query errored tiles constantly
-* Handle drawing borders for image tiles
-* Cache error bitmaps
-
 
 ---
 

@@ -128,20 +128,20 @@ const TILE_SERVERS = [
     // Note: when testing on the simulator, some of theese occasionaly seem to produce   
     // Error: Invalid Value
     // Details: failed inside handle_image_callback
-    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Imagery/MapServer/tile/{z}/{y}/{x}", 0, 20), // Esri - World Imagery
-    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Street_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Street Map
-    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Topo_Map/MapServer/tile/{z}/{y}/{x}", 0, 19), // Esri - World Topo Map
-    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - World Transportation
-    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Dark Gray Base
-    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade
-    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Hillshade Dark
-    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16), // Esri - World Light Gray Base
-    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}", 0, 15), // Esri - USA Topo Maps
-    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Ocean Base
-    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}", 0, 13), // Esri - World Shaded Relief
-    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}", 0, 12), // Esri - NatGeo World Map
-    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Specialty/World_Navigation_Charts/MapServer/tile/{z}/{y}/{x}", 0, 10), // Esri - World Navigation Charts
-    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Physical_Map/MapServer/tile/{z}/{y}/{x}", 0, 8), // Esri - World Physical Map
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Imagery/MapServer/tile/{z}/{y}/{x}?blankTile=false", 0, 20), // Esri - World Imagery
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Street_Map/MapServer/tile/{z}/{y}/{x}?blankTile=false", 0, 19), // Esri - World Street Map
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Topo_Map/MapServer/tile/{z}/{y}/{x}?blankTile=false", 0, 19), // Esri - World Topo Map
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}?blankTile=false", 0, 15), // Esri - World Transportation
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}?blankTile=false", 0, 16), // Esri - World Dark Gray Base
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}?blankTile=false", 0, 16), // Esri - World Hillshade
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}?blankTile=false", 0, 16), // Esri - World Hillshade Dark
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}?blankTile=false", 0, 16), // Esri - World Light Gray Base
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}?blankTile=false", 0, 15), // Esri - USA Topo Maps
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?blankTile=false", 0, 13), // Esri - World Ocean Base
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}?blankTile=false", 0, 13), // Esri - World Shaded Relief
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}?blankTile=false", 0, 12), // Esri - NatGeo World Map
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "Specialty/World_Navigation_Charts/MapServer/tile/{z}/{y}/{x}?blankTile=false", 0, 10), // Esri - World Navigation Charts
+    new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, "World_Physical_Map/MapServer/tile/{z}/{y}/{x}?blankTile=false", 0, 8), // Esri - World Physical Map
     // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
     new TileServerInfo(ATTRIBUTION_OPENSTREETMAP, URL_PREFIX_NONE, AUTH_TOKEN_TYPE_NONE, "https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png", 0, 12), // OpenStreetMap - cyclosm
     // stadia (also includes stamen) https://docs.stadiamaps.com/themes/

@@ -1133,15 +1133,43 @@ class TileCache {
         var halfHeight = tileSize / 2;
         dc.setColor(Graphics.COLOR_RED, _settings.tileErrorColour);
         dc.clear();
-        // cache the tile as errored, but do not chow the error message
+        // cache the tile as errored, but do not show the error message
         if (_settings.showErrorTileMessages) {
-            dc.drawText(
-                halfHeight,
-                halfHeight,
-                tileSize < 100 ? Graphics.FONT_XTINY : Graphics.FONT_LARGE, // could get text width and see which one covers more of the tile
-                msg,
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-            );
+            // could get text width and see which one covers more of the tile
+            if (tileSize < 100) {
+                dc.drawText(
+                    halfHeight,
+                    halfHeight,
+                    Graphics.FONT_XTINY,
+                    msg,
+                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+                );
+            } else {
+                var textHight = dc.getFontHeight(Graphics.FONT_LARGE);
+                dc.drawText(0, 0, Graphics.FONT_LARGE, msg, Graphics.TEXT_JUSTIFY_LEFT);
+                dc.drawText(tileSize, 0, Graphics.FONT_LARGE, msg, Graphics.TEXT_JUSTIFY_RIGHT);
+                dc.drawText(
+                    halfHeight,
+                    halfHeight,
+                    Graphics.FONT_LARGE,
+                    msg,
+                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+                );
+                dc.drawText(
+                    0,
+                    tileSize - textHight,
+                    Graphics.FONT_LARGE,
+                    msg,
+                    Graphics.TEXT_JUSTIFY_LEFT
+                );
+                dc.drawText(
+                    tileSize,
+                    tileSize - textHight,
+                    Graphics.FONT_LARGE,
+                    msg,
+                    Graphics.TEXT_JUSTIFY_RIGHT
+                );
+            }
         }
         if (_settings.showTileBorders) {
             dc.setColor(Graphics.COLOR_RED, _settings.tileErrorColour);
