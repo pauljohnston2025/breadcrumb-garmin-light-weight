@@ -434,6 +434,7 @@ class Settings {
 
     function setValueSideEffect() as Void {
         updateCachedValues();
+        updateViewSettings();
     }
 
     function setZoomAtPaceMode(_zoomAtPaceMode as Number) as Void {
@@ -765,8 +766,21 @@ class Settings {
     }
 
     function setRouteMax(value as Number) as Void {
+        var oldRouteMax = routeMax;
         routeMax = value;
+        if (oldRouteMax > routeMax) {
+            routeMaxReduced();
+        }
         setValue("routeMax", routeMax);
+    }
+
+    function routeMaxReduced() as Void {
+        // remove the first oes or the last ones? we do not have an age, so just remove the last ones.
+        for (var i = routeMax; i < routes.size(); ++i) {
+            var oldRouteEntry = routes[i];
+            var oldRouteId = oldRouteEntry["routeId"];
+            clearRouteFromContext(oldRouteId);
+        }
     }
 
     function setTileCacheSize(value as Number) as Void {
@@ -1388,7 +1402,7 @@ class Settings {
             context.clearRouteId(routeId);
         }
     }
-    
+
     function purgeRoutesFromContext() as Void {
         // symbol not found if the loadSettings method is called before we set tile cache
         // should n ot happen unless onsettingschange is called before initalise finishes
@@ -1978,6 +1992,7 @@ class Settings {
     function onSettingsChanged() as Void {
         System.println("onSettingsChanged: Setting Changed, loading");
         var oldRoutes = routes;
+        var oldRouteMax = routeMax;
         var oldMapChoice = mapChoice;
         var oldTileUrl = tileUrl;
         var oldTileSize = tileSize;
@@ -2005,6 +2020,10 @@ class Settings {
 
             // clear the route
             clearRouteFromContext(oldRouteId);
+        }
+
+        if (oldRouteMax > routeMax) {
+            routeMaxReduced();
         }
 
         // run any tile cache clearing that we need to when map features change
