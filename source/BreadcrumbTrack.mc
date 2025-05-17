@@ -6,7 +6,7 @@ import Toybox.Application;
 using Toybox.Time;
 using Toybox.Time.Gregorian;
 
-const MAX_POINTS = 1000;
+const MAX_POINTS = 400; // companion app was limited to 400 a while ago and I saw no real negative
 const MIN_DISTANCE_M = 5; // meters
 const RESTART_STABILITY_POINT_COUNT = 10; // number of points in a row that need to be within RESTART_STABILITY_DISTANCE_M to be onsisiddered a valid course
 //note: RESTART_STABILITY_POINT_COUNT should be set based on DELAY_COMPUTE_COUNT
