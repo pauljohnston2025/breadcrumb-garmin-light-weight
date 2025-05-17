@@ -96,7 +96,7 @@ class BreadcrumbContext {
                 var thisRoute = _routes[i];
                 if (
                     oldestOrFirstDisabledRoute == null ||
-                    oldestOrFirstDisabledRoute.epoch > thisRoute.epoch
+                    oldestOrFirstDisabledRoute.createdAt > thisRoute.createdAt
                 ) {
                     oldestOrFirstDisabledRoute = thisRoute;
                 }

@@ -128,7 +128,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             if (rescaleOccurred) {
                 // rescaling is an expensive operatioj, f we have multiple large routes rescale and then try and recalculate off track alerts (or anything else expensive)
                 // we could hit watchdog errors. Best to not attempt anything else.
-                logD("rescale occurred, skipping remaining calculate");
+                logD("rescale occurred");
                 return;
             }
             // this is here due to stack overflow bug when requests trigger the next request
@@ -254,7 +254,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             lastOffTrackAlertNotified = epoch; // if showAlert fails, we will still have vibrated and turned the screen on
 
             try {
-                logD("trying to trigger alert");
+                // logD("trying to trigger alert");
                 if (settings.alertType == ALERT_TYPE_ALERT) {
                     // allerts are really annoying bevcause users have to remember to enable them
                     // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
@@ -280,7 +280,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     Attention.vibrate(vibeData);
                 }
             } catch (e) {
-                // not sure there is a way to check that we can display or not, so just catch errors
                 System.println("failed to show alert: " + e.getErrorMessage());
             }
         }

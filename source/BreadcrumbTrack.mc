@@ -60,7 +60,7 @@ class BreadcrumbTrack {
     // though we already do this in a multi route setup, we might parse off track alerts for all the other routes then get to the one we are on.
     // single route use case is more common though, so we will optimise for that. in multi route we could store 'last route we were on'
     var lastClosePoint as RectangularPoint? = null; // SCALED (note: altitude is currently unscaled)
-    var epoch as Number = 0;
+    var createdAt as Number = 0;
     // storageIndex is the id of the route (-1 is the in progress track)
     var storageIndex as Number = 0;
     var name as String;
@@ -80,7 +80,7 @@ class BreadcrumbTrack {
 
     function initialize(routeIndex as Number, name as String) {
         _neverStarted = true;
-        epoch = Time.now().value();
+        createdAt = Time.now().value();
         storageIndex = routeIndex;
         self.name = name;
     }
@@ -132,7 +132,7 @@ class BreadcrumbTrack {
             Storage.setValue(key + "distanceTotal", distanceTotal);
             Storage.setValue(key + "elevationMin", elevationMin);
             Storage.setValue(key + "elevationMax", elevationMax);
-            Storage.setValue(key + "epoch", epoch);
+            Storage.setValue(key + "createdAt", createdAt);
             Storage.setValue(key + "name", name);
         } catch (e) {
             // it will still be in memory, just not persisted, this is bad as the user will think it worked, so return false to indicate error
@@ -153,7 +153,7 @@ class BreadcrumbTrack {
         Storage.deleteValue(key + "distanceTotal");
         Storage.deleteValue(key + "elevationMin");
         Storage.deleteValue(key + "elevationMax");
-        Storage.deleteValue(key + "epoch");
+        Storage.deleteValue(key + "createdAt");
         Storage.deleteValue(key + "name");
     }
 
@@ -193,8 +193,8 @@ class BreadcrumbTrack {
                 return null;
             }
 
-            var epoch = Storage.getValue(key + "epoch");
-            if (epoch == null) {
+            var createdAt = Storage.getValue(key + "createdAt");
+            if (createdAt == null) {
                 return null;
             }
 
@@ -218,7 +218,7 @@ class BreadcrumbTrack {
             track.distanceTotal = distanceTotal as Float;
             track.elevationMin = elevationMin as Float;
             track.elevationMax = elevationMax as Float;
-            track.epoch = epoch as Number;
+            track.createdAt = createdAt as Number;
             if (track.coordinates.size() % ARRAY_POINT_SIZE != 0) {
                 return null;
             }
