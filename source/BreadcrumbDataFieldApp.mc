@@ -225,7 +225,6 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 var y = rawData[1] as Number;
                 var z = rawData[2] as Number;
                 var tileKey = new TileKey(x, y, z);
-                var tile = new Tile();
                 var _tileCache = _breadcrumbContext.mapRenderer()._tileCache;
                 var bitmap = _tileCache.tileDataToBitmap64ColourString(tileDataStr.toCharArray());
                 if (bitmap == null) {
@@ -233,7 +232,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                     return;
                 }
 
-                tile.setBitmap(bitmap);
+                var tile = new Tile(bitmap);
                 _tileCache.addTile(tileKey, _breadcrumbContext.tileCache()._tileCacheVersion, tile);
                 return;
             } else if (type == PROTOCOL_REQUEST_LOCATION_LOAD) {

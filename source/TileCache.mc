@@ -106,15 +106,11 @@ function expired(expiresAt as Number, now as Number) as Boolean {
 class Tile {
     var lastUsed as Number;
     var expiresAt as Number = NO_EXPIRY;
-    var bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource or Null;
+    var bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource;
 
-    function initialize() {
+    function initialize(_bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource) {
         self.lastUsed = Time.now().value();
-        self.bitmap = null;
-    }
-
-    function setBitmap(bitmap as Graphics.BufferedBitmap or WatchUi.BitmapResource) as Void {
-        self.bitmap = bitmap;
+        self.bitmap = _bitmap;
     }
 
     function setExpiresAt(expiresAt as Number) as Void {
@@ -248,7 +244,6 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
     }
 
     function handle64ColourDataString(mapTile as String) as Void {
-        var tile = new Tile();
         // System.println("got tile string of length: " + mapTile.length());
         var bitmap = _tileCache.tileDataToBitmap64ColourString(mapTile.toCharArray());
         if (bitmap == null) {
@@ -257,12 +252,11 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             return;
         }
 
-        tile.setBitmap(bitmap);
+        var tile = new Tile(bitmap);
         _tileCache.addTile(_tileKey, _tileCacheVersion, tile);
     }
 
     function handleBase64FullColourDataString(mapTile as String) as Void {
-        var tile = new Tile();
         var mapTileBytes = StringUtil.convertEncodedString(mapTile, {
             :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
             :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
@@ -275,12 +269,11 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             return;
         }
 
-        tile.setBitmap(bitmap);
+        var tile = new Tile(bitmap);
         _tileCache.addTile(_tileKey, _tileCacheVersion, tile);
     }
 
     function handleBlackAndWhiteDataString(mapTile as String) as Void {
-        var tile = new Tile();
         // System.println("got tile string of length: " + mapTile.length());
         var bitmap = _tileCache.tileDataToBitmapBlackAndWhite(mapTile.toCharArray());
         if (bitmap == null) {
@@ -289,7 +282,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             return;
         }
 
-        tile.setBitmap(bitmap);
+        var tile = new Tile(bitmap);
         _tileCache.addTile(_tileKey, _tileCacheVersion, tile);
     }
 }
@@ -466,8 +459,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             data = croppedSection;
         }
 
-        var tile = new Tile();
-        tile.setBitmap(data);
+        var tile = new Tile(data);
         _tileCache.addTile(_tileKey, _tileCacheVersion, tile);
     }
 }
@@ -1119,8 +1111,7 @@ class TileCache {
         if (weakRefToErrorBitmap != null) {
             var errorBitmap = weakRefToErrorBitmap.get();
             if (errorBitmap != null) {
-                var tile = new Tile();
-                tile.setBitmap(errorBitmap);
+                var tile = new Tile(errorBitmap);
                 tile.setExpiresAt(expiresAt);
                 _internalCache[tileKey] = tile;
                 return;
@@ -1175,8 +1166,7 @@ class TileCache {
         }
 
         _errorBitmaps[msg] = bitmap.weak(); // store in our cache for later use
-        var tile = new Tile();
-        tile.setBitmap(bitmap);
+        var tile = new Tile(bitmap);
         tile.setExpiresAt(expiresAt);
         _internalCache[tileKey] = tile;
     }

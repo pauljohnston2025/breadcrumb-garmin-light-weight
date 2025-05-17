@@ -112,11 +112,6 @@ class MapRenderer {
                     continue;
                 }
 
-                var bitmap = tileFromCache.bitmap;
-                if (bitmap == null) {
-                    continue;
-                }
-
                 // Its best to have a 'scratch space' bitmap that we use for draws then rotate the whole thing
                 // cant rotate individual tiles as you can see the seams between tiles
                 // one large one then rotate looks much better, and is possibly faster
@@ -129,7 +124,7 @@ class MapRenderer {
                     yPixel,
                     tileScalePixelSize,
                     tileScalePixelSize,
-                    bitmap
+                    tileFromCache.bitmap
                 );
 
                 if (_settings.showTileBorders) {
@@ -200,11 +195,6 @@ class MapRenderer {
                     continue;
                 }
 
-                var bitmap = tileFromCache.bitmap;
-                if (bitmap == null) {
-                    continue;
-                }
-
                 // Its best to have a 'scratch space' bitmap that we use for draws then rotate the whole thing
                 // cant rotate individual tiles as you can see the seams between tiles
                 // one large one then rotate looks much better, and is possibly faster
@@ -242,7 +232,7 @@ class MapRenderer {
                 //     Line: 293
                 //     Function: onUpdate
                 try {
-                    dc.drawBitmap2(xPos, yPos, bitmap, {
+                    dc.drawBitmap2(xPos, yPos, tileFromCache.bitmap, {
                         // :bitmapX =>
                         // :bitmapY =>
                         // :bitmapWidth =>
