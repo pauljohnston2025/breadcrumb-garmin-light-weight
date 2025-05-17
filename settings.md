@@ -72,7 +72,7 @@ Map Enabled - See [Map Enabled](#map-enabled)
 
 `+` Button (top of screen) allows zooming into the current location  
 `-` Button (bottom of screen) allows zooming out of the current location  
-`G` Button (right of screen) Get the current tiles for the currently viewed area and put them into app storage (all tile layers), this allows offline navigation without a phone connection. This is an incredibly slow process, but should improve battery as all bluetooth can be done in advance before heading out the door, then the device can be fully charged. note: this will cache tiles regardless of the [Store Tiles For Offline Use](#store-tiles-for-offline-use) setting. For more details see [Offline Tile Storage](#offline-tile-storage)     
+`G` Button (right of screen) Get the current tiles for the currently viewed area and put them into app storage (all tile layers), this allows offline navigation without a phone connection. This is an incredibly slow process, but should improve battery as all bluetooth can be done in advance before heading out the door, then the device can be fully charged. note: this will cache tiles regardless of the [Store Tiles For Offline Use](#store-tiles-for-offline-use) setting. For more details see [Offline Tile Storage](#offline-tile-storage). The process of downloading all the tiles takes a very long time, it is best to set the tile server max/min layers so that the tiels downloaded are limited.  
 
 Other Screens:  
 Map move allows you to pan around the map, clear routes and toggle the display mode.  

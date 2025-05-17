@@ -1003,7 +1003,7 @@ class TileCache {
             }
             _webRequestHandler.add(
                 new ImageRequest(
-                    "tileimage" + tileKey + "-" + _tileCacheVersion, // the hash is for the small tile request, not the big one (they will send the same physical request out, but again use 256 tilSize if your using external sources)
+                    "im" + tileKey.optimisedHashKey() + "-" + _tileCacheVersion, // the hash is for the small tile request, not the big one (they will send the same physical request out, but again use 256 tilSize if your using external sources)
                     stringReplaceFirst(
                         stringReplaceFirst(
                             stringReplaceFirst(
@@ -1050,7 +1050,7 @@ class TileCache {
         }
         _webRequestHandler.add(
             new JsonRequest(
-                "/loadtile" + tileKey + "-" + _tileCacheVersion,
+                "json" + tileKey.optimisedHashKey() + "-" + _tileCacheVersion,
                 _settings.tileUrl + "/loadtile",
                 {
                     "x" => tileKey.x,
