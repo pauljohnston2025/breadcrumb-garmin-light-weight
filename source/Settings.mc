@@ -710,10 +710,10 @@ class Settings {
     function setTileSizeWithoutSideEffect(value as Number) as Void {
         tileSize = value;
         Application.Properties.setValue("tileSize", tileSize);
-        tileSizeChanged();
+        tileServerPropChanged();
     }
 
-    function tileSizeChanged() as Void {
+    function tileServerPropChanged() as Void {
         clearPendingWebRequests();
         clearTileCache();
     }
@@ -721,17 +721,13 @@ class Settings {
     function setHttpErrorTileTTLS(value as Number) as Void {
         httpErrorTileTTLS = value;
         setValue("httpErrorTileTTLS", httpErrorTileTTLS);
-    }
-    function httpErrorTileTTLSChanged() as Void {
-        clearTileCache();
+        tileServerPropChanged();
     }
 
     function setErrorTileTTLS(value as Number) as Void {
         errorTileTTLS = value;
         setValue("errorTileTTLS", errorTileTTLS);
-    }
-    function errorTileTTLSChanged() as Void {
-        clearTileCache();
+        tileServerPropChanged();
     }
 
     function setFullTileSize(value as Number) as Void {
@@ -741,12 +737,7 @@ class Settings {
     function setFullTileSizeWithoutSideEffect(value as Number) as Void {
         fullTileSize = value;
         Application.Properties.setValue("fullTileSize", fullTileSize);
-        fullTileSizeChanged();
-    }
-
-    function fullTileSizeChanged() as Void {
-        clearPendingWebRequests();
-        clearTileCache();
+        tileServerPropChanged();
     }
 
     function setScaledTileSize(value as Number) as Void {
@@ -756,12 +747,7 @@ class Settings {
     function setScaledTileSizeWithoutSideEffect(value as Number) as Void {
         scaledTileSize = value;
         Application.Properties.setValue("scaledTileSize", scaledTileSize);
-        scaledTileSizeChanged();
-    }
-
-    function scaledTileSizeChanged() as Void {
-        clearPendingWebRequests();
-        clearTileCache();
+        tileServerPropChanged();
     }
 
     function setTileLayerMax(value as Number) as Void {
@@ -854,13 +840,8 @@ class Settings {
 
         if (oldStorageTileCacheSize > storageTileCacheSize) {
             // only nuke storage tile cache if we reduce the number of tiles we can store
-            storageTileCacheSizeReduced();
+            tileServerPropChanged();
         }
-    }
-
-    function storageTileCacheSizeReduced() as Void {
-        clearPendingWebRequests();
-        clearStorageTiles(); // clears the tile storage for us
     }
 
     function setTileCachePadding(value as Number) as Void {
@@ -905,12 +886,8 @@ class Settings {
         setValue("cacheTilesInStorage", cacheTilesInStorage);
 
         if (!cacheTilesInStorage) {
-            cacheTilesInStorageChanged();
+            tileServerPropChanged();
         }
-    }
-
-    function cacheTilesInStorageChanged() as Void {
-        clearStorageTiles();
     }
 
     function setStorageMapTilesOnly(value as Boolean) as Void {
@@ -1144,117 +1121,56 @@ class Settings {
         setMapEnabled(true);
     }
 
+    function toggleSimple(key as String, value as Boolean) as Boolean {
+        setValue(key, value);
+        return value;
+    }
+
     function toggleCacheTilesInStorage() as Void {
-        if (cacheTilesInStorage) {
-            setCacheTilesInStorage(false);
-            return;
-        }
-
-        setCacheTilesInStorage(true);
+        cacheTilesInStorage = toggleSimple("cacheTilesInStorage", !cacheTilesInStorage);
+        tileServerPropChanged();
     }
-
     function toggleStorageMapTilesOnly() as Void {
-        if (storageMapTilesOnly) {
-            setStorageMapTilesOnly(false);
-            return;
-        }
-
-        setStorageMapTilesOnly(true);
+        storageMapTilesOnly = toggleSimple("storageMapTilesOnly", !storageMapTilesOnly);
     }
-
     function toggleDrawLineToClosestPoint() as Void {
-        if (drawLineToClosestPoint) {
-            setDrawLineToClosestPoint(false);
-            return;
-        }
-
-        setDrawLineToClosestPoint(true);
+        drawLineToClosestPoint = toggleSimple("drawLineToClosestPoint", !drawLineToClosestPoint);
     }
-
     function toggleShowPoints() as Void {
-        if (showPoints) {
-            setShowPoints(false);
-            return;
-        }
-
-        setShowPoints(true);
+        showPoints = toggleSimple("showPoints", !showPoints);
     }
     function toggleDrawLineToClosestTrack() as Void {
-        if (drawLineToClosestTrack) {
-            setDrawLineToClosestTrack(false);
-            return;
-        }
-
-        setDrawLineToClosestTrack(true);
+        drawLineToClosestTrack = toggleSimple("drawLineToClosestTrack", !drawLineToClosestTrack);
     }
     function toggleShowTileBorders() as Void {
-        if (showTileBorders) {
-            setShowTileBorders(false);
-            return;
-        }
-
-        setShowTileBorders(true);
+        showTileBorders = toggleSimple("showTileBorders", !showTileBorders);
     }
     function toggleShowErrorTileMessages() as Void {
-        if (showErrorTileMessages) {
-            setShowErrorTileMessages(false);
-            return;
-        }
-
-        setShowErrorTileMessages(true);
+        showErrorTileMessages = toggleSimple("showErrorTileMessages", !showErrorTileMessages);
     }
     function toggleIncludeDebugPageInOnScreenUi() as Void {
-        if (includeDebugPageInOnScreenUi) {
-            setIncludeDebugPageInOnScreenUi(false);
-            return;
-        }
-
-        setIncludeDebugPageInOnScreenUi(true);
+        includeDebugPageInOnScreenUi = toggleSimple(
+            "includeDebugPageInOnScreenUi",
+            !includeDebugPageInOnScreenUi
+        );
     }
-
     function toggleDisplayLatLong() as Void {
-        if (displayLatLong) {
-            setDisplayLatLong(false);
-            return;
-        }
-
-        setDisplayLatLong(true);
+        displayLatLong = toggleSimple("displayLatLong", !displayLatLong);
     }
-
     function toggleScaleRestrictedToTileLayers() as Void {
-        if (scaleRestrictedToTileLayers) {
-            setScaleRestrictedToTileLayers(false);
-            return;
-        }
-
-        setScaleRestrictedToTileLayers(true);
+        scaleRestrictedToTileLayers = toggleSimple(
+            "scaleRestrictedToTileLayers",
+            !scaleRestrictedToTileLayers
+        );
     }
-
     function toggleDisplayRouteNames() as Void {
-        if (displayRouteNames) {
-            setDisplayRouteNames(false);
-            return;
-        }
-
-        setDisplayRouteNames(true);
+        displayRouteNames = toggleSimple("displayRouteNames", !displayRouteNames);
     }
-
     function toggleEnableOffTrackAlerts() as Void {
-        if (enableOffTrackAlerts) {
-            setEnableOffTrackAlerts(false);
-            return;
-        }
-
-        setEnableOffTrackAlerts(true);
+        enableOffTrackAlerts = toggleSimple("enableOffTrackAlerts", !enableOffTrackAlerts);
     }
-
     function toggleRoutesEnabled() as Void {
-        if (routesEnabled) {
-            setRoutesEnabled(false);
-            return;
-        }
-
-        setRoutesEnabled(true);
+        routesEnabled = toggleSimple("routesEnabled", !routesEnabled);
     }
 
     function nextMode() as Void {
@@ -2070,35 +1986,23 @@ class Settings {
         if (!oldTileUrl.equals(tileUrl)) {
             tileUrlChanged();
         }
-        if (oldTileSize != tileSize) {
-            tileSizeChanged();
+        if (
+            oldTileSize != tileSize ||
+            oldHttpErrorTileTTLS != httpErrorTileTTLS ||
+            oldErrorTileTTLS != errorTileTTLS ||
+            oldFullTileSize != fullTileSize ||
+            oldScaledTileSize != scaledTileSize ||
+            oldCacheTilesInStorage != cacheTilesInStorage ||
+            oldTileCacheSize > tileCacheSize ||
+            oldStorageTileCacheSize > storageTileCacheSize
+        ) {
+            tileServerPropChanged();
         }
-        if (oldHttpErrorTileTTLS != httpErrorTileTTLS) {
-            httpErrorTileTTLSChanged();
-        }
-        if (oldErrorTileTTLS != errorTileTTLS) {
-            errorTileTTLSChanged();
-        }
-        if (oldFullTileSize != fullTileSize) {
-            fullTileSizeChanged();
-        }
-        if (oldScaledTileSize != scaledTileSize) {
-            scaledTileSizeChanged();
-        }
-        if (oldTileCacheSize > tileCacheSize) {
-            // only nuke tile cache if we reduce the number of tiles we can store
-            tileCacheSizeReduced();
-        }
-        if (oldStorageTileCacheSize > storageTileCacheSize) {
-            // only nuke tile cache if we reduce the number of tiles we can store
-            storageTileCacheSizeReduced();
-        }
+
         if (oldMapEnabled != mapEnabled) {
             mapEnabledChanged();
         }
-        if (oldCacheTilesInStorage != cacheTilesInStorage) {
-            cacheTilesInStorageChanged();
-        }
+
         if (oldMapChoice != mapChoice) {
             updateMapChoiceChange(mapChoice);
         }
