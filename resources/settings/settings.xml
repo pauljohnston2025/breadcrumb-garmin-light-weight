@@ -26,7 +26,7 @@
         </settingConfig>
     </setting>
 
-    <setting propertyKey="@Properties.recalculateIntervalS" title="@Strings.recalculateIntervalSTitle" prompt="@Strings.recalculateIntervalSPrompt">
+    <setting propertyKey="@Properties.recalculateIntervalS" title="@Strings.recalculateIntervalSTitle">
         <settingConfig type="numeric" min="0"/>
     </setting>
 
@@ -71,23 +71,23 @@
             <settingConfig type="numeric" min="0"/>
         </setting>
 
-        <setting propertyKey="@Properties.tileCachePadding" title="@Strings.tileCachePaddingTitle" prompt="@Strings.tileCachePaddingPrompt">
+        <setting propertyKey="@Properties.tileCachePadding" title="@Strings.tileCachePaddingTitle">
             <settingConfig type="numeric" min="0"/>
         </setting>
         
-        <setting propertyKey="@Properties.maxPendingWebRequests" title="@Strings.maxPendingWebRequests" prompt="@Strings.maxPendingWebRequestsPrompt">
+        <setting propertyKey="@Properties.maxPendingWebRequests" title="@Strings.maxPendingWebRequests">
             <settingConfig type="numeric" min="0" max="100"/>
         </setting>
         
-        <setting propertyKey="@Properties.disableMapsFailureCount" title="@Strings.disableMapsFailureCountTitle" prompt="@Strings.disableMapsFailureCountPrompt">
+        <setting propertyKey="@Properties.disableMapsFailureCount" title="@Strings.disableMapsFailureCountTitle">
             <settingConfig type="numeric" min="0"/>
         </setting>
 
-        <setting propertyKey="@Properties.httpErrorTileTTLS" title="@Strings.httpErrorTileTTLSTitle" prompt="@Strings.httpErrorTileTTLSPrompt">
+        <setting propertyKey="@Properties.httpErrorTileTTLS" title="@Strings.httpErrorTileTTLSTitle">
             <settingConfig type="numeric" min="0"/>
         </setting>
 
-        <setting propertyKey="@Properties.errorTileTTLS" title="@Strings.errorTileTTLSTitle" prompt="@Strings.errorTileTTLSPrompt">
+        <setting propertyKey="@Properties.errorTileTTLS" title="@Strings.errorTileTTLSTitle">
             <settingConfig type="numeric" min="0"/>
         </setting>
 
@@ -141,7 +141,7 @@
             <settingConfig type="alphaNumeric"/>
         </setting>
 
-        <setting propertyKey="@Properties.authToken" title="@Strings.authTokenTitle" prompt="@Strings.authTokenPrompt">
+        <setting propertyKey="@Properties.authToken" title="@Strings.authTokenTitle">
             <settingConfig type="alphaNumeric"/>
         </setting>
 
@@ -174,16 +174,16 @@
             <settingConfig type="boolean"/>
         </setting>
 
-        <setting propertyKey="@Properties.storageTileCacheSize" title="@Strings.storageTileCacheSizeTitle" prompt="@Strings.storageTileCacheSizePrompt">
+        <setting propertyKey="@Properties.storageTileCacheSize" title="@Strings.storageTileCacheSizeTitle">
             <settingConfig type="numeric" min="0"/>
         </setting>
     </group>
 
-    <group id="offTrackAlertsGroup" title="@Strings.offTrackAlertsGroupTitle" description="@Strings.enableOffTrackAlertsDescription">
-        <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle" prompt="@Strings.offTrackAlertsDistanceMPrompt">
+    <group id="offTrackAlertsGroup" title="@Strings.offTrackAlertsGroupTitle">
+        <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle">
             <settingConfig type="numeric" min="0"/>
         </setting>
-        <setting propertyKey="@Properties.offTrackCheckIntervalS" title="@Strings.offTrackCheckIntervalSTitle" prompt="@Strings.offTrackCheckIntervalSPrompt">
+        <setting propertyKey="@Properties.offTrackCheckIntervalS" title="@Strings.offTrackCheckIntervalSTitle">
             <settingConfig type="numeric" min="0"/>
         </setting>
         <setting propertyKey="@Properties.drawLineToClosestPoint" title="@Strings.drawLineToClosestPointTitle">
@@ -192,7 +192,7 @@
         <setting propertyKey="@Properties.enableOffTrackAlerts" title="@Strings.enableOffTrackAlertsTitle">
             <settingConfig type="boolean"/>
         </setting>
-        <setting propertyKey="@Properties.offTrackAlertsMaxReportIntervalS" title="@Strings.offTrackAlertsMaxReportIntervalSTitle" prompt="@Strings.offTrackAlertsMaxReportIntervalSPrompt">
+        <setting propertyKey="@Properties.offTrackAlertsMaxReportIntervalS" title="@Strings.offTrackAlertsMaxReportIntervalSTitle">
             <settingConfig type="numeric" min="0"/>
         </setting>
         <setting propertyKey="@Properties.alertType" title="@Strings.alertTypeTitle">
@@ -203,7 +203,7 @@
         </setting>
     </group>
 
-    <group id="colours" title="@Strings.coloursTitle" description="@Strings.coloursDescription">
+    <group id="colours" title="@Strings.coloursTitle">
         <setting propertyKey="@Properties.trackColour" title="@Strings.trackColourTitle" prompt="@Strings.colourPrompt">
             <settingConfig type="alphaNumeric"/>
         </setting>
