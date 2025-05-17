@@ -1,5 +1,5 @@
 <drawables>
-    <bitmap id="LauncherIcon" filename="launcher_icon.png" />
+    <bitmap id="LauncherIcon" filename="launcher_icon.png" scaleX="61" scaleY="61"/>
     <bitmap id="ColourIcon" class="ColourIcon" filename="launcher_icon.png" automaticPalette="true" dithering="none" scaleX="15%" scaleRelativeTo="screen" />
     <!-- online editor for svgs https://www.svgviewer.dev/ -->
     <bitmap id="Crosshair" filename="crosshair.svg" automaticPalette="false" dithering="none" scaleX="50" scaleY="50"/>

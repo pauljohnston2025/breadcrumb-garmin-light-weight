@@ -65,7 +65,7 @@ class BreadcrumbContext {
     function routes() as Array<BreadcrumbTrack> {
         return _routes;
     }
-    function newRoute(name as String) as BreadcrumbTrack {
+    function newRoute(name as String) as BreadcrumbTrack? {
         // we could maybe just not load the route if they are not enabled?
         // but they are pushing a new route from the app for this to happen
         // so forcing the new route to be enabled
@@ -82,11 +82,18 @@ class BreadcrumbContext {
         // eg me.routes = [BreadcrumbTrack{storageIndex:0, name: "phoneroute"}] settings.routes = [{id:2, name: "customroute2"}, {id:0, name: "phoneroute"}],
         // the colours will be uneffected
         // note: the route will also be force enabled, as described above
+        if (_settings.routeMax <= 0) {
+            WatchUi.showToast("Route Max is 0", {});
+            return null; // cannot allocate routes
+        }
         if (_routes.size() >= _settings.routeMax) {
             var oldestOrFirstDisabledRoute = null;
             for (var i = 0; i < _routes.size(); ++i) {
                 var thisRoute = _routes[i];
-                if (oldestOrFirstDisabledRoute == null || oldestOrFirstDisabledRoute.epoch > thisRoute.epoch) {
+                if (
+                    oldestOrFirstDisabledRoute == null ||
+                    oldestOrFirstDisabledRoute.epoch > thisRoute.epoch
+                ) {
                     oldestOrFirstDisabledRoute = thisRoute;
                 }
 
@@ -94,6 +101,10 @@ class BreadcrumbContext {
                     oldestOrFirstDisabledRoute = thisRoute;
                     break;
                 }
+            }
+            if (oldestOrFirstDisabledRoute == null) {
+                System.println("not possible (routes should be at least 1): " + _settings.routeMax);
+                return null;
             }
             _routes.remove(oldestOrFirstDisabledRoute);
             var routeId = oldestOrFirstDisabledRoute.storageIndex;
@@ -166,7 +177,7 @@ class BreadcrumbContext {
             }
         }
     }
-    
+
     function purgeRoutes() as Void {
         _routes = [];
     }

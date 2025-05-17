@@ -128,6 +128,11 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 if (routeData.size() % 3 == 0) {
                     logD("Parsing route data");
                     var route = _breadcrumbContext.newRoute(name);
+                    if(route == null)
+                    {
+                        logE("Failed to add route");
+                        return;
+                    }
                     for (var i = 0; i < routeData.size(); i += 3) {
                         route.addLatLongRaw(
                             routeData[i].toFloat(),
@@ -176,6 +181,11 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 if (routeData.size() % ARRAY_POINT_SIZE == 0) {
                     logD("Parsing route data 2");
                     var route = _breadcrumbContext.newRoute(name);
+                    if(route == null)
+                    {
+                        logE("Failed to add route");
+                        return;
+                    }
                     var routeWrote = route.handleRouteV2(routeData, _breadcrumbContext.cachedValues());
                     logD("Parsing route data 2 complete, wrote to storage: " + routeWrote);
                     if (!routeWrote)
