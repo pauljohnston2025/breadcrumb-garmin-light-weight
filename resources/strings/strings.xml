@@ -17,7 +17,6 @@
     <string id="elevationModeOrderedRoutes">Ordered Routes</string>
     <string id="tileUrlTitle">Tile Url</string>
     <string id="authTokenTitle">Auth Token</string>
-    <string id="mapSettingsDescription">Tile size should be a multiple of 256 for best results. Choose these values wisely. Too big = crash, too small = crash or slow performance. Tile url should be 'http://127.0.0.1:8080' for companion app or template eg. 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png'. Tile size should generally be 256 if using a template.</string>
     <string id="tileUrlPrompt">https://fancytileserver/{z}/{x}/{y}.png</string>
     <string id="elevationMode">Elevation</string>
     <string id="trackRouteMode">Track/Route</string>
@@ -54,7 +53,6 @@
     <string id="metersAroundUser">Meters Around User</string>
     <string id="metersAroundUserPrompt">100</string>
     <string id="zoomAtPaceTitle">Zoom At Pace</string>
-    <string id="zoomAtPaceDescription">Map will automatically zoom when moving or stopped, can be disabled by manually settings scale</string>
     <string id="zoomAtPaceModeTitle">Mode</string>
     <string id="zoomAtPaceModePace">Zoom When Moving</string>
     <string id="zoomAtPaceModeStopped">Zoom When Stopped</string>
@@ -116,7 +114,6 @@
     <string id="mapMove">Map Move</string>
     <string id="debug">Debug</string>
     <string id="clearRoutes">Clear All Routes</string>
-    <string id="routesDescription">Do not add routes from the settings page, instead use the companion app. Routes may be removed or modified from within settings</string>
 
     <string id="mapChoice">Map Choice</string>
     <string id="custom">Custom</string>

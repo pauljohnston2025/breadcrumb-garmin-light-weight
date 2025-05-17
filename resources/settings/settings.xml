@@ -43,7 +43,7 @@
         <settingConfig type="boolean"/>
     </setting>
     
-    <group id="zoomAtPace" title="@Strings.zoomAtPaceTitle" description="@Strings.zoomAtPaceDescription">
+    <group id="zoomAtPace" title="@Strings.zoomAtPaceTitle">
         <setting propertyKey="@Properties.zoomAtPaceMode" title="@Strings.zoomAtPaceModeTitle">
             <settingConfig type="list">
                 <listEntry value="0">@Strings.zoomAtPaceModePace</listEntry>
@@ -66,7 +66,7 @@
     <setting propertyKey="@Properties.mapEnabled" title="@Strings.mapEnabledTitle">
         <settingConfig type="boolean"/>
     </setting>
-    <group id="mapSettings" title="@Strings.mapsettingsTitle" description="@Strings.mapSettingsDescription" enableIfTrue="@Properties.mapEnabled">
+    <group id="mapSettings" title="@Strings.mapsettingsTitle" enableIfTrue="@Properties.mapEnabled">
         <setting propertyKey="@Properties.tileCacheSize" title="@Strings.tileCacheSizeTitle" prompt="@Strings.tileCacheSizePrompt">
             <settingConfig type="numeric" min="0"/>
         </setting>
@@ -103,7 +103,7 @@
             <settingConfig type="boolean"/>
         </setting>
     </group>
-    <group id="tileServerSettings" title="@Strings.tileServerSettingsTitle" description="@Strings.mapSettingsDescription" enableIfTrue="@Properties.mapEnabled">
+    <group id="tileServerSettings" title="@Strings.tileServerSettingsTitle" enableIfTrue="@Properties.mapEnabled">
         <setting propertyKey="@Properties.mapChoice" title="@Strings.mapChoice">
             <settingConfig type="list">
                 <listEntry value="0">@Strings.custom</listEntry>
@@ -229,7 +229,7 @@
         </setting>
     </group>
 
-    <group id="routesdesc" title="@Strings.routesTitle" description="@Strings.routesDescription">
+    <group id="routesdesc" title="@Strings.routesTitle">
         <setting propertyKey="@Properties.routesEnabled" title="@Strings.routesEnabled">
             <settingConfig type="boolean"/>
         </setting>
