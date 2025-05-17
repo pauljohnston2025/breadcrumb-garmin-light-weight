@@ -18,8 +18,8 @@ class CachedValues {
     // things set to -1 are updated on the first layout/calcualte call
 
     // updated when settings change
-    var smallTilesPerScaledTile as Number;
-    var smallTilesPerFullTile as Number;
+    var smallTilesPerScaledTile as Number = -1;
+    var smallTilesPerFullTile as Number = -1;
     // updated when user manually pans around screen
     var fixedPosition as RectangularPoint?; // NOT SCALED - raw meters
     var scale as Float? = null; // fixed map scale, when manually zooming or panning around map
@@ -30,7 +30,7 @@ class CachedValues {
     var centerPosition as RectangularPoint = new RectangularPoint(0f, 0f, 0f); // scaled to pixels
     var currentScale as Float = 0.0; // pixels per meter so <pixel count> / _currentScale = meters  or  meters * _currentScale = pixels
     // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
-    var mapMoveDistanceM as Float;
+    var mapMoveDistanceM as Float = -1f;
 
     // updated whenever we get new activity data with a new heading
     var rotationRad as Float = 0.0; // heading in radians
@@ -80,6 +80,9 @@ class CachedValues {
 
     function initialize(settings as Settings) {
         self._settings = settings;
+    }
+
+    function setup() as Void {
         smallTilesPerScaledTile = Math.ceil(
             _settings.scaledTileSize / _settings.tileSize.toFloat()
         ).toNumber();
@@ -89,6 +92,7 @@ class CachedValues {
         fixedPosition = null;
         // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
         mapMoveDistanceM = _settings.metersAroundUser.toFloat();
+        recalculateAll();
     }
 
     function calcOuterBoundingBoxFromTrackAndRoutes(
@@ -288,9 +292,7 @@ class CachedValues {
             currentlyZoomingAroundUser = weShouldZoomAroundUser;
             var ret = updateScaleCenterAndMap();
             _settings.clearPendingWebRequests();
-            if (getApp()._view != null) {
-                getApp()._view.resetRenderTime();
-            }
+            getApp()._view.resetRenderTime();
             return ret;
         }
 
@@ -425,9 +427,7 @@ class CachedValues {
             route.rescale(scaleFactor); // rescale all routes, even if they are not enabled
         }
         getApp()._breadcrumbContext.track().rescale(scaleFactor);
-        if (getApp()._view != null) {
-            getApp()._view.rescale(scaleFactor);
-        }
+        getApp()._view.rescale(scaleFactor);
         centerPosition.rescaleInPlace(scaleFactor);
 
         currentScale = newScale;
@@ -506,9 +506,7 @@ class CachedValues {
         }
         updateFixedPositionFromSettings();
         updateScaleCenterAndMap();
-        if (getApp()._view != null) {
-            getApp()._view.resetRenderTime();
-        }
+        getApp()._view.resetRenderTime();
     }
 
     function moveFixedPositionDown() as Void {
@@ -524,9 +522,7 @@ class CachedValues {
         }
         updateFixedPositionFromSettings();
         updateScaleCenterAndMap();
-        if (getApp()._view != null) {
-            getApp()._view.resetRenderTime();
-        }
+        getApp()._view.resetRenderTime();
     }
 
     function moveFixedPositionLeft() as Void {
@@ -542,9 +538,7 @@ class CachedValues {
         }
         updateFixedPositionFromSettings();
         updateScaleCenterAndMap();
-        if (getApp()._view != null) {
-            getApp()._view.resetRenderTime();
-        }
+        getApp()._view.resetRenderTime();
     }
 
     function moveFixedPositionRight() as Void {
@@ -560,9 +554,7 @@ class CachedValues {
         }
         updateFixedPositionFromSettings();
         updateScaleCenterAndMap();
-        if (getApp()._view != null) {
-            getApp()._view.resetRenderTime();
-        }
+        getApp()._view.resetRenderTime();
     }
 
     function calcCenterPoint() as Boolean {
@@ -661,17 +653,13 @@ class CachedValues {
             // they are not acutally in a user scale in this case though, so makes sense to show that we are tracking the users desired zoom instead of ours
             scaleCanInc = true;
             scaleCanDec = true;
-            if (getApp()._view != null) {
-                getApp()._view.resetRenderTime();
-            }
+            getApp()._view.resetRenderTime();
             return;
         }
 
         _settings.clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
         updateScaleCenterAndMap();
-        if (getApp()._view != null) {
-            getApp()._view.resetRenderTime();
-        }
+        getApp()._view.resetRenderTime();
     }
 
     function cancelCacheCurrentMapArea() as Void {

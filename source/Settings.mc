@@ -1269,35 +1269,11 @@ class Settings {
     }
 
     function clearTileCache() as Void {
-        // symbol not found if the loadSettings method is called before we set tile cache
-        // should n ot happen unless onsettingschange is called before initalise finishes
-        // it alwasys has the symbol, but it might not be initalised yet
-        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
-        var context = getApp()._breadcrumbContext;
-        if (
-            (context != null and context instanceof BreadcrumbContext) &&
-            context has :_tileCache &&
-            context._tileCache != null &&
-            context._tileCache instanceof TileCache
-        ) {
-            context._tileCache.clearValues();
-        }
+        getApp()._breadcrumbContext.tileCache().clearValues();
     }
 
     function clearStorageTiles() as Void {
-        // symbol not found if the loadSettings method is called before we set tile cache
-        // should n ot happen unless onsettingschange is called before initalise finishes
-        // it alwasys has the symbol, but it might not be initalised yet
-        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
-        var context = getApp()._breadcrumbContext;
-        if (
-            (context != null and context instanceof BreadcrumbContext) &&
-            context has :_tileCache &&
-            context._tileCache != null &&
-            context._tileCache instanceof TileCache
-        ) {
-            context._tileCache._storageTileCache.clearValues();
-        }
+        getApp()._breadcrumbContext.tileCache()._storageTileCache.clearValues();
     }
 
     function transmit(
@@ -1305,139 +1281,45 @@ class Settings {
         options as Dictionary?,
         listener as Communications.ConnectionListener
     ) as Void {
-        // symbol not found if the loadSettings method is called before we set tile cache
-        // should n ot happen unless onsettingschange is called before initalise finishes
-        // it alwasys has the symbol, but it might not be initalised yet
-        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
-        var context = getApp()._breadcrumbContext;
-        if (
-            (context != null and context instanceof BreadcrumbContext) &&
-            context has :_webRequestHandler &&
-            context._webRequestHandler != null &&
-            context._webRequestHandler instanceof WebRequestHandler
-        ) {
-            context._webRequestHandler.transmit(content, options, listener);
-        }
+        getApp()._breadcrumbContext._webRequestHandler.transmit(content, options, listener);
     }
 
     function clearTileCacheStats() as Void {
-        // symbol not found if the loadSettings method is called before we set tile cache
-        // should n ot happen unless onsettingschange is called before initalise finishes
-        // it alwasys has the symbol, but it might not be initalised yet
-        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
-        var context = getApp()._breadcrumbContext;
-        if (
-            (context != null and context instanceof BreadcrumbContext) &&
-            context has :_tileCache &&
-            context._tileCache != null &&
-            context._tileCache instanceof TileCache
-        ) {
-            context._tileCache.clearStats();
-        }
+        getApp()._breadcrumbContext.tileCache().clearStats();
     }
 
     function clearPendingWebRequests() as Void {
-        // symbol not found if the loadSettings method is called before we set tile cache
-        // should n ot happen unless onsettingschange is called before initalise finishes
-        // it alwasys has the symbol, but it might not be initalised yet
-        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
-        var context = getApp()._breadcrumbContext;
-        if (
-            (context != null and context instanceof BreadcrumbContext) &&
-            context has :_webRequestHandler &&
-            context._webRequestHandler != null &&
-            context._webRequestHandler instanceof WebRequestHandler
-        ) {
-            context._webRequestHandler.clearValues();
-        }
+        getApp()._breadcrumbContext._webRequestHandler.clearValues();
     }
 
     function updateViewSettings() as Void {
-        // symbol not found if the loadSettings method is called before we set tile cache
-        // should n ot happen unless onsettingschange is called before initalise finishes
-        // it alwasys has the symbol, but it might not be initalised yet
-        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
-        var app = getApp();
-        if (
-            app != null &&
-            app has :_view &&
-            app._view != null &&
-            app._view instanceof BreadcrumbDataFieldView
-        ) {
-            app._view.onSettingsChanged();
-        }
+        getApp()._view.onSettingsChanged();
     }
 
     function updateCachedValues() as Void {
-        // symbol not found if the loadSettings method is called before we set tile cache
-        // should n ot happen unless onsettingschange is called before initalise finishes
-        // it alwasys has the symbol, but it might not be initalised yet
-        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
-        var context = getApp()._breadcrumbContext;
-        if (
-            (context != null and context instanceof BreadcrumbContext) &&
-            context has :_cachedValues &&
-            context._cachedValues != null &&
-            context._cachedValues instanceof CachedValues
-        ) {
-            context._cachedValues.recalculateAll();
-        }
+        getApp()._breadcrumbContext._cachedValues.recalculateAll();
     }
 
     function clearWebStats() as Void {
-        // symbol not found if the loadSettings method is called before we set tile cache
-        // should n ot happen unless onsettingschange is called before initalise finishes
-        // it alwasys has the symbol, but it might not be initalised yet
-        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
-        var context = getApp()._breadcrumbContext;
-        if (
-            (context != null and context instanceof BreadcrumbContext) &&
-            context has :_webRequestHandler &&
-            context._webRequestHandler != null &&
-            context._webRequestHandler instanceof WebRequestHandler
-        ) {
-            context._webRequestHandler.clearStats();
-        }
+        getApp()._breadcrumbContext._webRequestHandler.clearStats();
     }
 
     function clearContextRoutes() as Void {
-        // symbol not found if the loadSettings method is called before we set tile cache
-        // should n ot happen unless onsettingschange is called before initalise finishes
-        // it alwasys has the symbol, but it might not be initalised yet
-        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
-        var context = getApp()._breadcrumbContext;
-        if (context != null and context instanceof BreadcrumbContext) {
-            context.clearRoutes();
-        }
+        getApp()._breadcrumbContext.clearRoutes();
     }
 
     function clearRouteFromContext(routeId as Number) as Void {
-        // symbol not found if the loadSettings method is called before we set tile cache
-        // should n ot happen unless onsettingschange is called before initalise finishes
-        // it alwasys has the symbol, but it might not be initalised yet
-        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
-        var context = getApp()._breadcrumbContext;
-        if (context != null and context instanceof BreadcrumbContext) {
-            context.clearRouteId(routeId);
-        }
+        getApp()._breadcrumbContext.clearRouteId(routeId);
     }
 
     function purgeRoutesFromContext() as Void {
-        // symbol not found if the loadSettings method is called before we set tile cache
-        // should n ot happen unless onsettingschange is called before initalise finishes
-        // it alwasys has the symbol, but it might not be initalised yet
-        // _breadcrumbContext also may not be set yet, as we are loading the settings from within the contructor
-        var context = getApp()._breadcrumbContext;
-        if (context != null and context instanceof BreadcrumbContext) {
-            context.purgeRoutes();
-        }
+        getApp()._breadcrumbContext.purgeRoutes();
     }
 
     // some times these parserswere throwing when it was an empty strings seem to result in, or wrong type
     //
     // Error: Unhandled Exception
     // Exception: UnexpectedTypeException: Expected Number/Float/Long/Double/Char, given null/Number
-
     function parseColour(key as String, defaultValue as Number) as Number {
         try {
             return parseColourRaw(key, Application.Properties.getValue(key), defaultValue);

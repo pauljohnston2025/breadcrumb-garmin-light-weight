@@ -7,7 +7,7 @@ import Toybox.Communications;
 
 var globalExceptionCounter as Number = 0;
 
-enum /* Protocol */  {
+enum /* Protocol */ {
     PROTOCOL_ROUTE_DATA = 0,
     PROTOCOL_MAP_TILE = 1,
     PROTOCOL_REQUEST_LOCATION_LOAD = 2,
@@ -18,7 +18,7 @@ enum /* Protocol */  {
     PROTOCOL_ROUTE_DATA2 = 7, // an optimised form of PROTOCOL_ROUTE_DATA, so we do not trip the watchdog
 }
 
-enum /* ProtocolSend */  {
+enum /* ProtocolSend */ {
     PROTOCOL_SEND_OPEN_APP = 0,
     PROTOCOL_SEND_SETTINGS = 1,
 }
@@ -49,22 +49,21 @@ class SettingsSent extends Communications.ConnectionListener {
     }
 }
 
-
 // to get devices and their memeory limits
 // cd <homedir>/AppData/Roaming/Garmin/ConnectIQ/Devices/
 // cat ./**/compiler.json | grep -E '"type": "datafield"|displayName' -B 1
 // we currently need 128.5Kb of memory
 class BreadcrumbDataFieldApp extends Application.AppBase {
     var _breadcrumbContext as BreadcrumbContext;
-    var _view as BreadcrumbDataFieldView? = null; // null until initalise is called (sometimes settings change is called before)
-    
+    var _view as BreadcrumbDataFieldView;
+
     var _commStatus as CommStatus = new CommStatus();
 
     function initialize() {
         AppBase.initialize();
         _breadcrumbContext = new BreadcrumbContext();
-        _breadcrumbContext.cachedValues().recalculateAll();
         _view = new BreadcrumbDataFieldView(_breadcrumbContext);
+        _breadcrumbContext.setup();
     }
 
     function onSettingsChanged() as Void {
@@ -128,8 +127,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 if (routeData.size() % 3 == 0) {
                     logD("Parsing route data");
                     var route = _breadcrumbContext.newRoute(name);
-                    if(route == null)
-                    {
+                    if (route == null) {
                         logE("Failed to add route");
                         return;
                     }
@@ -148,8 +146,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                     }
                     _breadcrumbContext.cachedValues().recalculateAll();
                     logD("Parsing route data complete, wrote to storage: " + routeWrote);
-                    if (!routeWrote)
-                    {
+                    if (!routeWrote) {
                         _breadcrumbContext.clearRoute(route.storageIndex);
                     }
                     return;
@@ -181,15 +178,16 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 if (routeData.size() % ARRAY_POINT_SIZE == 0) {
                     logD("Parsing route data 2");
                     var route = _breadcrumbContext.newRoute(name);
-                    if(route == null)
-                    {
+                    if (route == null) {
                         logE("Failed to add route");
                         return;
                     }
-                    var routeWrote = route.handleRouteV2(routeData, _breadcrumbContext.cachedValues());
+                    var routeWrote = route.handleRouteV2(
+                        routeData,
+                        _breadcrumbContext.cachedValues()
+                    );
                     logD("Parsing route data 2 complete, wrote to storage: " + routeWrote);
-                    if (!routeWrote)
-                    {
+                    if (!routeWrote) {
                         _breadcrumbContext.clearRoute(route.storageIndex);
                     }
                     return;
@@ -260,11 +258,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 // logD("sending settings"+ settings);
                 _breadcrumbContext
                     .webRequestHandler()
-                    .transmit(
-                        [PROTOCOL_SEND_SETTINGS, settings],
-                        {},
-                        new SettingsSent()
-                    );
+                    .transmit([PROTOCOL_SEND_SETTINGS, settings], {}, new SettingsSent());
                 return;
             } else if (type == PROTOCOL_SAVE_SETTINGS) {
                 System.println("got save settings req: " + rawData);

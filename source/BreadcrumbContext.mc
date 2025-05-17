@@ -16,12 +16,21 @@ class BreadcrumbContext {
     // Set the label of the data field here.
     function initialize() {
         _settings = new Settings();
-        _settings.loadSettings();
         _cachedValues = new CachedValues(_settings);
 
         _routes = [];
         _track = new BreadcrumbTrack(-1, "");
         _breadcrumbRenderer = new BreadcrumbRenderer(_settings, _cachedValues);
+
+        _webRequestHandler = new WebRequestHandler(_settings);
+        _tileCache = new TileCache(_webRequestHandler, _settings, _cachedValues);
+        _mapRenderer = new MapRenderer(_tileCache, _settings, _cachedValues);
+    }
+
+    function setup() as Void
+    {
+        _settings.loadSettings(); // we want to make sure everything is done later
+        _cachedValues.setup();
 
         // routes loaded from storage will be rescalrescaled on the first calculate in cached values
         for (var i = 0; i < _settings.routeMax; ++i) {
@@ -35,10 +44,6 @@ class BreadcrumbContext {
                 }
             }
         }
-
-        _webRequestHandler = new WebRequestHandler(_settings);
-        _tileCache = new TileCache(_webRequestHandler, _settings, _cachedValues);
-        _mapRenderer = new MapRenderer(_tileCache, _settings, _cachedValues);
     }
 
     function settings() as Settings {
