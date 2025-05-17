@@ -1449,7 +1449,7 @@ class Settings {
 
     static function parseColourRaw(
         key as String,
-        colourString as String?,
+        colourString as PropertyValueType,
         defaultValue as Number
     ) as Number {
         try {
@@ -1497,7 +1497,7 @@ class Settings {
 
     static function parseNumberRaw(
         key as String,
-        value as String or Null or Float or Number or Double,
+        value as PropertyValueType,
         defaultValue as Number
     ) as Number {
         try {
@@ -1538,7 +1538,7 @@ class Settings {
 
     function parseBoolRaw(
         key as String,
-        value as String or Boolean or Null,
+        value as PropertyValueType,
         defaultValue as Boolean
     ) as Boolean {
         try {
@@ -1578,7 +1578,7 @@ class Settings {
 
     static function parseFloatRaw(
         key as String,
-        value as String or Null or Float or Number or Double,
+        value as PropertyValueType,
         defaultValue as Float
     ) as Float {
         try {
@@ -1617,7 +1617,11 @@ class Settings {
         return defaultValue;
     }
 
-    function parseStringRaw(key as String, value as String?, defaultValue as String) as String {
+    function parseStringRaw(
+        key as String,
+        value as PropertyValueType,
+        defaultValue as String
+    ) as String {
         try {
             if (value == null) {
                 return defaultValue;
@@ -1645,7 +1649,7 @@ class Settings {
 
     function parseOptionalFloatRaw(
         key as String,
-        value as String or Float or Null,
+        value as PropertyValueType,
         defaultValue as Float?
     ) as Float? {
         try {
@@ -1988,15 +1992,15 @@ class Settings {
         // cachedValues.setScale(1.96); // really close
     }
 
-    function emptyString(key as String, value) as String {
+    function emptyString(key as String, value as PropertyValueType) as String {
         return parseStringRaw(key, value, "");
     }
 
-    function defaultNumberParser(key as String, value) as Number {
+    function defaultNumberParser(key as String, value as PropertyValueType) as Number {
         return parseNumberRaw(key, value, 0);
     }
 
-    function defaultFalse(key as String, value) as Boolean {
+    function defaultFalse(key as String, value as PropertyValueType) as Boolean {
         if (value instanceof Boolean) {
             return value;
         }
@@ -2004,7 +2008,7 @@ class Settings {
         return false;
     }
 
-    function defaultColourParser(key as String, value) as Number {
+    function defaultColourParser(key as String, value as PropertyValueType) as Number {
         return parseColourRaw(key, value, Graphics.COLOR_RED);
     }
 

@@ -25,7 +25,7 @@ class BreadcrumbRenderer {
     var _downArrow as BitmapResource;
 
     // units in meters (float/int) to label
-    var SCALE_NAMES as Dictionary = {
+    var SCALE_NAMES as Dictionary<Number, String> = {
         1 => "1m",
         5 => "5m",
         10 => "10m",
@@ -52,27 +52,29 @@ class BreadcrumbRenderer {
         10000000 => "10000km",
     };
 
-    var ELEVATION_SCALE_NAMES as Dictionary = {
+    // we want much smaller elevation changes to be seen
+    // so elevation scales are in mm, not meters
+    var ELEVATION_SCALE_NAMES as Dictionary<Number, String> = {
         // some rediculously small values for level ground (highly unlikely in the wild, but common on simulator)
-        0.001 => "1mm",
-        0.0025 => "2.5mm",
-        0.005 => "5mm",
-        0.01 => "1cm",
-        0.025 => "2.5cm",
-        0.05 => "5cm",
-        0.1 => "10cm",
-        0.25 => "25cm",
-        0.5 => "50cm",
-        1 => "1m",
-        5 => "5m",
-        10 => "10m",
-        20 => "20m",
-        30 => "30m",
-        40 => "40m",
-        50 => "50m",
-        100 => "100m",
-        250 => "250m",
-        500 => "500m",
+        1 => "1mm",
+        2 => "2mm",
+        5 => "5mm",
+        10 => "1cm",
+        25 => "2.5cm",
+        50 => "5cm",
+        100 => "10cm",
+        250 => "25cm",
+        500 => "50cm",
+        1000 => "1m",
+        5000 => "5m",
+        10000 => "10m",
+        20000 => "20m",
+        30000 => "30m",
+        40000 => "40m",
+        50000 => "50m",
+        100000 => "100m",
+        250000 => "250m",
+        500000 => "500m",
     };
 
     // benchmark same track loaded (just render track no activity running) using
@@ -86,48 +88,50 @@ class BreadcrumbRenderer {
     function initialize(settings as Settings, cachedValues as CachedValues) {
         self.settings = settings;
         _cachedValues = cachedValues;
-        _crosshair = WatchUi.loadResource(Rez.Drawables.Crosshair);
-        _nosmoking = WatchUi.loadResource(Rez.Drawables.NoSmoking);
-        _leftArrow = WatchUi.loadResource(Rez.Drawables.LeftArrow);
-        _rightArrow = WatchUi.loadResource(Rez.Drawables.RightArrow);
-        _upArrow = WatchUi.loadResource(Rez.Drawables.UpArrow);
-        _downArrow = WatchUi.loadResource(Rez.Drawables.DownArrow);
+        _crosshair = WatchUi.loadResource(Rez.Drawables.Crosshair) as WatchUi.BitmapResource;
+        _nosmoking = WatchUi.loadResource(Rez.Drawables.NoSmoking) as WatchUi.BitmapResource;
+        _leftArrow = WatchUi.loadResource(Rez.Drawables.LeftArrow) as WatchUi.BitmapResource;
+        _rightArrow = WatchUi.loadResource(Rez.Drawables.RightArrow) as WatchUi.BitmapResource;
+        _upArrow = WatchUi.loadResource(Rez.Drawables.UpArrow) as WatchUi.BitmapResource;
+        _downArrow = WatchUi.loadResource(Rez.Drawables.DownArrow) as WatchUi.BitmapResource;
     }
 
-    function getScaleSize() as [Number, Number] {
+    function getScaleSize() as [Float, Number] {
         return getScaleSizeGeneric(
             _cachedValues.currentScale,
             DESIRED_SCALE_PIXEL_WIDTH,
-            SCALE_NAMES
+            SCALE_NAMES,
+            1
         );
     }
 
     function getScaleSizeGeneric(
         scale as Float,
         desiredWidth as Float,
-        scaleNames as Dictionary
-    ) as [Number, Number] {
-        var foundDistanceM = 10;
+        scaleNames as Dictionary<Number, String>,
+        scaleFactor as Number // for elevation to be in mm rather than m
+    ) as [Float, Number] {
+        var foundDistanceKey = 10;
         var foundPixelWidth = 0;
         // get the closest without going over
         // keys loads them in random order, we want the smallest first
         var keys = scaleNames.keys();
         keys.sort(null);
         for (var i = 0; i < keys.size(); ++i) {
-            var distanceM = keys[i];
-            var testPixelWidth = (distanceM as Float) * scale;
+            var distanceKey = keys[i] as Number;
+            var testPixelWidth = (distanceKey.toFloat() / scaleFactor) * scale;
             if (testPixelWidth > desiredWidth) {
                 break;
             }
 
             foundPixelWidth = testPixelWidth;
-            foundDistanceM = distanceM;
+            foundDistanceKey = distanceKey;
         }
 
-        return [foundPixelWidth, foundDistanceM];
+        return [foundPixelWidth, foundDistanceKey];
     }
 
-    function renderCurrentScale(dc as Dc) {
+    function renderCurrentScale(dc as Dc) as Void {
         var scaleData = getScaleSize();
         var pixelWidth = scaleData[0];
         var distanceM = scaleData[1];
@@ -547,7 +551,7 @@ class BreadcrumbRenderer {
         lastX as Float,
         lastY as Float,
         drawEndMarker as Boolean
-    ) {
+    ) as Void {
         // todo let user confgure these, or render icons instead
         // could add a start play button and a finnish flag (not finlands flag, the checkered kind)
         var squareSize = 10;
@@ -867,7 +871,6 @@ class BreadcrumbRenderer {
         // make this a const
         var halfLineLength = 10;
         var lineFromEdge = 10;
-        var textHeight = 15; // guestimate
         var scaleFromEdge = 75; // guestimate
 
         if (_cachedValues.fixedPosition != null || _cachedValues.scale != null) {
@@ -888,15 +891,17 @@ class BreadcrumbRenderer {
         }
 
         if (settings.displayLatLong) {
+            var fixedLatitude = settings.fixedLatitude;
+            var fixedLongitude = settings.fixedLongitude;
             if (
                 _cachedValues.fixedPosition != null &&
-                settings.fixedLatitude != null &&
-                settings.fixedLongitude != null
+                fixedLatitude != null &&
+                fixedLongitude != null
             ) {
                 var txt =
-                    settings.fixedLatitude.format("%.3f") +
+                    fixedLatitude.format("%.3f") +
                     ", " +
-                    settings.fixedLongitude.format("%.3f");
+                    fixedLongitude.format("%.3f");
                 dc.drawText(
                     xHalf,
                     screenHeight - scaleFromEdge,
@@ -1116,7 +1121,6 @@ class BreadcrumbRenderer {
 
     function handleClearRoute(x as Number, y as Number) as Boolean {
         var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
 
         if (
             settings.mode != MODE_NORMAL &&
@@ -1248,7 +1252,7 @@ class BreadcrumbRenderer {
         _xElevationEnd = screenWidth - _xElevationStart;
         var xElevationFromCenter = xHalf - _xElevationStart;
         _yElevationHeight =
-            Math.sqrt(xHalf * xHalf - xElevationFromCenter * xElevationFromCenter) * 2 - 40;
+            Math.sqrt(xHalf * xHalf - xElevationFromCenter * xElevationFromCenter).toFloat() * 2 - 40;
         _halfYElevationHeight = _yElevationHeight / 2.0f;
         yElevationTop = yHalf - _halfYElevationHeight;
         yElevationBottom = yHalf + _halfYElevationHeight;
@@ -1261,7 +1265,7 @@ class BreadcrumbRenderer {
         var xHalf = _cachedValues.xHalf; // local lookup faster
         var yHalf = _cachedValues.yHalf; // local lookup faster
 
-        var offsetSize = Math.sqrt(((yHalf - halfHitboxSize) * (yHalf - halfHitboxSize)) / 2);
+        var offsetSize = Math.sqrt(((yHalf - halfHitboxSize) * (yHalf - halfHitboxSize)) / 2).toFloat();
 
         // top left
         clearRouteX = xHalf - offsetSize;
@@ -1316,13 +1320,14 @@ class BreadcrumbRenderer {
         var yHalf = _cachedValues.yHalf; // local lookup faster
         var screenHeight = _cachedValues.screenHeight; // local lookup faster
 
-        var hScaleData = getScaleSizeGeneric(hScalePPM, DESIRED_SCALE_PIXEL_WIDTH, SCALE_NAMES);
+        var hScaleData = getScaleSizeGeneric(hScalePPM, DESIRED_SCALE_PIXEL_WIDTH, SCALE_NAMES, 1);
         var hPixelWidth = hScaleData[0];
         var hDistanceM = hScaleData[1];
         var vScaleData = getScaleSizeGeneric(
             vScale,
             DESIRED_ELEV_SCALE_PIXEL_WIDTH,
-            ELEVATION_SCALE_NAMES
+            ELEVATION_SCALE_NAMES,
+            1000
         );
         var vPixelWidth = vScaleData[0];
         var vDistanceM = vScaleData[1];
@@ -1555,8 +1560,6 @@ class BreadcrumbRenderer {
 
         dc.setColor(colour, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
-
-        var pointSize = track.coordinates.pointSize();
 
         var coordinatesRaw = track.coordinates._internalArrayBuffer;
         var prevPointX = coordinatesRaw[0];

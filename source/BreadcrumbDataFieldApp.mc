@@ -5,9 +5,9 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 import Toybox.Communications;
 
-var globalExceptionCounter = 0;
+var globalExceptionCounter as Number = 0;
 
-enum Protocol {
+enum /* Protocol */  {
     PROTOCOL_ROUTE_DATA = 0,
     PROTOCOL_MAP_TILE = 1,
     PROTOCOL_REQUEST_LOCATION_LOAD = 2,
@@ -18,7 +18,7 @@ enum Protocol {
     PROTOCOL_ROUTE_DATA2 = 7, // an optimised form of PROTOCOL_ROUTE_DATA, so we do not trip the watchdog
 }
 
-enum ProtocolSend {
+enum /* ProtocolSend */  {
     PROTOCOL_SEND_OPEN_APP = 0,
     PROTOCOL_SEND_SETTINGS = 1,
 }
@@ -56,7 +56,7 @@ class SettingsSent extends Communications.ConnectionListener {
 // we currently need 128.5Kb of memory
 class BreadcrumbDataFieldApp extends Application.AppBase {
     var _breadcrumbContext as BreadcrumbContext;
-    var _view as BreadcrumbDataFieldView;
+    var _view as BreadcrumbDataFieldView? = null; // null until initalise is called (sometimes settings change is called before)
     
     var _commStatus as CommStatus = new CommStatus();
 

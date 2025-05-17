@@ -39,8 +39,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     var _scratchPadBitmap as BufferedBitmap?;
     var settings as Settings;
     var _cachedValues as CachedValues;
-    var lastOffTrackAlertNotified = 0;
-    var lastOffTrackAlertChecked = 0;
+    var lastOffTrackAlertNotified as Number = 0;
+    var lastOffTrackAlertChecked as Number = 0;
     var _computeCounter as Number = 0;
     var _lastFullRenderTime as Number = 0;
     var _lastFullRenderScale as Float = 0f;
@@ -56,8 +56,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
 
     function rescale(scaleFactor as Float) as Void {
-        if (offTrackInfo.pointWeLeftTrack != null) {
-            offTrackInfo.pointWeLeftTrack.rescaleInPlace(scaleFactor);
+        var pointWeLeftTrack = offTrackInfo.pointWeLeftTrack;
+        if (pointWeLeftTrack != null) {
+            pointWeLeftTrack.rescaleInPlace(scaleFactor);
         }
     }
 
@@ -131,7 +132,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 return;
             }
             // this is here due to stack overflow bug when requests trigger the next request
-            while (_breadcrumbContext.webRequestHandler().startNextIfWeCan()) {}
+            // only try 3 times, do not want to schedule heps if they complete immeditely, could hit watchdog
+            for (var i = 0; i < 3; ++i) {
+                if (!_breadcrumbContext.webRequestHandler().startNextIfWeCan()) {
+                    break;
+                }
+            }
 
             if (_cachedValues.stepCacheCurrentMapArea()) {
                 return;
@@ -216,10 +222,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 return;
             }
 
+            var pointWeLeftTrack = offTrackInfo.pointWeLeftTrack;
+            var routePointWeLeftTrack = routeOffTrackInfo.pointWeLeftTrack;
             if (
-                offTrackInfo.pointWeLeftTrack == null ||
-                offTrackInfo.pointWeLeftTrack.distanceTo(newPoint) >
-                    routeOffTrackInfo.pointWeLeftTrack.distanceTo(newPoint)
+                routePointWeLeftTrack != null &&
+                (pointWeLeftTrack == null ||
+                    pointWeLeftTrack.distanceTo(newPoint) >
+                        routePointWeLeftTrack.distanceTo(newPoint))
             ) {
                 offTrackInfo = routeOffTrackInfo.clone(); // never store the point we got or rescales could occur twice on the same object
             }
@@ -451,7 +460,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 // we should probbaly track this and auto matically switch modes
                 updateScratchPadBitmap();
             }
-            if (_scratchPadBitmap == null) {
+            var scratchPadBitmapLocal = _scratchPadBitmap;
+            if (scratchPadBitmapLocal == null) {
                 // if its still null, we were unable to create the bitmap in the graphics pool
                 dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
                 dc.clear();
@@ -477,13 +487,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 // if they rotate we will draw rotations stright away
                 _lastFullRenderTime = epoch;
                 _lastFullRenderScale = _cachedValues.currentScale;
-                var scratchPadBitmapDc = _scratchPadBitmap.getDc();
+                var scratchPadBitmapDc = scratchPadBitmapLocal.getDc();
                 rederUnrotated(scratchPadBitmapDc, routes, track);
             }
 
             try {
                 if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING) {
-                    dc.drawBitmap2(0, 0, _scratchPadBitmap, {
+                    dc.drawBitmap2(0, 0, scratchPadBitmapLocal, {
                         // :bitmapX =>
                         // :bitmapY =>
                         // :bitmapWidth =>
@@ -493,7 +503,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                         :transform => _cachedValues.rotationMatrix,
                     });
                 } else {
-                    dc.drawBitmap(0, 0, _scratchPadBitmap);
+                    dc.drawBitmap(0, 0, scratchPadBitmapLocal);
                 }
             } catch (e) {
                 logE("failed drawBitmap2 or drawBitmap: " + e.getErrorMessage());
@@ -567,26 +577,27 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     function renderOffTrackPoint(dc as Dc) as Void {
         var lastPoint = _breadcrumbContext.track().lastPoint();
         var renderer = _breadcrumbContext.trackRenderer();
+        var pointWeLeftTrack = offTrackInfo.pointWeLeftTrack;
         if (lastPoint != null) {
             // only ever not null if feature enabled
-            if (!offTrackInfo.onTrack && offTrackInfo.pointWeLeftTrack != null) {
+            if (!offTrackInfo.onTrack && pointWeLeftTrack != null) {
                 // points need to be scaled and rotated :(
                 renderer.renderLineFromLastPointToRoute(
                     dc,
                     lastPoint,
-                    offTrackInfo.pointWeLeftTrack,
+                    pointWeLeftTrack,
                     Graphics.COLOR_RED
                 );
             }
 
             // debug draw line to point
             if (settings.drawLineToClosestTrack) {
-                if (offTrackInfo.onTrack && offTrackInfo.pointWeLeftTrack != null) {
+                if (offTrackInfo.onTrack && pointWeLeftTrack != null) {
                     // points need to be scaled and rotated :(
                     renderer.renderLineFromLastPointToRoute(
                         dc,
                         lastPoint,
-                        offTrackInfo.pointWeLeftTrack,
+                        pointWeLeftTrack,
                         Graphics.COLOR_PURPLE
                     );
                 }
@@ -597,26 +608,28 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     function renderOffTrackPointUnrotated(dc as Dc) as Void {
         var lastPoint = _breadcrumbContext.track().lastPoint();
         var renderer = _breadcrumbContext.trackRenderer();
+        var pointWeLeftTrack = offTrackInfo.pointWeLeftTrack;
         if (lastPoint != null) {
             // only ever not null if feature enabled
-            if (!offTrackInfo.onTrack && offTrackInfo.pointWeLeftTrack != null) {
+
+            if (!offTrackInfo.onTrack && pointWeLeftTrack != null) {
                 // points need to be scaled and rotated :(
                 renderer.renderLineFromLastPointToRouteUnrotated(
                     dc,
                     lastPoint,
-                    offTrackInfo.pointWeLeftTrack,
+                    pointWeLeftTrack,
                     Graphics.COLOR_RED
                 );
             }
 
             // debug draw line to point
             if (settings.drawLineToClosestTrack) {
-                if (offTrackInfo.onTrack && offTrackInfo.pointWeLeftTrack != null) {
+                if (offTrackInfo.onTrack && pointWeLeftTrack != null) {
                     // points need to be scaled and rotated :(
                     renderer.renderLineFromLastPointToRouteUnrotated(
                         dc,
                         lastPoint,
-                        offTrackInfo.pointWeLeftTrack,
+                        pointWeLeftTrack,
                         Graphics.COLOR_PURPLE
                     );
                 }
@@ -697,8 +710,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         y += spacing;
         var distToLastStr = "NA";
         var lastPoint = _breadcrumbContext.track().lastPoint();
-        if (lastPoint != null && offTrackInfo.pointWeLeftTrack != null) {
-            var distMeters = offTrackInfo.pointWeLeftTrack.distanceTo(lastPoint);
+        var pointWeLeftTrack = offTrackInfo.pointWeLeftTrack;
+        if (lastPoint != null && pointWeLeftTrack != null) {
+            var distMeters = pointWeLeftTrack.distanceTo(lastPoint);
             if (_cachedValues.currentScale != 0f) {
                 distMeters = distMeters / _cachedValues.currentScale;
             }
@@ -772,12 +786,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         // y+=spacing;
         // could do as a ratio for a single field
         // auto
-        if (_cachedValues.scale != null) {
+        var scale = _cachedValues.scale;
+        if (scale != null) {
             dc.drawText(
                 x,
                 y,
                 Graphics.FONT_XTINY,
-                "scale: " + _cachedValues.scale.format("%.2f"),
+                "scale: " + scale.format("%.2f"),
                 Graphics.TEXT_JUSTIFY_CENTER
             );
         } else {
@@ -805,8 +820,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var startAt = elevationScale[2];
         var hScalePPM = elevationScale[3];
 
-        var elevationText =
-            track.lastPoint() == null ? "" : track.lastPoint().altitude.format("%.0f") + "m";
+        var lastPoint = track.lastPoint();
+        var elevationText = lastPoint == null ? "" : lastPoint.altitude.format("%.0f") + "m";
 
         renderer.renderElevationChart(
             dc,
@@ -855,8 +870,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var startAt = elevationScale[2];
         var hScalePPM = elevationScale[3];
 
-        var elevationText =
-            track.lastPoint() == null ? "" : track.lastPoint().altitude.format("%.0f") + "m";
+        var lastPoint = track.lastPoint();
+        var elevationText = lastPoint == null ? "" : lastPoint.altitude.format("%.0f") + "m";
 
         var elevationStartX = renderer._xElevationStart;
 

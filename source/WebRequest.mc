@@ -204,7 +204,7 @@ class WebRequestHandler {
         pendingHashes = [];
     }
 
-    // Communications.trnsmit can fail if web requests are pending, 'Communications transmit queue full'
+    // Communications.transmit can fail if web requests are pending, 'Communications transmit queue full'
     // so we will have to queue it up to the web server as 'high priority', or just have a transmit queue that is always high priority
     function transmit(
         content as Application.PersistableType,

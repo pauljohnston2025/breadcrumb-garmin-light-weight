@@ -34,8 +34,8 @@ class CachedValues {
 
     // updated whenever we get new activity data with a new heading
     var rotationRad as Float = 0.0; // heading in radians
-    var rotateCos as Float = Math.cos(rotationRad);
-    var rotateSin as Float = Math.sin(rotationRad);
+    var rotateCos as Float = Math.cos(rotationRad).toFloat();
+    var rotateSin as Float = Math.sin(rotationRad).toFloat();
     var currentSpeed as Float = -1f;
     var currentlyZoomingAroundUser as Boolean = false;
 
@@ -177,7 +177,7 @@ class CachedValues {
     }
 
     // needs to be called whenever the screen moves to a new bounding box
-    function updateMapData() {
+    function updateMapData() as Void {
         if (currentScale == 0f || smallTilesPerScaledTile == 0) {
             // do not divide by zero my good friends
             // we do not have a scale calculated yet
@@ -191,7 +191,11 @@ class CachedValues {
         var z = Math.round(calculateTileLevel(desiredResolution)).toNumber();
         tileZ = minN(maxN(z, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
 
-        var tileWidthM = earthsCircumference / Math.pow(2, tileZ) / smallTilesPerScaledTile;
+        var tileWidthM = (
+            earthsCircumference /
+            Math.pow(2, tileZ) /
+            smallTilesPerScaledTile
+        ).toFloat();
         // var minScreenDim = minF(_screenWidth, _screenHeight);
         // var minScreenDimM = minScreenDim / currentScale;
         var screenWidthM = screenWidth / currentScale;
@@ -254,8 +258,8 @@ class CachedValues {
         var currentHeading = activityInfo.currentHeading;
         if (currentHeading != null) {
             rotationRad = currentHeading;
-            rotateCos = Math.cos(rotationRad);
-            rotateSin = Math.sin(rotationRad);
+            rotateCos = Math.cos(rotationRad).toFloat();
+            rotateSin = Math.sin(rotationRad).toFloat();
         }
         var _currentSpeed = activityInfo.currentSpeed;
         if (_currentSpeed != null) {
@@ -282,11 +286,12 @@ class CachedValues {
             _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_ALWAYS_ZOOM;
         if (currentlyZoomingAroundUser != weShouldZoomAroundUser) {
             currentlyZoomingAroundUser = weShouldZoomAroundUser;
-            return updateScaleCenterAndMap();
+            var ret = updateScaleCenterAndMap();
             _settings.clearPendingWebRequests();
             if (getApp()._view != null) {
                 getApp()._view.resetRenderTime();
             }
+            return ret;
         }
 
         return false;
@@ -465,19 +470,25 @@ class CachedValues {
         xMoveRotated as Float,
         yMoveRotated as Float
     ) as [Float, Float]? {
+        var fixedPositionL = fixedPosition;
+        if (fixedPositionL == null) {
+            // never happens, but appease the compiler
+            logE("unreachable, fixedPositionL is null");
+            return null;
+        }
         if (
             _settings.renderMode == RENDER_MODE_UNBUFFERED_NO_ROTATION ||
             _settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
         ) {
             return RectangularPoint.xyToLatLon(
-                fixedPosition.x + xMoveUnrotated,
-                fixedPosition.y + yMoveUnrotated
+                fixedPositionL.x + xMoveUnrotated,
+                fixedPositionL.y + yMoveUnrotated
             );
         }
 
         return RectangularPoint.xyToLatLon(
-            fixedPosition.x + xMoveRotated,
-            fixedPosition.y + yMoveRotated
+            fixedPositionL.x + xMoveRotated,
+            fixedPositionL.y + yMoveRotated
         );
     }
 

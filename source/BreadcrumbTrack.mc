@@ -35,11 +35,12 @@ class OffTrackInfo {
     }
 
     function clone() as OffTrackInfo {
-        if (pointWeLeftTrack == null) {
+        var pointWeLeftTrackL = pointWeLeftTrack;
+        if (pointWeLeftTrackL == null) {
             return new OffTrackInfo(onTrack, null);
         }
 
-        return new OffTrackInfo(onTrack, pointWeLeftTrack.clone());
+        return new OffTrackInfo(onTrack, pointWeLeftTrackL.clone());
     }
 }
 
@@ -164,7 +165,7 @@ class BreadcrumbTrack {
                 return null;
             }
             var bbc = Storage.getValue(key + "bbc");
-            if (bbc == null || bbc.size() != 3) {
+            if (bbc == null || !(bbc instanceof Array) || bbc.size() != 3) {
                 return null;
             }
             var coords = Storage.getValue(key + "coords");
@@ -198,7 +199,7 @@ class BreadcrumbTrack {
             }
 
             var name = Storage.getValue(key + "name");
-            if (name == null) {
+            if (name == null || !(name instanceof String)) {
                 return null;
             }
 
