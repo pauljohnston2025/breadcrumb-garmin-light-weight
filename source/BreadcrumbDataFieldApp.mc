@@ -91,6 +91,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         return [_view, new BreadcrumbDataFieldDelegate(_breadcrumbContext)];
     }
 
+    (:settingsView)
     function getSettingsView() as [Views] or [Views, InputDelegates] or Null {
         var settings = new $.SettingsMain();
         return [settings, new $.SettingsMainDelegate(settings)];

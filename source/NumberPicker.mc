@@ -5,6 +5,7 @@ import Toybox.Graphics;
 import Toybox.WatchUi;
 import Toybox.Lang;
 
+(:settingsView)
 class NumberPicker {
     private var currentVal as String;
     private var _charset as String;
@@ -137,6 +138,7 @@ class NumberPicker {
     }
 }
 
+(:settingsView)
 class FloatPicker extends NumberPicker {
     var defaultVal as Float;
     function initialize(defaultVal as Float) {
@@ -151,6 +153,7 @@ class FloatPicker extends NumberPicker {
     protected function onValue(value as Float?) as Void;
 }
 
+(:settingsView)
 class IntPicker extends NumberPicker {
     var defaultVal as Number;
     function initialize(defaultVal as Number) {
@@ -165,6 +168,7 @@ class IntPicker extends NumberPicker {
     protected function onValue(value as Number?) as Void;
 }
 
+(:settingsView)
 class ColourPicker extends NumberPicker {
     var defaultVal as Number;
     function initialize(defaultVal as Number) {
@@ -183,6 +187,7 @@ class ColourPicker extends NumberPicker {
     }
 }
 
+(:settingsView)
 class RerenderIgnoredView extends WatchUi.View {
     function initialize() {
         View.initialize();
@@ -200,11 +205,13 @@ class RerenderIgnoredView extends WatchUi.View {
     }
 }
 
+(:settingsView)
 function forceRefresh() as Void {
     WatchUi.requestUpdate(); // sometimes does not work, but lets call it anyway
     WatchUi.pushView(new RerenderIgnoredView(), null, WatchUi.SLIDE_IMMEDIATE);
 }
 
+(:settingsView)
 class NumberPickerView extends WatchUi.View {
     private var picker as NumberPicker;
 
@@ -231,6 +238,7 @@ class NumberPickerView extends WatchUi.View {
     }
 }
 
+(:settingsView)
 class NumberPickerDelegate extends WatchUi.BehaviorDelegate {
     private var picker as NumberPicker;
 

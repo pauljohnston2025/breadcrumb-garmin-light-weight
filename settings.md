@@ -94,7 +94,7 @@ Route 1 - Blue, Route 2 - Red, Current Track - Green
 
 ### Compute Interval
 
-The number of seconds that need to elapse before we try and add or next track point. Higher values should result in better battery performance (less calculations), but will also mean you need to wait longer for the map and track to update. This setting is also used to control how often to refresh the buffer if using a buffered render mode.
+The number of seconds that need to elapse before we try and add or next track point. Higher values should result in better battery performance (less calculations), but will also mean you need to wait longer for the map and track to update. This setting is also used to control how often to refresh the buffer if using a buffered render mode. A lower number should be used for high speed activities such as cycling.  
 
 ---
 
@@ -454,6 +454,7 @@ Include the debug page when navigating between pages in the on screen ui.
 
 # On Device
 
+Only some high memory devices allow configuring the settings directly from the watch, all other devices will need to use an alternate method for configuring the settings.  
 It is much easier to configure the settings from the ConnectIQ store, or through the companion app, but it is possible to use the on device settings. All of the settings should have the same names, see above for explanation on each setting.
 
 ![](images/settings/ondevice.png)

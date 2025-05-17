@@ -367,21 +367,25 @@ class Settings {
         setValue("mode", mode);
     }
 
+    (:settingsView)
     function setElevationMode(value as Number) as Void {
         elevationMode = value;
         setValue("elevationMode", elevationMode);
     }
 
+    (:settingsView)
     function setUiMode(_uiMode as Number) as Void {
         uiMode = _uiMode;
         setValue("uiMode", uiMode);
     }
 
+    (:settingsView)
     function setAlertType(_alertType as Number) as Void {
         alertType = _alertType;
         setValue("alertType", alertType);
     }
 
+    (:settingsView)
     function setRenderMode(_renderMode as Number) as Void {
         renderMode = _renderMode;
         setValue("renderMode", renderMode);
@@ -432,6 +436,7 @@ class Settings {
             clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
         }
     }
+
     function setFixedPositionWithoutUpdate(
         lat as Float?,
         long as Float?,
@@ -486,6 +491,7 @@ class Settings {
         setValue("zoomAtPaceMode", zoomAtPaceMode);
     }
 
+    (:settingsView)
     function setMapChoice(value as Number) as Void {
         mapChoice = value;
         setValue("mapChoice", mapChoice);
@@ -645,6 +651,7 @@ class Settings {
         updateTileServerMapChoiceChange(tileServerInfo);
     }
 
+    (:settingsView)
     function setTileUrl(_tileUrl as String) as Void {
         setTileUrlWithoutSideEffect(_tileUrl);
         setValueSideEffect();
@@ -675,34 +682,41 @@ class Settings {
         requiresAuth = tileUrl.find("{authToken}") != null;
     }
 
+    (:settingsView)
     function setAuthToken(value as String) as Void {
         authToken = value;
         setValue("authToken", authToken);
     }
 
+    (:settingsView)
     function setZoomAtPaceSpeedMPS(mps as Float) as Void {
         zoomAtPaceSpeedMPS = mps;
         setValue("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
     }
 
+    (:settingsView)
     function setMetersAroundUser(value as Number) as Void {
         metersAroundUser = value;
         setValue("metersAroundUser", metersAroundUser);
     }
 
+    (:settingsView)
     function setFixedLatitude(value as Float) as Void {
         setFixedPosition(value, fixedLongitude, true);
     }
 
+    (:settingsView)
     function setFixedLongitude(value as Float) as Void {
         setFixedPosition(fixedLatitude, value, true);
     }
 
+    (:settingsView)
     function setMaxPendingWebRequests(value as Number) as Void {
         maxPendingWebRequests = value;
         setValue("maxPendingWebRequests", maxPendingWebRequests);
     }
 
+    (:settingsView)
     function setTileSize(value as Number) as Void {
         setTileSizeWithoutSideEffect(value);
         setValueSideEffect();
@@ -718,18 +732,21 @@ class Settings {
         clearTileCache();
     }
 
+    (:settingsView)
     function setHttpErrorTileTTLS(value as Number) as Void {
         httpErrorTileTTLS = value;
         setValue("httpErrorTileTTLS", httpErrorTileTTLS);
         tileServerPropChanged();
     }
 
+    (:settingsView)
     function setErrorTileTTLS(value as Number) as Void {
         errorTileTTLS = value;
         setValue("errorTileTTLS", errorTileTTLS);
         tileServerPropChanged();
     }
 
+    (:settingsView)
     function setFullTileSize(value as Number) as Void {
         setFullTileSizeWithoutSideEffect(value);
         setValueSideEffect();
@@ -740,6 +757,7 @@ class Settings {
         tileServerPropChanged();
     }
 
+    (:settingsView)
     function setScaledTileSize(value as Number) as Void {
         setScaledTileSizeWithoutSideEffect(value);
         setValueSideEffect();
@@ -750,6 +768,7 @@ class Settings {
         tileServerPropChanged();
     }
 
+    (:settingsView)
     function setTileLayerMax(value as Number) as Void {
         setTileLayerMaxWithoutSideEffect(value);
         setValueSideEffect();
@@ -759,6 +778,7 @@ class Settings {
         Application.Properties.setValue("tileLayerMax", tileLayerMax);
     }
 
+    (:settingsView)
     function setTileLayerMin(value as Number) as Void {
         setTileLayerMinWithoutSideEffect(value);
         setValueSideEffect();
@@ -768,29 +788,34 @@ class Settings {
         Application.Properties.setValue("tileLayerMin", tileLayerMin);
     }
 
+    (:settingsView)
     function setDisableMapsFailureCount(value as Number) as Void {
         disableMapsFailureCount = value;
         setValue("disableMapsFailureCount", disableMapsFailureCount);
     }
 
+    (:settingsView)
     function setOffTrackAlertsDistanceM(value as Number) as Void {
         offTrackAlertsDistanceM = value;
         setValue("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
         updateViewSettings();
     }
 
+    (:settingsView)
     function setOffTrackAlertsMaxReportIntervalS(value as Number) as Void {
         offTrackAlertsMaxReportIntervalS = value;
         setValue("offTrackAlertsMaxReportIntervalS", offTrackAlertsMaxReportIntervalS);
         updateViewSettings();
     }
 
+    (:settingsView)
     function setOffTrackCheckIntervalS(value as Number) as Void {
         offTrackCheckIntervalS = value;
         setValue("offTrackCheckIntervalS", offTrackCheckIntervalS);
         updateViewSettings();
     }
 
+    (:settingsView)
     function setRouteMax(value as Number) as Void {
         var oldRouteMax = routeMax;
         routeMax = value;
@@ -809,6 +834,7 @@ class Settings {
         }
     }
 
+    (:settingsView)
     function setTileCacheSize(value as Number) as Void {
         setTileCacheSizeWithoutSideEffect(value);
         setValueSideEffect();
@@ -829,6 +855,7 @@ class Settings {
         clearTileCache();
     }
 
+    (:settingsView)
     function setStorageTileCacheSize(value as Number) as Void {
         setStorageTileCacheSizeWithoutSideEffect(value);
         setValueSideEffect();
@@ -844,11 +871,13 @@ class Settings {
         }
     }
 
+    (:settingsView)
     function setTileCachePadding(value as Number) as Void {
         tileCachePadding = value;
         setValue("tileCachePadding", tileCachePadding);
     }
 
+    (:settingsView)
     function setRecalculateIntervalS(value as Number) as Void {
         recalculateIntervalS = value;
         setValue("recalculateIntervalS", recalculateIntervalS);
@@ -881,6 +910,7 @@ class Settings {
         }
     }
 
+    (:settingsView)
     function setCacheTilesInStorage(value as Boolean) as Void {
         cacheTilesInStorage = value;
         setValue("cacheTilesInStorage", cacheTilesInStorage);
@@ -890,53 +920,64 @@ class Settings {
         }
     }
 
+    (:settingsView)
     function setStorageMapTilesOnly(value as Boolean) as Void {
         storageMapTilesOnly = value;
         setValue("storageMapTilesOnly", storageMapTilesOnly);
     }
 
+    (:settingsView)
     function setDrawLineToClosestPoint(value as Boolean) as Void {
         drawLineToClosestPoint = value;
         setValue("drawLineToClosestPoint", drawLineToClosestPoint);
         updateViewSettings();
     }
 
+    (:settingsView)
     function setShowPoints(value as Boolean) as Void {
         showPoints = value;
         setValue("showPoints", showPoints);
     }
+    (:settingsView)
     function setDrawLineToClosestTrack(value as Boolean) as Void {
         drawLineToClosestTrack = value;
         setValue("drawLineToClosestTrack", drawLineToClosestTrack);
     }
+    (:settingsView)
     function setShowTileBorders(value as Boolean) as Void {
         showTileBorders = value;
         setValue("showTileBorders", showTileBorders);
     }
+    (:settingsView)
     function setShowErrorTileMessages(value as Boolean) as Void {
         showErrorTileMessages = value;
         setValue("showErrorTileMessages", showErrorTileMessages);
     }
+    (:settingsView)
     function setIncludeDebugPageInOnScreenUi(value as Boolean) as Void {
         includeDebugPageInOnScreenUi = value;
         setValue("includeDebugPageInOnScreenUi", includeDebugPageInOnScreenUi);
     }
 
+    (:settingsView)
     function setDisplayLatLong(value as Boolean) as Void {
         displayLatLong = value;
         setValue("displayLatLong", displayLatLong);
     }
 
+    (:settingsView)
     function setScaleRestrictedToTileLayers(value as Boolean) as Void {
         scaleRestrictedToTileLayers = value;
         setValue("scaleRestrictedToTileLayers", scaleRestrictedToTileLayers);
     }
 
+    (:settingsView)
     function setDisplayRouteNames(_displayRouteNames as Boolean) as Void {
         displayRouteNames = _displayRouteNames;
         setValue("displayRouteNames", displayRouteNames);
     }
 
+    (:settingsView)
     function setEnableOffTrackAlerts(_enableOffTrackAlerts as Boolean) as Void {
         enableOffTrackAlerts = _enableOffTrackAlerts;
         setValue("enableOffTrackAlerts", enableOffTrackAlerts);
@@ -979,6 +1020,7 @@ class Settings {
         return routes[routeIndex]["enabled"];
     }
 
+    (:settingsView)
     function setRouteColour(routeId as Number, value as Number) as Void {
         ensureRouteId(routeId);
         var routeIndex = getRouteIndexById(routeId);
@@ -1077,36 +1119,43 @@ class Settings {
         setValue("routes", toSave);
     }
 
+    (:settingsView)
     function setTrackColour(value as Number) as Void {
         trackColour = value;
         setValue("trackColour", trackColour.format("%X"));
     }
 
+    (:settingsView)
     function setTileErrorColour(value as Number) as Void {
         tileErrorColour = value;
         setValue("tileErrorColour", tileErrorColour.format("%X"));
     }
 
+    (:settingsView)
     function setUserColour(value as Number) as Void {
         userColour = value;
         setValue("userColour", userColour.format("%X"));
     }
 
+    (:settingsView)
     function setNormalModeColour(value as Number) as Void {
         normalModeColour = value;
         setValue("normalModeColour", normalModeColour.format("%X"));
     }
 
+    (:settingsView)
     function setDebugColour(value as Number) as Void {
         debugColour = value;
         setValue("debugColour", debugColour.format("%X"));
     }
 
+    (:settingsView)
     function setUiColour(value as Number) as Void {
         uiColour = value;
         setValue("uiColour", uiColour.format("%X"));
     }
 
+    (:settingsView)
     function setElevationColour(value as Number) as Void {
         elevationColour = value;
         setValue("elevationColour", elevationColour.format("%X"));
@@ -1121,54 +1170,68 @@ class Settings {
         setMapEnabled(true);
     }
 
+    (:settingsView)
     function toggleSimple(key as String, value as Boolean) as Boolean {
         setValue(key, value);
         return value;
     }
 
+    (:settingsView)
     function toggleCacheTilesInStorage() as Void {
         cacheTilesInStorage = toggleSimple("cacheTilesInStorage", !cacheTilesInStorage);
         tileServerPropChanged();
     }
+    (:settingsView)
     function toggleStorageMapTilesOnly() as Void {
         storageMapTilesOnly = toggleSimple("storageMapTilesOnly", !storageMapTilesOnly);
     }
+    (:settingsView)
     function toggleDrawLineToClosestPoint() as Void {
         drawLineToClosestPoint = toggleSimple("drawLineToClosestPoint", !drawLineToClosestPoint);
     }
+    (:settingsView)
     function toggleShowPoints() as Void {
         showPoints = toggleSimple("showPoints", !showPoints);
     }
+    (:settingsView)
     function toggleDrawLineToClosestTrack() as Void {
         drawLineToClosestTrack = toggleSimple("drawLineToClosestTrack", !drawLineToClosestTrack);
     }
+    (:settingsView)
     function toggleShowTileBorders() as Void {
         showTileBorders = toggleSimple("showTileBorders", !showTileBorders);
     }
+    (:settingsView)
     function toggleShowErrorTileMessages() as Void {
         showErrorTileMessages = toggleSimple("showErrorTileMessages", !showErrorTileMessages);
     }
+    (:settingsView)
     function toggleIncludeDebugPageInOnScreenUi() as Void {
         includeDebugPageInOnScreenUi = toggleSimple(
             "includeDebugPageInOnScreenUi",
             !includeDebugPageInOnScreenUi
         );
     }
+    (:settingsView)
     function toggleDisplayLatLong() as Void {
         displayLatLong = toggleSimple("displayLatLong", !displayLatLong);
     }
+    (:settingsView)
     function toggleScaleRestrictedToTileLayers() as Void {
         scaleRestrictedToTileLayers = toggleSimple(
             "scaleRestrictedToTileLayers",
             !scaleRestrictedToTileLayers
         );
     }
+    (:settingsView)
     function toggleDisplayRouteNames() as Void {
         displayRouteNames = toggleSimple("displayRouteNames", !displayRouteNames);
     }
+    (:settingsView)
     function toggleEnableOffTrackAlerts() as Void {
         enableOffTrackAlerts = toggleSimple("enableOffTrackAlerts", !enableOffTrackAlerts);
     }
+    (:settingsView)
     function toggleRoutesEnabled() as Void {
         routesEnabled = toggleSimple("routesEnabled", !routesEnabled);
     }
