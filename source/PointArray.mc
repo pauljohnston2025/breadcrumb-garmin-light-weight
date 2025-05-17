@@ -24,10 +24,10 @@ class RectangularPoint {
         altitude = _altitude;
     }
 
-    function distanceTo(point as RectangularPoint) as Decimal {
+    function distanceTo(point as RectangularPoint) as Float {
         var xDist = point.x - x;
         var yDist = point.y - y;
-        return Math.sqrt(xDist * xDist + yDist * yDist);
+        return Math.sqrt(xDist * xDist + yDist * yDist).toFloat();
     }
 
     function valid() as Boolean {

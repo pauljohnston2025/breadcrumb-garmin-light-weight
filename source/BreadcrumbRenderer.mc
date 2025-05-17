@@ -1309,7 +1309,7 @@ class BreadcrumbRenderer {
         hScalePPM as Float,
         vScale as Float,
         startAt as Float,
-        distanceM as Float,
+        distancePixels as Float,
         elevationText as String
     ) as Void {
         var xHalf = _cachedValues.xHalf; // local lookup faster
@@ -1423,12 +1423,17 @@ class BreadcrumbRenderer {
             // drawAngledText and drawRadialText not available :(
         }
 
-        var text =
-            "dist: " +
-            (distanceM * _cachedValues.currentScale).format("%.0f") +
-            "m\n" +
-            "elev: " +
-            elevationText;
+        var distanceM = distancePixels;
+        var distanceScale = _cachedValues.currentScale;
+        if (distanceScale != 0f) {
+            distanceM = distancePixels / distanceScale;
+        }
+        var distanceKM = distanceM / 1000f;
+        var distText =
+            distanceKM > 1
+                ? distanceKM.format("%.1f") + "km"
+                : distanceM.toNumber().toString() + "m";
+        var text = "dist: " + distText + "\n" + "elev: " + elevationText;
         dc.drawText(xHalf, 20, Graphics.FONT_XTINY, text, Graphics.TEXT_JUSTIFY_CENTER);
     }
 

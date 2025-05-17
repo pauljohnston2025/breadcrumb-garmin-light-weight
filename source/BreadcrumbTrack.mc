@@ -72,7 +72,7 @@ class BreadcrumbTrack {
 
     var boundingBox as [Float, Float, Float, Float] = BOUNDING_BOX_DEFAULT(); // SCALED -- since the points are used to generate it on failure
     var boundingBoxCenter as RectangularPoint = BOUNDING_BOX_CENTER_DEFAULT(); // SCALED -- since the points are used to generate it on failure
-    var distanceTotal as Decimal = 0f; // SCALED -- since the points are used to generate it on failure
+    var distanceTotal as Float = 0f; // SCALED -- since the points are used to generate it on failure
     var elevationMin as Float = FLOAT_MAX; // UNSCALED
     var elevationMax as Float = FLOAT_MIN; // UNSCALED
     var _neverStarted as Boolean;
@@ -139,7 +139,6 @@ class BreadcrumbTrack {
             ++$.globalExceptionCounter;
             return false;
         }
-
         return true;
     }
 
@@ -215,7 +214,7 @@ class BreadcrumbTrack {
             );
             track.coordinates._internalArrayBuffer = coords as Array<Float>;
             track.coordinates._size = coordsSize as Number;
-            track.distanceTotal = distanceTotal as Decimal;
+            track.distanceTotal = distanceTotal as Float;
             track.elevationMin = elevationMin as Float;
             track.elevationMax = elevationMax as Float;
             track.epoch = epoch as Number;
@@ -363,7 +362,7 @@ class BreadcrumbTrack {
         }
 
         if (stabilityCheckDistance > maxDistanceMScaled) {
-            // we are unstable, remove all points
+            // we are unstable, remove all our stability check points
             seenStartupPoints = 0;
             coordinates.removeLastCountPoints(possibleBadPointsAdded);
             possibleBadPointsAdded = 0;
