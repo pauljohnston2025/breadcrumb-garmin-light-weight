@@ -50,8 +50,9 @@ class SettingsSent extends Communications.ConnectionListener {
 }
 
 class BreadcrumbDataFieldApp extends Application.AppBase {
-    var _view as BreadcrumbDataFieldView;
     var _breadcrumbContext as BreadcrumbContext;
+    var _view as BreadcrumbDataFieldView;
+    
     var _commStatus as CommStatus = new CommStatus();
 
     function initialize() {

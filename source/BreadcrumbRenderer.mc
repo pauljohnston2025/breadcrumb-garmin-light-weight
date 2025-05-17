@@ -699,9 +699,9 @@ class BreadcrumbRenderer {
                 " web ok: " +
                 breadcrumbContext.webRequestHandler().successCount() +
                 "\nmem: " +
-                (System.getSystemStats().usedMemory / 1000f).format("%.1f") +
+                (System.getSystemStats().usedMemory / 1024f).format("%.1f") +
                 "K f: " +
-                (System.getSystemStats().freeMemory / 1000f).format("%.1f") +
+                (System.getSystemStats().freeMemory / 1024f).format("%.1f") +
                 "K" +
                 "\nstorage tiles: " +
                 breadcrumbContext.tileCache()._storageTileCache._tilesInStorage.size() +

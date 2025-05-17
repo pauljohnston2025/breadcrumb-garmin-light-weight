@@ -760,9 +760,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             y,
             Graphics.FONT_XTINY,
             "mem: " +
-                (System.getSystemStats().usedMemory / 1000f).format("%.1f") +
+                (System.getSystemStats().usedMemory / 1024f).format("%.1f") +
                 "K f: " +
-                (System.getSystemStats().freeMemory / 1000f).format("%.1f") +
+                (System.getSystemStats().freeMemory / 1024f).format("%.1f") +
                 "K",
             Graphics.TEXT_JUSTIFY_CENTER
         );
