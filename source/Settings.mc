@@ -159,6 +159,16 @@ const TILE_SERVERS = [
     new TileServerInfo(ATTRIBUTION_CARTO, URL_PREFIX_CARTO, AUTH_TOKEN_TYPE_NONE, "light_all/{z}/{x}/{y}.png", 0, 20), // Carto - Light All
 ];
 
+// we are getting dangerously close to the app settings limit
+// was getting "Unable to serialize app data" in the sim, but after a restart worked fine
+// see
+// https://forums.garmin.com/developer/connect-iq/f/discussion/409127/unable-to-serialize-app-data---watch-app?pifragment-1298=1#pifragment-1298=1
+// is seems like this only happened when:
+// * I tried to run on instinct 3 (that only has 128kb of memory)
+// * Crashed with OOM
+// * Then tried running on the venu2s which has enough memory it fails with "Unable to serialize app data"
+// * Reset sim app data and remove apps
+// * Works fine
 class Settings {
     var googleAttribution as WatchUi.BitmapResource = WatchUi.loadResource(
         Rez.Drawables.GoogleAttribution

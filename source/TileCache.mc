@@ -120,8 +120,8 @@ class Tile {
         self.expiresAt = expiresAt;
     }
 
-    function expiredAlready(now as Number) as Void {
-        expired(self.expiresAt, now);
+    function expiredAlready(now as Number) as Boolean {
+        return expired(self.expiresAt, now);
     }
 
     function markUsed() as Void {
@@ -567,7 +567,7 @@ class StorageTileCache {
         var expiresAt = tileMeta[2];
         if (expired(expiresAt, epoch)) {
             logE("tile expired" + tileMeta);
-            // todo should we exict the tile now?
+            // todo should we evict the tile now?
             return null;
         }
 
@@ -946,8 +946,12 @@ class TileCache {
     // loads a tile into the cache
     // reurns true if seed should stop and wait for next calculate (to prevent watchdog errors)
     function seedTile(tileKey as TileKey) as Boolean {
-        if (haveTile(tileKey)) {
-            return false;
+        var tile = _internalCache[tileKey] as Tile?;
+        if (tile != null) {
+            var epoch = Time.now().value();
+            if (!tile.expiredAlready(epoch)) {
+                return false;
+            }
         }
         return startSeedTile(tileKey, false);
     }
@@ -1207,7 +1211,7 @@ class TileCache {
         var keys = _internalCache.keys();
         for (var i = 0; i < keys.size(); i++) {
             var key = keys[i];
-            var tile = self._internalCache[key];
+            var tile = self._internalCache[key] as Tile;
             if (tile.expiredAlready(epoch)) {
                 oldestKey = key;
                 break;

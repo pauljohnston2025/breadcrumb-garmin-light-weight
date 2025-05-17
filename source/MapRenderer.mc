@@ -177,6 +177,7 @@ class MapRenderer {
         var yHalf = cachedValues.yHalf; // local lookup faster
 
         // perhaps we should draw all tiles then draw all border lines in second for loop?
+        // this for loop is noce though, as it only draws borders on the tiles that are drawn (and we have in our tile cache), not every possible tile on the screen
         var rotateCosNeg = 0f; // only calculate if we need it
         var rotateSinNeg = 0f; // only calculate if we need it
         if (_settings.showTileBorders) {
