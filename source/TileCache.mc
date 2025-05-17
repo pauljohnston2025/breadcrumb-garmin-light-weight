@@ -3,6 +3,7 @@ import Toybox.Graphics;
 import Toybox.WatchUi;
 import Toybox.PersistedContent;
 import Toybox.StringUtil;
+import Toybox.Application;
 using Toybox.Graphics;
 using Toybox.Lang;
 using Toybox.Math;
@@ -62,7 +63,7 @@ class TileKey {
             :fromRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
             :toRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
             :encoding => StringUtil.CHAR_ENCODING_UTF8,
-        });
+        }) as String;
     }
 
     function hashCode() as Number {
@@ -208,7 +209,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
 
         if (addToCache) {
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-                _tileCache._storageTileCache.addJsonData(_tileKey, data);
+                _tileCache._storageTileCache.addJsonData(_tileKey, data as Dictionary<PropertyKeyType, PropertyValueType>);
             }
         }
 
@@ -265,7 +266,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var mapTileBytes = StringUtil.convertEncodedString(mapTile, {
             :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
             :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
-        });
+        }) as ByteArray;
         // System.println("got tile string of length: " + mapTile.length());
         var bitmap = _tileCache.tileDataToBitmapFullColour(mapTileBytes);
         if (bitmap == null) {
@@ -564,30 +565,38 @@ class StorageTileCache {
         Storage.setValue(metaKeyStr, tileMeta);
 
         var epoch = Time.now().value();
-        var expiresAt = tileMeta[2];
+        var expiresAt = tileMeta[2]as Number;
         if (expired(expiresAt, epoch)) {
             logE("tile expired" + tileMeta);
             // todo should we evict the tile now?
             return null;
         }
 
-        switch (tileMeta[1]) {
+        switch (tileMeta[1]as Number) {
             case STORAGE_TILE_TYPE_DICT:
                 // no need to check type of the getValue call, handling code checks it
-                return [200, Storage.getValue(tileKey(tileKeyStr))]; // should always fit into the 32Kb size
+                return [200, Storage.getValue(tileKey(tileKeyStr)) as Dictionary]; // should always fit into the 32Kb size
             case STORAGE_TILE_TYPE_BITMAP:
                 if (tileMeta.size() < 6) {
                     logE("bad tile metadata in storage for bitmap tile" + tileMeta);
                     return null;
                 }
                 // no need to check type of loadBitmap, handling code checks it
-                return [200, loadBitmap(tileKeyStr, tileMeta[3], tileMeta[4], tileMeta[5])];
+                return [
+                    200,
+                    loadBitmap(
+                        tileKeyStr,
+                        tileMeta[3] as Number,
+                        tileMeta[4] as Number,
+                        tileMeta[5] as Number
+                    ),
+                ];
             case STORAGE_TILE_TYPE_ERRORED:
                 if (tileMeta.size() < 4) {
                     logE("bad tile metadata in storage for error tile" + tileMeta);
                     return null;
                 }
-                var responseCode = tileMeta[3];
+                var responseCode = tileMeta[3] as Number;
                 if (responseCode == WRONG_DATA_TILE) {
                     return [200, null]; // they normally come from 200 responses, with null data
                 }
@@ -621,7 +630,10 @@ class StorageTileCache {
         addMetaData(tileKeyStr, [epoch, STORAGE_TILE_TYPE_ERRORED, expiresAt, WRONG_DATA_TILE]);
     }
 
-    function addJsonData(tileKey as TileKey, data as Dictionary) as Void {
+    function addJsonData(
+        tileKey as TileKey,
+        data as Dictionary<PropertyKeyType, PropertyValueType>
+    ) as Void {
         var tileKeyStr = tileKey.optimisedHashKey();
         if (addMetaData(tileKeyStr, [Time.now().value(), STORAGE_TILE_TYPE_DICT, NO_EXPIRY])) {
             safeAdd(tileKey(tileKeyStr), data);
@@ -635,7 +647,7 @@ class StorageTileCache {
         tileHeight as Number
     ) as WatchUi.BitmapResource? {
         // bitmap has to just load as a single image, but it could be over the 32Kb limit
-        return Storage.getValue(tileKey(tileKeyStr));
+        return Storage.getValue(tileKey(tileKeyStr)) as WatchUi.BitmapResource?;
     }
 
     private function deleteBitmap(tileKeyStr as String, tileCount as Number) as Void {
@@ -672,8 +684,8 @@ class StorageTileCache {
         try {
             // update our tracking first, we do not want to loose tiles because we stored them, but could then not update the tracking
             _tilesInStorage.add(tileKeyStr);
-            Storage.setValue(TILES_KEY, _tilesInStorage);
-            Storage.setValue(metaKey(tileKeyStr), metaData);
+            Storage.setValue(TILES_KEY, _tilesInStorage as Array<PropertyValueType>);
+            Storage.setValue(metaKey(tileKeyStr), metaData as Array<PropertyValueType>);
         } catch (e) {
             if (e instanceof Lang.StorageFullException) {
                 // we expect storage to get full at some point, but there seems to be no way to get the size of the storage,
@@ -699,7 +711,7 @@ class StorageTileCache {
         return true;
     }
 
-    function safeAdd(key as String, data) as Boolean {
+    function safeAdd(key as String, data as PropertyValueType) as Boolean {
         try {
             Storage.setValue(key, data);
         } catch (e) {
@@ -752,7 +764,7 @@ class StorageTileCache {
                 break;
             }
 
-            var expiresAt = tileMetaData[2];
+            var expiresAt = tileMetaData[2] as Number;
             if (expired(expiresAt, epoch)) {
                 oldestKey = key;
                 oldestMetaKeyStr = metaKeyStr;
@@ -760,7 +772,7 @@ class StorageTileCache {
                 break;
             }
 
-            var lastUsed = tileMetaData[0];
+            var lastUsed = tileMetaData[0] as Number;
             if (oldestTime == null || oldestTime > lastUsed) {
                 oldestTime = lastUsed;
                 oldestKey = key;
@@ -798,7 +810,7 @@ class StorageTileCache {
             System.println("Evicted tile " + oldestKey + " from storage cache");
         }
 
-        Storage.setValue(TILES_KEY, _tilesInStorage);
+        Storage.setValue(TILES_KEY, _tilesInStorage as Array<PropertyValueType>);
     }
 
     function clearValues() as Void {
@@ -823,7 +835,8 @@ class TileCache {
     // Ignore any tile adds that do not have this version (allows outstanding web requests to be ignored once they are handled)
     var _tileCacheVersion as Number = 0;
     var _storageTileCache as StorageTileCache;
-    var _errorBitmaps as Dictionary<String, WeakReference<Graphics.BufferedBitmap> > = {};
+    var _errorBitmaps as Dictionary<String, WeakReference<Graphics.BufferedBitmap> > =
+        ({}) as Dictionary<String, WeakReference<Graphics.BufferedBitmap> >;
 
     function initialize(
         webRequestHandler as WebRequestHandler,
@@ -833,7 +846,7 @@ class TileCache {
         _settings = settings;
         _cachedValues = cachedValues;
         _webRequestHandler = webRequestHandler;
-        _internalCache = {};
+        _internalCache = ({}) as Dictionary<TileKey, Tile>;
         _storageTileCache = new StorageTileCache(_settings);
 
         // note: these need to match whats in the app
@@ -938,8 +951,8 @@ class TileCache {
     }
 
     public function clearValuesWithoutStorage() as Void {
-        _internalCache = {};
-        _errorBitmaps = {};
+        _internalCache = ({}) as Dictionary<TileKey, Tile>;
+        _errorBitmaps = ({}) as Dictionary<String, WeakReference<Graphics.BufferedBitmap> >;
         _tileCacheVersion++;
     }
 
@@ -993,7 +1006,7 @@ class TileCache {
                     return true;
                 }
                 // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
-                imageReqHandler.handleSuccessfulTile(tileFromStorage[1], false);
+                imageReqHandler.handleSuccessfulTile(tileFromStorage[1] as BitmapResource?, false);
                 return true;
             }
             if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
@@ -1040,7 +1053,7 @@ class TileCache {
                 return true;
             }
             // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
-            jsonWebHandler.handleSuccessfulTile(tileFromStorage[1], false);
+            jsonWebHandler.handleSuccessfulTile(tileFromStorage[1] as Dictionary?, false);
             return true;
         }
         if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
@@ -1229,7 +1242,7 @@ class TileCache {
         }
     }
 
-    function tileDataToBitmap64ColourString(charArr as Array<Char>) as Graphics.BufferedBitmap? {
+    function tileDataToBitmap64ColourString(charArr as Array<Char>?) as Graphics.BufferedBitmap? {
         // System.println("tile data " + arr);
         var tileSize = _settings.tileSize;
         var requiredSize = tileSize * tileSize;
@@ -1295,7 +1308,7 @@ class TileCache {
         return localBitmap;
     }
 
-    function tileDataToBitmapBlackAndWhite(charArr as Array<Char>) as Graphics.BufferedBitmap? {
+    function tileDataToBitmapBlackAndWhite(charArr as Array<Char>?) as Graphics.BufferedBitmap? {
         // System.println("tile data " + arr);
         var tileSize = _settings.tileSize;
         var requiredSize = Math.ceil((tileSize * tileSize) / 6f).toNumber(); // 6 bits of colour per byte
@@ -1354,7 +1367,7 @@ class TileCache {
         return localBitmap;
     }
 
-    function tileDataToBitmapFullColour(mapTileBytes as ByteArray) as Graphics.BufferedBitmap? {
+    function tileDataToBitmapFullColour(mapTileBytes as ByteArray?) as Graphics.BufferedBitmap? {
         // System.println("tile data " + arr);
         var tileSize = _settings.tileSize;
         var requiredSize = tileSize * tileSize * 3;
@@ -1398,10 +1411,11 @@ class TileCache {
         for (var i = 0; i < tileSize; ++i) {
             for (var j = 0; j < tileSize; ++j) {
                 // probbaly a faster way to do this
-                var colour = mapTileBytes.decodeNumber(Lang.NUMBER_FORMAT_UINT32, {
-                    :offset => offset,
-                    :endianness => Lang.ENDIAN_BIG,
-                });
+                var colour =
+                    mapTileBytes.decodeNumber(Lang.NUMBER_FORMAT_UINT32, {
+                        :offset => offset,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Number;
                 colour = (colour >> 8) & 0x00ffffff; // 24 bit colour only
                 offset += 3;
                 // tried setFill and setStroke, neither seemed to work, so we can only support 24bit colour

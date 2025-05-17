@@ -214,24 +214,19 @@ function getTileServerInfo(id as Number) as TileServerInfo?
 // * Reset sim app data and remove apps
 // * Works fine
 class Settings {
-    var googleAttribution as WatchUi.BitmapResource = WatchUi.loadResource(
-        Rez.Drawables.GoogleAttribution
-    );
-    var openTopMapAttribution as WatchUi.BitmapResource = WatchUi.loadResource(
-        Rez.Drawables.OpenTopMapAttribution
-    );
-    var esriAttribution as WatchUi.BitmapResource = WatchUi.loadResource(
-        Rez.Drawables.EsriAttribution
-    );
-    var openStreetMapAttribution as WatchUi.BitmapResource = WatchUi.loadResource(
-        Rez.Drawables.OpenStreetMapAttribution
-    );
-    var stadiaAttribution as WatchUi.BitmapResource = WatchUi.loadResource(
-        Rez.Drawables.StadiaAttribution
-    );
-    var cartoAttribution as WatchUi.BitmapResource = WatchUi.loadResource(
-        Rez.Drawables.CartoAttribution
-    );
+    // todo only load these when needed (but cache them)
+    var googleAttribution as WatchUi.BitmapResource =
+        WatchUi.loadResource(Rez.Drawables.GoogleAttribution) as BitmapResource;
+    var openTopMapAttribution as WatchUi.BitmapResource =
+        WatchUi.loadResource(Rez.Drawables.OpenTopMapAttribution) as BitmapResource;
+    var esriAttribution as WatchUi.BitmapResource =
+        WatchUi.loadResource(Rez.Drawables.EsriAttribution) as BitmapResource;
+    var openStreetMapAttribution as WatchUi.BitmapResource =
+        WatchUi.loadResource(Rez.Drawables.OpenStreetMapAttribution) as BitmapResource;
+    var stadiaAttribution as WatchUi.BitmapResource =
+        WatchUi.loadResource(Rez.Drawables.StadiaAttribution) as BitmapResource;
+    var cartoAttribution as WatchUi.BitmapResource =
+        WatchUi.loadResource(Rez.Drawables.CartoAttribution) as BitmapResource;
 
     // should be a multiple of 256 (since thats how tiles are stored, though the companion app will render them scaled for you)
     // we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes.
@@ -476,7 +471,7 @@ class Settings {
         }
     }
 
-    function setValue(key as String, value) as Void {
+    function setValue(key as String, value as PropertyValueType) as Void {
         Application.Properties.setValue(key, value);
         setValueSideEffect();
     }
@@ -829,7 +824,7 @@ class Settings {
         // remove the first oes or the last ones? we do not have an age, so just remove the last ones.
         for (var i = routeMax; i < routes.size(); ++i) {
             var oldRouteEntry = routes[i];
-            var oldRouteId = oldRouteEntry["routeId"];
+            var oldRouteId = oldRouteEntry["routeId"] as Number;
             clearRouteFromContext(oldRouteId);
         }
     }
@@ -995,7 +990,7 @@ class Settings {
             return Graphics.COLOR_BLUE;
         }
 
-        return routes[routeIndex]["colour"];
+        return routes[routeIndex]["colour"] as Number;
     }
 
     // see oddity with route name and route loading new in context.newRoute
@@ -1005,7 +1000,7 @@ class Settings {
             return "";
         }
 
-        return routes[routeIndex]["name"];
+        return routes[routeIndex]["name"] as String;
     }
 
     function routeEnabled(routeId as Number) as Boolean {
@@ -1017,7 +1012,7 @@ class Settings {
         if (routeIndex == null) {
             return false;
         }
-        return routes[routeIndex]["enabled"];
+        return routes[routeIndex]["enabled"] as Boolean;
     }
 
     (:settingsView)
@@ -1100,23 +1095,24 @@ class Settings {
         saveRoutes();
     }
 
-    function routesToSave() as Array {
+    function routesToSave() as Array<Dictionary<String, PropertyValueType> > {
         var toSave = [];
         for (var i = 0; i < routes.size(); ++i) {
             var entry = routes[i];
-            toSave.add({
-                "routeId" => entry["routeId"],
-                "name" => entry["name"],
-                "enabled" => entry["enabled"],
-                "colour" => entry["colour"].format("%X"), // this is why we have to copy it :(
-            });
+            var toAdd = {
+                "routeId" => entry["routeId"] as Number,
+                "name" => entry["name"] as String,
+                "enabled" => entry["enabled"] as Boolean,
+                "colour" => (entry["colour"] as Number).format("%X"), // this is why we have to copy it :(
+            };
+            toSave.add(toAdd);
         }
         return toSave;
     }
 
     function saveRoutes() as Void {
         var toSave = routesToSave();
-        setValue("routes", toSave);
+        setValue("routes", toSave as Dictionary<PropertyKeyType, PropertyValueType>);
     }
 
     (:settingsView)
@@ -1539,7 +1535,9 @@ class Settings {
                 return null;
             }
 
-            return parseFloatRaw(key, value, defaultValue);
+            // as Float is a bit of a hack, it can be null, but we just want allow us to use our helper
+            // (duck typing means at runtime the null passes through fine)
+            return parseFloatRaw(key, value, defaultValue as Float);
         } catch (e) {
             System.println("Error parsing optional float: " + key);
         }
@@ -1550,8 +1548,8 @@ class Settings {
         key as String,
         expectedKeys as Array<String>,
         parsers as Array<Method>,
-        defaultValue as Array
-    ) as Array {
+        defaultValue as Array<Dictionary>
+    ) as Array<Dictionary> {
         var value = null;
         try {
             value = Application.Properties.getValue(key);
@@ -1670,7 +1668,7 @@ class Settings {
         updateViewSettings();
     }
 
-    function asDict() as Dictionary {
+    function asDict() as Dictionary<String, PropertyValueType> {
         // all these return values should be identical to the storage value
         // eg. nulls are exposed as 0
         // colours are strings
@@ -1732,7 +1730,7 @@ class Settings {
         };
     }
 
-    function saveSettings(settings as Dictionary) as Void {
+    function saveSettings(settings as Dictionary<String, PropertyValueType>) as Void {
         // should we sanitize this as its untrusted? makes it significantly more annoying to do
         var keys = settings.keys();
         for (var i = 0; i < keys.size(); ++i) {
@@ -1741,7 +1739,7 @@ class Settings {
             // for now just blindly trust the users
             // we do reload which sanitizes, but they could break garmins settings page with unexpected types
             try {
-                Application.Properties.setValue(key, value);
+                Application.Properties.setValue(key, value as PropertyValueType);
             } catch (e) {
                 logE("failed property save: " + e.getErrorMessage() + " " + key + ":" + value);
                 ++$.globalExceptionCounter;
@@ -1853,7 +1851,7 @@ class Settings {
         // fix for a garmin bug where bool settings are not changable if they default to true
         // https://forums.garmin.com/developer/connect-iq/i/bug-reports/bug-boolean-properties-with-default-value-true-can-t-be-changed-in-simulator
         var haveDoneFirstLoadSetup = Application.Properties.getValue("haveDoneFirstLoadSetup");
-        if (!haveDoneFirstLoadSetup) {
+        if (haveDoneFirstLoadSetup instanceof Boolean && !haveDoneFirstLoadSetup) {
             setValue("haveDoneFirstLoadSetup", true);
             resetDefaults(); // pulls from our defaults
         }
@@ -1915,7 +1913,7 @@ class Settings {
         // like garmmins settings are not rendering desciptions anymore :(
         for (var i = 0; i < oldRoutes.size(); ++i) {
             var oldRouteEntry = oldRoutes[i];
-            var oldRouteId = oldRouteEntry["routeId"];
+            var oldRouteId = oldRouteEntry["routeId"] as Number;
 
             var routeIndex = getRouteIndexById(oldRouteId);
             if (routeIndex != null) {

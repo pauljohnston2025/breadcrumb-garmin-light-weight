@@ -98,15 +98,16 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
     function onPhone(msg as Communications.PhoneAppMessage) as Void {
         try {
-            var data = msg.data as Array<Number>?;
-            if (data == null || data.size() < 1) {
+            var data = msg.data as Array?;
+            if (data == null || !(data instanceof Array) || data.size() < 1) {
                 System.println("Bad message: " + data);
                 return;
             }
 
-            var type = data[0];
+            var type = data[0] as Number;
             var rawData = data.slice(1, null);
 
+            // todo drop back compat for this onec everyone has new companion app and is using PROTOCOL_ROUTE_DATA2
             if (type == PROTOCOL_ROUTE_DATA) {
                 // keep for back compat with old apps
                 // protocol:
@@ -123,7 +124,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 }
 
                 var name = rawData[0] as String;
-                var routeData = rawData.slice(1, null);
+                var routeData = rawData.slice(1, null) as Array<Float>;
                 if (routeData.size() % 3 == 0) {
                     logD("Parsing route data");
                     var route = _breadcrumbContext.newRoute(name);
@@ -133,9 +134,9 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                     }
                     for (var i = 0; i < routeData.size(); i += 3) {
                         route.addLatLongRaw(
-                            routeData[i].toFloat(),
-                            routeData[i + 1].toFloat(),
-                            routeData[i + 2].toFloat()
+                            routeData[i],
+                            routeData[i + 1],
+                            routeData[i + 2]
                         );
                     }
 
@@ -268,7 +269,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                     );
                     return;
                 }
-                _breadcrumbContext.settings().saveSettings(rawData[0] as Dictionary);
+                _breadcrumbContext.settings().saveSettings(rawData[0] as Dictionary<String, PropertyValueType>);
                 _breadcrumbContext.settings().onSettingsChanged(); // reload anything that has changed
                 return;
             } else if (type == PROTOCOL_DROP_TILE_CACHE) {
@@ -282,7 +283,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 return;
             }
 
-            System.println("Unknown message type: " + data[0]);
+            System.println("Unknown message type: " + type);
         } catch (e) {
             logE("failed onPhone: " + e.getErrorMessage());
             ++$.globalExceptionCounter;

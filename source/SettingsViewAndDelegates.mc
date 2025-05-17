@@ -5,10 +5,14 @@ import Toybox.WatchUi;
 import Toybox.Communications;
 import Toybox.Graphics;
 
+typedef Renderable as interface  {
+    function rerender() as Void;
+};
+
 (:settingsView)
 class SettingsFloatPicker extends FloatPicker {
     private var callback as Method;
-    public var parent = null;
+    public var parent as Renderable? = null;
     function initialize(callback as Method, defaultVal as Float) {
         FloatPicker.initialize(defaultVal);
         self.callback = callback;
@@ -20,8 +24,9 @@ class SettingsFloatPicker extends FloatPicker {
         }
 
         callback.invoke(value);
-        if (parent != null && parent has :rerender) {
-            parent.rerender();
+        var parentL = parent;
+        if (parentL != null) {
+            parentL.rerender();
         }
     }
 }
@@ -29,7 +34,7 @@ class SettingsFloatPicker extends FloatPicker {
 (:settingsView)
 class SettingsNumberPicker extends IntPicker {
     private var callback as Method;
-    public var parent = null;
+    public var parent as Renderable? = null;
     function initialize(callback as Method, defaultVal as Number) {
         IntPicker.initialize(defaultVal);
         self.callback = callback;
@@ -41,8 +46,9 @@ class SettingsNumberPicker extends IntPicker {
         }
 
         callback.invoke(value);
-        if (parent != null && parent has :rerender) {
-            parent.rerender();
+        var parentL = parent;
+        if (parentL != null) {
+            parentL.rerender();
         }
     }
 }
@@ -50,8 +56,8 @@ class SettingsNumberPicker extends IntPicker {
 (:settingsView)
 class SettingsStringPicker extends WatchUi.TextPickerDelegate {
     private var callback as Method;
-    public var parent = null;
-    function initialize(callback as Method, parent) {
+    public var parent as Renderable? = null;
+    function initialize(callback as Method, parent as Renderable?) {
         TextPickerDelegate.initialize();
         self.callback = callback;
         self.parent = parent;
@@ -61,8 +67,9 @@ class SettingsStringPicker extends WatchUi.TextPickerDelegate {
         System.println("onTextEntered: " + text + " " + changed);
 
         callback.invoke(text);
-        if (parent != null && parent has :rerender) {
-            parent.rerender();
+        var parentL = parent;
+        if (parentL != null) {
+            parentL.rerender();
         }
 
         return true;
@@ -77,7 +84,7 @@ class SettingsStringPicker extends WatchUi.TextPickerDelegate {
 (:settingsView)
 class SettingsColourPicker extends ColourPicker {
     private var callback as Method;
-    public var parent = null;
+    public var parent as Renderable? = null;
     function initialize(callback as Method, defaultVal as Number) {
         ColourPicker.initialize(defaultVal);
         self.callback = callback;
@@ -89,8 +96,9 @@ class SettingsColourPicker extends ColourPicker {
         }
 
         callback.invoke(value);
-        if (parent != null && parent has :rerender) {
-            parent.rerender();
+        var parentL = parent;
+        if (parentL != null) {
+            parentL.rerender();
         }
     }
 }
@@ -98,7 +106,7 @@ class SettingsColourPicker extends ColourPicker {
 (:settingsView)
 function startPicker(
     picker as SettingsFloatPicker or SettingsColourPicker or SettingsNumberPicker,
-    parent
+    parent as Renderable
 ) as Void {
     picker.parent = parent;
     WatchUi.pushView(
@@ -109,7 +117,11 @@ function startPicker(
 }
 
 (:settingsView)
-function safeSetSubLabel(menu as WatchUi.Menu2, id as Object, value as String) as Void {
+function safeSetSubLabel(
+    menu as WatchUi.Menu2,
+    id as Object,
+    value as String or ResourceId
+) as Void {
     var itemIndex = menu.findItemById(id);
     if (itemIndex <= -1) {
         return;
@@ -124,7 +136,7 @@ function safeSetSubLabel(menu as WatchUi.Menu2, id as Object, value as String) a
 }
 
 (:settingsView)
-function safeSetLabel(menu as WatchUi.Menu2, id as Object, value as String) as Void {
+function safeSetLabel(menu as WatchUi.Menu2, id as Object, value as String or ResourceId) as Void {
     var itemIndex = menu.findItemById(id);
     if (itemIndex <= -1) {
         return;
@@ -339,11 +351,11 @@ class SettingsMap extends Rez.Menus.SettingsMap {
             :settingsMapDisableMapsFailureCount,
             settings.disableMapsFailureCount.toString()
         );
-        var latString =
-            settings.fixedLatitude == null ? "Disabled" : settings.fixedLatitude.format("%.5f");
+        var fixedLatitude = settings.fixedLatitude;
+        var latString = fixedLatitude == null ? "Disabled" : fixedLatitude.format("%.5f");
         safeSetSubLabel(me, :settingsMapFixedLatitude, latString);
-        var longString =
-            settings.fixedLongitude == null ? "Disabled" : settings.fixedLongitude.format("%.5f");
+        var fixedLongitude = settings.fixedLongitude;
+        var longString = fixedLongitude == null ? "Disabled" : fixedLongitude.format("%.5f");
         safeSetSubLabel(me, :settingsMapFixedLongitude, longString);
         safeSetToggle(
             me,
@@ -665,7 +677,7 @@ class SettingsRoutes extends WatchUi.Menu2 {
         rerender();
     }
 
-    function setup() {
+    function setup() as Void {
         addItem(
             new ToggleMenuItem(
                 Rez.Strings.routesEnabled,
@@ -1129,7 +1141,6 @@ class SettingsMapAttributionDelegate extends WatchUi.Menu2InputDelegate {
         me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
         var itemId = item.getId() as Object;
         switch (itemId) {
             case :settingsMapAttributionOpenTopoMap:
@@ -1466,18 +1477,20 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
                 view
             );
         } else if (itemId == :settingsMapFixedLatitude) {
+            var fixedLatitude = settings.fixedLatitude;
             startPicker(
                 new SettingsFloatPicker(
                     settings.method(:setFixedLatitude),
-                    settings.fixedLatitude != null ? settings.fixedLatitude : 0f
+                    fixedLatitude != null ? fixedLatitude : 0f
                 ),
                 view
             );
         } else if (itemId == :settingsMapFixedLongitude) {
+            var fixedLongitude = settings.fixedLongitude;
             startPicker(
                 new SettingsFloatPicker(
                     settings.method(:setFixedLongitude),
-                    settings.fixedLongitude != null ? settings.fixedLongitude : 0f
+                    fixedLongitude != null ? fixedLongitude : 0f
                 ),
                 view
             );

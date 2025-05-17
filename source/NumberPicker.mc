@@ -10,7 +10,7 @@ class NumberPicker {
     private var currentVal as String;
     private var _charset as String;
     private var maxLength as Number;
-    private var letterPositions as Array<Array<Number> >;
+    private var letterPositions as Array<[Float, Float]>;
     private var halfWidth as Number?;
     private var myText as WatchUi.Text;
     const halfHitboxSize as Number = 35;
@@ -46,7 +46,7 @@ class NumberPicker {
         centerY as Number,
         radius as Number,
         numPoints as Number
-    ) as Array<Array<Number> > {
+    ) as Array<[Float, Float]> {
         var points = new [numPoints];
 
         var angleIncrement = (2 * Math.PI) / numPoints;
@@ -54,13 +54,13 @@ class NumberPicker {
         for (var i = 0; i < numPoints; i++) {
             var angle = i * angleIncrement;
 
-            var x = centerX + radius * Math.cos(angle);
-            var y = centerY + radius * Math.sin(angle);
+            var x = centerX + radius * Math.cos(angle).toFloat();
+            var y = centerY + radius * Math.sin(angle).toFloat();
 
             points[i] = [x, y];
         }
 
-        return points;
+        return points as Array<[Float, Float]>;
     }
 
     function onUpdate(dc as Dc) as Void {
@@ -96,9 +96,12 @@ class NumberPicker {
             return;
         }
 
-        currentVal = currentVal.substring(null, -1);
-        myText.setText(currentVal);
-        forceRefresh();
+        var subStr = currentVal.substring(null, -1);
+        if (subStr != null) {
+            currentVal = subStr;
+            myText.setText(currentVal);
+            forceRefresh();
+        }
     }
 
     function onTap(x as Number, y as Number) as Boolean {
@@ -132,7 +135,7 @@ class NumberPicker {
         return null;
     }
 
-    protected function onReading(value as String);
+    protected function onReading(value as String) as Void;
     protected function backgroundColour(value as String) as Number {
         return Graphics.COLOR_BLACK;
     }

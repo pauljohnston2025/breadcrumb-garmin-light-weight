@@ -39,7 +39,7 @@ class RectangularPoint {
     function clone() as RectangularPoint {
         return new RectangularPoint(x, y, altitude);
     }
-    
+
     function rescale(scaleFactor as Float) as RectangularPoint {
         // unsafe to call with nulls or 0, checks should be made in parent
         return new RectangularPoint(x * scaleFactor, y * scaleFactor, altitude);
@@ -67,7 +67,7 @@ class RectangularPoint {
     }
 
     // should be the inverse of latLon2xy ie. https://gis.stackexchange.com/a/387677
-    static function xyToLatLon(x as Float, y as Float) as Array<Float>? {
+    static function xyToLatLon(x as Float, y as Float) as [Float, Float]? {
         // Inverse Mercator projection formulas
         var lon = x / _lonConversion; // Longitude (degrees)
         var lat = Math.atan(Math.pow(Math.E, (y / _lonConversion) * _pi180)) / _pi360 - 90;
@@ -77,7 +77,7 @@ class RectangularPoint {
             return null;
         }
 
-        return [lat, lon];
+        return [lat.toFloat(), lon.toFloat()];
     }
 }
 
@@ -115,7 +115,7 @@ class PointArray {
     }
 
     function lastPoint() as RectangularPoint? {
-        return getPoint((_size / ARRAY_POINT_SIZE) - 1); // stack overflow if we call pointSize()
+        return getPoint(_size / ARRAY_POINT_SIZE - 1); // stack overflow if we call pointSize()
     }
 
     function firstPoint() as RectangularPoint? {
@@ -127,7 +127,7 @@ class PointArray {
             return null;
         }
 
-        if (i >= (_size / ARRAY_POINT_SIZE)) {
+        if (i >= _size / ARRAY_POINT_SIZE) {
             return null;
         }
 

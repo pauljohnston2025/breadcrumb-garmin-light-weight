@@ -339,11 +339,12 @@ class CachedValues {
     }
 
     function nextTileLayerScale(direction as Number) as Float {
-        if (smallTilesPerFullTile == 0 || scale == null || scale == 0f) {
+        var scaleL = scale;
+        if (smallTilesPerFullTile == 0 || scaleL == null || scaleL == 0f) {
             return 0f;
         }
 
-        var currentZF = calculateTileLevel(1 / scale);
+        var currentZF = calculateTileLevel(1 / scaleL);
         var currentZ = Math.round(currentZF).toNumber();
         currentZ = minN(maxN(currentZ, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits, otherwise we can decreent/increment outside the range if we are already at a bad scale
         var nextZ = currentZ + direction;
@@ -396,9 +397,9 @@ class CachedValues {
 
         var maxDistanceM = maxF(xDistanceM, yDistanceM);
 
-        if (maxDistanceM == 0) {
+        if (maxDistanceM == 0f) {
             // show 1m of space to avaoid division by 0
-            maxDistanceM = 1;
+            maxDistanceM = 1f;
         }
 
         return calculateScale(maxDistanceM);
@@ -461,7 +462,7 @@ class CachedValues {
         return Math.log(
             earthsCircumference / (_settings.tileSize * desiredResolution) / smallTilesPerFullTile,
             2
-        );
+        ).toFloat();
     }
 
     function moveLatLong(
@@ -639,7 +640,12 @@ class CachedValues {
         if (fixedLongitude == null) {
             fixedLongitude = lastRenderedLatLongCenter == null ? 0f : lastRenderedLatLongCenter[1];
         }
-        return RectangularPoint.latLon2xy(fixedLatitude, fixedLongitude, 0f);
+        var center = RectangularPoint.latLon2xy(fixedLatitude, fixedLongitude, 0f);
+        if (center != null) {
+            return center;
+        }
+
+        return new RectangularPoint(0f, 0f, 0f); // highly unlikely code path
     }
 
     function setScale(_scale as Float?) as Void {
@@ -805,7 +811,7 @@ class CachedValues {
         firstTileY as Number,
         lastTileX as Number,
         lastTileY as Number
-    ) {
+    ) as Void{
         var tileCache = getApp()._breadcrumbContext.tileCache();
 
         for (var y = firstTileY; y < lastTileY; ++y) {

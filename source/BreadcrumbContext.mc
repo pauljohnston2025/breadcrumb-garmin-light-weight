@@ -27,8 +27,7 @@ class BreadcrumbContext {
         _mapRenderer = new MapRenderer(_tileCache, _settings, _cachedValues);
     }
 
-    function setup() as Void
-    {
+    function setup() as Void {
         _settings.loadSettings(); // we want to make sure everything is done later
         _cachedValues.setup();
 

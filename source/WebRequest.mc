@@ -24,11 +24,11 @@ class ImageWebHandler {
 
 class WebRequest {
     var url as String;
-    var params as Dictionary<Object, Object>;
+    var params as Dictionary;
     // unique id for this request, if two requests have the same hash the second one will be dropped if the first is pending
     var hash as String;
 
-    function initialize(_hash as String, _url as String, _params as Dictionary<Object, Object>) {
+    function initialize(_hash as String, _url as String, _params as Dictionary) {
         hash = _hash;
         url = _url;
         params = _params;
@@ -40,7 +40,7 @@ class JsonRequest extends WebRequest {
     function initialize(
         _hash as String,
         _url as String,
-        _params as Dictionary<Object, Object>,
+        _params as Dictionary,
         _handler as JsonWebHandler
     ) {
         WebRequest.initialize(_hash, _url, _params);
@@ -53,7 +53,7 @@ class ImageRequest extends WebRequest {
     function initialize(
         _hash as String,
         _url as String,
-        _params as Dictionary<Object, Object>,
+        _params as Dictionary,
         _handler as ImageWebHandler
     ) {
         WebRequest.initialize(_hash, _url, _params);
@@ -88,7 +88,7 @@ class WebRequestHandleWrapper {
                 Null
     ) as Void {
         try {
-            handler.handle(responseCode, data);
+            handler.handle(responseCode, data as Null); // trust me it's the correct type (as null is to suppress the warning)
 
             if (
                 responseCode != 200 &&
@@ -397,7 +397,7 @@ class WebRequestHandler {
         // routes still work though, so allowing them to still be used
         Communications.makeWebRequest(
             jsonOrImageReq.url,
-            jsonOrImageReq.params,
+            jsonOrImageReq.params as Dictionary<Lang.Object, Lang.Object>,
             {
                 :method => Communications.HTTP_REQUEST_METHOD_GET,
                 :headers => {

@@ -108,7 +108,12 @@ class MapRenderer {
             for (var y = 0; y < tileCountY; ++y) {
                 var tileKey = new TileKey(firstTileX + x, firstTileY + y, tileZ);
                 var tileFromCache = _tileCache.getTile(tileKey); // seed it for the next render
-                if (tileFromCache == null || tileFromCache.bitmap == null) {
+                if (tileFromCache == null) {
+                    continue;
+                }
+
+                var bitmap = tileFromCache.bitmap;
+                if (bitmap == null) {
                     continue;
                 }
 
@@ -124,7 +129,7 @@ class MapRenderer {
                     yPixel,
                     tileScalePixelSize,
                     tileScalePixelSize,
-                    tileFromCache.bitmap
+                    bitmap
                 );
 
                 if (_settings.showTileBorders) {
@@ -191,7 +196,12 @@ class MapRenderer {
             for (var y = 0; y < tileCountY; ++y) {
                 var tileKey = new TileKey(firstTileX + x, firstTileY + y, tileZ);
                 var tileFromCache = _tileCache.getTile(tileKey); // seed it for the next render
-                if (tileFromCache == null || tileFromCache.bitmap == null) {
+                if (tileFromCache == null) {
+                    continue;
+                }
+
+                var bitmap = tileFromCache.bitmap;
+                if (bitmap == null) {
                     continue;
                 }
 
@@ -232,7 +242,7 @@ class MapRenderer {
                 //     Line: 293
                 //     Function: onUpdate
                 try {
-                    dc.drawBitmap2(xPos, yPos, tileFromCache.bitmap, {
+                    dc.drawBitmap2(xPos, yPos, bitmap, {
                         // :bitmapX =>
                         // :bitmapY =>
                         // :bitmapWidth =>

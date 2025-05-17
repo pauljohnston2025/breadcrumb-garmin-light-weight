@@ -112,7 +112,7 @@ class BreadcrumbRenderer {
         scaleFactor as Number // for elevation to be in mm rather than m
     ) as [Float, Number] {
         var foundDistanceKey = 10;
-        var foundPixelWidth = 0;
+        var foundPixelWidth = 0f;
         // get the closest without going over
         // keys loads them in random order, we want the smallest first
         var keys = scaleNames.keys();
@@ -1174,7 +1174,6 @@ class BreadcrumbRenderer {
 
     function handleStartCacheRoute(x as Number, y as Number) as Boolean {
         var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
 
         if (settings.mode != MODE_NORMAL) {
             return false; // only normal mode can start a tile cache download

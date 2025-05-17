@@ -127,7 +127,7 @@ class BreadcrumbTrack {
                 boundingBoxCenter.y,
                 boundingBoxCenter.altitude,
             ]);
-            Storage.setValue(key + "coords", coordinates._internalArrayBuffer);
+            Storage.setValue(key + "coords", coordinates._internalArrayBuffer as Array<PropertyValueType>);
             Storage.setValue(key + "coordsSize", coordinates._size);
             Storage.setValue(key + "distanceTotal", distanceTotal);
             Storage.setValue(key + "elevationMin", elevationMin);
