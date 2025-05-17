@@ -174,34 +174,27 @@ class BreadcrumbRenderer {
         var xHalf = _cachedValues.xHalf; // local lookup faster
         var yHalf = _cachedValues.yHalf; // local lookup faster
 
-        var lastPointRotated = rotateScaledLatLong(
-            lastPoint.x,
-            lastPoint.y,
-            centerPosition.x,
-            centerPosition.y,
-            rotateCos,
-            rotateSin,
-            xHalf,
-            yHalf
-        );
-        var offTrackPointRotated = rotateScaledLatLong(
-            offTrackPoint.x,
-            offTrackPoint.y,
-            centerPosition.x,
-            centerPosition.y,
-            rotateCos,
-            rotateSin,
-            xHalf,
-            yHalf
-        );
+        var lastPointUnrotatedX = lastPoint.x - centerPosition.x;
+        var lastPointUnrotatedY = lastPoint.y - centerPosition.y;
+        var lastPointRotatedX =
+            xHalf + rotateCos * lastPointUnrotatedX - rotateSin * lastPointUnrotatedY;
+        var lastPointRotatedY =
+            yHalf - (rotateSin * lastPointUnrotatedX + rotateCos * lastPointUnrotatedY);
+
+        var offTrackPointUnrotatedX = offTrackPoint.x - centerPosition.x;
+        var offTrackPointUnrotatedY = offTrackPoint.y - centerPosition.y;
+        var offTrackPointRotatedX =
+            xHalf + rotateCos * offTrackPointUnrotatedX - rotateSin * offTrackPointUnrotatedY;
+        var offTrackPointRotatedY =
+            yHalf - (rotateSin * offTrackPointUnrotatedX + rotateCos * offTrackPointUnrotatedY);
 
         dc.setPenWidth(4);
         dc.setColor(colour, Graphics.COLOR_BLACK);
         dc.drawLine(
-            lastPointRotated[0],
-            lastPointRotated[1],
-            offTrackPointRotated[0],
-            offTrackPointRotated[1]
+            lastPointRotatedX,
+            lastPointRotatedY,
+            offTrackPointRotatedX,
+            offTrackPointRotatedY
         );
     }
 
@@ -261,9 +254,17 @@ class BreadcrumbRenderer {
 
         var triangleSizeY = 10;
         var triangleSizeX = 4;
-        var triangleTop = [userPosRotatedX, userPosRotatedY - triangleSizeY];
-        var triangleLeft = [triangleTop[0] - triangleSizeX, userPosRotatedY + triangleSizeY];
-        var triangleRight = [triangleTop[0] + triangleSizeX, triangleLeft[1]];
+        var triangleTopX = userPosRotatedX;
+        var triangleTopY = userPosRotatedY - triangleSizeY;
+
+        var triangleLeftX = triangleTopX - triangleSizeX;
+        var triangleLeftY = userPosRotatedY + triangleSizeY;
+
+        var triangleRightX = triangleTopX + triangleSizeX;
+        var triangleRightY = triangleLeftY;
+
+        var triangleCenterX = userPosRotatedX;
+        var triangleCenterY = userPosRotatedY;
 
         if (
             settings.renderMode != RENDER_MODE_BUFFERED_ROTATING &&
@@ -271,43 +272,45 @@ class BreadcrumbRenderer {
         ) {
             // todo: load user arrow from bitmap and draw rotated instead
             // we normally rotate the track, but we now need to rotate the user
-            triangleTop = rotatePixelCoords(
-                triangleTop[0],
-                triangleTop[1],
-                userPosRotatedX,
-                userPosRotatedY,
-                rotateCos,
-                rotateSin,
-                xHalf,
-                yHalf
-            );
-            triangleLeft = rotatePixelCoords(
-                triangleLeft[0],
-                triangleLeft[1],
-                userPosRotatedX,
-                userPosRotatedY,
-                rotateCos,
-                rotateSin,
-                xHalf,
-                yHalf
-            );
-            triangleRight = rotatePixelCoords(
-                triangleRight[0],
-                triangleRight[1],
-                userPosRotatedX,
-                userPosRotatedY,
-                rotateCos,
-                rotateSin,
-                xHalf,
-                yHalf
-            );
+            var triangleTopXRot =
+                triangleCenterX +
+                rotateCos * (triangleTopX - triangleCenterX) -
+                rotateSin * (triangleTopY - triangleCenterY);
+            // yes + and not -, we are in pixel coordinates, the rest are in latitude which is negative at the bottom of the page
+            triangleTopY =
+                triangleCenterY +
+                (rotateSin * (triangleTopX - triangleCenterX) +
+                    rotateCos * (triangleTopY - triangleCenterY));
+            triangleTopX = triangleTopXRot;
+
+            var triangleLeftXRot =
+                triangleCenterX +
+                rotateCos * (triangleLeftX - triangleCenterX) -
+                rotateSin * (triangleLeftY - triangleCenterY);
+            // yes + and not -, we are in pixel coordinates, the rest are in latitude which is negative at the bottom of the page
+            triangleLeftY =
+                triangleCenterY +
+                (rotateSin * (triangleLeftX - triangleCenterX) +
+                    rotateCos * (triangleLeftY - triangleCenterY));
+            triangleLeftX = triangleLeftXRot;
+
+            var triangleRightXRot =
+                triangleCenterX +
+                rotateCos * (triangleRightX - triangleCenterX) -
+                rotateSin * (triangleRightY - triangleCenterY);
+            // yes + and not -, we are in pixel coordinates, the rest are in latitude which is negative at the bottom of the page
+            triangleRightY =
+                triangleCenterY +
+                (rotateSin * (triangleRightX - triangleCenterX) +
+                    rotateCos * (triangleRightY - triangleCenterY));
+            triangleRightX = triangleRightXRot;
         }
 
         dc.setColor(settings.userColour, Graphics.COLOR_BLACK);
         dc.setPenWidth(6);
-        dc.drawLine(triangleTop[0], triangleTop[1], triangleRight[0], triangleRight[1]);
-        dc.drawLine(triangleRight[0], triangleRight[1], triangleLeft[0], triangleLeft[1]);
-        dc.drawLine(triangleLeft[0], triangleLeft[1], triangleTop[0], triangleTop[1]);
+        dc.drawLine(triangleTopX, triangleTopY, triangleRightX, triangleRightY);
+        dc.drawLine(triangleRightX, triangleRightY, triangleLeftX, triangleLeftY);
+        dc.drawLine(triangleLeftX, triangleLeftY, triangleTopX, triangleTopY);
     }
 
     function renderTrackUnrotated(
@@ -464,42 +467,39 @@ class BreadcrumbRenderer {
         // note: size is using the overload of points array (the reduced pointarray size)
         // but we draw from the raw points
         if (size >= ARRAY_POINT_SIZE * 2) {
-            var firstRotated = rotateScaledLatLong(
-                coordinatesRaw[0],
-                coordinatesRaw[1],
-                centerPosition.x,
-                centerPosition.y,
-                rotateCos,
-                rotateSin,
-                xHalf,
-                yHalf
-            );
-
-            var lastRotated = firstRotated;
+            var firstXScaledAtCenter = coordinatesRaw[0] - centerPosition.x;
+            var firstYScaledAtCenter = coordinatesRaw[1] - centerPosition.y;
+            var firstXRotated =
+                xHalf + rotateCos * firstXScaledAtCenter - rotateSin * firstYScaledAtCenter;
+            var firstYRotated =
+                yHalf - (rotateSin * firstXScaledAtCenter + rotateCos * firstYScaledAtCenter);
+            var lastXRotated = firstXRotated;
+            var lastYRotated = firstYRotated;
 
             for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
-                var nextRotated = rotateScaledLatLong(
-                    coordinatesRaw[i],
-                    coordinatesRaw[i + 1],
-                    centerPosition.x,
-                    centerPosition.y,
-                    rotateCos,
-                    rotateSin,
-                    xHalf,
-                    yHalf
-                );
+                var nextX = coordinatesRaw[i];
+                var nextY = coordinatesRaw[i + 1];
 
-                dc.drawLine(lastRotated[0], lastRotated[1], nextRotated[0], nextRotated[1]);
+                var nextXScaledAtCenter = nextX - centerPosition.x;
+                var nextYScaledAtCenter = nextY - centerPosition.y;
 
-                lastRotated = nextRotated;
+                var nextXRotated =
+                    xHalf + rotateCos * nextXScaledAtCenter - rotateSin * nextYScaledAtCenter;
+                var nextYRotated =
+                    yHalf - (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
+
+                dc.drawLine(lastXRotated, lastYRotated, nextXRotated, nextYRotated);
+
+                lastXRotated = nextXRotated;
+                lastYRotated = nextYRotated;
             }
 
             renderStartAndEnd(
                 dc,
-                firstRotated[0],
-                firstRotated[1],
-                lastRotated[0],
-                lastRotated[1],
+                firstXRotated,
+                firstYRotated,
+                lastXRotated,
+                lastYRotated,
                 drawEndMarker
             );
         }
@@ -527,18 +527,16 @@ class BreadcrumbRenderer {
         var size = breadcrumb.coordinates.size();
         var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
         for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
-            var rotated = rotateScaledLatLong(
-                coordinatesRaw[i],
-                coordinatesRaw[i + 1],
-                centerPosition.x,
-                centerPosition.y,
-                rotateCos,
-                rotateSin,
-                xHalf,
-                yHalf
-            );
+            var nextX = coordinatesRaw[i];
+            var nextY = coordinatesRaw[i + 1];
 
-            dc.fillCircle(rotated[0], rotated[1], 5);
+            var nextXScaledAtCenter = nextX - centerPosition.x;
+            var nextYScaledAtCenter = nextY - centerPosition.y;
+
+            var x = xHalf + rotateCos * nextXScaledAtCenter - rotateSin * nextYScaledAtCenter;
+            var y = yHalf - (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
+
+            dc.fillCircle(x, y, 5);
         }
     }
 

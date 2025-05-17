@@ -218,56 +218,14 @@ function stringReplaceFirst(
     return newString;
 }
 
-function isHttpResponseCode(responseCode as Number) as Boolean {
+function isHttpResponseCode(responseCode as Number) as Boolean
+{
     return responseCode > 0;
 }
 
-function distance(x1 as Float, y1 as Float, x2 as Float, y2 as Float) as Float {
+function distance(x1 as Float, y1 as Float, x2 as Float, y2 as Float) as Float
+{
     var xDist = x2 - x1;
     var yDist = y2 - y1;
-    return Math.sqrt(xDist * xDist + yDist * yDist).toFloat();
-}
-
-// slightly different than otating a pixel coordinate, singe the coordinate sytem is inverted
-// se negatives on the y parts
-function rotateScaledLatLong(
-    x as Float,
-    y as Float,
-    centerX as Float,
-    centerY as Float,
-    rotateCos as Float,
-    rotateSin as Float,
-    xHalf as Float,
-    yHalf as Float
-) as [Float, Float] {
-    // would it be better to pull rotateSin and rotateCos from the cached values?
-    // would be slower, but passing less variable to func could result in better memory footprint
-
-    var unrotatedX = x - centerX;
-    var unrotatedY = y - centerY;
-    return [
-        xHalf + rotateCos * unrotatedX - rotateSin * unrotatedY,
-        yHalf - (rotateSin * unrotatedX + rotateCos * unrotatedY),
-    ];
-}
-
-function rotatePixelCoords(
-    x as Float,
-    y as Float,
-    centerX as Float,
-    centerY as Float,
-    rotateCos as Float,
-    rotateSin as Float,
-    xHalf as Float,
-    yHalf as Float
-) as [Float, Float] {
-    // would it be better to pull rotateSin and rotateCos from the cached values?
-    // would be slower, but passing less variable to func could result in better memory footprint
-
-    var unrotatedX = x - centerX;
-    var unrotatedY = y - centerY;
-    return [
-        xHalf + rotateCos * unrotatedX - rotateSin * unrotatedY,
-        yHalf + rotateSin * unrotatedX + rotateCos * unrotatedY,
-    ];
+    return Math.sqrt(xDist * xDist + yDist * yDist).toFloat();   
 }

@@ -259,55 +259,41 @@ class MapRenderer {
                     // we have to manually draw rotated lines, since we cannot draw to a buffered bitmap (taking up too much memory)
                     // we could probably avoid drawing 2 wher ethe tiles overlap, but then have to handle the outer tiles diferently
                     // its only a debug settings in a rarely used mode, so fine to do multiple draws
-                    var tl = rotatePixelCoords(
-                        (tileOffsetX + x * tileScalePixelSize).toFloat(),
-                        (tileOffsetY + y * tileScalePixelSize).toFloat(),
-                        xHalf,
-                        yHalf,
-                        rotateCosNeg,
-                        rotateSinNeg,
-                        xHalf,
-                        yHalf
-                    );
+                    var tlX = tileOffsetX + x * tileScalePixelSize;
+                    var tlY = tileOffsetY + y * tileScalePixelSize;
+                    var trX = tlX + tileScalePixelSize;
+                    var trY = tlY;
 
-                    var tr = rotatePixelCoords(
-                        (tileOffsetX + x * tileScalePixelSize + tileScalePixelSize).toFloat(),
-                        (tileOffsetY + y * tileScalePixelSize).toFloat(),
-                        xHalf,
-                        yHalf,
-                        rotateCosNeg,
-                        rotateSinNeg,
-                        xHalf,
-                        yHalf
-                    );
+                    var blX = tlX;
+                    var blY = tlY + tileScalePixelSize;
+                    var brX = trX;
+                    var brY = blY;
 
-                    var bl = rotatePixelCoords(
-                        (tileOffsetX + x * tileScalePixelSize).toFloat(),
-                        (tileOffsetY + y * tileScalePixelSize + tileScalePixelSize).toFloat(),
-                        xHalf,
-                        yHalf,
-                        rotateCosNeg,
-                        rotateSinNeg,
-                        xHalf,
-                        yHalf
-                    );
+                    var tlUnrotatedX = tlX - xHalf;
+                    var tlUnrotatedY = tlY - yHalf;
+                    var tlRotatedX = xHalf + rotateCosNeg * tlUnrotatedX - rotateSinNeg * tlUnrotatedY;
+                    var tlRotatedY = yHalf + (rotateSinNeg * tlUnrotatedX + rotateCosNeg * tlUnrotatedY);
 
-                    var br = rotatePixelCoords(
-                        (tileOffsetX + x * tileScalePixelSize + tileScalePixelSize).toFloat(),
-                        (tileOffsetY + y * tileScalePixelSize + tileScalePixelSize).toFloat(),
-                        xHalf,
-                        yHalf,
-                        rotateCosNeg,
-                        rotateSinNeg,
-                        xHalf,
-                        yHalf
-                    );
+                    var trUnrotatedX = trX - xHalf;
+                    var trUnrotatedY = trY - yHalf;
+                    var trRotatedX = xHalf + rotateCosNeg * trUnrotatedX - rotateSinNeg * trUnrotatedY;
+                    var trRotatedY = yHalf + (rotateSinNeg * trUnrotatedX + rotateCosNeg * trUnrotatedY);
+
+                    var blUnrotatedX = blX - xHalf;
+                    var blUnrotatedY = blY - yHalf;
+                    var blRotatedX = xHalf + rotateCosNeg * blUnrotatedX - rotateSinNeg * blUnrotatedY;
+                    var blRotatedY = yHalf + (rotateSinNeg * blUnrotatedX + rotateCosNeg * blUnrotatedY);
+
+                    var brUnrotatedX = brX - xHalf;
+                    var brUnrotatedY = brY - yHalf;
+                    var brRotatedX = xHalf + rotateCosNeg * brUnrotatedX - rotateSinNeg * brUnrotatedY;
+                    var brRotatedY = yHalf + (rotateSinNeg * brUnrotatedX + rotateCosNeg * brUnrotatedY);
 
                     // draw our 4 lines
-                    dc.drawLine(tl[0], tl[1], tr[0], tr[1]);
-                    dc.drawLine(tr[0], tr[1], br[0], br[1]);
-                    dc.drawLine(br[0], br[1], bl[0], bl[1]);
-                    dc.drawLine(bl[0], bl[1], tl[0], tl[1]);
+                    dc.drawLine(tlRotatedX, tlRotatedY, trRotatedX, trRotatedY);
+                    dc.drawLine(trRotatedX, trRotatedY, brRotatedX, brRotatedY);
+                    dc.drawLine(brRotatedX, brRotatedY, blRotatedX, blRotatedY);
+                    dc.drawLine(blRotatedX, blRotatedY, tlRotatedX, tlRotatedY);
                 }
             }
         }
