@@ -179,7 +179,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             if (_cachedValues.currentScale != 0f) {
                 newPoint.rescaleInPlace(_cachedValues.currentScale);
             }
-            if (_breadcrumbContext.track().onActivityInfo(newPoint)) {
+            var trackAddRes = _breadcrumbContext.track().onActivityInfo(newPoint);
+            var pointAdded = trackAddRes[0];
+            var complexOperationHappened = trackAddRes[1];
+            if (pointAdded && !complexOperationHappened) {
                 // todo: PERF only update this if the new point added changed the bounding box
                 // its pretty good atm though, only recalculates once every few seconds, and only
                 // if a point is added

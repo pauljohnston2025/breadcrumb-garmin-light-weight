@@ -260,14 +260,17 @@ class BreadcrumbTrack {
     }
 
     // new point should be in scale already
-    function addPointRaw(newPoint as RectangularPoint, distance as Float) as Void {
+    function addPointRaw(newPoint as RectangularPoint, distance as Float) as Boolean {
         distanceTotal += distance;
         coordinates.add(newPoint);
         updateBoundingBox(newPoint);
         if (coordinates.restrictPoints(MAX_POINTS)) {
             // a resize occured, calculate important data again
             updatePointDataFromAllPoints();
+            return true;
         }
+
+        return false;
     }
 
     function updatePointDataFromAllPoints() as Void {
@@ -339,7 +342,7 @@ class BreadcrumbTrack {
         inRestartMode = true;
     }
 
-    function handlePointAddStartup(newPoint as RectangularPoint) as Boolean {
+    function handlePointAddStartup(newPoint as RectangularPoint) as [Boolean, Boolean] {
         // genreal p-lan of this function is
         // add data to both startup array and raw array (so we can start drawing points immediately, without the need for patching both arrays together)
         // on unstable points, remove points from both arrays
@@ -348,15 +351,14 @@ class BreadcrumbTrack {
         var lastStartupPoint = coordinates.lastPoint();
         if (lastStartupPoint == null) {
             // nothing to compare against, add the point to both arrays
-            addPointRaw(newPoint, 0f);
-            return true;
+            return [true, addPointRaw(newPoint, 0f)];
         }
 
         var stabilityCheckDistance = lastStartupPoint.distanceTo(newPoint);
         if (stabilityCheckDistance < minDistanceMScaled) {
             // point too close, no need to add, but its still a good point
             seenStartupPoints++;
-            return false;
+            return [false, false];
         }
 
         if (stabilityCheckDistance > maxDistanceMScaled) {
@@ -365,19 +367,17 @@ class BreadcrumbTrack {
             coordinates.removeLastCountPoints(possibleBadPointsAdded);
             possibleBadPointsAdded = 0;
             updatePointDataFromAllPoints();
-            return false;
+            return [false, true];
         }
 
         // we are stable, see if we can break out of startup
         seenStartupPoints++;
         possibleBadPointsAdded++;
-        addPointRaw(newPoint, stabilityCheckDistance);
-
         if (seenStartupPoints == RESTART_STABILITY_POINT_COUNT) {
             inRestartMode = false;
         }
 
-        return true;
+        return [true, addPointRaw(newPoint, stabilityCheckDistance)];
     }
 
     function pointFromActivityInfo(activityInfo as Activity.Info) as RectangularPoint? {
@@ -557,8 +557,8 @@ class BreadcrumbTrack {
         return new OffTrackInfo(false, lastClosePoint);
     }
 
-    // returns true if a new point was added to the track
-    function onActivityInfo(newScaledPoint as RectangularPoint) as Boolean {
+    // returns [if a new point was added to the track, if a complex operation occurred]
+    function onActivityInfo(newScaledPoint as RectangularPoint) as [Boolean, Boolean] {
         // todo only call this when a point is added (some points are skipped on smaller distances)
         // _breadcrumbContext.mapRenderer().loadMapTilesForPosition(newPoint, _breadcrumbContext.trackRenderer()._currentScale);
 
@@ -570,21 +570,20 @@ class BreadcrumbTrack {
         if (lastPoint == null) {
             // startup mode should have set at least one point, revert to startup mode, something has gone wrong
             onStartResume();
-            return false;
+            return [false, false];
         }
 
         var distance = lastPoint.distanceTo(newScaledPoint);
         if (distance < minDistanceMScaled) {
             // point too close, so we can skip it
-            return false;
+            return [false, false];
         }
 
         if (distance > maxDistanceMScaled) {
             // it's too far away, and likely a glitch
-            return false;
+            return [false, false];
         }
 
-        addPointRaw(newScaledPoint, distance);
-        return true;
+        return [true, addPointRaw(newScaledPoint, distance)];
     }
 }

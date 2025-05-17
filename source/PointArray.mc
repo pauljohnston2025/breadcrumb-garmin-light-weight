@@ -160,6 +160,7 @@ class PointArray {
         }
 
         resize((ARRAY_POINT_SIZE * maPoints) / 2);
+        logD("restrictPoints occurred");
         return true;
     }
 
