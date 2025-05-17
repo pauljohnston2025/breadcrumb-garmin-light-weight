@@ -361,7 +361,8 @@ class BreadcrumbTrack {
             return [false, false];
         }
 
-        if (stabilityCheckDistance > maxDistanceMScaled) {
+        // allow large distances when we have just started, we need to get the first point to work from after a resume
+        if (stabilityCheckDistance > maxDistanceMScaled && seenStartupPoints != 0) {
             // we are unstable, remove all our stability check points
             seenStartupPoints = 0;
             coordinates.removeLastCountPoints(possibleBadPointsAdded);
