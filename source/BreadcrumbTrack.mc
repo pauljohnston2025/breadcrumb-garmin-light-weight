@@ -346,11 +346,8 @@ class BreadcrumbTrack {
         // if the main coordinates array has been sliced in half through `restrictPoints()`
         // this may remove more points than needed, but is not a huge concern
         var lastStartupPoint = coordinates.lastPoint();
-        if (lastStartupPoint == null || seenStartupPoints == 0) {
+        if (lastStartupPoint == null) {
             // nothing to compare against, add the point to both arrays
-            // setting to 1 instead of incrementing, just incase they do not get cleaed when they should
-            seenStartupPoints = 1;
-            possibleBadPointsAdded = 1;
             addPointRaw(newPoint, 0f);
             return true;
         }
@@ -377,10 +374,7 @@ class BreadcrumbTrack {
         addPointRaw(newPoint, stabilityCheckDistance);
 
         if (seenStartupPoints == RESTART_STABILITY_POINT_COUNT) {
-            // we have enough stable points that we can exist restart mode and just handle them as normal points
             inRestartMode = false;
-            seenStartupPoints = 0;
-            possibleBadPointsAdded = 0;
         }
 
         return true;
