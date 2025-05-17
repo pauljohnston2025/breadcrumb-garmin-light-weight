@@ -425,9 +425,7 @@ class BreadcrumbTrack {
         if (segmentLengthSq == 0.0) {
             // Points A and B are the same
             // Calculate the final distance
-            var xDist = pointP.x - segmentAX;
-            var yDist = pointP.y - segmentAY;
-            var closestDistance = Math.sqrt(xDist * xDist + yDist * yDist);
+            var closestDistance = distance(pointP.x, pointP.y, segmentAX, segmentAY);
             return [closestDistance, segmentAX, segmentAY];
         }
 
@@ -451,9 +449,7 @@ class BreadcrumbTrack {
         var closestY = segmentAY + clampedT * vy;
 
         // Calculate the final distance
-        var xDist = pointP.x - closestX;
-        var yDist = pointP.y - closestY;
-        var closestSegmentDistance = Math.sqrt(xDist * xDist + yDist * yDist);
+        var closestSegmentDistance = distance(pointP.x, pointP.y, closestX, closestY);
         return [closestSegmentDistance, closestX, closestY];
     }
 

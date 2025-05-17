@@ -25,9 +25,7 @@ class RectangularPoint {
     }
 
     function distanceTo(point as RectangularPoint) as Float {
-        var xDist = point.x - x;
-        var yDist = point.y - y;
-        return Math.sqrt(xDist * xDist + yDist * yDist).toFloat();
+        return distance(point.x, point.y, x, y);
     }
 
     function valid() as Boolean {

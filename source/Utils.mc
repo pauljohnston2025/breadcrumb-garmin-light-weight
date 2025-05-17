@@ -2,6 +2,7 @@ import Toybox.Lang;
 import Toybox.System;
 import Toybox.Graphics;
 import Toybox.Time;
+import Toybox.Math;
 
 const FLOAT_MIN = -340282346638528859811704183484516925440.0;
 const FLOAT_MAX = 340282346638528859811704183484516925440.0;
@@ -220,4 +221,11 @@ function stringReplaceFirst(
 function isHttpResponseCode(responseCode as Number) as Boolean
 {
     return responseCode > 0;
+}
+
+function distance(x1 as Float, y1 as Float, x2 as Float, y2 as Float) as Float
+{
+    var xDist = x2 - x1;
+    var yDist = y2 - y1;
+    return Math.sqrt(xDist * xDist + yDist * yDist).toFloat();   
 }

@@ -1569,10 +1569,7 @@ class BreadcrumbRenderer {
             var currPointY = coordinatesRaw[i + 1];
             var currPointAlt = coordinatesRaw[i + 2];
 
-            var xDist = prevPointX - currPointX;
-            var yDist = prevPointY - currPointY;
-            var xDistance = Math.sqrt(xDist * xDist + yDist * yDist);
-
+            var xDistance = distance(prevPointX, prevPointY, currPointX, currPointY);
             var yDistance = prevPointAlt - currPointAlt;
 
             var currChartX = prevChartX + xDistance * hScale;
