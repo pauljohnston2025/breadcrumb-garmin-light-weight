@@ -317,7 +317,6 @@ class CachedValues {
         rotationMatrix.translate(-xHalf, -yHalf); // move back to position
     }
 
-    (:scaledbitmap)
     function calculateScale(maxDistanceM as Float) as Float {
         if (_settings.scaleRestrictedToTileLayers && _settings.mapEnabled) {
             return tileLayerScale(maxDistanceM);
@@ -325,12 +324,16 @@ class CachedValues {
         return calculateScaleStandard(maxDistanceM);
     }
 
-    // todo inline
     function calculateScaleStandard(maxDistanceM as Float) as Float {
         if (scale != null) {
             return scale;
         }
 
+        return calcScaleForScreenMeters(maxDistanceM);
+    }
+
+    function calcScaleForScreenMeters(maxDistanceM as Float) as Float
+    {
         // we want the whole map to be show on the screen, we have 360 pixels on the
         // venu 2s
         // but this would only work for sqaures, so 0.75 fudge factor for circle
@@ -380,14 +383,6 @@ class CachedValues {
         // note: this gets as close as it can to the zoom level, some route clipping might occur
         // we have to go to the largertile sizes so that we can see the whole route
         return (_settings.tileSize / tileWidthM2).toFloat();
-    }
-
-    (:noscaledbitmap)
-    function calculateScale(maxDistanceM as Float) as Float {
-        // note: this can come from user intervention, and settings the sclae overload, we will get a close as we can
-        var perfectScale = calculateScaleStandard(maxDistanceM);
-
-        return perfectScale;
     }
 
     /** returns the new scale */

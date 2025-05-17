@@ -488,8 +488,17 @@ class Settings {
 
     (:settingsView)
     function setMapChoice(value as Number) as Void {
+        setMapChoiceWithoutSideEffect(value);
+        setValueSideEffect();
+        mapChoiceChanged();
+    }
+
+    function setMapChoiceWithoutSideEffect(value as Number) as Void {
         mapChoice = value;
-        setValue("mapChoice", mapChoice);
+        Application.Properties.setValue("mapChoice", mapChoice);
+    }
+
+    function mapChoiceChanged() as Void {
         updateMapChoiceChange(mapChoice);
         updateCachedValues();
         updateViewSettings();
@@ -627,6 +636,21 @@ class Settings {
             logD("limiting storage tile cache size to: " + storageTileCacheSizeMax);
             setStorageTileCacheSizeWithoutSideEffect(storageTileCacheSizeMax);
         }
+    }
+
+    function companionChangedToMaxMin(minLayer as Number, maxLayer as Number) as Void
+    {
+        // we need to to force the url to be companion app
+        // update to be custom (since companion app url will override tile layers)
+        // This does mean when the users selects companion app on the watch settings it might not match the currently 
+        // configured tile server max/min on the companion app
+        // assert(tileUrl.equals(COMPANION_APP_TILE_URL)); 
+
+        setMapChoiceWithoutSideEffect(0); // custom
+        setTileUrlWithoutSideEffect(COMPANION_APP_TILE_URL); // is checked above, but we will force it to be safe
+        setTileLayerMaxWithoutSideEffect(maxLayer);
+        setTileLayerMinWithoutSideEffect(minLayer);
+        setValueSideEffect();
     }
 
     function updateMapChoiceChange(value as Number) as Void {

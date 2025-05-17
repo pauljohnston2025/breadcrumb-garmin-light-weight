@@ -8,23 +8,6 @@ const FLOAT_MIN = -340282346638528859811704183484516925440.0;
 const FLOAT_MAX = 340282346638528859811704183484516925440.0;
 const NUMBER_MAX = 0x7fffffff;
 
-(:release)
-function isSimulator() as Boolean {
-    return false;
-}
-
-(:debug)
-function isSimulator() as Boolean {
-    var simulators = ["9f8a103dbb3fe23a4c02a601d429c4c677f2908d"];
-    System.println("deviceID: " + System.getDeviceSettings().uniqueIdentifier);
-    if (simulators.indexOf(System.getDeviceSettings().uniqueIdentifier) > -1) {
-        System.println("simulator detected");
-        return true;
-    }
-
-    return false;
-}
-
 function maxF(lhs as Float, rhs as Float) as Float {
     if (lhs > rhs) {
         return lhs;
@@ -98,12 +81,6 @@ function newBitmap(width as Number, height as Number) as Graphics.BufferedBitmap
     return bitmap;
 }
 
-// todo inline with prettier and only log in debug builds
-// todo log levels (problably seperate functions)
-function log(message as String) as Void {
-    logLevel("D", message);
-}
-
 function logLevel(lvl as String, message as String) as Void {
     System.println("" + Time.now().value() + " " + lvl + " " + message);
 }
@@ -115,6 +92,14 @@ function logE(message as String) as Void {
 function logD(message as String) as Void {
     logLevel("D", message);
 }
+
+(:debug)
+function logT(message as String) as Void {
+    logLevel("T", message);
+}
+
+(:release)
+function logT(message as String) as Void {}
 
 // todo (perf): make these inline functions, and set options for vivoactive so these functions result in a direct call to dc
 // only  way to set colour of text is through setColour, which does not support alpha channel, so reverting these changes
@@ -218,14 +203,12 @@ function stringReplaceFirst(
     return newString;
 }
 
-function isHttpResponseCode(responseCode as Number) as Boolean
-{
+function isHttpResponseCode(responseCode as Number) as Boolean {
     return responseCode > 0;
 }
 
-function distance(x1 as Float, y1 as Float, x2 as Float, y2 as Float) as Float
-{
+function distance(x1 as Float, y1 as Float, x2 as Float, y2 as Float) as Float {
     var xDist = x2 - x1;
     var yDist = y2 - y1;
-    return Math.sqrt(xDist * xDist + yDist * yDist).toFloat();   
+    return Math.sqrt(xDist * xDist + yDist * yDist).toFloat();
 }

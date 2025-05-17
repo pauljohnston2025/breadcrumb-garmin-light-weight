@@ -226,7 +226,7 @@ class WebRequestHandler {
 
         var hash = jsonOrImageReq.hash;
         if (pendingHashes.indexOf(hash) > -1) {
-            // log("Dropping req for: " + hash);
+            // logD("Dropping req for: " + hash);
             // note: we cannot attempt to run the request, as i've gotten stack over flows on real devices
             // all web requests will be started from the top level compute loop
             // stack overflow comes when it completes immediately, and calls into handle

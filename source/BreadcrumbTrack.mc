@@ -316,7 +316,7 @@ class BreadcrumbTrack {
 
     // call on first start
     function onStart() as Void {
-        log("onStart");
+        logD("onStart");
         // check from startup, and also clear the current coordinates,
         // anything we got before start is invalid
         coordinates.clear();
@@ -335,7 +335,7 @@ class BreadcrumbTrack {
         if (_neverStarted) {
             onStart();
         }
-        log("onStartResume");
+        logD("onStartResume");
         // check from startup
         seenStartupPoints = 0;
         possibleBadPointsAdded = 0;

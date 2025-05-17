@@ -8,13 +8,13 @@ import Toybox.Communications;
 var globalExceptionCounter as Number = 0;
 
 enum /* Protocol */ {
-    PROTOCOL_ROUTE_DATA = 0,
-    PROTOCOL_MAP_TILE = 1,
+    // PROTOCOL_ROUTE_DATA = 0, - removed in favour of PROTOCOL_ROUTE_DATA2, users must update companion app
+    // PROTOCOL_MAP_TILE = 1, - removed watch has pulled tiles from phone rather than phone pushing for a while
     PROTOCOL_REQUEST_LOCATION_LOAD = 2,
     PROTOCOL_CANCEL_LOCATION_REQUEST = 3,
     PROTOCOL_REQUEST_SETTINGS = 4,
     PROTOCOL_SAVE_SETTINGS = 5,
-    PROTOCOL_DROP_TILE_CACHE = 6, // generally because a new url has been selected on the companion app
+    PROTOCOL_COMPANOIN_APP_TILE_CACHE_CHANGED = 6, // generally because a new url has been selected on the companion app
     PROTOCOL_ROUTE_DATA2 = 7, // an optimised form of PROTOCOL_ROUTE_DATA, so we do not trip the watchdog
 }
 
@@ -107,60 +107,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             var type = data[0] as Number;
             var rawData = data.slice(1, null);
 
-            // todo drop back compat for this onec everyone has new companion app and is using PROTOCOL_ROUTE_DATA2
-            if (type == PROTOCOL_ROUTE_DATA) {
-                // keep for back compat with old apps
-                // protocol:
-                //  name
-                //  [x, y, z]...  // latitude <float> and longitude <float> in degrees, altitude <float> too
-                if (rawData.size() < 1) {
-                    System.println(
-                        "Failed to parse route data, bad length: " +
-                            rawData.size() +
-                            " remainder: " +
-                            (rawData.size() % 3)
-                    );
-                    return;
-                }
-
-                var name = rawData[0] as String;
-                var routeData = rawData.slice(1, null) as Array<Float>;
-                if (routeData.size() % 3 == 0) {
-                    logD("Parsing route data");
-                    var route = _breadcrumbContext.newRoute(name);
-                    if (route == null) {
-                        logE("Failed to add route");
-                        return;
-                    }
-                    for (var i = 0; i < routeData.size(); i += 3) {
-                        route.addLatLongRaw(
-                            routeData[i],
-                            routeData[i + 1],
-                            routeData[i + 2]
-                        );
-                    }
-
-                    var routeWrote = route.writeToDisk(ROUTE_KEY);
-                    var currentScale = _breadcrumbContext.cachedValues().currentScale;
-                    if (currentScale != 0f) {
-                        route.rescale(currentScale);
-                    }
-                    _breadcrumbContext.cachedValues().recalculateAll();
-                    logD("Parsing route data complete, wrote to storage: " + routeWrote);
-                    if (!routeWrote) {
-                        _breadcrumbContext.clearRoute(route.storageIndex);
-                    }
-                    return;
-                }
-
-                System.println(
-                    "Failed to parse route data, bad length: " +
-                        rawData.size() +
-                        " remainder: " +
-                        (rawData.size() % 3)
-                );
-                return;
-            } else if (type == PROTOCOL_ROUTE_DATA2) {
+            if (type == PROTOCOL_ROUTE_DATA2) {
                 // protocol:
                 //  name
                 //  [x, y, z]...  // latitude <float> and longitude <float> in rectangular coordinates - pre calculated by the app, altitude <float> too
@@ -187,73 +134,48 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                         routeData,
                         _breadcrumbContext.cachedValues()
                     );
-                    logD("Parsing route data 2 complete, wrote to storage: " + routeWrote);
+                    logT("Parsing route data 2 complete, wrote to storage: " + routeWrote);
                     if (!routeWrote) {
                         _breadcrumbContext.clearRoute(route.storageIndex);
                     }
                     return;
                 }
 
-                System.println(
+                logE(
                     "Failed to parse route2 data, bad length: " +
                         rawData.size() +
                         " remainder: " +
                         (rawData.size() % 3)
                 );
                 return;
-            } else if (type == PROTOCOL_MAP_TILE) {
-                // note: this route is depdrecated since its really to send through messages
-                // instead you should send through PROTOCOL_REQUEST_TILE_LOAD and serve the correct tiles
-                // with the phone companion app
-                if (rawData.size() < 4) {
-                    System.println("Failed to parse map tile, bad length: " + rawData.size());
-                    return;
-                }
-
-                var tileDataStr = rawData[3] as String;
-                if (
-                    tileDataStr.length() !=
-                    _breadcrumbContext.settings().tileSize * _breadcrumbContext.settings().tileSize
-                ) {
-                    System.println(
-                        "Failed to parse map tile, bad tile length: " + tileDataStr.length()
-                    );
-                    return;
-                }
-
-                var x = rawData[0] as Number;
-                var y = rawData[1] as Number;
-                var z = rawData[2] as Number;
-                var tileKey = new TileKey(x, y, z);
-                var _tileCache = _breadcrumbContext.mapRenderer()._tileCache;
-                var bitmap = _tileCache.tileDataToBitmap64ColourString(tileDataStr.toCharArray());
-                if (bitmap == null) {
-                    System.println("failed to parse bitmap on set tile data");
-                    return;
-                }
-
-                var tile = new Tile(bitmap);
-                _tileCache.addTile(tileKey, _breadcrumbContext.tileCache()._tileCacheVersion, tile);
-                return;
             } else if (type == PROTOCOL_REQUEST_LOCATION_LOAD) {
                 if (rawData.size() < 2) {
-                    System.println(
+                    logE(
                         "Failed to parse request load tile, bad length: " + rawData.size()
                     );
                     return;
                 }
 
-                System.println("parsing req location: " + rawData);
+                logT("parsing req location: " + rawData);
                 var lat = rawData[0] as Float;
                 var long = rawData[1] as Float;
                 _breadcrumbContext.settings().setFixedPosition(lat, long, true);
+
+                if (rawData.size() >= 3) {
+                    // also sets the scale, since user has providedd how many meters they want to see
+                    // note this ignores the 'restrict to tile layers' functionality
+                    var scale = _breadcrumbContext
+                        .cachedValues()
+                        .calcScaleForScreenMeters(rawData[2] as Float);
+                    _breadcrumbContext.cachedValues().setScale(scale);
+                }
                 return;
             } else if (type == PROTOCOL_CANCEL_LOCATION_REQUEST) {
                 System.println("got cancel location req: " + rawData);
                 _breadcrumbContext.settings().setFixedPosition(null, null, true);
                 return;
             } else if (type == PROTOCOL_REQUEST_SETTINGS) {
-                System.println("got send settings req: " + rawData);
+                logT("got send settings req: " + rawData);
                 var settings = _breadcrumbContext.settings().asDict();
                 // logD("sending settings"+ settings);
                 _breadcrumbContext
@@ -261,28 +183,41 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                     .transmit([PROTOCOL_SEND_SETTINGS, settings], {}, new SettingsSent());
                 return;
             } else if (type == PROTOCOL_SAVE_SETTINGS) {
-                System.println("got save settings req: " + rawData);
+                logT("got save settings req: " + rawData);
                 if (rawData.size() < 1) {
-                    System.println(
+                    logE(
                         "Failed to parse save settings request, bad length: " + rawData.size()
                     );
                     return;
                 }
-                _breadcrumbContext.settings().saveSettings(rawData[0] as Dictionary<String, PropertyValueType>);
+                _breadcrumbContext
+                    .settings()
+                    .saveSettings(rawData[0] as Dictionary<String, PropertyValueType>);
                 _breadcrumbContext.settings().onSettingsChanged(); // reload anything that has changed
                 return;
-            } else if (type == PROTOCOL_DROP_TILE_CACHE) {
-                System.println("got drop tile cache req: " + rawData);
+            } else if (type == PROTOCOL_COMPANOIN_APP_TILE_CACHE_CHANGED) { // use to just be PROTOCOL_DROP_TILE_CACHE
+                logT("got tile cache changed req: " + rawData);
+                if (_breadcrumbContext.settings().tileUrl.equals(COMPANION_APP_TILE_URL)) {
+                    logE("not using the companion app tile server");
+                    return;
+                }
                 // this is not perfect, some web requests could be about to complete and add a tile to the cache
                 // maybe we should go into a backoff period? or just allow manual purge from phone app for if something goes wrong
                 // currently tiles have no expiery
                 _breadcrumbContext.tileCache()._storageTileCache.clearValues();
                 _breadcrumbContext.settings().clearTileCache();
                 _breadcrumbContext.settings().clearPendingWebRequests();
+
+                if (rawData.size() >= 2) {
+                    // also sets the scale, since user has providedd how many meters they want to see
+                    // note this ignores the 'restrict to tile layers' functionality
+                    _breadcrumbContext.settings().companionChangedToMaxMin(rawData[0] as Number, rawData[1] as Number);
+                }
+
                 return;
             }
 
-            System.println("Unknown message type: " + type);
+            logE("Unknown message type: " + type);
         } catch (e) {
             logE("failed onPhone: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
