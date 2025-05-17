@@ -49,6 +49,11 @@ class SettingsSent extends Communications.ConnectionListener {
     }
 }
 
+
+// to get devices and their memeory limits
+// cd <homedir>/AppData/Roaming/Garmin/ConnectIQ/Devices/
+// cat ./**/compiler.json | grep -E '"type": "datafield"|displayName' -B 1
+// we currently need 128.5Kb of memory
 class BreadcrumbDataFieldApp extends Application.AppBase {
     var _breadcrumbContext as BreadcrumbContext;
     var _view as BreadcrumbDataFieldView;
