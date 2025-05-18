@@ -841,15 +841,30 @@ class Settings {
             routeMaxReduced();
         }
         setValue("routeMax", routeMax);
+        updateCachedValues();
+        updateViewSettings();
     }
 
     function routeMaxReduced() as Void {
         // remove the first oes or the last ones? we do not have an age, so just remove the last ones.
+        var routesToRemove = [] as Array<Number>;
         for (var i = routeMax; i < routes.size(); ++i) {
             var oldRouteEntry = routes[i];
             var oldRouteId = oldRouteEntry["routeId"] as Number;
-            clearRouteFromContext(oldRouteId);
+            routesToRemove.add(oldRouteId);
         }
+        for (var i = 0; i < routesToRemove.size(); ++i) {
+            var routeId = routesToRemove[i];
+            clearRouteFromContext(routeId);
+            // do not use the clear route helper method, it will stack overflow
+            var routeIndex = getRouteIndexById(routeId);
+            if (routeIndex == null) {
+                return;
+            }
+            routes.remove(routes[routeIndex]);
+        }
+
+        saveRoutesNoSideEffect();
     }
 
     (:settingsView)
@@ -1134,8 +1149,13 @@ class Settings {
     }
 
     function saveRoutes() as Void {
+        saveRoutesNoSideEffect();
+        setValueSideEffect();
+    }
+    
+    function saveRoutesNoSideEffect() as Void {
         var toSave = routesToSave();
-        setValue("routes", toSave as Dictionary<PropertyKeyType, PropertyValueType>);
+        Application.Properties.setValue("routes", toSave as Dictionary<PropertyKeyType, PropertyValueType>);
     }
 
     (:settingsView)

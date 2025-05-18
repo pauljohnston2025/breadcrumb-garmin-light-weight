@@ -843,10 +843,14 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
             var view = new SettingsDebug();
             WatchUi.pushView(view, new $.SettingsDebugDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainClearStorage) {
-            var dialog = new WatchUi.Confirmation(WatchUi.loadResource(Rez.Strings.clearStorage) as String);
+            var dialog = new WatchUi.Confirmation(
+                WatchUi.loadResource(Rez.Strings.clearStorage) as String
+            );
             WatchUi.pushView(dialog, new ClearStorageDelegate(), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainResetDefaults) {
-            var dialog = new WatchUi.Confirmation(WatchUi.loadResource(Rez.Strings.resetDefaults) as String);
+            var dialog = new WatchUi.Confirmation(
+                WatchUi.loadResource(Rez.Strings.resetDefaults) as String
+            );
             WatchUi.pushView(dialog, new ResetSettingsDelegate(), WatchUi.SLIDE_IMMEDIATE);
         }
     }
@@ -1305,27 +1309,39 @@ class SettingsRoutesDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
         me.settings = settings;
     }
+
+    function setRouteMax(value as Number) as Void {
+        settings.setRouteMax(value);
+        // reload our ui, so any route changes are cleared
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // remove the number picker view
+        reloadView();
+        WatchUi.pushView(new DummyView(), null, WatchUi.SLIDE_IMMEDIATE); // push dummy view for the number picker to remove
+    }
+
+    function reloadView() as Void {
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        var view = new $.SettingsRoutes(settings);
+        WatchUi.pushView(
+            view,
+            new $.SettingsRoutesDelegate(view, settings),
+            WatchUi.SLIDE_IMMEDIATE
+        );
+    }
+
     public function onSelect(item as WatchUi.MenuItem) as Void {
         var itemId = item.getId();
         if (itemId == :settingsRoutesEnabled) {
             settings.toggleRoutesEnabled();
-            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-            var view = new $.SettingsRoutes(settings);
-            WatchUi.pushView(
-                view,
-                new $.SettingsRoutesDelegate(view, settings),
-                WatchUi.SLIDE_IMMEDIATE
-            );
+            reloadView();
         } else if (itemId == :settingsDisplayRouteNames) {
             settings.toggleDisplayRouteNames();
             view.rerender();
         } else if (itemId == :settingsDisplayRouteMax) {
-            startPicker(
-                new SettingsNumberPicker(settings.method(:setRouteMax), settings.routeMax),
-                view
-            );
+            startPicker(new SettingsNumberPicker(method(:setRouteMax), settings.routeMax), view);
         } else if (itemId == :settingsRoutesClearAll) {
-            var dialog = new WatchUi.Confirmation(WatchUi.loadResource(Rez.Strings.clearRoutes1) as String);
+            var dialog = new WatchUi.Confirmation(
+                WatchUi.loadResource(Rez.Strings.clearRoutes1) as String
+            );
             WatchUi.pushView(dialog, new ClearRoutesDelegate(), WatchUi.SLIDE_IMMEDIATE);
         }
 
@@ -1372,7 +1388,9 @@ class SettingsRouteDelegate extends WatchUi.Menu2InputDelegate {
                 view
             );
         } else if (itemId == :settingsRouteDelete) {
-            var dialog = new WatchUi.Confirmation(WatchUi.loadResource(Rez.Strings.routeDelete) as String);
+            var dialog = new WatchUi.Confirmation(
+                WatchUi.loadResource(Rez.Strings.routeDelete) as String
+            );
             WatchUi.pushView(
                 dialog,
                 new DeleteRouteDelegate(view.routeId, settings),
@@ -1608,7 +1626,9 @@ class SettingsMapStorageDelegate extends WatchUi.Menu2InputDelegate {
             getApp()._breadcrumbContext.cachedValues.cancelCacheCurrentMapArea();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMapStorageClearCachedTiles) {
-            var dialog = new WatchUi.Confirmation(WatchUi.loadResource(Rez.Strings.clearCachedTiles) as String);
+            var dialog = new WatchUi.Confirmation(
+                WatchUi.loadResource(Rez.Strings.clearCachedTiles) as String
+            );
             WatchUi.pushView(dialog, new ClearCachedTilesDelegate(), WatchUi.SLIDE_IMMEDIATE);
         }
     }

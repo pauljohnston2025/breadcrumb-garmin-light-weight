@@ -46,6 +46,11 @@ class BreadcrumbContext {
     }
 
     function newRoute(name as String) as BreadcrumbTrack? {
+        if (settings.routeMax <= 0) {
+            WatchUi.showToast("Route Max is 0", {});
+            return null; // cannot allocate routes
+        }
+        
         // we could maybe just not load the route if they are not enabled?
         // but they are pushing a new route from the app for this to happen
         // so forcing the new route to be enabled
@@ -62,10 +67,6 @@ class BreadcrumbContext {
         // eg me.routes = [BreadcrumbTrack{storageIndex:0, name: "phoneroute"}] settings.routes = [{id:2, name: "customroute2"}, {id:0, name: "phoneroute"}],
         // the colours will be uneffected
         // note: the route will also be force enabled, as described above
-        if (settings.routeMax <= 0) {
-            WatchUi.showToast("Route Max is 0", {});
-            return null; // cannot allocate routes
-        }
         if (routes.size() >= settings.routeMax) {
             var oldestOrFirstDisabledRoute = null;
             for (var i = 0; i < routes.size(); ++i) {
