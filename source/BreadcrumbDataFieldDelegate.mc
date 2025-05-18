@@ -47,6 +47,14 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
         if (renderer.handleStartCacheRoute(x, y)) {
             return true;
         }
+        
+        if (renderer.handleStartMapEnable(x, y)) {
+            return true;
+        }
+        
+        if (renderer.handleStartMapDisable(x, y)) {
+            return true;
+        }
 
         if (renderer.handleClearRoute(x, y)) {
             // returns true if it handles touches on top left
@@ -57,12 +65,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
         // perhaps put this into new class to handle touch events, and have a
         // renderer for that ui would allow us to switch out ui and handle touched
         // differently also will alow setting the scren height
-        if (
-            y > renderer.modeSelectY - halfHitboxSize &&
-            y < renderer.modeSelectY + halfHitboxSize &&
-            x > renderer.modeSelectX - halfHitboxSize &&
-            x < renderer.modeSelectX + halfHitboxSize
-        ) {
+        if (inHitbox(x,y,renderer.modeSelectX, renderer.modeSelectY, halfHitboxSize)) {
             // top right
             settings.nextMode();
             return true;
@@ -72,12 +75,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
             return false;
         }
 
-        if (
-            y > renderer.returnToUserY - halfHitboxSize &&
-            y < renderer.returnToUserY + halfHitboxSize &&
-            x > renderer.returnToUserX - halfHitboxSize &&
-            x < renderer.returnToUserX + halfHitboxSize
-        ) {
+        if (inHitbox(x,y,renderer.returnToUserX, renderer.returnToUserY, halfHitboxSize)) {
             // return to users location
             // bottom left
             settings.setFixedPosition(null, null, true);
@@ -86,20 +84,24 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
             // but we will just clear it when they click 'go back to user', and it will now be whatever is in the 'zoom at pace' settings
             renderer.resetScale();
             return true;
-        } else if (
-            y > renderer.mapEnabledY - halfHitboxSize &&
-            y < renderer.mapEnabledY + halfHitboxSize &&
-            x > renderer.mapEnabledX - halfHitboxSize &&
-            x < renderer.mapEnabledX + halfHitboxSize
-        ) {
-            // botom right
-            if (settings.mode == MODE_NORMAL) {
-                settings.toggleMapEnabled();
-                return true;
-            }
+        }
+        //  else if (
+        //     y > renderer.mapEnabledY - halfHitboxSize &&
+        //     y < renderer.mapEnabledY + halfHitboxSize &&
+        //     x > renderer.mapEnabledX - halfHitboxSize &&
+        //     x < renderer.mapEnabledX + halfHitboxSize
+        // ) {
+        //     // botom right
+        //     // map enable/disable now handled above
+        //     // if (settings.mode == MODE_NORMAL) {
+        //     //     settings.toggleMapEnabled();
+        //     //     return true;
+        //     // }
 
-            return false;
-        } else if (y < hitboxSize) {
+        //     return false;
+        // } 
+        // todo update these to use inHitbox ?
+        else if (y < hitboxSize) {
             if (settings.mode == MODE_MAP_MOVE) {
                 cachedValues.moveFixedPositionUp();
                 return true;

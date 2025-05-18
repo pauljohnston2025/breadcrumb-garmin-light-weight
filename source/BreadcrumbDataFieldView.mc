@@ -361,6 +361,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         if (renderer.renderClearTrackUi(dc)) {
             return;
         }
+        if (renderer.renderMapEnable(dc)) {
+            return;
+        }
+        if (renderer.renderMapDisable(dc)) {
+            return;
+        }
 
         // mode should be wtored here, but is needed for renderring the ui
         // should structure this way better, but oh well (renderer per mode etc.)

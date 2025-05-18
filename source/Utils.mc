@@ -190,3 +190,11 @@ function distance(x1 as Float, y1 as Float, x2 as Float, y2 as Float) as Float {
     var yDist = y2 - y1;
     return Math.sqrt(xDist * xDist + yDist * yDist).toFloat();
 }
+
+
+function inHitbox(x as Number, y as Number, hitboxX as Float, hitboxY as Float, halfHitboxSize as Float) as Boolean {
+    return y > hitboxY - halfHitboxSize &&
+            y < hitboxY + halfHitboxSize &&
+            x > hitboxX - halfHitboxSize &&
+            x < hitboxX + halfHitboxSize;
+}

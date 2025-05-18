@@ -100,7 +100,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         try {
             var data = msg.data as Array?;
             if (data == null || !(data instanceof Array) || data.size() < 1) {
-                System.println("Bad message: " + data);
+                logE("Bad message: " + data);
                 return;
             }
 
@@ -108,6 +108,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             var rawData = data.slice(1, null);
 
             if (type == PROTOCOL_ROUTE_DATA2) {
+                logT("Parsing route data 2");
                 // protocol:
                 //  name
                 //  [x, y, z]...  // latitude <float> and longitude <float> in rectangular coordinates - pre calculated by the app, altitude <float> too
@@ -124,7 +125,6 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 var name = rawData[0] as String;
                 var routeData = rawData[1] as Array<Float>;
                 if (routeData.size() % ARRAY_POINT_SIZE == 0) {
-                    logD("Parsing route data 2");
                     var route = _breadcrumbContext.newRoute(name);
                     if (route == null) {
                         logE("Failed to add route");
@@ -149,12 +149,12 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 );
                 return;
             } else if (type == PROTOCOL_REQUEST_LOCATION_LOAD) {
+                logT("parsing req location: " + rawData);
                 if (rawData.size() < 2) {
                     logE("Failed to parse request load tile, bad length: " + rawData.size());
                     return;
                 }
 
-                logT("parsing req location: " + rawData);
                 var lat = rawData[0] as Float;
                 var long = rawData[1] as Float;
                 _breadcrumbContext.settings.setFixedPosition(lat, long, true);
@@ -169,7 +169,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 }
                 return;
             } else if (type == PROTOCOL_CANCEL_LOCATION_REQUEST) {
-                System.println("got cancel location req: " + rawData);
+                logT("got cancel location req: " + rawData);
                 _breadcrumbContext.settings.setFixedPosition(null, null, true);
                 return;
             } else if (type == PROTOCOL_REQUEST_SETTINGS) {

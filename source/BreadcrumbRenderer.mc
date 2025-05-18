@@ -15,6 +15,8 @@ class BreadcrumbRenderer {
     // todo put into ui class
     var _clearRouteProgress as Number = 0;
     var _starCacheTilesProgress as Number = 0;
+    var _enableMapProgress as Number = 0;
+    var _disableMapProgress as Number = 0;
     var settings as Settings;
     var _cachedValues as CachedValues;
     var _crosshair as BitmapResource;
@@ -565,83 +567,20 @@ class BreadcrumbRenderer {
     }
 
     function renderTileSeedUi(dc as Dc) as Boolean {
+        if (
+            renderLeftStartConfirmation(
+                dc,
+                _starCacheTilesProgress,
+                "Start tile caching. This breaks on some devices. Are you sure?",
+                "Confirm start tile caching",
+                "Start tile caching, LAST CHANCE!!!"
+            )
+        ) {
+            return true;
+        }
+
         var xHalf = _cachedValues.xHalf; // local lookup faster
         var yHalf = _cachedValues.yHalf; // local lookup faster
-        var screenHeight = _cachedValues.screenHeight; // local lookup faster
-
-        // should be using Toybox.WatchUi.Confirmation and Toybox.WatchUi.ConfirmationDelegate for questions
-        var padding = xHalf / 2.0f;
-        var topText = yHalf / 2.0f;
-        switch (_starCacheTilesProgress) {
-            case 0:
-                break;
-            case 1:
-            case 3: {
-                // press left to confirm, right cancels
-                dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_GREEN);
-                dc.fillRectangle(0, 0, xHalf, screenHeight);
-                dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
-                dc.fillRectangle(xHalf, 0, xHalf, screenHeight);
-                dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(
-                    xHalf - padding,
-                    yHalf,
-                    Graphics.FONT_XTINY,
-                    "Y",
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                dc.drawText(
-                    xHalf + padding,
-                    yHalf,
-                    Graphics.FONT_XTINY,
-                    "N",
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                var text =
-                    _starCacheTilesProgress == 1
-                        ? "Start tile caching\n(this breaks on some devices)\nare you sure?"
-                        : "Start tile caching, LAST CHANCE!!!";
-                dc.drawText(
-                    xHalf,
-                    topText,
-                    Graphics.FONT_XTINY,
-                    text,
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                return true;
-            }
-            case 2: {
-                // press left to confirm, right cancels
-                dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
-                dc.fillRectangle(0, 0, xHalf, screenHeight);
-                dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_GREEN);
-                dc.fillRectangle(xHalf, 0, xHalf, screenHeight);
-                dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(
-                    xHalf - padding,
-                    yHalf,
-                    Graphics.FONT_XTINY,
-                    "N",
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                dc.drawText(
-                    xHalf + padding,
-                    yHalf,
-                    Graphics.FONT_XTINY,
-                    "Y",
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                var text = "Confirm start tile caching";
-                dc.drawText(
-                    xHalf,
-                    topText,
-                    Graphics.FONT_XTINY,
-                    text,
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                return true;
-            }
-        }
 
         if (!_cachedValues.seeding()) {
             // not seeding, no ui
@@ -717,80 +656,136 @@ class BreadcrumbRenderer {
         return true;
     }
 
-    function renderClearTrackUi(dc as Dc) as Boolean {
+    function renderMapEnable(dc as Dc) as Boolean {
+        return renderLeftStartConfirmation(
+            dc,
+            _enableMapProgress,
+            "Enable maps. This breaks on some devices. Are you sure?",
+            "Confirm map enable",
+            "Enabling maps, LAST CHANCE!!!"
+        );
+    }
+
+    function renderMapDisable(dc as Dc) as Boolean {
+        return renderLeftStartConfirmation(
+            dc,
+            _disableMapProgress,
+            "Disable maps. All tiles and storage tiles will be removed. Are you sure?",
+            "Confirm map disable",
+            "Disabling maps, LAST CHANCE!!!"
+        );
+    }
+
+    function renderYNUi(
+        dc as Dc,
+        text as String or ResourceId,
+        leftText as String,
+        rightText as String,
+        leftColour as Number,
+        rightColour as Number
+    ) as Void {
         var xHalf = _cachedValues.xHalf; // local lookup faster
         var yHalf = _cachedValues.yHalf; // local lookup faster
         var screenHeight = _cachedValues.screenHeight; // local lookup faster
-
-        // should be using Toybox.WatchUi.Confirmation and Toybox.WatchUi.ConfirmationDelegate for questions
+        var screenWidth = _cachedValues.screenWidth; // local lookup faster
         var padding = xHalf / 2.0f;
         var topText = yHalf / 2.0f;
+
+        dc.setColor(leftColour, leftColour);
+        dc.fillRectangle(0, 0, xHalf, screenHeight);
+        dc.setColor(rightColour, rightColour);
+        dc.fillRectangle(xHalf, 0, xHalf, screenHeight);
+
+        var textArea = new WatchUi.TextArea({
+            :text => text,
+            :color => settings.uiColour,
+            :font => [Graphics.FONT_XTINY],
+            :justification => Graphics.TEXT_JUSTIFY_CENTER,
+            :locX => WatchUi.LAYOUT_HALIGN_CENTER,
+            :locY => topText,
+            :width => screenWidth * 0.8f, // round devices cannot show text at top of screen
+            :height => xHalf,
+        });
+        textArea.draw(dc);
+
+        dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(
+            xHalf - padding,
+            yHalf,
+            Graphics.FONT_XTINY,
+            leftText,
+            Graphics.TEXT_JUSTIFY_CENTER
+        );
+        dc.drawText(
+            xHalf + padding,
+            yHalf,
+            Graphics.FONT_XTINY,
+            rightText,
+            Graphics.TEXT_JUSTIFY_CENTER
+        );
+    }
+
+    function renderLeftStartConfirmation(
+        dc as Dc,
+        variable as Number,
+        text1 as String or ResourceId,
+        text2 as String or ResourceId,
+        text3 as String or ResourceId
+    ) as Boolean {
+        switch (variable) {
+            case 0:
+                break;
+            case 1:
+            case 3: {
+                // press left to confirm, right cancels
+                renderYNUi(
+                    dc as Dc,
+                    variable == 1 ? text1 : text3,
+                    "Y",
+                    "N",
+                    Graphics.COLOR_GREEN,
+                    Graphics.COLOR_RED
+                );
+                return true;
+            }
+            case 2: {
+                // press left to confirm, right cancels
+                renderYNUi(dc as Dc, text2, "N", "Y", Graphics.COLOR_RED, Graphics.COLOR_GREEN);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function renderClearTrackUi(dc as Dc) as Boolean {
         switch (_clearRouteProgress) {
             case 0:
                 break;
             case 1:
             case 3: {
                 // press right to confirm, left cancels
-                dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
-                dc.fillRectangle(0, 0, xHalf, screenHeight);
-                dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_GREEN);
-                dc.fillRectangle(xHalf, 0, xHalf, screenHeight);
-                dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(
-                    xHalf - padding,
-                    yHalf,
-                    Graphics.FONT_XTINY,
-                    "N",
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                dc.drawText(
-                    xHalf + padding,
-                    yHalf,
-                    Graphics.FONT_XTINY,
-                    "Y",
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                var text =
+                renderYNUi(
+                    dc as Dc,
                     _clearRouteProgress == 1
                         ? "Clearing all routes, are you sure?"
-                        : "Clearing all routes, LAST CHANCE!!!";
-                dc.drawText(
-                    xHalf,
-                    topText,
-                    Graphics.FONT_XTINY,
-                    text,
-                    Graphics.TEXT_JUSTIFY_CENTER
+                        : "Clearing all routes, LAST CHANCE!!!",
+                    "N",
+                    "Y",
+                    Graphics.COLOR_RED,
+                    Graphics.COLOR_GREEN
                 );
                 return true;
             }
             case 2: {
                 // press left to confirm, right cancels
-                dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_GREEN);
-                dc.fillRectangle(0, 0, xHalf, screenHeight);
-                dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_RED);
-                dc.fillRectangle(xHalf, 0, xHalf, screenHeight);
-                dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(
-                    xHalf - padding,
-                    yHalf,
-                    Graphics.FONT_XTINY,
+                renderYNUi(
+                    dc as Dc,
+                    "Confirm route clear",
                     "Y",
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                dc.drawText(
-                    xHalf + padding,
-                    yHalf,
-                    Graphics.FONT_XTINY,
                     "N",
-                    Graphics.TEXT_JUSTIFY_CENTER
-                );
-                var text = "Confirm route clear";
-                dc.drawText(
-                    xHalf,
-                    topText,
-                    Graphics.FONT_XTINY,
-                    text,
-                    Graphics.TEXT_JUSTIFY_CENTER
+                    Graphics.COLOR_GREEN,
+                    Graphics.COLOR_RED
                 );
                 return true;
             }
@@ -1011,7 +1006,7 @@ class BreadcrumbRenderer {
             fvText = "R";
         }
         dc.drawText(
-            lineFromEdge,
+            halfHitboxSize,
             yHalf,
             Graphics.FONT_XTINY,
             fvText,
@@ -1021,7 +1016,7 @@ class BreadcrumbRenderer {
         if (settings.mapEnabled) {
             // right of screen
             dc.drawText(
-                screenWidth - lineFromEdge,
+                screenWidth - halfHitboxSize,
                 yHalf,
                 Graphics.FONT_XTINY,
                 "G",
@@ -1130,12 +1125,7 @@ class BreadcrumbRenderer {
         switch (_clearRouteProgress) {
             case 0:
                 // press top left to start clear route
-                if (
-                    y > clearRouteY - halfHitboxSize &&
-                    y < clearRouteY + halfHitboxSize &&
-                    x > clearRouteX - halfHitboxSize &&
-                    x < clearRouteX + halfHitboxSize
-                ) {
+                if (inHitbox(x, y, clearRouteX, clearRouteY, halfHitboxSize)) {
                     _clearRouteProgress = 1;
                     return true;
                 }
@@ -1170,46 +1160,93 @@ class BreadcrumbRenderer {
     }
 
     function handleStartCacheRoute(x as Number, y as Number) as Boolean {
+        var res = handleStartLeftYNUi(
+            x,
+            y,
+            _cachedValues.screenWidth - halfHitboxSize, // right of screen
+            _cachedValues.yHalf,
+            _starCacheTilesProgress,
+            _cachedValues.method(:startCacheCurrentMapArea)
+        );
+        _starCacheTilesProgress = res[1];
+        return res[0];
+    }
+
+    function handleStartMapEnable(x as Number, y as Number) as Boolean {
+        if (settings.mapEnabled) {
+            _enableMapProgress = 0;
+            return false; // already enabled
+        }
+        var res = handleStartLeftYNUi(
+            x,
+            y,
+            mapEnabledX,
+            mapEnabledY,
+            _enableMapProgress,
+            settings.method(:toggleMapEnabled)
+        );
+        _enableMapProgress = res[1];
+        return res[0];
+    }
+    function handleStartMapDisable(x as Number, y as Number) as Boolean {
+        if (!settings.mapEnabled) {
+            _disableMapProgress = 0;
+            return false; // already disabled
+        }
+        var res = handleStartLeftYNUi(
+            x,
+            y,
+            mapEnabledX,
+            mapEnabledY,
+            _disableMapProgress,
+            settings.method(:toggleMapEnabled)
+        );
+        _disableMapProgress = res[1];
+        return res[0];
+    }
+
+    function handleStartLeftYNUi(
+        x as Number,
+        y as Number,
+        hitboxX as Float,
+        hitboxY as Float,
+        variable as Number,
+        method as Method
+    ) as [Boolean, Number] {
         var xHalf = _cachedValues.xHalf; // local lookup faster
 
         if (settings.mode != MODE_NORMAL) {
-            return false; // only normal mode can start a tile cache download
+            return [false, variable]; // only normal mode can start y/n confirms atm
         }
-        switch (_starCacheTilesProgress) {
+        switch (variable) {
             case 0:
-                // press right of the screen to start tile cache download
-                if (x > _cachedValues.screenWidth - hitboxSize) {
-                    _starCacheTilesProgress = 1;
-                    return true;
+                // start location touched
+                if (inHitbox(x, y, hitboxX, hitboxY, halfHitboxSize)) {
+                    return [true, 1];
                 }
-                return false;
+                return [false, 0];
             case 1:
                 // press left to confirm, right cancels
                 if (x < xHalf) {
-                    _starCacheTilesProgress = 2;
-                    return true;
+                    return [true, 2];
                 }
-                _starCacheTilesProgress = 0;
-                return true;
+                return [true, 0];
 
             case 2:
                 // press right to confirm, left cancels
                 if (x > xHalf) {
-                    _starCacheTilesProgress = 3;
-                    return true;
+                    return [true, 3];
                 }
-                _starCacheTilesProgress = 0;
-                return true;
+                return [true, 0];
             case 3:
                 // press left to confirm, right cancels
                 if (x < xHalf) {
-                    _cachedValues.startCacheCurrentMapArea();
+                    method.invoke();
                 }
-                _starCacheTilesProgress = 0;
-                return true;
+                return [true, 0];
         }
 
-        return false;
+        return [false, variable];
     }
 
     function resetScale() as Void {
@@ -1236,7 +1273,7 @@ class BreadcrumbRenderer {
     var returnToUserY as Float = -1f;
     var mapEnabledX as Float = -1f;
     var mapEnabledY as Float = -1f;
-    var hitboxSize as Float = 60f;
+    var hitboxSize as Float = 40f;
     var halfHitboxSize as Float = hitboxSize / 2.0f;
 
     function setElevationAndUiData(xElevationStart as Float) as Void {

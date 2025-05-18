@@ -122,12 +122,7 @@ class NumberPicker {
             var pointY = point[1];
 
             // Check if the tap is within the hit box
-            if (
-                x >= pointX - halfHitboxSize &&
-                x <= pointX + halfHitboxSize &&
-                y >= pointY - halfHitboxSize &&
-                y <= pointY + halfHitboxSize
-            ) {
+            if (inHitbox(x, y, pointX, pointY, halfHitboxSize.toFloat())) {
                 return self._charset.substring(i, i + 1);
             }
         }
