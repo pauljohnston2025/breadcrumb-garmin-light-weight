@@ -51,8 +51,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         _breadcrumbContext = breadcrumbContext;
         _scratchPadBitmap = null;
         DataField.initialize();
-        settings = _breadcrumbContext.settings();
-        _cachedValues = _breadcrumbContext.cachedValues();
+        settings = _breadcrumbContext.settings;
+        _cachedValues = _breadcrumbContext.cachedValues;
     }
 
     function rescale(scaleFactor as Float) as Void {
@@ -86,16 +86,16 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         // logD("onLayout");
         _cachedValues.setScreenSize(dc.getWidth(), dc.getHeight());
         var textDim = dc.getTextDimensions("1234", Graphics.FONT_XTINY);
-        _breadcrumbContext.trackRenderer().setElevationAndUiData(textDim[0] * 1.0f);
+        _breadcrumbContext.breadcrumbRenderer.setElevationAndUiData(textDim[0] * 1.0f);
         updateScratchPadBitmap();
     }
 
     function onWorkoutStarted() as Void {
-        _breadcrumbContext.track().onStart();
+        _breadcrumbContext.track.onStart();
     }
 
     function onTimerStart() as Void {
-        _breadcrumbContext.track().onStartResume();
+        _breadcrumbContext.track.onStartResume();
     }
 
     function compute(info as Activity.Info) as Void {
@@ -113,8 +113,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
         // logD("compute");
         // temp hack for debugging in simulator (since it seems altitude does not work when playing activity data from gpx file)
-        // var route = _breadcrumbContext.routes()[0];
-        // var nextPoint = route.coordinates.getPoint(_breadcrumbContext.track().coordinates.pointSize());
+        // var route = _breadcrumbContext.routes[0];
+        // var nextPoint = route.coordinates.getPoint(_breadcrumbContext.track.coordinates.pointSize());
         // if (nextPoint != null)
         // {
         //     info.altitude = nextPoint.altitude;
@@ -134,7 +134,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             // this is here due to stack overflow bug when requests trigger the next request
             // only try 3 times, do not want to schedule heps if they complete immeditely, could hit watchdog
             for (var i = 0; i < 3; ++i) {
-                if (!_breadcrumbContext.webRequestHandler().startNextIfWeCan()) {
+                if (!_breadcrumbContext.webRequestHandler.startNextIfWeCan()) {
                     break;
                 }
             }
@@ -147,7 +147,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             // could possibly be moved into cached values when map data changes - though map data may not change but we nuked the pending web requests - safer here
             // or we have to do multiple seeds if pending web requests is low
             // needs to be before _computeCounter for when we load tiles from storage (we can only load 1 tile per second)
-            if (_breadcrumbContext.mapRenderer().seedTiles()) {
+            if (_breadcrumbContext.mapRenderer.seedTiles()) {
                 // we loadeed a tile from storage, which could be a significantly costly task,
                 // do not trip the watchdog, be safe and return
                 // if tile cacheSize is not large enough, this could result in no tracking, since all tiles could potentially be pulled from storage
@@ -164,22 +164,22 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
         _computeCounter = 0;
 
-        var settings = _breadcrumbContext.settings();
+        var settings = _breadcrumbContext.settings;
         var disableMapsFailureCount = settings.disableMapsFailureCount;
         if (
             disableMapsFailureCount != 0 &&
-            _breadcrumbContext.webRequestHandler().errorCount() > disableMapsFailureCount
+            _breadcrumbContext.webRequestHandler.errorCount() > disableMapsFailureCount
         ) {
             System.println("disabling maps, too many errors");
             settings.setMapEnabled(false);
         }
 
-        var newPoint = _breadcrumbContext.track().pointFromActivityInfo(info);
+        var newPoint = _breadcrumbContext.track.pointFromActivityInfo(info);
         if (newPoint != null) {
             if (_cachedValues.currentScale != 0f) {
                 newPoint.rescaleInPlace(_cachedValues.currentScale);
             }
-            var trackAddRes = _breadcrumbContext.track().onActivityInfo(newPoint);
+            var trackAddRes = _breadcrumbContext.track.onActivityInfo(newPoint);
             var pointAdded = trackAddRes[0];
             var complexOperationHappened = trackAddRes[1];
             if (pointAdded && !complexOperationHappened) {
@@ -187,7 +187,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 // its pretty good atm though, only recalculates once every few seconds, and only
                 // if a point is added
                 _cachedValues.updateScaleCenterAndMap();
-                var lastPoint = _breadcrumbContext.track().lastPoint();
+                var lastPoint = _breadcrumbContext.track.lastPoint();
                 if (
                     lastPoint != null &&
                     (settings.enableOffTrackAlerts || settings.drawLineToClosestPoint)
@@ -209,8 +209,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         lastOffTrackAlertChecked = epoch;
 
         var atLeastOneEnabled = false;
-        for (var i = 0; i < _breadcrumbContext.routes().size(); ++i) {
-            var route = _breadcrumbContext.routes()[i];
+        for (var i = 0; i < _breadcrumbContext.routes.size(); ++i) {
+            var route = _breadcrumbContext.routes[i];
             if (!settings.routeEnabled(route.storageIndex)) {
                 continue;
             }
@@ -354,7 +354,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         dc.clear();
 
         // logD("onUpdate");
-        var renderer = _breadcrumbContext.trackRenderer();
+        var renderer = _breadcrumbContext.breadcrumbRenderer;
         if (renderer.renderTileSeedUi(dc)) {
             return;
         }
@@ -366,13 +366,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         // should structure this way better, but oh well (renderer per mode etc.)
         if (settings.mode == MODE_ELEVATION) {
             renderElevation(dc);
-            if (_breadcrumbContext.settings().uiMode == UI_MODE_SHOW_ALL) {
+            if (_breadcrumbContext.settings.uiMode == UI_MODE_SHOW_ALL) {
                 renderer.renderUi(dc);
             }
             return;
         } else if (settings.mode == MODE_DEBUG) {
             renderDebug(dc);
-            if (_breadcrumbContext.settings().uiMode == UI_MODE_SHOW_ALL) {
+            if (_breadcrumbContext.settings.uiMode == UI_MODE_SHOW_ALL) {
                 renderer.renderUi(dc);
             }
             return;
@@ -380,7 +380,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
         renderMain(dc);
 
-        var routes = _breadcrumbContext.routes();
+        var routes = _breadcrumbContext.routes;
 
         if (settings.displayRouteNames) {
             for (var i = 0; i < routes.size(); ++i) {
@@ -404,13 +404,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
 
         // move based on the last scale we drew
-        if (_breadcrumbContext.settings().uiMode == UI_MODE_SHOW_ALL) {
+        if (_breadcrumbContext.settings.uiMode == UI_MODE_SHOW_ALL) {
             renderer.renderUi(dc);
         }
 
         renderer.renderCurrentScale(dc);
 
-        var lastPoint = _breadcrumbContext.track().lastPoint();
+        var lastPoint = _breadcrumbContext.track.lastPoint();
         if (lastPoint != null) {
             renderer.renderUser(dc, lastPoint);
         }
@@ -450,8 +450,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         // _renderCounter = 0;
         // looks like view must do a render (not doing a render causes flashes), perhaps we can store our rendered state to a buffer to load from?
 
-        var routes = _breadcrumbContext.routes();
-        var track = _breadcrumbContext.track();
+        var routes = _breadcrumbContext.routes;
+        var track = _breadcrumbContext.track;
 
         if (
             settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
@@ -515,8 +515,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
 
         if (settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING) {
-            var mapRenderer = _breadcrumbContext.mapRenderer();
-            var renderer = _breadcrumbContext.trackRenderer();
+            var mapRenderer = _breadcrumbContext.mapRenderer;
+            var renderer = _breadcrumbContext.breadcrumbRenderer;
             dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
             dc.clear();
             mapRenderer.renderMap(dc);
@@ -547,8 +547,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         routes as Array<BreadcrumbTrack>,
         track as BreadcrumbTrack
     ) as Void {
-        var renderer = _breadcrumbContext.trackRenderer();
-        var mapRenderer = _breadcrumbContext.mapRenderer();
+        var renderer = _breadcrumbContext.breadcrumbRenderer;
+        var mapRenderer = _breadcrumbContext.mapRenderer;
 
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
@@ -577,8 +577,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
 
     function renderOffTrackPoint(dc as Dc) as Void {
-        var lastPoint = _breadcrumbContext.track().lastPoint();
-        var renderer = _breadcrumbContext.trackRenderer();
+        var lastPoint = _breadcrumbContext.track.lastPoint();
+        var renderer = _breadcrumbContext.breadcrumbRenderer;
         var pointWeLeftTrack = offTrackInfo.pointWeLeftTrack;
         if (lastPoint != null) {
             // only ever not null if feature enabled
@@ -608,8 +608,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
 
     function renderOffTrackPointUnrotated(dc as Dc) as Void {
-        var lastPoint = _breadcrumbContext.track().lastPoint();
-        var renderer = _breadcrumbContext.trackRenderer();
+        var lastPoint = _breadcrumbContext.track.lastPoint();
+        var renderer = _breadcrumbContext.breadcrumbRenderer;
         var pointWeLeftTrack = offTrackInfo.pointWeLeftTrack;
         if (lastPoint != null) {
             // only ever not null if feature enabled
@@ -663,9 +663,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             y,
             Graphics.FONT_XTINY,
             "pending web: " +
-                _breadcrumbContext.webRequestHandler().pendingCount() +
+                _breadcrumbContext.webRequestHandler.pendingCount() +
                 " t: " +
-                _breadcrumbContext.webRequestHandler().pendingTransmitCount(),
+                _breadcrumbContext.webRequestHandler.pendingTransmitCount(),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -674,13 +674,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             y,
             Graphics.FONT_XTINY,
             "outstanding: " +
-                _breadcrumbContext.webRequestHandler().outstandingCount() +
+                _breadcrumbContext.webRequestHandler.outstandingCount() +
                 " web: " +
-                _breadcrumbContext.webRequestHandler().outstandingHashesCount(),
+                _breadcrumbContext.webRequestHandler.outstandingHashesCount(),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
-        var combined = "last web res: " + _breadcrumbContext.webRequestHandler().lastResult();
+        var combined = "last web res: " + _breadcrumbContext.webRequestHandler.lastResult();
 
         if (settings.storageMapTilesOnly) {
             combined = "<storage only>";
@@ -688,9 +688,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
         combined +=
             "  tiles: " +
-            _breadcrumbContext.tileCache().tileCount() +
+            _breadcrumbContext.tileCache.tileCount() +
             " s: " +
-            _breadcrumbContext.tileCache()._storageTileCache._tilesInStorage.size();
+            _breadcrumbContext.tileCache._storageTileCache._tilesInStorage.size();
 
         dc.drawText(x, y, Graphics.FONT_XTINY, combined, Graphics.TEXT_JUSTIFY_CENTER);
         y += spacing;
@@ -711,7 +711,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         );
         y += spacing;
         var distToLastStr = "NA";
-        var lastPoint = _breadcrumbContext.track().lastPoint();
+        var lastPoint = _breadcrumbContext.track.lastPoint();
         var pointWeLeftTrack = offTrackInfo.pointWeLeftTrack;
         if (lastPoint != null && pointWeLeftTrack != null) {
             var distMeters = pointWeLeftTrack.distanceTo(lastPoint);
@@ -749,9 +749,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             y,
             Graphics.FONT_XTINY,
             "web err: " +
-                _breadcrumbContext.webRequestHandler().errorCount() +
+                _breadcrumbContext.webRequestHandler.errorCount() +
                 " web ok: " +
-                _breadcrumbContext.webRequestHandler().successCount(),
+                _breadcrumbContext.webRequestHandler.successCount(),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -759,7 +759,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "hits: " + _breadcrumbContext.tileCache().hits(),
+            "hits: " + _breadcrumbContext.tileCache.hits(),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -767,7 +767,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "misses: " + _breadcrumbContext.tileCache().misses(),
+            "misses: " + _breadcrumbContext.tileCache.misses(),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -812,9 +812,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
 
     function renderElevationStacked(dc as Dc) as Void {
-        var routes = _breadcrumbContext.routes();
-        var track = _breadcrumbContext.track();
-        var renderer = _breadcrumbContext.trackRenderer();
+        var routes = _breadcrumbContext.routes;
+        var track = _breadcrumbContext.track;
+        var renderer = _breadcrumbContext.breadcrumbRenderer;
 
         var elevationScale = renderer.getElevationScale(track, routes);
         var hScale = elevationScale[0];
@@ -862,9 +862,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
 
     function renderElevationOrderedRoutes(dc as Dc) as Void {
-        var routes = _breadcrumbContext.routes();
-        var track = _breadcrumbContext.track();
-        var renderer = _breadcrumbContext.trackRenderer();
+        var routes = _breadcrumbContext.routes;
+        var track = _breadcrumbContext.track;
+        var renderer = _breadcrumbContext.breadcrumbRenderer;
 
         var elevationScale = renderer.getElevationScaleOrderedRoutes(track, routes);
         var hScale = elevationScale[0];

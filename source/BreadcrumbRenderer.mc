@@ -693,22 +693,22 @@ class BreadcrumbRenderer {
                 ).format("%.1f") +
                 "%)" +
                 "\npending web: " +
-                breadcrumbContext.webRequestHandler().pendingCount() +
+                breadcrumbContext.webRequestHandler.pendingCount() +
                 "\noutstanding: " +
-                breadcrumbContext.webRequestHandler().outstandingCount() +
+                breadcrumbContext.webRequestHandler.outstandingCount() +
                 "\nlast web res: " +
-                breadcrumbContext.webRequestHandler().lastResult() +
+                breadcrumbContext.webRequestHandler.lastResult() +
                 "\nweb err: " +
-                breadcrumbContext.webRequestHandler().errorCount() +
+                breadcrumbContext.webRequestHandler.errorCount() +
                 " web ok: " +
-                breadcrumbContext.webRequestHandler().successCount() +
+                breadcrumbContext.webRequestHandler.successCount() +
                 "\nmem: " +
                 (System.getSystemStats().usedMemory / 1024f).format("%.1f") +
                 "K f: " +
                 (System.getSystemStats().freeMemory / 1024f).format("%.1f") +
                 "K" +
                 "\nstorage tiles: " +
-                breadcrumbContext.tileCache()._storageTileCache._tilesInStorage.size() +
+                breadcrumbContext.tileCache._storageTileCache._tilesInStorage.size() +
                 "/" +
                 settings.storageTileCacheSize,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
@@ -898,10 +898,7 @@ class BreadcrumbRenderer {
                 fixedLatitude != null &&
                 fixedLongitude != null
             ) {
-                var txt =
-                    fixedLatitude.format("%.3f") +
-                    ", " +
-                    fixedLongitude.format("%.3f");
+                var txt = fixedLatitude.format("%.3f") + ", " + fixedLongitude.format("%.3f");
                 dc.drawText(
                     xHalf,
                     screenHeight - scaleFromEdge,
@@ -1251,7 +1248,8 @@ class BreadcrumbRenderer {
         _xElevationEnd = screenWidth - _xElevationStart;
         var xElevationFromCenter = xHalf - _xElevationStart;
         _yElevationHeight =
-            Math.sqrt(xHalf * xHalf - xElevationFromCenter * xElevationFromCenter).toFloat() * 2 - 40;
+            Math.sqrt(xHalf * xHalf - xElevationFromCenter * xElevationFromCenter).toFloat() * 2 -
+            40;
         _halfYElevationHeight = _yElevationHeight / 2.0f;
         yElevationTop = yHalf - _halfYElevationHeight;
         yElevationBottom = yHalf + _halfYElevationHeight;
@@ -1264,7 +1262,9 @@ class BreadcrumbRenderer {
         var xHalf = _cachedValues.xHalf; // local lookup faster
         var yHalf = _cachedValues.yHalf; // local lookup faster
 
-        var offsetSize = Math.sqrt(((yHalf - halfHitboxSize) * (yHalf - halfHitboxSize)) / 2).toFloat();
+        var offsetSize = Math.sqrt(
+            ((yHalf - halfHitboxSize) * (yHalf - halfHitboxSize)) / 2
+        ).toFloat();
 
         // top left
         clearRouteX = xHalf - offsetSize;

@@ -24,9 +24,9 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
         var coords = evt.getCoordinates();
         var x = coords[0];
         var y = coords[1];
-        var renderer = _breadcrumbContext.trackRenderer();
-        var settings = _breadcrumbContext.settings();
-        var cachedValues = _breadcrumbContext.cachedValues();
+        var renderer = _breadcrumbContext.breadcrumbRenderer;
+        var settings = _breadcrumbContext.settings;
+        var cachedValues = _breadcrumbContext.cachedValues;
 
         var hitboxSize = renderer.hitboxSize;
         var halfHitboxSize = hitboxSize / 2.0f;
@@ -35,8 +35,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
             return false;
         }
 
-        if (cachedValues.seeding())
-        {
+        if (cachedValues.seeding()) {
             // we are displaying the tile seed screen, only allow cancel
             if (y < hitboxSize) {
                 // top of screen

@@ -59,11 +59,13 @@ class TileKey {
             :offset => 8,
             :endianness => Lang.ENDIAN_BIG,
         });
-        return StringUtil.convertEncodedString(byteArr, {
-            :fromRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
-            :toRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
-            :encoding => StringUtil.CHAR_ENCODING_UTF8,
-        }) as String;
+        return (
+            StringUtil.convertEncodedString(byteArr, {
+                :fromRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
+                :toRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
+                :encoding => StringUtil.CHAR_ENCODING_UTF8,
+            }) as String
+        );
     }
 
     function hashCode() as Number {
@@ -163,8 +165,8 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             return;
         }
 
-        var settings = getApp()._breadcrumbContext.settings();
-        var cachedValues = getApp()._breadcrumbContext.cachedValues();
+        var settings = getApp()._breadcrumbContext.settings;
+        var cachedValues = getApp()._breadcrumbContext.cachedValues;
 
         if (responseCode != 200) {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
@@ -186,8 +188,8 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         data as Dictionary or String or Iterator or Null,
         addToCache as Boolean
     ) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
-        var cachedValues = getApp()._breadcrumbContext.cachedValues();
+        var settings = getApp()._breadcrumbContext.settings;
+        var cachedValues = getApp()._breadcrumbContext.cachedValues;
 
         if (!(data instanceof Dictionary)) {
             System.println("wrong data type, not dict: " + data);
@@ -205,7 +207,10 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
 
         if (addToCache) {
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-                _tileCache._storageTileCache.addJsonData(_tileKey, data as Dictionary<PropertyKeyType, PropertyValueType>);
+                _tileCache._storageTileCache.addJsonData(
+                    _tileKey,
+                    data as Dictionary<PropertyKeyType, PropertyValueType>
+                );
             }
         }
 
@@ -257,10 +262,11 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
     }
 
     function handleBase64FullColourDataString(mapTile as String) as Void {
-        var mapTileBytes = StringUtil.convertEncodedString(mapTile, {
-            :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
-            :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
-        }) as ByteArray;
+        var mapTileBytes =
+            StringUtil.convertEncodedString(mapTile, {
+                :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
+                :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
+            }) as ByteArray;
         // System.println("got tile string of length: " + mapTile.length());
         var bitmap = _tileCache.tileDataToBitmapFullColour(mapTileBytes);
         if (bitmap == null) {
@@ -327,8 +333,8 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             return;
         }
 
-        var settings = getApp()._breadcrumbContext.settings();
-        var cachedValues = getApp()._breadcrumbContext.cachedValues();
+        var settings = getApp()._breadcrumbContext.settings;
+        var cachedValues = getApp()._breadcrumbContext.cachedValues;
 
         if (responseCode != 200) {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
@@ -350,8 +356,8 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         data as WatchUi.BitmapResource or Graphics.BitmapReference or Null,
         addToCache as Boolean
     ) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
-        var cachedValues = getApp()._breadcrumbContext.cachedValues();
+        var settings = getApp()._breadcrumbContext.settings;
+        var cachedValues = getApp()._breadcrumbContext.cachedValues;
 
         if (
             data == null ||
@@ -557,14 +563,14 @@ class StorageTileCache {
         Storage.setValue(metaKeyStr, tileMeta);
 
         var epoch = Time.now().value();
-        var expiresAt = tileMeta[2]as Number;
+        var expiresAt = tileMeta[2] as Number;
         if (expired(expiresAt, epoch)) {
             logE("tile expired" + tileMeta);
             // todo should we evict the tile now?
             return null;
         }
 
-        switch (tileMeta[1]as Number) {
+        switch (tileMeta[1] as Number) {
             case STORAGE_TILE_TYPE_DICT:
                 // no need to check type of the getValue call, handling code checks it
                 return [200, Storage.getValue(tileKey(tileKeyStr)) as Dictionary]; // should always fit into the 32Kb size
@@ -605,7 +611,7 @@ class StorageTileCache {
     function addErroredTile(tileKey as TileKey, responseCode as Number) as Void {
         var tileKeyStr = tileKey.optimisedHashKey();
         var epoch = Time.now().value();
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var expiresAt =
             epoch +
             (isHttpResponseCode(responseCode)
@@ -617,7 +623,7 @@ class StorageTileCache {
     function addWrongDataTile(tileKey as TileKey) as Void {
         var tileKeyStr = tileKey.optimisedHashKey();
         var epoch = Time.now().value();
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var expiresAt = epoch + settings.errorTileTTLS;
         addMetaData(tileKeyStr, [epoch, STORAGE_TILE_TYPE_ERRORED, expiresAt, WRONG_DATA_TILE]);
     }

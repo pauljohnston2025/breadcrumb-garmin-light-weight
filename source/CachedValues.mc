@@ -146,7 +146,7 @@ class CachedValues {
         if (currentlyZoomingAroundUser) {
             var renderDistanceM = _settings.metersAroundUser;
             if (!calcCenterPoint()) {
-                var lastPoint = getApp()._breadcrumbContext.track().coordinates.lastPoint();
+                var lastPoint = getApp()._breadcrumbContext.track.coordinates.lastPoint();
                 if (lastPoint != null) {
                     centerPosition = lastPoint;
                     return calculateScale(renderDistanceM.toFloat());
@@ -154,7 +154,7 @@ class CachedValues {
                 // we are zooming around the user, but we do not have a last track point
                 // resort to using bounding box
                 var boundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
-                    getApp()._breadcrumbContext.routes(),
+                    getApp()._breadcrumbContext.routes,
                     null
                 );
                 calcCenterPointForBoundingBox(boundingBox);
@@ -165,7 +165,7 @@ class CachedValues {
         }
 
         var boundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
-            getApp()._breadcrumbContext.routes(),
+            getApp()._breadcrumbContext.routes,
             _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK
                 ? null
                 : optionalTrackBoundingBox()
@@ -175,9 +175,9 @@ class CachedValues {
     }
 
     function optionalTrackBoundingBox() as [Float, Float, Float, Float]? {
-        return getApp()._breadcrumbContext.track().coordinates.lastPoint() == null
+        return getApp()._breadcrumbContext.track.coordinates.lastPoint() == null
             ? null
-            : getApp()._breadcrumbContext.track().boundingBox;
+            : getApp()._breadcrumbContext.track.boundingBox;
     }
 
     // needs to be called whenever the screen moves to a new bounding box
@@ -332,8 +332,7 @@ class CachedValues {
         return calcScaleForScreenMeters(maxDistanceM);
     }
 
-    function calcScaleForScreenMeters(maxDistanceM as Float) as Float
-    {
+    function calcScaleForScreenMeters(maxDistanceM as Float) as Float {
         // we want the whole map to be show on the screen, we have 360 pixels on the
         // venu 2s
         // but this would only work for sqaures, so 0.75 fudge factor for circle
@@ -417,12 +416,12 @@ class CachedValues {
             scaleFactor = newScale / currentScale;
         }
 
-        var routes = getApp()._breadcrumbContext.routes();
+        var routes = getApp()._breadcrumbContext.routes;
         for (var i = 0; i < routes.size(); ++i) {
             var route = routes[i];
             route.rescale(scaleFactor); // rescale all routes, even if they are not enabled
         }
-        getApp()._breadcrumbContext.track().rescale(scaleFactor);
+        getApp()._breadcrumbContext.track.rescale(scaleFactor);
         getApp()._view.rescale(scaleFactor);
         centerPosition.rescaleInPlace(scaleFactor);
 
@@ -572,7 +571,7 @@ class CachedValues {
             _settings.zoomAtPaceMode != ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK
         ) {
             // the hacks begin
-            var lastPoint = getApp()._breadcrumbContext.track().coordinates.lastPoint();
+            var lastPoint = getApp()._breadcrumbContext.track.coordinates.lastPoint();
             if (lastPoint != null) {
                 centerPosition = lastPoint;
                 return true;
@@ -678,7 +677,7 @@ class CachedValues {
             return;
         }
 
-        var tileCache = getApp()._breadcrumbContext.tileCache();
+        var tileCache = getApp()._breadcrumbContext.tileCache;
         // If we do not clear the in memory tile cache the image tiles sometimes cause us to crash.
         // Think its because the graphics pool runs out of memory, and makeImageRequest fails with
         // Error: System Error
@@ -761,7 +760,7 @@ class CachedValues {
             tilesPerXRow -
             (lastTileX - maxN(firstTileX, seedingUpToTileX));
 
-        var tileCache = getApp()._breadcrumbContext.tileCache();
+        var tileCache = getApp()._breadcrumbContext.tileCache;
 
         // we do not want to get a massive for loop that we then get killed by the watchdog
         // we also might not even fetch a tile, we need to wait until the previous set have responded
@@ -806,8 +805,8 @@ class CachedValues {
         firstTileY as Number,
         lastTileX as Number,
         lastTileY as Number
-    ) as Void{
-        var tileCache = getApp()._breadcrumbContext.tileCache();
+    ) as Void {
+        var tileCache = getApp()._breadcrumbContext.tileCache;
 
         for (var y = firstTileY; y < lastTileY; ++y) {
             for (

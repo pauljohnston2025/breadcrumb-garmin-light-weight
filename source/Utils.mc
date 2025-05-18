@@ -126,7 +126,7 @@ function drawScaledBitmapHelper(
     // I assume one has a performance benifit over the other?
     // need to test which is better (or if there is any noticible difference)
     // todo cache this transform so we do nto need to recreate every time
-    var tileScaleFactor = getApp()._breadcrumbContext.cachedValues().tileScaleFactor;
+    var tileScaleFactor = getApp()._breadcrumbContext.cachedValues.tileScaleFactor;
     var scaleMatrix = new AffineTransform();
     scaleMatrix.scale(tileScaleFactor, tileScaleFactor); // scale
     try {

@@ -5,7 +5,7 @@ import Toybox.WatchUi;
 import Toybox.Communications;
 import Toybox.Graphics;
 
-typedef Renderable as interface  {
+typedef Renderable as interface {
     function rerender() as Void;
 };
 
@@ -222,7 +222,7 @@ class SettingsMain extends Rez.Menus.SettingsMain {
     }
 
     function rerender() as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var modeString = "";
         switch (settings.mode) {
             case MODE_NORMAL:
@@ -295,7 +295,7 @@ class SettingsZoomAtPace extends Rez.Menus.SettingsZoomAtPace {
     }
 
     function rerender() as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var modeString = "";
         switch (settings.zoomAtPaceMode) {
             case ZOOM_AT_PACE_MODE_PACE:
@@ -336,7 +336,7 @@ class SettingsMap extends Rez.Menus.SettingsMap {
     }
 
     function rerender() as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         safeSetToggle(me, :settingsMapEnabled, true);
 
         safeSetSubLabel(me, :settingsMapTileCacheSize, settings.tileCacheSize.toString());
@@ -375,7 +375,7 @@ class SettingsTileServer extends Rez.Menus.SettingsTileServer {
     }
 
     function rerender() as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
 
         var mapChoiceString = "";
         switch (settings.mapChoice) {
@@ -486,7 +486,7 @@ class SettingsMapStorage extends Rez.Menus.SettingsMapStorage {
     }
 
     function rerender() as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         safeSetToggle(me, :settingsMapStorageCacheTilesInStorage, settings.cacheTilesInStorage);
         safeSetToggle(me, :settingsMapStorageStorageMapTilesOnly, settings.storageMapTilesOnly);
         safeSetSubLabel(
@@ -496,7 +496,7 @@ class SettingsMapStorage extends Rez.Menus.SettingsMapStorage {
         );
         var cacheSize =
             "" +
-            getApp()._breadcrumbContext.tileCache()._storageTileCache._tilesInStorage.size() +
+            getApp()._breadcrumbContext.tileCache._storageTileCache._tilesInStorage.size() +
             "/" +
             settings.storageTileCacheSize;
         safeSetSubLabel(me, :settingsMapStorageCacheCurrentArea, cacheSize);
@@ -523,7 +523,7 @@ class SettingsAlerts extends Rez.Menus.SettingsAlerts {
     }
 
     function rerender() as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         safeSetToggle(me, :settingsAlertsDrawLineToClosestPoint, settings.drawLineToClosestPoint);
         safeSetToggle(me, :settingsAlertsEnabled, true);
         safeSetSubLabel(
@@ -562,7 +562,7 @@ class SettingsAlertsDisabled extends Rez.Menus.SettingsAlertsDisabled {
     }
 
     function rerender() as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         safeSetToggle(me, :settingsAlertsDrawLineToClosestPoint, settings.drawLineToClosestPoint);
         safeSetSubLabel(
             me,
@@ -586,7 +586,7 @@ class SettingsColours extends Rez.Menus.SettingsColours {
     }
 
     function rerender() as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         safeSetIcon(me, :settingsColoursTrackColour, new ColourIcon(settings.trackColour));
         safeSetIcon(me, :settingsColoursUserColour, new ColourIcon(settings.userColour));
         safeSetIcon(me, :settingsColoursElevationColour, new ColourIcon(settings.elevationColour));
@@ -608,7 +608,7 @@ class SettingsDebug extends Rez.Menus.SettingsDebug {
     }
 
     function rerender() as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         safeSetIcon(me, :settingsDebugTileErrorColour, new ColourIcon(settings.tileErrorColour));
         safeSetToggle(me, :settingsDebugShowPoints, settings.showPoints);
         safeSetToggle(me, :settingsDebugDrawLineToClosestTrack, settings.drawLineToClosestTrack);
@@ -765,7 +765,7 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
     }
 
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsMainMode) {
             WatchUi.pushView(
@@ -885,7 +885,7 @@ class ResetSettingsDelegate extends WatchUi.ConfirmationDelegate {
     }
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
-            getApp()._breadcrumbContext.settings().resetDefaults();
+            getApp()._breadcrumbContext.settings.resetDefaults();
         }
 
         return true; // we always handle it
@@ -900,8 +900,8 @@ class ClearStorageDelegate extends WatchUi.ConfirmationDelegate {
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
             Application.Storage.clearValues(); // purge the storage, but we have to clean up all our classes that load from storage too
-            getApp()._breadcrumbContext.tileCache()._storageTileCache.clearValues(); // reload our tile storage class
-            getApp()._breadcrumbContext.tileCache().clearValues(); // also clear the tile cache, it case it pulled from our storage
+            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues(); // reload our tile storage class
+            getApp()._breadcrumbContext.tileCache.clearValues(); // also clear the tile cache, it case it pulled from our storage
             getApp()._breadcrumbContext.clearRoutes(); // also clear the routes to mimic storage being removed
         }
 
@@ -916,8 +916,8 @@ class ClearCachedTilesDelegate extends WatchUi.ConfirmationDelegate {
     }
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
-            getApp()._breadcrumbContext.tileCache()._storageTileCache.clearValues();
-            getApp()._breadcrumbContext.tileCache().clearValues(); // also clear the tile cache, it case it pulled from our storage
+            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues();
+            getApp()._breadcrumbContext.tileCache.clearValues(); // also clear the tile cache, it case it pulled from our storage
 
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop confirmation
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop map storage view
@@ -937,7 +937,7 @@ class StartCachedTilesDelegate extends WatchUi.ConfirmationDelegate {
     }
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
-            getApp()._breadcrumbContext.cachedValues().startCacheCurrentMapArea();
+            getApp()._breadcrumbContext.cachedValues.startCacheCurrentMapArea();
         }
 
         return true; // we always handle it
@@ -985,7 +985,7 @@ class SettingsModeDelegate extends WatchUi.Menu2InputDelegate {
         me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsModeTrackRoute) {
             settings.setMode(MODE_NORMAL);
@@ -1036,7 +1036,7 @@ class SettingsMapChoiceDelegate extends WatchUi.Menu2InputDelegate {
         me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId() as Object;
         switch (itemId) {
             case :settingsMapChoiceCustom:
@@ -1178,7 +1178,7 @@ class SettingsUiModeDelegate extends WatchUi.Menu2InputDelegate {
         me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsUiModeShowall) {
             settings.setUiMode(UI_MODE_SHOW_ALL);
@@ -1201,7 +1201,7 @@ class SettingsElevationModeDelegate extends WatchUi.Menu2InputDelegate {
         me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsElevationModeStacked) {
             settings.setElevationMode(ELEVATION_MODE_STACKED);
@@ -1222,7 +1222,7 @@ class SettingsAlertTypeDelegate extends WatchUi.Menu2InputDelegate {
         me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsAlertTypeToast) {
             settings.setAlertType(ALERT_TYPE_TOAST);
@@ -1243,7 +1243,7 @@ class SettingsRenderModeDelegate extends WatchUi.Menu2InputDelegate {
         me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsRenderModeBufferedRotating) {
             settings.setRenderMode(RENDER_MODE_BUFFERED_ROTATING);
@@ -1268,7 +1268,7 @@ class SettingsZoomAtPaceDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsZoomAtPaceMode) {
             WatchUi.pushView(
@@ -1390,7 +1390,7 @@ class SettingsZoomAtPaceModeDelegate extends WatchUi.Menu2InputDelegate {
         me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsZoomAtPaceModePace) {
             settings.setZoomAtPaceMode(ZOOM_AT_PACE_MODE_PACE);
@@ -1417,7 +1417,7 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsMapEnabled) {
             settings.setMapEnabled(false);
@@ -1521,7 +1521,7 @@ class SettingsTileServerDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsMapChoice) {
             WatchUi.pushView(
@@ -1583,7 +1583,7 @@ class SettingsMapStorageDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsMapStorageCacheTilesInStorage) {
             settings.toggleCacheTilesInStorage();
@@ -1605,7 +1605,7 @@ class SettingsMapStorageDelegate extends WatchUi.Menu2InputDelegate {
             );
             WatchUi.pushView(dialog, new StartCachedTilesDelegate(), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMapStorageCancelCacheDownload) {
-            getApp()._breadcrumbContext.cachedValues().cancelCacheCurrentMapArea();
+            getApp()._breadcrumbContext.cachedValues.cancelCacheCurrentMapArea();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMapStorageClearCachedTiles) {
             var dialog = new WatchUi.Confirmation("Clear all cached tiles?");
@@ -1622,7 +1622,7 @@ class SettingsMapDisabledDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsMapEnabled) {
             settings.setMapEnabled(true);
@@ -1641,7 +1641,7 @@ class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsAlertsDrawLineToClosestPoint) {
             settings.toggleDrawLineToClosestPoint();
@@ -1697,7 +1697,7 @@ class SettingsAlertsDisabledDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsAlertsDrawLineToClosestPoint) {
             settings.toggleDrawLineToClosestPoint();
@@ -1739,7 +1739,7 @@ class ClearRoutesDelegate extends WatchUi.ConfirmationDelegate {
     var settings as Settings;
     function initialize() {
         WatchUi.ConfirmationDelegate.initialize();
-        self.settings = getApp()._breadcrumbContext.settings();
+        self.settings = getApp()._breadcrumbContext.settings;
     }
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
@@ -1772,7 +1772,7 @@ class SettingsColoursDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsColoursTrackColour) {
             startPicker(
@@ -1822,7 +1822,7 @@ class SettingsDebugDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = getApp()._breadcrumbContext.settings();
+        var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
         if (itemId == :settingsDebugTileErrorColour) {
             startPicker(

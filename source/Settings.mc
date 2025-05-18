@@ -638,13 +638,12 @@ class Settings {
         }
     }
 
-    function companionChangedToMaxMin(minLayer as Number, maxLayer as Number) as Void
-    {
+    function companionChangedToMaxMin(minLayer as Number, maxLayer as Number) as Void {
         // we need to to force the url to be companion app
         // update to be custom (since companion app url will override tile layers)
-        // This does mean when the users selects companion app on the watch settings it might not match the currently 
+        // This does mean when the users selects companion app on the watch settings it might not match the currently
         // configured tile server max/min on the companion app
-        // assert(tileUrl.equals(COMPANION_APP_TILE_URL)); 
+        // assert(tileUrl.equals(COMPANION_APP_TILE_URL));
 
         setMapChoiceWithoutSideEffect(0); // custom
         setTileUrlWithoutSideEffect(COMPANION_APP_TILE_URL); // is checked above, but we will force it to be safe
@@ -1289,11 +1288,11 @@ class Settings {
     }
 
     function clearTileCache() as Void {
-        getApp()._breadcrumbContext.tileCache().clearValues();
+        getApp()._breadcrumbContext.tileCache.clearValues();
     }
 
     function clearStorageTiles() as Void {
-        getApp()._breadcrumbContext.tileCache()._storageTileCache.clearValues();
+        getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues();
     }
 
     function transmit(
@@ -1301,15 +1300,15 @@ class Settings {
         options as Dictionary?,
         listener as Communications.ConnectionListener
     ) as Void {
-        getApp()._breadcrumbContext._webRequestHandler.transmit(content, options, listener);
+        getApp()._breadcrumbContext.webRequestHandler.transmit(content, options, listener);
     }
 
     function clearTileCacheStats() as Void {
-        getApp()._breadcrumbContext.tileCache().clearStats();
+        getApp()._breadcrumbContext.tileCache.clearStats();
     }
 
     function clearPendingWebRequests() as Void {
-        getApp()._breadcrumbContext._webRequestHandler.clearValues();
+        getApp()._breadcrumbContext.webRequestHandler.clearValues();
     }
 
     function updateViewSettings() as Void {
@@ -1317,11 +1316,11 @@ class Settings {
     }
 
     function updateCachedValues() as Void {
-        getApp()._breadcrumbContext._cachedValues.recalculateAll();
+        getApp()._breadcrumbContext.cachedValues.recalculateAll();
     }
 
     function clearWebStats() as Void {
-        getApp()._breadcrumbContext._webRequestHandler.clearStats();
+        getApp()._breadcrumbContext.webRequestHandler.clearStats();
     }
 
     function clearContextRoutes() as Void {

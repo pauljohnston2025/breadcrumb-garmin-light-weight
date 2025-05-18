@@ -561,7 +561,7 @@ class BreadcrumbTrack {
     // returns [if a new point was added to the track, if a complex operation occurred]
     function onActivityInfo(newScaledPoint as RectangularPoint) as [Boolean, Boolean] {
         // todo only call this when a point is added (some points are skipped on smaller distances)
-        // _breadcrumbContext.mapRenderer().loadMapTilesForPosition(newPoint, _breadcrumbContext.trackRenderer()._currentScale);
+        // _breadcrumbContext.mapRenderer.loadMapTilesForPosition(newPoint, _breadcrumbContext.breadcrumbRenderer._currentScale);
 
         if (inRestartMode) {
             return handlePointAddStartup(newScaledPoint);

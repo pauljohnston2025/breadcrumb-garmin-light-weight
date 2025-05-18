@@ -271,23 +271,31 @@ class MapRenderer {
 
                     var tlUnrotatedX = tlX - xHalf;
                     var tlUnrotatedY = tlY - yHalf;
-                    var tlRotatedX = xHalf + rotateCosNeg * tlUnrotatedX - rotateSinNeg * tlUnrotatedY;
-                    var tlRotatedY = yHalf + (rotateSinNeg * tlUnrotatedX + rotateCosNeg * tlUnrotatedY);
+                    var tlRotatedX =
+                        xHalf + rotateCosNeg * tlUnrotatedX - rotateSinNeg * tlUnrotatedY;
+                    var tlRotatedY =
+                        yHalf + (rotateSinNeg * tlUnrotatedX + rotateCosNeg * tlUnrotatedY);
 
                     var trUnrotatedX = trX - xHalf;
                     var trUnrotatedY = trY - yHalf;
-                    var trRotatedX = xHalf + rotateCosNeg * trUnrotatedX - rotateSinNeg * trUnrotatedY;
-                    var trRotatedY = yHalf + (rotateSinNeg * trUnrotatedX + rotateCosNeg * trUnrotatedY);
+                    var trRotatedX =
+                        xHalf + rotateCosNeg * trUnrotatedX - rotateSinNeg * trUnrotatedY;
+                    var trRotatedY =
+                        yHalf + (rotateSinNeg * trUnrotatedX + rotateCosNeg * trUnrotatedY);
 
                     var blUnrotatedX = blX - xHalf;
                     var blUnrotatedY = blY - yHalf;
-                    var blRotatedX = xHalf + rotateCosNeg * blUnrotatedX - rotateSinNeg * blUnrotatedY;
-                    var blRotatedY = yHalf + (rotateSinNeg * blUnrotatedX + rotateCosNeg * blUnrotatedY);
+                    var blRotatedX =
+                        xHalf + rotateCosNeg * blUnrotatedX - rotateSinNeg * blUnrotatedY;
+                    var blRotatedY =
+                        yHalf + (rotateSinNeg * blUnrotatedX + rotateCosNeg * blUnrotatedY);
 
                     var brUnrotatedX = brX - xHalf;
                     var brUnrotatedY = brY - yHalf;
-                    var brRotatedX = xHalf + rotateCosNeg * brUnrotatedX - rotateSinNeg * brUnrotatedY;
-                    var brRotatedY = yHalf + (rotateSinNeg * brUnrotatedX + rotateCosNeg * brUnrotatedY);
+                    var brRotatedX =
+                        xHalf + rotateCosNeg * brUnrotatedX - rotateSinNeg * brUnrotatedY;
+                    var brRotatedY =
+                        yHalf + (rotateSinNeg * brUnrotatedX + rotateCosNeg * brUnrotatedY);
 
                     // draw our 4 lines
                     dc.drawLine(tlRotatedX, tlRotatedY, trRotatedX, trRotatedY);
