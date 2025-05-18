@@ -843,10 +843,10 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
             var view = new SettingsDebug();
             WatchUi.pushView(view, new $.SettingsDebugDelegate(view), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainClearStorage) {
-            var dialog = new WatchUi.Confirmation("Clear all Storage (routes and cached tiles)?");
+            var dialog = new WatchUi.Confirmation(WatchUi.loadResource(Rez.Strings.clearStorage) as String);
             WatchUi.pushView(dialog, new ClearStorageDelegate(), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainResetDefaults) {
-            var dialog = new WatchUi.Confirmation("Reset all settings?");
+            var dialog = new WatchUi.Confirmation(WatchUi.loadResource(Rez.Strings.resetDefaults) as String);
             WatchUi.pushView(dialog, new ResetSettingsDelegate(), WatchUi.SLIDE_IMMEDIATE);
         }
     }
@@ -1325,7 +1325,7 @@ class SettingsRoutesDelegate extends WatchUi.Menu2InputDelegate {
                 view
             );
         } else if (itemId == :settingsRoutesClearAll) {
-            var dialog = new WatchUi.Confirmation("Clear all routes?");
+            var dialog = new WatchUi.Confirmation(WatchUi.loadResource(Rez.Strings.clearRoutes1) as String);
             WatchUi.pushView(dialog, new ClearRoutesDelegate(), WatchUi.SLIDE_IMMEDIATE);
         }
 
@@ -1372,7 +1372,7 @@ class SettingsRouteDelegate extends WatchUi.Menu2InputDelegate {
                 view
             );
         } else if (itemId == :settingsRouteDelete) {
-            var dialog = new WatchUi.Confirmation("Delete Route?");
+            var dialog = new WatchUi.Confirmation(WatchUi.loadResource(Rez.Strings.routeDelete) as String);
             WatchUi.pushView(
                 dialog,
                 new DeleteRouteDelegate(view.routeId, settings),
@@ -1601,14 +1601,14 @@ class SettingsMapStorageDelegate extends WatchUi.Menu2InputDelegate {
             );
         } else if (itemId == :settingsMapStorageCacheCurrentArea) {
             var dialog = new WatchUi.Confirmation(
-                "Start Caching tiles? This breaks on some devices."
+                WatchUi.loadResource(Rez.Strings.startTileCache1) as String
             );
             WatchUi.pushView(dialog, new StartCachedTilesDelegate(), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMapStorageCancelCacheDownload) {
             getApp()._breadcrumbContext.cachedValues.cancelCacheCurrentMapArea();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMapStorageClearCachedTiles) {
-            var dialog = new WatchUi.Confirmation("Clear all cached tiles?");
+            var dialog = new WatchUi.Confirmation(WatchUi.loadResource(Rez.Strings.clearCachedTiles) as String);
             WatchUi.pushView(dialog, new ClearCachedTilesDelegate(), WatchUi.SLIDE_IMMEDIATE);
         }
     }

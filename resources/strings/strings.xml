@@ -1,9 +1,6 @@
 <strings>
     <string id="AppName">BreadcrumbDataField</string>
     <string id="settingsTitle">Breadcrumb Data Field Settings</string>
-    <string id="cancel">Cancel</string>
-    <string id="exit">Exit</string>
-    <string id="back">Back</string>
 
     <string id="layerTileSize">Tile Size (pixels)</string>
     <string id="tileLayerMaxTitle">Tile Layer Max</string>
