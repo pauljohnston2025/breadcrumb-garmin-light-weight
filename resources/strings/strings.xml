@@ -211,6 +211,20 @@
     <string id="cartoVoyagerTemplate">voyager/{z}/{x}/{y}.png</string>
     <string id="cartoDarkMatterTemplate">dark_all/{z}/{x}/{y}.png</string>
     <string id="cartoLightAllTemplate">light_all/{z}/{x}/{y}.png</string>
+
+
+    <string id="enableMaps1">Enable maps. This breaks on some devices. Are you sure?</string>
+    <string id="enableMaps2">Confirm map enable</string>
+    <string id="enableMaps3">Enabling maps, LAST CHANCE!!!</string>
+    <string id="disableMaps1">Disable maps. All tiles and storage tiles will be removed. Are you sure?</string>
+    <string id="disableMaps2">Confirm map disable</string>
+    <string id="disableMaps3">Disabling maps, LAST CHANCE!!!</string>
+    <string id="startTileCache1">Start tile caching. This breaks on some devices. Are you sure?</string>
+    <string id="startTileCache2">Confirm start tile caching</string>
+    <string id="startTileCache3">Start tile caching, LAST CHANCE!!!</string>
+    <string id="clearRoutes1">Clearing all routes, are you sure?</string>
+    <string id="clearRoutes2">Confirm route clear</string>
+    <string id="clearRoutes3">Clearing all routes, LAST CHANCE!!!</string>
     
 </strings>
 

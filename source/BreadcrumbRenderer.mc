@@ -571,9 +571,9 @@ class BreadcrumbRenderer {
             renderLeftStartConfirmation(
                 dc,
                 _starCacheTilesProgress,
-                "Start tile caching. This breaks on some devices. Are you sure?",
-                "Confirm start tile caching",
-                "Start tile caching, LAST CHANCE!!!"
+                Rez.Strings.startTileCache1,
+                Rez.Strings.startTileCache2,
+                Rez.Strings.startTileCache3
             )
         ) {
             return true;
@@ -660,9 +660,9 @@ class BreadcrumbRenderer {
         return renderLeftStartConfirmation(
             dc,
             _enableMapProgress,
-            "Enable maps. This breaks on some devices. Are you sure?",
-            "Confirm map enable",
-            "Enabling maps, LAST CHANCE!!!"
+            Rez.Strings.enableMaps1,
+            Rez.Strings.enableMaps2,
+            Rez.Strings.enableMaps3
         );
     }
 
@@ -670,15 +670,15 @@ class BreadcrumbRenderer {
         return renderLeftStartConfirmation(
             dc,
             _disableMapProgress,
-            "Disable maps. All tiles and storage tiles will be removed. Are you sure?",
-            "Confirm map disable",
-            "Disabling maps, LAST CHANCE!!!"
+            Rez.Strings.disableMaps1,
+            Rez.Strings.disableMaps2,
+            Rez.Strings.disableMaps3
         );
     }
 
     function renderYNUi(
         dc as Dc,
-        text as String or ResourceId,
+        text as ResourceId,
         leftText as String,
         rightText as String,
         leftColour as Number,
@@ -728,9 +728,9 @@ class BreadcrumbRenderer {
     function renderLeftStartConfirmation(
         dc as Dc,
         variable as Number,
-        text1 as String or ResourceId,
-        text2 as String or ResourceId,
-        text3 as String or ResourceId
+        text1 as ResourceId,
+        text2 as ResourceId,
+        text3 as ResourceId
     ) as Boolean {
         switch (variable) {
             case 0:
@@ -768,8 +768,8 @@ class BreadcrumbRenderer {
                 renderYNUi(
                     dc as Dc,
                     _clearRouteProgress == 1
-                        ? "Clearing all routes, are you sure?"
-                        : "Clearing all routes, LAST CHANCE!!!",
+                        ? Rez.Strings.clearRoutes1
+                        : Rez.Strings.clearRoutes3,
                     "N",
                     "Y",
                     Graphics.COLOR_RED,
@@ -781,7 +781,7 @@ class BreadcrumbRenderer {
                 // press left to confirm, right cancels
                 renderYNUi(
                     dc as Dc,
-                    "Confirm route clear",
+                    Rez.Strings.clearRoutes2,
                     "Y",
                     "N",
                     Graphics.COLOR_GREEN,
@@ -1160,6 +1160,10 @@ class BreadcrumbRenderer {
     }
 
     function handleStartCacheRoute(x as Number, y as Number) as Boolean {
+        if (!settings.mapEnabled) {
+            _starCacheTilesProgress = 0;
+            return false; // maps are not enabled, we hide the start symbol in this case
+        }
         var res = handleStartLeftYNUi(
             x,
             y,
