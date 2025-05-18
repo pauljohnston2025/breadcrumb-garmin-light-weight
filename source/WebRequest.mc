@@ -175,7 +175,7 @@ class ConnectionListenerWrapper extends Communications.ConnectionListener {
         }
 
         alreadyDecedWebHandler = true;
-        webHandler.decrementTransmit();
+        webHandler._outstandingCount--;
     }
 }
 
@@ -274,10 +274,6 @@ class WebRequestHandler {
         }
 
         return false;
-    }
-
-    function decrementTransmit() as Void {
-        --_outstandingCount;
     }
 
     function decrementOutstanding(hash as String) as Void {
@@ -412,34 +408,6 @@ class WebRequestHandler {
             // see https://forums.garmin.com/developer/connect-iq/f/discussion/2289/documentation-clarification-object-method-and-lang-method
             callback
         );
-    }
-
-    function pendingCount() as Number {
-        return pending.size();
-    }
-
-    function pendingTransmitCount() as Number {
-        return pendingTransmit.size();
-    }
-
-    function outstandingCount() as Number {
-        return _outstandingCount;
-    }
-
-    function outstandingHashesCount() as Number {
-        return outstandingHashes.size();
-    }
-
-    function errorCount() as Number {
-        return _errorCount;
-    }
-
-    function successCount() as Number {
-        return _successCount;
-    }
-
-    function lastResult() as Number? {
-        return _lastResult;
     }
 
     function clearStats() as Void {

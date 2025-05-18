@@ -693,15 +693,15 @@ class BreadcrumbRenderer {
                 ).format("%.1f") +
                 "%)" +
                 "\npending web: " +
-                breadcrumbContext.webRequestHandler.pendingCount() +
+                breadcrumbContext.webRequestHandler.pending.size() +
                 "\noutstanding: " +
-                breadcrumbContext.webRequestHandler.outstandingCount() +
+                breadcrumbContext.webRequestHandler._outstandingCount +
                 "\nlast web res: " +
-                breadcrumbContext.webRequestHandler.lastResult() +
+                breadcrumbContext.webRequestHandler._lastResult +
                 "\nweb err: " +
-                breadcrumbContext.webRequestHandler.errorCount() +
+                breadcrumbContext.webRequestHandler._errorCount +
                 " web ok: " +
-                breadcrumbContext.webRequestHandler.successCount() +
+                breadcrumbContext.webRequestHandler._successCount +
                 "\nmem: " +
                 (System.getSystemStats().usedMemory / 1024f).format("%.1f") +
                 "K f: " +

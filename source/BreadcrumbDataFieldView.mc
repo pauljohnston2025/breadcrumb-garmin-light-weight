@@ -168,7 +168,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var disableMapsFailureCount = settings.disableMapsFailureCount;
         if (
             disableMapsFailureCount != 0 &&
-            _breadcrumbContext.webRequestHandler.errorCount() > disableMapsFailureCount
+            _breadcrumbContext.webRequestHandler._errorCount > disableMapsFailureCount
         ) {
             System.println("disabling maps, too many errors");
             settings.setMapEnabled(false);
@@ -663,9 +663,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             y,
             Graphics.FONT_XTINY,
             "pending web: " +
-                _breadcrumbContext.webRequestHandler.pendingCount() +
+                _breadcrumbContext.webRequestHandler.pending.size() +
                 " t: " +
-                _breadcrumbContext.webRequestHandler.pendingTransmitCount(),
+                _breadcrumbContext.webRequestHandler.pendingTransmit.size(),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -674,13 +674,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             y,
             Graphics.FONT_XTINY,
             "outstanding: " +
-                _breadcrumbContext.webRequestHandler.outstandingCount() +
+                _breadcrumbContext.webRequestHandler._outstandingCount +
                 " web: " +
-                _breadcrumbContext.webRequestHandler.outstandingHashesCount(),
+                _breadcrumbContext.webRequestHandler.outstandingHashes.size(),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
-        var combined = "last web res: " + _breadcrumbContext.webRequestHandler.lastResult();
+        var combined = "last web res: " + _breadcrumbContext.webRequestHandler._lastResult;
 
         if (settings.storageMapTilesOnly) {
             combined = "<storage only>";
@@ -749,9 +749,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             y,
             Graphics.FONT_XTINY,
             "web err: " +
-                _breadcrumbContext.webRequestHandler.errorCount() +
+                _breadcrumbContext.webRequestHandler._errorCount +
                 " web ok: " +
-                _breadcrumbContext.webRequestHandler.successCount(),
+                _breadcrumbContext.webRequestHandler._successCount,
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
