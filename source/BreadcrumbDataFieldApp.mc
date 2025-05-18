@@ -16,6 +16,7 @@ enum /* Protocol */ {
     PROTOCOL_SAVE_SETTINGS = 5,
     PROTOCOL_COMPANION_APP_TILE_SERVER_CHANGED = 6, // generally because a new url has been selected on the companion app
     PROTOCOL_ROUTE_DATA2 = 7, // an optimised form of PROTOCOL_ROUTE_DATA, so we do not trip the watchdog
+    PROTOCOL_CACHE_CURRENT_AREA = 8,
 }
 
 enum /* ProtocolSend */ {
@@ -215,6 +216,13 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                         rawData[1] as Number
                     );
                 }
+
+                return;
+            } else if (type == PROTOCOL_CACHE_CURRENT_AREA) {
+                // use to just be PROTOCOL_DROP_TILE_CACHE
+                logT("got tile cache current area req: " + rawData);
+                
+                _breadcrumbContext.cachedValues.startCacheCurrentMapArea();
 
                 return;
             }
