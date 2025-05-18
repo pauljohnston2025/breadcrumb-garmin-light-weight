@@ -680,7 +680,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
-        var combined = "last web res: " + _breadcrumbContext.webRequestHandler._lastResult;
+        var combined = "web res: " + _breadcrumbContext.webRequestHandler._lastResult;
 
         if (settings.storageMapTilesOnly) {
             combined = "<storage only>";
@@ -688,7 +688,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
         combined +=
             "  tiles: " +
-            _breadcrumbContext.tileCache.tileCount() +
+            _breadcrumbContext.tileCache._internalCache.size() +
             " s: " +
             _breadcrumbContext.tileCache._storageTileCache._tilesInStorage.size();
 
@@ -759,7 +759,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "hits: " + _breadcrumbContext.tileCache.hits(),
+            "hits: " + _breadcrumbContext.tileCache._hits,
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -767,7 +767,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "misses: " + _breadcrumbContext.tileCache.misses(),
+            "misses: " + _breadcrumbContext.tileCache._misses,
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;

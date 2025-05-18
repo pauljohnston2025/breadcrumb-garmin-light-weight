@@ -736,8 +736,6 @@ class StorageTileCache {
         // it will be faster to load them from there than bluetooth
         var oldestTime = null;
         var oldestKey = null;
-        var oldestMetaKeyStr = null;
-        var oldestMetaData = null;
 
         var epoch = Time.now().value();
 
@@ -757,16 +755,12 @@ class StorageTileCache {
             ) {
                 // we do not have it in storage anymore somehow, remove this tile
                 oldestKey = key;
-                oldestMetaKeyStr = metaKeyStr;
-                oldestMetaData = null; // we cannot parse the metadata
                 break;
             }
 
             var expiresAt = tileMetaData[2] as Number;
             if (expired(expiresAt, epoch)) {
                 oldestKey = key;
-                oldestMetaKeyStr = metaKeyStr;
-                oldestMetaData = tileMetaData;
                 break;
             }
 
@@ -774,36 +768,11 @@ class StorageTileCache {
             if (oldestTime == null || oldestTime > lastUsed) {
                 oldestTime = lastUsed;
                 oldestKey = key;
-                oldestMetaKeyStr = metaKeyStr;
-                oldestMetaData = tileMetaData;
             }
         }
 
         if (oldestKey != null) {
-            if (oldestMetaKeyStr != null) {
-                Storage.deleteValue(oldestMetaKeyStr);
-            }
-            if (oldestMetaData != null) {
-                oldestMetaData = oldestMetaData as Array<Number>;
-                switch (oldestMetaData[1]) {
-                    case STORAGE_TILE_TYPE_DICT:
-                        Storage.deleteValue(tileKey(oldestKey));
-                        break;
-                    case STORAGE_TILE_TYPE_BITMAP:
-                        if (oldestMetaData.size() < 4) {
-                            logE(
-                                "bad tile metadata in storage for bitmap tile remove" +
-                                    oldestMetaData
-                            );
-                            break;
-                        }
-                        deleteBitmap(oldestKey, oldestMetaData[3]);
-                        break;
-                    case STORAGE_TILE_TYPE_ERRORED:
-                        // noop its just the meta key
-                        break;
-                }
-            }
+            deleteByMetaData(oldestKey);
             _tilesInStorage.remove(oldestKey);
             System.println("Evicted tile " + oldestKey + " from storage cache");
         }
@@ -811,11 +780,37 @@ class StorageTileCache {
         Storage.setValue(TILES_KEY, _tilesInStorage as Array<PropertyValueType>);
     }
 
+    function deleteByMetaData(key as String) as Void {
+        var metaKeyStr = metaKey(key);
+        var metaData = Storage.getValue(metaKeyStr);
+        Storage.deleteValue(metaKeyStr);
+
+        if (metaData == null || !(metaData instanceof Array) || metaData.size() < 2) {
+            return;
+        }
+
+        switch (metaData[1] as Number) {
+            case STORAGE_TILE_TYPE_DICT:
+                Storage.deleteValue(tileKey(key));
+                break;
+            case STORAGE_TILE_TYPE_BITMAP:
+                if (metaData.size() < 4) {
+                    logE("bad tile metadata in storage for bitmap tile remove" + metaData);
+                    break;
+                }
+                deleteBitmap(key, metaData[3] as Number);
+                break;
+            case STORAGE_TILE_TYPE_ERRORED:
+                // noop its just the meta key
+                break;
+        }
+    }
+
     function clearValues() as Void {
         var keys = _tilesInStorage;
-        for (var i = 0; i < keys.size(); i++) {
+        for (var i = 0; i < keys.size(); ++i) {
             var key = keys[i];
-            Storage.deleteValue(key);
+            deleteByMetaData(key);
         }
         _tilesInStorage = [];
         Storage.setValue(TILES_KEY, _tilesInStorage);
@@ -1078,10 +1073,6 @@ class TileCache {
 
     // puts a tile into the cache
     function addTile(tileKey as TileKey, tileCacheVersion as Number, tile as Tile) as Void {
-        if (tile.bitmap == null) {
-            return;
-        }
-
         if (tileCacheVersion != _tileCacheVersion) {
             return;
         }
@@ -1115,7 +1106,7 @@ class TileCache {
 
         var weakRefToErrorBitmap = _errorBitmaps[msg];
         if (weakRefToErrorBitmap != null) {
-            var errorBitmap = weakRefToErrorBitmap.get();
+            var errorBitmap = weakRefToErrorBitmap.get() as Graphics.BufferedBitmap?;
             if (errorBitmap != null) {
                 var tile = new Tile(errorBitmap);
                 tile.setExpiresAt(expiresAt);
@@ -1195,18 +1186,6 @@ class TileCache {
 
     function haveTile(tileKey as TileKey) as Boolean {
         return _internalCache.hasKey(tileKey);
-    }
-
-    function tileCount() as Number {
-        return _internalCache.size();
-    }
-
-    function hits() as Number {
-        return _hits;
-    }
-
-    function misses() as Number {
-        return _misses;
     }
 
     function evictLeastRecentlyUsedTile() as Void {
