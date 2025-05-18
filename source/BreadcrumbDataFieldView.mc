@@ -668,7 +668,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "pending web: " +
+            "pendingWeb: " +
                 _breadcrumbContext.webRequestHandler.pending.size() +
                 " t: " +
                 _breadcrumbContext.webRequestHandler.pendingTransmit.size(),
@@ -686,7 +686,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
-        var combined = "web res: " + _breadcrumbContext.webRequestHandler._lastResult;
+        var combined = "lastWebRes: " + _breadcrumbContext.webRequestHandler._lastResult;
 
         if (settings.storageMapTilesOnly) {
             combined = "<storage only>";
@@ -704,7 +704,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "last alert check: " + (epoch - lastOffTrackAlertChecked) + "s",
+            "lastAlertCheck: " + (epoch - lastOffTrackAlertChecked) + "s",
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -712,7 +712,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "last alert: " + (epoch - lastOffTrackAlertNotified) + "s",
+            "lastAlert: " + (epoch - lastOffTrackAlertNotified) + "s",
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -725,14 +725,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 distMeters = distMeters / _cachedValues.currentScale;
             }
 
-            distToLastStr = distMeters.format("%.2f") + "m";
+            distToLastStr = distMeters.format("%.0f") + "m";
         }
 
         dc.drawText(
             x,
             y,
             Graphics.FONT_XTINY,
-            "on track: " + (offTrackInfo.onTrack ? "Y" : "N") + " dist: " + distToLastStr,
+            "pts: " + _breadcrumbContext.track.coordinates.pointSize() + " onTrack: " + (offTrackInfo.onTrack ? "Y" : "N") + " dist: " + distToLastStr,
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -740,11 +740,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "tilelayer: " +
+            "tileLayer: " +
                 _cachedValues.tileZ +
-                " at min: " +
+                " atMin: " +
                 (_cachedValues.atMinTileLayer() ? "Y" : "N") +
-                " at max: " +
+                " atMax: " +
                 (_cachedValues.atMaxTileLayer() ? "Y" : "N"),
             Graphics.TEXT_JUSTIFY_CENTER
         );
@@ -754,9 +754,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "web err: " +
+            "webErr: " +
                 _breadcrumbContext.webRequestHandler._errorCount +
-                " web ok: " +
+                " webOk: " +
                 _breadcrumbContext.webRequestHandler._successCount,
             Graphics.TEXT_JUSTIFY_CENTER
         );

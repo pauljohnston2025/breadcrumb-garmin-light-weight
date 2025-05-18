@@ -1261,7 +1261,7 @@ class BreadcrumbRenderer {
     }
 
     // todo move most of these into a ui class
-    // and all teh elevation ones into elevation class, or cached values if they are
+    // and all the elevation ones into elevation class, or cached values if they are
     // things set to -1 are set by setScreenSize()
     var _xElevationStart as Float = -1f; // think this needs to depend on dpi?
     var _xElevationEnd as Float = -1f;
