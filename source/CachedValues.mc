@@ -166,7 +166,8 @@ class CachedValues {
 
         var boundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
             getApp()._breadcrumbContext.routes,
-            _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK
+            // if no roues we will try and render the track instead
+            (_settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK && getApp()._breadcrumbContext.routes.size() != 0)
                 ? null
                 : optionalTrackBoundingBox()
         );

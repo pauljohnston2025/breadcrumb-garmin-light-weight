@@ -1004,7 +1004,7 @@ class TileCache {
             }
             if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
                 // we are running in storage only mode, but the tile is not in the cache
-                imageReqHandler.handleErroredTile(404);
+                addErroredTile(tileKey, _tileCacheVersion, "S404", true);
                 return false;
             }
             _webRequestHandler.add(
@@ -1051,7 +1051,7 @@ class TileCache {
         }
         if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
             // we are running in storage only mode, but the tile is not in the cache
-            jsonWebHandler.handleErroredTile(404);
+            addErroredTile(tileKey, _tileCacheVersion, "S404", true);
             return false;
         }
         _webRequestHandler.add(

@@ -704,6 +704,7 @@ class Settings {
     function setAuthToken(value as String) as Void {
         authToken = value;
         setValue("authToken", authToken);
+        tileServerPropChanged();
     }
 
     (:settingsView)
@@ -1152,10 +1153,13 @@ class Settings {
         saveRoutesNoSideEffect();
         setValueSideEffect();
     }
-    
+
     function saveRoutesNoSideEffect() as Void {
         var toSave = routesToSave();
-        Application.Properties.setValue("routes", toSave as Dictionary<PropertyKeyType, PropertyValueType>);
+        Application.Properties.setValue(
+            "routes",
+            toSave as Dictionary<PropertyKeyType, PropertyValueType>
+        );
     }
 
     (:settingsView)
@@ -1950,6 +1954,7 @@ class Settings {
         var oldStorageTileCacheSize = storageTileCacheSize;
         var oldMapEnabled = mapEnabled;
         var oldCacheTilesInStorage = cacheTilesInStorage;
+        var oldAuthToken = authToken;
         loadSettings();
         // route settins do not work because garmins setting spage cannot edit them
         // when any property is modified, so we have to explain to users not to touch the settings, but we cannot because it looks
@@ -1984,7 +1989,8 @@ class Settings {
             oldScaledTileSize != scaledTileSize ||
             oldCacheTilesInStorage != cacheTilesInStorage ||
             oldTileCacheSize > tileCacheSize ||
-            oldStorageTileCacheSize > storageTileCacheSize
+            oldStorageTileCacheSize > storageTileCacheSize ||
+            !oldAuthToken.equals(authToken)
         ) {
             tileServerPropChanged();
         }

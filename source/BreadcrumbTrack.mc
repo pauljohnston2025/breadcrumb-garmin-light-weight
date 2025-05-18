@@ -11,7 +11,11 @@ const MIN_DISTANCE_M = 5; // meters
 const RESTART_STABILITY_POINT_COUNT = 10; // number of points in a row that need to be within RESTART_STABILITY_DISTANCE_M to be onsisiddered a valid course
 //note: RESTART_STABILITY_POINT_COUNT should be set based on DELAY_COMPUTE_COUNT
 // if DELAY_COMPUTE_COUNT = 5 seconds, 10 points give us startup cheking for 50 seconds, enough time to get a lock
-const STABILITY_MAX_DISTANCE_M = 100; // max distance allowed to move to be consisdered a stable point (distance from previous point)
+// max distance allowed to move to be consisdered a stable point (distance from previous point) 
+// this needs to be relatively high, since the compute interval could be set quite large, or the user could be  on a motortransport (car, bike, jetski)
+// eg. at 80kmph with a 5 second compute interval (that may not run for 3 attempts, 15 seconds)
+// 80000/60/60*15 = 333.333
+const STABILITY_MAX_DISTANCE_M = 400; 
 // note: onActivityInfo is called once per second but delayed by DELAY_COMPUTE_COUNT make sure STABILITY_MAX_DISTANCE_M takes that into account
 // ie human averge running speed is 3m/s if DELAY_COMPUTE_COUNT is set to 5 STABILITY_MAX_DISTANCE_M should be set to at least 15
 const DELAY_COMPUTE_COUNT = 5;

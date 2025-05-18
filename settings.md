@@ -426,9 +426,10 @@ Shows error codes on the errored map tiles
 
 Some custom error message are
 
-* WD - wrong data for tile (this may be null, or we got a string instead of a dictionary)
-* UT - unknown tile type (should be very rare, only occurs on outdated watches when we update supported tile format types in the companion app)
-* FP - failed to parse bitmap from the companion app tile response
+* WD - Wrong data for tile (this may be null, or we got a string instead of a dictionary).  
+* UT - Unknown tile type (should be very rare, only occurs on outdated watches when we update supported tile format types in the companion app). 
+* FP - Failed to parse bitmap from the companion app tile response.  
+* S404 - Special error code to indicate that we are in storage only mode, and the tile was not in the storage.  
 
 Negative error codes are documented by garmin: https://developer.garmin.com/connect-iq/api-docs/Toybox/Communications.html#Error-module    
 All other error codes should follow the http spec, eg. 404 - Not Found, 403 - Forbidden
