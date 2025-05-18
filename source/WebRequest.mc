@@ -92,7 +92,8 @@ class WebRequestHandleWrapper {
 
             if (
                 responseCode != 200 &&
-                webHandler._settings.tileUrl.equals(COMPANION_APP_TILE_URL)
+                webHandler._settings.tileUrl.equals(COMPANION_APP_TILE_URL) &&
+                !getApp()._breadcrumbContext.settings.storageMapTilesOnly
             ) {
                 // todo only send this on certain errors, and only probbaly only after some limit?
                 // we could also send a toast, but the transmit allows us to open the app easier on the phone
@@ -107,7 +108,7 @@ class WebRequestHandleWrapper {
                 // System.println("got web error: " + responseCode);
                 webHandler._errorCount++;
             }
-            webHandler._lastResult = (responseCode == 200 && data == null) ? null : responseCode;
+            webHandler._lastResult = responseCode == 200 && data == null ? null : responseCode;
         } catch (e) {
             System.println("failed to handle web request: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
@@ -258,11 +259,11 @@ class WebRequestHandler {
             return false;
         }
 
-        // kept getting errors with 
+        // kept getting errors with
         // Error: System Error
         // Details: failed inside handle_image_callback
-        // only happened on real rdevice when using makeImageREquest, and having tiles put into storage. 
-        // Not sure if its an issue with storage thats propagating to the image handler 
+        // only happened on real rdevice when using makeImageREquest, and having tiles put into storage.
+        // Not sure if its an issue with storage thats propagating to the image handler
         // (eg. maye its larger than 32Kb and that makes a system error rather than a storage exception)
         // trying to reduce parallel requests to 1 at a time to see if that helps
         if (_outstandingCount < 3) {

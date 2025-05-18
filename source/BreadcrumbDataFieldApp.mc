@@ -14,7 +14,7 @@ enum /* Protocol */ {
     PROTOCOL_CANCEL_LOCATION_REQUEST = 3,
     PROTOCOL_REQUEST_SETTINGS = 4,
     PROTOCOL_SAVE_SETTINGS = 5,
-    PROTOCOL_COMPANOIN_APP_TILE_CACHE_CHANGED = 6, // generally because a new url has been selected on the companion app
+    PROTOCOL_COMPANION_APP_TILE_SERVER_CHANGED = 6, // generally because a new url has been selected on the companion app
     PROTOCOL_ROUTE_DATA2 = 7, // an optimised form of PROTOCOL_ROUTE_DATA, so we do not trip the watchdog
 }
 
@@ -193,10 +193,10 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 );
                 _breadcrumbContext.settings.onSettingsChanged(); // reload anything that has changed
                 return;
-            } else if (type == PROTOCOL_COMPANOIN_APP_TILE_CACHE_CHANGED) {
+            } else if (type == PROTOCOL_COMPANION_APP_TILE_SERVER_CHANGED) {
                 // use to just be PROTOCOL_DROP_TILE_CACHE
                 logT("got tile cache changed req: " + rawData);
-                if (_breadcrumbContext.settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
+                if (!_breadcrumbContext.settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
                     logE("not using the companion app tile server");
                     return;
                 }

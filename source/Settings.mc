@@ -5,6 +5,7 @@ import Toybox.System;
 import Toybox.Application;
 import Toybox.Communications;
 import Toybox.WatchUi;
+import Toybox.PersistedContent;
 
 enum /*Mode*/ {
     MODE_NORMAL,
@@ -203,6 +204,38 @@ function getTileServerInfo(id as Number) as TileServerInfo?
     return null;
 }
 
+class TileUpdateHandler extends JsonWebHandler {
+    var companionMapChoiceVersion as Number;
+    function initialize(_companionMapChoiceVersion as Number) {
+        JsonWebHandler.initialize();
+        companionMapChoiceVersion = _companionMapChoiceVersion;
+    }
+
+    function handle(
+        responseCode as Number,
+        data as Dictionary or String or Iterator or Null
+    ) as Void {
+        var settings = getApp()._breadcrumbContext.settings;
+        if (settings.companionMapChoiceVersion != companionMapChoiceVersion) {
+            return;
+        }
+        if (responseCode != 200) {
+            logE("failed TUH: " + responseCode);
+            return;
+        }
+
+        if (!(data instanceof Dictionary)) {
+            logE("failed TUH: wrong type" + data);
+            return;
+        }
+
+        settings.companionChangedToMaxMin(
+            data["tileLayerMin"] as Number,
+            data["tileLayerMax"] as Number
+        );
+    }
+}
+
 // we are getting dangerously close to the app settings limit
 // was getting "Unable to serialize app data" in the sim, but after a restart worked fine
 // see
@@ -314,6 +347,7 @@ class Settings {
     var authToken as String = "";
     var requiresAuth as Boolean = false;
     var mapChoice as Number = 0;
+    var companionMapChoiceVersion as Number = 0;
     // see keys below in routes = getArraySchema(...)
     // see oddity with route name and route loading new in context.newRoute
     var routes as Array<Dictionary> = [];
@@ -596,6 +630,17 @@ class Settings {
             setStorageTileCacheSizeWithoutSideEffect(storageTileCacheSizeMax);
         }
 
+        // grab the min and max from the tile server
+        ++companionMapChoiceVersion;
+        getApp()._breadcrumbContext.webRequestHandler.add(
+            new JsonRequest(
+                "TUH-" + companionMapChoiceVersion,
+                tileUrl + "/tileServerDetails",
+                {},
+                new TileUpdateHandler(companionMapChoiceVersion)
+            )
+        );
+
         return;
     }
 
@@ -689,7 +734,7 @@ class Settings {
         updateRequiresAuth();
 
         // prompts user to open the app
-        if (tileUrl.equals(COMPANION_APP_TILE_URL)) {
+        if (tileUrl.equals(COMPANION_APP_TILE_URL) && !storageMapTilesOnly) {
             // we could also send a toast, but the transmit allows us to open the app easier on the phone
             // even though the phone side is a bit of a hack (ConnectIQMessageReceiver cannot parse the data), it's still better than having to manualy open the app.
             transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
@@ -937,7 +982,7 @@ class Settings {
         }
 
         // prompts user to open the app
-        if (tileUrl.equals(COMPANION_APP_TILE_URL)) {
+        if (tileUrl.equals(COMPANION_APP_TILE_URL) && !storageMapTilesOnly) {
             // we could also send a toast, but the transmit allows us to open the app easier on the phone
             // even though the phone side is a bit of a hack (ConnectIQMessageReceiver cannot parse the data), it's still better than having to manualy open the app.
             transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
