@@ -1010,7 +1010,7 @@ class BreadcrumbRenderer {
             yHalf,
             Graphics.FONT_XTINY,
             fvText,
-            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
 
         if (settings.mapEnabled) {
@@ -1020,7 +1020,7 @@ class BreadcrumbRenderer {
                 yHalf,
                 Graphics.FONT_XTINY,
                 "G",
-                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
             );
         }
     }
@@ -1277,7 +1277,7 @@ class BreadcrumbRenderer {
     var returnToUserY as Float = -1f;
     var mapEnabledX as Float = -1f;
     var mapEnabledY as Float = -1f;
-    var hitboxSize as Float = 40f;
+    var hitboxSize as Float = 60f;
     var halfHitboxSize as Float = hitboxSize / 2.0f;
 
     function setElevationAndUiData(xElevationStart as Float) as Void {
