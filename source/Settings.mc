@@ -400,6 +400,7 @@ class Settings {
     var showErrorTileMessages as Boolean = false;
     var tileErrorColour as Number = Graphics.COLOR_BLACK;
     var includeDebugPageInOnScreenUi as Boolean = false;
+    var drawHitboxes as Boolean = false; // not exposed yet
 
     function setMode(_mode as Number) as Void {
         mode = _mode;

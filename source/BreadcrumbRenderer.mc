@@ -767,9 +767,7 @@ class BreadcrumbRenderer {
                 // press right to confirm, left cancels
                 renderYNUi(
                     dc as Dc,
-                    _clearRouteProgress == 1
-                        ? Rez.Strings.clearRoutes1
-                        : Rez.Strings.clearRoutes3,
+                    _clearRouteProgress == 1 ? Rez.Strings.clearRoutes1 : Rez.Strings.clearRoutes3,
                     "N",
                     "Y",
                     Graphics.COLOR_RED,
@@ -795,15 +793,50 @@ class BreadcrumbRenderer {
     }
 
     function renderUi(dc as Dc) as Void {
-        dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(1);
-
         var currentScale = _cachedValues.currentScale; // local lookup faster
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var screenWidth = _cachedValues.screenWidth; // local lookup faster
         var screenHeight = _cachedValues.screenHeight; // local lookup faster
         var xHalf = _cachedValues.xHalf; // local lookup faster
         var yHalf = _cachedValues.yHalf; // local lookup faster
+
+        if (settings.drawHitboxes) {
+            dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(1);
+            dc.drawRectangle(
+                clearRouteX - halfHitboxSize,
+                clearRouteY - halfHitboxSize,
+                hitboxSize,
+                hitboxSize
+            );
+            dc.drawRectangle(
+                modeSelectX - halfHitboxSize,
+                modeSelectY - halfHitboxSize,
+                hitboxSize,
+                hitboxSize
+            );
+            dc.drawRectangle(
+                returnToUserX - halfHitboxSize,
+                returnToUserY - halfHitboxSize,
+                hitboxSize,
+                hitboxSize
+            );
+            dc.drawRectangle(
+                mapEnabledX - halfHitboxSize,
+                mapEnabledY - halfHitboxSize,
+                hitboxSize,
+                hitboxSize
+            );
+
+            // top bottom left right
+            dc.drawLine(0, hitboxSize, screenWidth, hitboxSize);
+            dc.drawLine(0, screenHeight - hitboxSize, screenWidth, screenHeight - hitboxSize);
+            dc.drawLine(hitboxSize, 0, hitboxSize, screenHeight);
+            dc.drawLine(screenWidth - hitboxSize, 0, screenWidth - hitboxSize, screenHeight);
+        }
+
+        dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(1);
 
         // current mode displayed
         var modeLetter = "T";

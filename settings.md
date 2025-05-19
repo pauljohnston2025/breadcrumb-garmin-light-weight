@@ -4,6 +4,23 @@ If enabling map tiles or trying to send routes to the watch app you will require
 If you just wish to use the breadcrumb track feature (a trail of your current track), it can be used without any phone connection.  
 Map support can be enabled without the companion app, but the [garmin connect app](https://play.google.com/store/apps/details?id=com.garmin.android.apps.connectmobile&hl=en_AU) must still be installed, and an active bluetooth connection maintained.
 
+This is a datafield, not a full fledged app, it runs in the context of native activity.  
+The datafield is expected to be used to cover the full available area of a round watchface.    
+It will still work with non-round devices or partial layouts, but the full feature set of the ui will not be possible due to the limited space.
+
+To add datafield to a native app:
+
+1. Open the app (eg. running), you do not have to start the activity, just open it.
+1. Long press to open settings (or use the touchscreen to press settings)
+1. Navigate to Data Screens
+1. Select screen
+1. Choose layout - recommended full screen layout
+1. Edit data fields - choose the 'BreadCrumbDataField' from the 'ConnectIQ Fields' menu
+
+Some helpful guides on adding data fields:  
+* [For the venu range](https://support.garmin.com/en-AU/?faq=gyywAozBuAAGlvfzvR9VZ8&identifier=707572&searchQuery=data%20field&tab=topics)    
+* [A more thorough explanation for a different app](https://support.garmin.com/en-AU/?faq=3HkHX1wT6U7TeNB7YHfiT7&identifier=707572&searchQuery=data%20field&tab=topics)    
+
 ---
 
 All settings are editable from 4 places.

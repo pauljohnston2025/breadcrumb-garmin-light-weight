@@ -64,10 +64,9 @@ Companion app:
 The companion app is available on my github: https://github.com/pauljohnston2025/breadcrumb-mobile.git  
 While all settings can be configured directly on the watch or through Connect IQ settings, the companion app unlocks powerful features such as offline map support via Bluetooth transfer and route loading. Currently, the companion app is only available on Android, but contributions from iOS developers are highly welcomed to expand platform support and bring these functionalities to a wider audience.
 
-This is a datafield, not a full fledged app, it runs in the context of native activity.
-
-The datafield is expected to be used to cover the full available area of a round watchface.  
-It will still work with non-round devices or partial layouts, but the full feature set of the ui will not be possible due to the limited space.
+This is a datafield, not a full fledged app, it runs in the context of native activity.  
+The datafield is expected to be used to cover the full available area of a round watchface.    
+It will still work with non-round devices or partial layouts, but the full feature set of the ui will not be possible due to the limited space.  
 
 To add datafield to a native app:
 
@@ -79,7 +78,7 @@ To add datafield to a native app:
 - Edit data fields - choose the 'BreadCrumbDataField' from the 'ConnectIQ Fields' menu
 
 For the venu range: https://support.garmin.com/en-AU/?faq=gyywAozBuAAGlvfzvR9VZ8&identifier=707572&searchQuery=data%20field&tab=topics  
-A more thorough explaination for a different app can be found at: https://support.garmin.com/en-AU/?faq=3HkHX1wT6U7TeNB7YHfiT7&identifier=707572&searchQuery=data%20field&tab=topics
+A more thorough explanation for a different app can be found at: https://support.garmin.com/en-AU/?faq=3HkHX1wT6U7TeNB7YHfiT7&identifier=707572&searchQuery=data%20field&tab=topics
 
 ---
 
