@@ -205,22 +205,25 @@ function getTileServerInfo(id as Number) as TileServerInfo?
 }
 
 class TileUpdateHandler extends JsonWebHandler {
-    var companionMapChoiceVersion as Number;
-    function initialize(_companionMapChoiceVersion as Number) {
+    var mapChoiceVersion as Number;
+    function initialize(_mapChoiceVersion as Number) {
         JsonWebHandler.initialize();
-        companionMapChoiceVersion = _companionMapChoiceVersion;
+        mapChoiceVersion = _mapChoiceVersion;
     }
 
     function handle(
         responseCode as Number,
         data as Dictionary or String or Iterator or Null
     ) as Void {
-        var settings = getApp()._breadcrumbContext.settings;
-        if (settings.companionMapChoiceVersion != companionMapChoiceVersion) {
-            return;
-        }
         if (responseCode != 200) {
             logE("failed TUH: " + responseCode);
+            openTileServer();
+            return;
+        }
+
+        var settings = getApp()._breadcrumbContext.settings;
+        if (settings.mapChoiceVersion != mapChoiceVersion || settings.mapChoice != 1) {
+            // we have either changed version (and sent out another request that will update), or its no longer the companion app set as the desired choice
             return;
         }
 
@@ -233,6 +236,13 @@ class TileUpdateHandler extends JsonWebHandler {
             data["tileLayerMin"] as Number,
             data["tileLayerMax"] as Number
         );
+    }
+
+    function openTileServer() as Void {
+        // PROTOCOL_SEND_OPEN_APP will not work if the tile server is disabled :(
+        // also send a toast
+        getApp()._breadcrumbContext.webRequestHandler.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
+        WatchUi.showToast("Tile Server Reponse Failed", {});
     }
 }
 
@@ -347,7 +357,7 @@ class Settings {
     var authToken as String = "";
     var requiresAuth as Boolean = false;
     var mapChoice as Number = 0;
-    var companionMapChoiceVersion as Number = 0;
+    var mapChoiceVersion as Number = 0;
     // see keys below in routes = getArraySchema(...)
     // see oddity with route name and route loading new in context.newRoute
     var routes as Array<Dictionary> = [];
@@ -601,12 +611,10 @@ class Settings {
     function updateCompanionAppMapChoiceChange() as Void {
         // setting back to defaults otherwise when we chose companion app we will not get the correct tilesize and it will crash
         var defaultSettings = new Settings();
-        if (tileLayerMax != defaultSettings.tileLayerMax) {
-            setTileLayerMaxWithoutSideEffect(defaultSettings.tileLayerMax);
-        }
-        if (tileLayerMin != defaultSettings.tileLayerMin) {
-            setTileLayerMinWithoutSideEffect(defaultSettings.tileLayerMin);
-        }
+        // we want a tile layer that all tile servers should be able to show, it should also be low enough that users see there is a problem
+        // these values will be updated by companion app when tile serever changes, or the query below
+        setTileLayerMaxWithoutSideEffect(8); 
+        setTileLayerMinWithoutSideEffect(0);
         if (fullTileSize != defaultSettings.fullTileSize) {
             setFullTileSizeWithoutSideEffect(defaultSettings.fullTileSize);
         }
@@ -631,13 +639,12 @@ class Settings {
         }
 
         // grab the min and max from the tile server
-        ++companionMapChoiceVersion;
         getApp()._breadcrumbContext.webRequestHandler.add(
             new JsonRequest(
-                "TUH-" + companionMapChoiceVersion,
+                "TUH-" + mapChoiceVersion,
                 tileUrl + "/tileServerDetails",
                 {},
-                new TileUpdateHandler(companionMapChoiceVersion)
+                new TileUpdateHandler(mapChoiceVersion)
             )
         );
 
@@ -690,14 +697,19 @@ class Settings {
         // configured tile server max/min on the companion app
         // assert(tileUrl.equals(COMPANION_APP_TILE_URL));
 
-        setMapChoiceWithoutSideEffect(0); // custom
-        setTileUrlWithoutSideEffect(COMPANION_APP_TILE_URL); // is checked above, but we will force it to be safe
+        if (mapChoice != 1) {
+            // we are no longer on the companion app, abort
+            return;
+        }
+
         setTileLayerMaxWithoutSideEffect(maxLayer);
         setTileLayerMinWithoutSideEffect(minLayer);
         setValueSideEffect();
     }
 
     function updateMapChoiceChange(value as Number) as Void {
+        ++mapChoiceVersion;
+
         if (value == 0) {
             // custom - leave everything alone
             return;

@@ -209,6 +209,8 @@ garmin error codes are documented [here](https://developer.garmin.com/connect-iq
 Pick from a list on tile servers, select custom if you wish to manually specify a tileUrl.   
 Note: tiles that are more monochrome will download faster, as they have less colour variance and can be compressed further. Stadia's `Stamen Toner`, Stadia's `Alidade Smooth Dark`, Esri's `World Dark Gray Base` or Carto's `Dark Matter` are good examples of this. I noticed a 2X speed improvement on map tile downloads compared to full satellite tiles. Note: The tile load speed when using the companion app is a constant speed, as it can use a reduced palette. The companion app is often faster than full tile downloads when using the 64 colour mode, though the reduced colour palette may not appeal to some users. The faster tile loads also have the benefit if draining the battery less, as less bytes are sent over bluetooth.
 
+When using the companion app map choice the tile layer max and min (and any other settngs that need pulling from the app) will be loaded from the companion app tile server. If this is not running at he time the map choice is made, the update will fail, and you will be reduced to a low amount of xzoom levels (or blury map tiles). If this occurs the easiest way to fix it is open the companion app and change the companion apps tile server tosoething different, and then back to the desiredvalue (ensuring the tile server is running). Togleing the tile server on the companion app will also send an update of the tile layer max and min to the watch.  
+
 Currently this dropdown is an override for:
 
 * tileUrl

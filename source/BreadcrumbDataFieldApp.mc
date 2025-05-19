@@ -197,8 +197,8 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             } else if (type == PROTOCOL_COMPANION_APP_TILE_SERVER_CHANGED) {
                 // use to just be PROTOCOL_DROP_TILE_CACHE
                 logT("got tile cache changed req: " + rawData);
-                if (!_breadcrumbContext.settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
-                    logE("not using the companion app tile server");
+                if (_breadcrumbContext.settings.mapChoice != 1) {
+                    logE("not using the companion app tile server as map choice");
                     return;
                 }
                 // this is not perfect, some web requests could be about to complete and add a tile to the cache
@@ -221,7 +221,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             } else if (type == PROTOCOL_CACHE_CURRENT_AREA) {
                 // use to just be PROTOCOL_DROP_TILE_CACHE
                 logT("got tile cache current area req: " + rawData);
-                
+
                 _breadcrumbContext.cachedValues.startCacheCurrentMapArea();
 
                 return;
