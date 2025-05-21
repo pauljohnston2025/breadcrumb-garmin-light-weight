@@ -1067,6 +1067,7 @@ class Settings {
     function setShowErrorTileMessages(value as Boolean) as Void {
         showErrorTileMessages = value;
         setValue("showErrorTileMessages", showErrorTileMessages);
+        getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // remove the errored tiles from cache and redraw
     }
     (:settingsView)
     function setIncludeDebugPageInOnScreenUi(value as Boolean) as Void {
@@ -1253,6 +1254,7 @@ class Settings {
     function setTileErrorColour(value as Number) as Void {
         tileErrorColour = value;
         setValue("tileErrorColour", tileErrorColour.format("%X"));
+        getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // remove the errored tiles from cache and redraw
     }
 
     (:settingsView)
@@ -2036,6 +2038,8 @@ class Settings {
         var oldMapEnabled = mapEnabled;
         var oldCacheTilesInStorage = cacheTilesInStorage;
         var oldAuthToken = authToken;
+        var oldTileErrorColour = tileErrorColour;
+        var oldShowErrorTileMessages = showErrorTileMessages;
         loadSettings();
         // route settins do not work because garmins setting spage cannot edit them
         // when any property is modified, so we have to explain to users not to touch the settings, but we cannot because it looks
@@ -2056,6 +2060,13 @@ class Settings {
 
         if (oldRouteMax > _routeMax) {
             routeMaxReduced();
+        }
+
+        if (
+            oldTileErrorColour != tileErrorColour ||
+            oldShowErrorTileMessages != showErrorTileMessages
+        ) {
+            getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // remove the errored tiles from cache and redraw
         }
 
         // run any tile cache clearing that we need to when map features change
