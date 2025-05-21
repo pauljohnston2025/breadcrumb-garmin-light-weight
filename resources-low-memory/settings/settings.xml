@@ -1,0 +1,279 @@
+<settings>
+    <!-- https://developer.garmin.com/connect-iq/core-topics/properties-and-app-settings/ -->
+    <!-- todo add prompt to some of these -->
+
+    <setting propertyKey="@Properties.mode" title="@Strings.modeTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.trackRouteMode</listEntry>
+            <listEntry value="1">@Strings.elevationMode</listEntry>
+            <listEntry value="2">@Strings.mapMove</listEntry>
+            <listEntry value="3">@Strings.debug</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.uiMode" title="@Strings.uiModeTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.uiModeShowAll</listEntry>
+            <listEntry value="1">@Strings.uiModeHidden</listEntry>
+            <listEntry value="2">@Strings.uiModeNone</listEntry>
+        </settingConfig>
+    </setting>
+    
+    <setting propertyKey="@Properties.elevationMode" title="@Strings.elevationModeTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.elevationModeStacked</listEntry>
+            <listEntry value="1">@Strings.elevationModeOrderedRoutes</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.recalculateIntervalS" title="@Strings.recalculateIntervalSTitle">
+        <settingConfig type="numeric" min="0"/>
+    </setting>
+
+    <setting propertyKey="@Properties.renderMode" title="@Strings.renderModeTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.renderModeBufferedRotating</listEntry>
+            <listEntry value="2">@Strings.renderModeBufferedNoRotating</listEntry>
+            <listEntry value="3">@Strings.renderModeNoBufferedNoRotating</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.displayLatLong" title="@Strings.displayLatLongTitle">
+        <settingConfig type="boolean"/>
+    </setting>
+    
+    <group id="zoomAtPace" title="@Strings.zoomAtPaceTitle">
+        <setting propertyKey="@Properties.zoomAtPaceMode" title="@Strings.zoomAtPaceModeTitle">
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.zoomAtPaceModePace</listEntry>
+                <listEntry value="1">@Strings.zoomAtPaceModeStopped</listEntry>
+                <listEntry value="2">@Strings.zoomAtPaceModeNever</listEntry>
+                <listEntry value="3">@Strings.zoomAtPaceModeAlways</listEntry>
+                <listEntry value="4">@Strings.zoomAtPaceModeRoutesWithoutTrack</listEntry>
+            </settingConfig>
+        </setting>
+
+        <setting propertyKey="@Properties.metersAroundUser" title="@Strings.metersAroundUser" prompt="@Strings.metersAroundUserPrompt">
+            <settingConfig type="numeric" min="0" max="100000"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.zoomAtPaceSpeedMPS" title="@Strings.zoomAtPaceSpeedMPS" prompt="@Strings.zoomAtPaceSpeedMPSPrompt">
+            <settingConfig type="numeric" min="0" max="50"/>
+        </setting>
+    </group>
+
+    <setting propertyKey="@Properties.mapEnabled" title="@Strings.mapEnabledTitle">
+        <settingConfig type="boolean"/>
+    </setting>
+    <group id="mapSettings" title="@Strings.mapsettingsTitle" enableIfTrue="@Properties.mapEnabled">
+        <setting propertyKey="@Properties.tileCacheSize" title="@Strings.tileCacheSizeTitle" prompt="@Strings.tileCacheSizePrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+
+        <setting propertyKey="@Properties.tileCachePadding" title="@Strings.tileCachePaddingTitle">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.maxPendingWebRequests" title="@Strings.maxPendingWebRequests">
+            <settingConfig type="numeric" min="0" max="100"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.disableMapsFailureCount" title="@Strings.disableMapsFailureCountTitle">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+
+        <setting propertyKey="@Properties.httpErrorTileTTLS" title="@Strings.httpErrorTileTTLSTitle">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+
+        <setting propertyKey="@Properties.errorTileTTLS" title="@Strings.errorTileTTLSTitle">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+
+        <setting propertyKey="@Properties.fixedLatitude" title="@Strings.fixedLatitude" prompt="@Strings.fixedLatitudePrompt">
+            <settingConfig type="numeric" min="-90" max="90"/>
+        </setting>
+
+        <setting propertyKey="@Properties.fixedLongitude" title="@Strings.fixedLongitude" prompt="@Strings.fixedLongitudePrompt">
+            <settingConfig type="numeric" min="-180" max="180"/>
+        </setting>
+
+        <setting propertyKey="@Properties.scaleRestrictedToTileLayers" title="@Strings.scaleRestrictedToTileLayersTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+    </group>
+    <group id="tileServerSettings" title="@Strings.tileServerSettingsTitle" enableIfTrue="@Properties.mapEnabled">
+        <setting propertyKey="@Properties.mapChoice" title="@Strings.mapChoice">
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.custom</listEntry>
+                <listEntry value="2">@Strings.openTopoMap</listEntry>
+                <listEntry value="3">@Strings.esriWorldImagery</listEntry>
+                <listEntry value="4">@Strings.esriWorldStreetMap</listEntry>
+                <listEntry value="5">@Strings.esriWorldTopoMap</listEntry>
+                <listEntry value="6">@Strings.esriWorldTransportation</listEntry>
+                <listEntry value="7">@Strings.esriWorldDarkGrayBase</listEntry>
+                <listEntry value="8">@Strings.esriWorldHillshade</listEntry>
+                <listEntry value="9">@Strings.esriWorldHillshadeDark</listEntry>
+                <listEntry value="10">@Strings.esriWorldLightGrayBase</listEntry>
+                <listEntry value="11">@Strings.esriUSATopoMaps</listEntry>
+                <listEntry value="12">@Strings.esriWorldOceanBase</listEntry>
+                <listEntry value="13">@Strings.esriWorldShadedRelief</listEntry>
+                <listEntry value="14">@Strings.esriNatGeoWorldMap</listEntry>
+                <listEntry value="15">@Strings.esriWorldNavigationCharts</listEntry>
+                <listEntry value="16">@Strings.esriWorldPhysicalMap</listEntry>
+                <listEntry value="17">@Strings.openStreetMapcyclosm</listEntry>
+                <listEntry value="18">@Strings.stadiaAlidadeSmooth</listEntry>
+                <listEntry value="19">@Strings.stadiaAlidadeSmoothDark</listEntry>
+                <listEntry value="20">@Strings.stadiaOutdoors</listEntry>
+                <listEntry value="21">@Strings.stadiaStamenToner</listEntry>
+                <listEntry value="22">@Strings.stadiaStamenTonerLite</listEntry>
+                <listEntry value="23">@Strings.stadiaStamenTerrain</listEntry>
+                <listEntry value="24">@Strings.stadiaStamenWatercolor</listEntry>
+                <listEntry value="25">@Strings.stadiaOSMBright</listEntry>
+                <listEntry value="26">@Strings.cartoVoyager</listEntry>
+                <listEntry value="27">@Strings.cartoDarkMatter</listEntry>
+                <listEntry value="28">@Strings.cartoDarkLightAll</listEntry>
+            </settingConfig>
+        </setting>
+        <setting propertyKey="@Properties.tileUrl" title="@Strings.tileUrlTitle" prompt="@Strings.tileUrlPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+
+        <setting propertyKey="@Properties.authToken" title="@Strings.authTokenTitle">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+
+        <setting propertyKey="@Properties.tileSize" title="@Strings.layerTileSize" prompt="@Strings.tileSizePrompt">
+            <settingConfig type="numeric" min="2" max="256"/>
+        </setting>
+
+        <setting propertyKey="@Properties.scaledTileSize" title="@Strings.scaledTileSizeTitle" prompt="@Strings.scaledTileSizePrompt">
+            <settingConfig type="numeric" min="2" max="256"/>
+        </setting>
+
+        <setting propertyKey="@Properties.tileLayerMax" title="@Strings.tileLayerMaxTitle" prompt="@Strings.tileLayerMaxPrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+
+        <setting propertyKey="@Properties.tileLayerMin" title="@Strings.tileLayerMinTitle" prompt="@Strings.tileLayerMinPrompt">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+
+        <setting propertyKey="@Properties.fullTileSize" title="@Strings.fullTileSizeTitle" prompt="@Strings.fullTileSizePrompt">
+            <settingConfig type="numeric" min="2" max="256"/>
+        </setting>
+    </group>
+    
+    <group id="offTrackAlertsGroup" title="@Strings.offTrackAlertsGroupTitle">
+        <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+        <setting propertyKey="@Properties.offTrackCheckIntervalS" title="@Strings.offTrackCheckIntervalSTitle">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+        <setting propertyKey="@Properties.drawLineToClosestPoint" title="@Strings.drawLineToClosestPointTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+        <setting propertyKey="@Properties.enableOffTrackAlerts" title="@Strings.enableOffTrackAlertsTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+        <setting propertyKey="@Properties.offTrackAlertsMaxReportIntervalS" title="@Strings.offTrackAlertsMaxReportIntervalSTitle">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+        <setting propertyKey="@Properties.alertType" title="@Strings.alertTypeTitle">
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.alertTypeToast</listEntry>
+                <listEntry value="1">@Strings.alertTypeAlert</listEntry>
+            </settingConfig>
+        </setting>
+    </group>
+
+    <group id="colours" title="@Strings.coloursTitle">
+        <setting propertyKey="@Properties.trackColour" title="@Strings.trackColourTitle" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+
+        <setting propertyKey="@Properties.elevationColour" title="@Strings.elevationColourTitle" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.userColour" title="@Strings.userColour" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.normalModeColour" title="@Strings.normalModeColour" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.uiColour" title="@Strings.uiColour" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.debugColour" title="@Strings.debugColour" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+    </group>
+
+    <group id="routesdesc" title="@Strings.routesTitle">
+        <setting propertyKey="@Properties.routesEnabled" title="@Strings.routesEnabled">
+            <settingConfig type="boolean"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.displayRouteNames" title="@Strings.displayRouteNamesTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+    </group>
+    <!-- array settings are a complex beast see 
+    https://forums.garmin.com/developer/connect-iq/i/bug-reports/confusion-and-bugs-in-array-settings
+    and  https://forums.garmin.com/developer/connect-iq/f/discussion/296786/working-example-of-array-settings-kind-of -->
+    <!-- https://forums.garmin.com/developer/connect-iq/i/bug-reports/bug-we-were-unable-to-update-your-settings-at-this-time-please-try-again-later-in-connectiq -->
+    <!-- no matter what i do i get 'Sorry, this page is currently unavailable.' when trying to edit any of these settings-->
+    <!-- they can be created from the ui, but do not persist when settings opened again -->
+    <!-- I thought it might have been a simulator issue, but even settings pushed to real app was broken -->
+    <!-- even if I set defaults, remove a bunch of things or anything, users will just have to set these through the watch ui, however annoying that is -->
+    <!-- https://forums.garmin.com/developer/connect-iq/i/bug-reports/meta-bug-array-settings -->
+    <setting propertyKey="@Properties.routes" title="@Strings.routesTitle2" maxLength="5">
+        <setting title="@Strings.routeId" type="number">
+            <settingConfig id="routeId" type="numeric" readonly="true"/>
+        </setting>
+        <setting title="@Strings.routeName" type="string">
+            <settingConfig id="name" type="alphaNumeric"/>
+        </setting>
+        <setting title="@Strings.routeEnabled" type="boolean">
+            <settingConfig id="enabled" type="boolean"/>
+        </setting>
+        <setting title="@Strings.routeColourTitle" type="string" prompt="@Strings.colourPrompt">
+            <settingConfig id="colour" type="alphaNumeric"/>
+        </setting>
+    </setting>
+
+    <group id="debugSettings" title="@Strings.debugSettingsTitle">
+        <setting propertyKey="@Properties.showPoints" title="@Strings.showPointsTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+
+        <setting propertyKey="@Properties.drawLineToClosestTrack" title="@Strings.drawLineToClosestTrackTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+
+        <setting propertyKey="@Properties.showTileBorders" title="@Strings.showTileBordersTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+
+        <setting propertyKey="@Properties.showErrorTileMessages" title="@Strings.showErrorTileMessagesTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+
+        <setting propertyKey="@Properties.tileErrorColour" title="@Strings.tileErrorColourTitle" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+
+        <setting propertyKey="@Properties.includeDebugPageInOnScreenUi" title="@Strings.includeDebugPageInOnScreenUiTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+    </group>
+
+    <setting propertyKey="@Properties.resetDefaults" title="@Strings.resetDefaults">
+        <settingConfig type="boolean"/>
+    </setting>
+</settings>

@@ -128,6 +128,24 @@ class Tile {
     }
 }
 
+(:noCompanionTiles)
+class JsonWebTileRequestHandler extends JsonWebHandler {
+    function initialize(
+        tileCache as TileCache,
+        tileKey as TileKey,
+        tileCacheVersion as Number,
+        onlySeedStorage as Boolean
+    ) {
+        JsonWebHandler.initialize();
+    }
+
+    function handle(
+        responseCode as Number,
+        data as Dictionary or String or Iterator or Null
+    ) as Void {}
+}
+
+(:companionTiles)
 class JsonWebTileRequestHandler extends JsonWebHandler {
     var _tileCache as TileCache;
     var _tileKey as TileKey;
@@ -496,6 +514,30 @@ enum /* StorageTileType */ {
 typedef StorageTileDataType as [Number, Dictionary or WatchUi.BitmapResource or Null];
 
 // raw we request tiles stored directly on the watch for future use
+
+(:noStorage)
+class StorageTileCache {
+    var _tilesInStorage as Array<String> = [];
+
+    function initialize(settings as Settings) {}
+
+    function get(tileKey as TileKey) as StorageTileDataType? {
+        return null;
+    }
+    function haveTile(tileKey as TileKey) as Boolean {
+        return false;
+    }
+    function addErroredTile(tileKey as TileKey, responseCode as Number) as Void {}
+    function addWrongDataTile(tileKey as TileKey) as Void {}
+    function addJsonData(
+        tileKey as TileKey,
+        data as Dictionary<PropertyKeyType, PropertyValueType>
+    ) as Void {}
+    function addBitmap(tileKey as TileKey, bitmap as WatchUi.BitmapResource) as Void {}
+    function clearValues() as Void {}
+}
+
+(:storage)
 class StorageTileCache {
     // the Storage module does not allow  querying the current keys, so we would have to query every possible tile to get the oldest an be able to remove
     // so we will store what tiles we know exist, and be able to purge them ourselves
@@ -678,7 +720,7 @@ class StorageTileCache {
         }
     }
 
-    function addMetaData(tileKeyStr as String, metaData as Array<Number>) as Boolean {
+    private function addMetaData(tileKeyStr as String, metaData as Array<Number>) as Boolean {
         try {
             // update our tracking first, we do not want to loose tiles because we stored them, but could then not update the tracking
             _tilesInStorage.add(tileKeyStr);
@@ -709,7 +751,7 @@ class StorageTileCache {
         return true;
     }
 
-    function safeAdd(key as String, data as PropertyValueType) as Boolean {
+    private function safeAdd(key as String, data as PropertyValueType) as Boolean {
         try {
             Storage.setValue(key, data);
         } catch (e) {
@@ -731,7 +773,7 @@ class StorageTileCache {
         return true;
     }
 
-    function evictLeastRecentlyUsedTile() as Void {
+    private function evictLeastRecentlyUsedTile() as Void {
         // todo put older tiles into disk, and store what tiles are on disk (storage class)
         // it will be faster to load them from there than bluetooth
         var oldestTime = null;
@@ -780,7 +822,7 @@ class StorageTileCache {
         Storage.setValue(TILES_KEY, _tilesInStorage as Array<PropertyValueType>);
     }
 
-    function deleteByMetaData(key as String) as Void {
+    private function deleteByMetaData(key as String) as Void {
         var metaKeyStr = metaKey(key);
         var metaData = Storage.getValue(metaKeyStr);
         Storage.deleteValue(metaKeyStr);
@@ -1030,6 +1072,16 @@ class TileCache {
             return false;
         }
 
+        return seedCompanionAppTile(tileKey, onlySeedStorage);
+    }
+
+    (:noCompanionTiles)
+    function seedCompanionAppTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
+        return false;
+    }
+
+    (:companionTiles)
+    function seedCompanionAppTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
         // logD("small tile (companion): " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
         var jsonWebHandler = new JsonWebTileRequestHandler(
             me,
@@ -1217,6 +1269,11 @@ class TileCache {
         }
     }
 
+    (:noCompanionTiles)
+    function tileDataToBitmap64ColourString(charArr as Array<Char>?) as Graphics.BufferedBitmap? {
+        return null;
+    }
+    (:companionTiles)
     function tileDataToBitmap64ColourString(charArr as Array<Char>?) as Graphics.BufferedBitmap? {
         // System.println("tile data " + arr);
         var tileSize = _settings.tileSize;
@@ -1283,6 +1340,11 @@ class TileCache {
         return localBitmap;
     }
 
+    (:noCompanionTiles)
+    function tileDataToBitmapBlackAndWhite(charArr as Array<Char>?) as Graphics.BufferedBitmap? {
+        return null;
+    }
+    (:companionTiles)
     function tileDataToBitmapBlackAndWhite(charArr as Array<Char>?) as Graphics.BufferedBitmap? {
         // System.println("tile data " + arr);
         var tileSize = _settings.tileSize;
@@ -1342,6 +1404,11 @@ class TileCache {
         return localBitmap;
     }
 
+    (:noCompanionTiles)
+    function tileDataToBitmapFullColour(mapTileBytes as ByteArray?) as Graphics.BufferedBitmap? {
+        return null;
+    }
+    (:companionTiles)
     function tileDataToBitmapFullColour(mapTileBytes as ByteArray?) as Graphics.BufferedBitmap? {
         // System.println("tile data " + arr);
         var tileSize = _settings.tileSize;

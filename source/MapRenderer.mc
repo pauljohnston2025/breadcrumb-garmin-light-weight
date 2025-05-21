@@ -66,7 +66,36 @@ class MapRenderer {
         return false;
     }
 
+    (:noCompanionTiles)
     function renderMapUnrotated(dc as Dc) as Void {
+        if (_settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
+            if (!_settings.mapEnabled) {
+                return;
+            }
+
+            var xHalf = _cachedValues.xHalf; // local lookup faster
+            var yHalf = _cachedValues.yHalf; // local lookup faster
+
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
+            dc.clear();
+
+            dc.drawText(
+                xHalf,
+                yHalf,
+                Graphics.FONT_XTINY,
+                "COMPANION APP\nTILE SERVER\nNOT SUPPORTED\nCONFIGURE MAP\nIN SETTINGS",
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            );
+            return;
+        }
+
+        renderMapUnrotatedInner(dc);
+    }
+    (:companionTiles)
+    function renderMapUnrotated(dc as Dc) as Void {
+        renderMapUnrotatedInner(dc);
+    }
+    function renderMapUnrotatedInner(dc as Dc) as Void {
         var cachedValues = _cachedValues; // local lookup faster
         if (!_cachedValues.mapDataCanBeUsed) {
             // do not divide by zero my good friends
@@ -136,6 +165,11 @@ class MapRenderer {
         }
     }
 
+    (:noUnbufferedRotations)
+    function renderMap(dc as Dc) as Void {
+    }
+
+    (:unbufferedRotations)
     function renderMap(dc as Dc) as Void {
         var cachedValues = _cachedValues; // local lookup faster
         if (!_cachedValues.mapDataCanBeUsed) {

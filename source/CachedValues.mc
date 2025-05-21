@@ -167,7 +167,8 @@ class CachedValues {
         var boundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
             getApp()._breadcrumbContext.routes,
             // if no roues we will try and render the track instead
-            (_settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK && getApp()._breadcrumbContext.routes.size() != 0)
+            _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK &&
+                getApp()._breadcrumbContext.routes.size() != 0
                 ? null
                 : optionalTrackBoundingBox()
         );
@@ -673,6 +674,9 @@ class CachedValues {
         seedingTilesProgressForThisLayer = 0;
     }
 
+    (:noStorage)
+    function startCacheCurrentMapArea() as Void {}
+    (:storage)
     function startCacheCurrentMapArea() as Void {
         if (!_settings.mapEnabled) {
             return;
@@ -709,8 +713,13 @@ class CachedValues {
         return seedingZ >= 0;
     }
 
+    (:noStorage)
     function stepCacheCurrentMapArea() as Boolean {
-        if (seedingZ == -1) {
+        return false;
+    }
+    (:storage)
+    function stepCacheCurrentMapArea() as Boolean {
+        if (!seeding()) {
             return false;
         }
 
@@ -729,6 +738,7 @@ class CachedValues {
         return true;
     }
 
+    (:storage)
     function seedNextTilesToStorage() as Boolean {
         var tileWidthM = earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
 
@@ -801,6 +811,7 @@ class CachedValues {
         return false;
     }
 
+    (:storage)
     function updateSeedingProgress(
         firstTileX as Number,
         firstTileY as Number,

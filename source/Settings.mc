@@ -241,7 +241,11 @@ class TileUpdateHandler extends JsonWebHandler {
     function openTileServer() as Void {
         // PROTOCOL_SEND_OPEN_APP will not work if the tile server is disabled :(
         // also send a toast
-        getApp()._breadcrumbContext.webRequestHandler.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
+        getApp()._breadcrumbContext.webRequestHandler.transmit(
+            [PROTOCOL_SEND_OPEN_APP],
+            {},
+            getApp()._commStatus
+        );
         WatchUi.showToast("Tile Server Reponse Failed", {});
     }
 }
@@ -369,7 +373,7 @@ class Settings {
     var debugColour as Number = 0xfeffffff; // white, but colour_white results in FFFFFFFF (-1) when we parse it and that is fully transparent
     // I did get up to 4 large routes working with off track alerts, but any more than that and watchdog catches us out, 3 is a safer limit.
     // currently we still load disabled routes into memory, so its also not great having this larege and a heap of disabled routes
-    var routeMax as Number = 3;
+    private var _routeMax as Number = 3;
 
     // note this only works if a single track is enabled (multiple tracks would always error)
     var enableOffTrackAlerts as Boolean = true;
@@ -401,6 +405,16 @@ class Settings {
     var tileErrorColour as Number = Graphics.COLOR_BLACK;
     var includeDebugPageInOnScreenUi as Boolean = false;
     var drawHitboxes as Boolean = false; // not exposed yet
+
+    (:noStorage)
+    function routeMax() as Number {
+        return 1; // can only get 1 route (second route crashed on storage save), we also still need space for the track
+    }
+
+    (:storage)
+    function routeMax() as Number {
+        return _routeMax;
+    }
 
     function setMode(_mode as Number) as Void {
         mode = _mode;
@@ -584,14 +598,20 @@ class Settings {
         return null;
     }
 
+    (:noStorage)
+    function maxTileCacheSizeGuess() as Number {
+        return 8; // its in graphics memory, so it `should` be fine
+    }
+
     // this is a wild guess, its only used to try and protect users
     // they can set it higher after configuring the tile server choice, or custom mode is full hands off
     // this is just to ry and limit it for users when they ar simply selecting a new map choice
+    (:storage)
     function maxTileCacheSizeGuess() as Number {
         var ROUTE_SIZE_BYTES = 7000; // a large route loaded onto the device
         // var MAX_CACHE_SIZE_USER_PROTECT_BYTES = 80 /*tiles*/ *64*64 /*tile size*/ * BYTES_PER_PIXEL;
         var availableMemBytes = System.getSystemStats().totalMemory - 116000; // magic number we saw in testing with 0 routes loaded
-        availableMemBytes -= ROUTE_SIZE_BYTES * routeMax;
+        availableMemBytes -= ROUTE_SIZE_BYTES * routeMax();
         var OVERHEAD_PER_BITMAP_BYTES = 650; // larger image tiles seem to work better (we want smaller tiles to be effected by this more)
         // I pretty much want perfectSize to be ~20 for large image tiles (192*192) and ~90 for small buffered bitmap tiles (64*64)
         // so adjust OVERHEAD_PER_BITMAP_BYTES accordingly
@@ -609,12 +629,15 @@ class Settings {
         return maxTileCacheSizeGuess() * 4; // this will result in ~64 for image tiles and ~324 for companion app 64*64 tiles
     }
 
+    (:noCompanionTiles)
+    function updateCompanionAppMapChoiceChange() as Void {}
+    (:companionTiles)
     function updateCompanionAppMapChoiceChange() as Void {
         // setting back to defaults otherwise when we chose companion app we will not get the correct tilesize and it will crash
         var defaultSettings = new Settings();
         // we want a tile layer that all tile servers should be able to show, it should also be low enough that users see there is a problem
         // these values will be updated by companion app when tile serever changes, or the query below
-        setTileLayerMaxWithoutSideEffect(8); 
+        setTileLayerMaxWithoutSideEffect(8);
         setTileLayerMinWithoutSideEffect(0);
         if (fullTileSize != defaultSettings.fullTileSize) {
             setFullTileSizeWithoutSideEffect(defaultSettings.fullTileSize);
@@ -894,12 +917,12 @@ class Settings {
 
     (:settingsView)
     function setRouteMax(value as Number) as Void {
-        var oldRouteMax = routeMax;
-        routeMax = value;
-        if (oldRouteMax > routeMax) {
+        var oldRouteMax = _routeMax;
+        _routeMax = value;
+        if (oldRouteMax > _routeMax) {
             routeMaxReduced();
         }
-        setValue("routeMax", routeMax);
+        setValue("routeMax", _routeMax);
         updateCachedValues();
         updateViewSettings();
     }
@@ -907,7 +930,7 @@ class Settings {
     function routeMaxReduced() as Void {
         // remove the first oes or the last ones? we do not have an age, so just remove the last ones.
         var routesToRemove = [] as Array<Number>;
-        for (var i = routeMax; i < routes.size(); ++i) {
+        for (var i = _routeMax; i < routes.size(); ++i) {
             var oldRouteEntry = routes[i];
             var oldRouteId = oldRouteEntry["routeId"] as Number;
             routesToRemove.add(oldRouteId);
@@ -1154,7 +1177,7 @@ class Settings {
             return;
         }
 
-        if (routes.size() >= routeMax) {
+        if (routes.size() >= _routeMax) {
             return;
         }
 
@@ -1753,7 +1776,7 @@ class Settings {
         offTrackAlertsDistanceM = defaultSettings.offTrackAlertsDistanceM;
         offTrackAlertsMaxReportIntervalS = defaultSettings.offTrackAlertsMaxReportIntervalS;
         offTrackCheckIntervalS = defaultSettings.offTrackCheckIntervalS;
-        routeMax = defaultSettings.routeMax;
+        _routeMax = defaultSettings.routeMax();
         normalModeColour = defaultSettings.normalModeColour;
         uiColour = defaultSettings.uiColour;
         debugColour = defaultSettings.debugColour;
@@ -1828,7 +1851,7 @@ class Settings {
             "offTrackAlertsMaxReportIntervalS" => offTrackAlertsMaxReportIntervalS,
             "offTrackCheckIntervalS" => offTrackCheckIntervalS,
             "normalModeColour" => normalModeColour.format("%X"),
-            "routeMax" => routeMax,
+            "routeMax" => _routeMax,
             "uiColour" => uiColour.format("%X"),
             "debugColour" => debugColour.format("%X"),
             "resetDefaults" => false,
@@ -1911,7 +1934,7 @@ class Settings {
     }
 
     function loadSettingsPart2() as Void {
-        routeMax = parseColour("routeMax", routeMax);
+        _routeMax = parseColour("routeMax", _routeMax);
         uiColour = parseColour("uiColour", uiColour);
         debugColour = parseColour("debugColour", debugColour);
         maxPendingWebRequests = parseNumber("maxPendingWebRequests", maxPendingWebRequests);
@@ -2000,7 +2023,7 @@ class Settings {
     function onSettingsChanged() as Void {
         System.println("onSettingsChanged: Setting Changed, loading");
         var oldRoutes = routes;
-        var oldRouteMax = routeMax;
+        var oldRouteMax = _routeMax;
         var oldMapChoice = mapChoice;
         var oldTileUrl = tileUrl;
         var oldTileSize = tileSize;
@@ -2031,7 +2054,7 @@ class Settings {
             clearRouteFromContext(oldRouteId);
         }
 
-        if (oldRouteMax > routeMax) {
+        if (oldRouteMax > _routeMax) {
             routeMaxReduced();
         }
 

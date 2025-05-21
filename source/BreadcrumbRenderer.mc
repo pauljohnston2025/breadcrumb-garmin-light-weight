@@ -161,7 +161,16 @@ class BreadcrumbRenderer {
         );
     }
 
+    (:noUnbufferedRotations)
+    function renderLineFromLastPointToRoute(
+        dc as Dc,
+        lastPoint as RectangularPoint,
+        offTrackPoint as RectangularPoint,
+        colour as Number
+    ) as Void {}
+
     // points should already be scaled
+    (:unbufferedRotations)
     function renderLineFromLastPointToRoute(
         dc as Dc,
         lastPoint as RectangularPoint,
@@ -393,6 +402,14 @@ class BreadcrumbRenderer {
         }
     }
 
+    (:noUnbufferedRotations)
+    function renderTrackName(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType
+    ) as Void {}
+
+    (:unbufferedRotations)
     function renderTrackName(
         dc as Dc,
         breadcrumb as BreadcrumbTrack,
@@ -446,6 +463,29 @@ class BreadcrumbRenderer {
         );
     }
 
+    (:noUnbufferedRotations)
+    function renderTrack(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType,
+        drawEndMarker as Boolean
+    ) as Void {
+        var xHalf = _cachedValues.xHalf; // local lookup faster
+        var yHalf = _cachedValues.yHalf; // local lookup faster
+
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
+        dc.clear();
+
+        dc.drawText(
+            xHalf,
+            yHalf,
+            Graphics.FONT_XTINY,
+            "RENDER MODE\nNOT SUPPORTED",
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+        );
+    }
+
+    (:unbufferedRotations)
     function renderTrack(
         dc as Dc,
         breadcrumb as BreadcrumbTrack,
@@ -511,6 +551,14 @@ class BreadcrumbRenderer {
         }
     }
 
+    (:noUnbufferedRotations)
+    function renderTrackPoints(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType
+    ) as Void {}
+
+    (:unbufferedRotations)
     function renderTrackPoints(
         dc as Dc,
         breadcrumb as BreadcrumbTrack,
@@ -566,6 +614,12 @@ class BreadcrumbRenderer {
         }
     }
 
+    (:noStorage)
+    function renderTileSeedUi(dc as Dc) as Boolean {
+        // no point adding render message, its never supported
+        return false;
+    }
+    (:storage)
     function renderTileSeedUi(dc as Dc) as Boolean {
         if (
             renderLeftStartConfirmation(
@@ -790,6 +844,23 @@ class BreadcrumbRenderer {
         }
 
         return false;
+    }
+
+    (:noStorage)
+    function renderTileCacheButton(dc as Dc) as Void {}
+    (:storage)
+    function renderTileCacheButton(dc as Dc) as Void {
+        var screenWidth = _cachedValues.screenWidth; // local lookup faster
+        var yHalf = _cachedValues.yHalf; // local lookup faster
+
+        // right of screen
+        dc.drawText(
+            screenWidth - halfHitboxSize,
+            yHalf,
+            Graphics.FONT_XTINY,
+            "G",
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+        );
     }
 
     function renderUi(dc as Dc) as Void {
@@ -1047,14 +1118,7 @@ class BreadcrumbRenderer {
         );
 
         if (settings.mapEnabled) {
-            // right of screen
-            dc.drawText(
-                screenWidth - halfHitboxSize,
-                yHalf,
-                Graphics.FONT_XTINY,
-                "G",
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-            );
+            renderTileCacheButton(dc);
         }
     }
 
@@ -1192,6 +1256,11 @@ class BreadcrumbRenderer {
         return false;
     }
 
+    (:noStorage)
+    function handleStartCacheRoute(x as Number, y as Number) as Boolean {
+        return false;
+    }
+    (:storage)
     function handleStartCacheRoute(x as Number, y as Number) as Boolean {
         if (!settings.mapEnabled) {
             _starCacheTilesProgress = 0;

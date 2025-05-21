@@ -704,7 +704,7 @@ class SettingsRoutes extends WatchUi.Menu2 {
         addItem(
             new MenuItem(
                 Rez.Strings.routeMax,
-                settings.routeMax.toString(),
+                settings.routeMax().toString(),
                 :settingsDisplayRouteMax,
                 {}
             )
@@ -719,7 +719,7 @@ class SettingsRoutes extends WatchUi.Menu2 {
             )
         );
 
-        for (var i = 0; i < settings.routeMax; ++i) {
+        for (var i = 0; i < settings.routeMax(); ++i) {
             var routeIndex = settings.getRouteIndexById(i);
             if (routeIndex == null) {
                 // do not show routes that are not in the settings array
@@ -746,8 +746,8 @@ class SettingsRoutes extends WatchUi.Menu2 {
     function rerender() as Void {
         safeSetToggle(me, :settingsRoutesEnabled, settings.routesEnabled);
         safeSetToggle(me, :settingsDisplayRouteNames, settings.displayRouteNames);
-        safeSetSubLabel(me, :settingsDisplayRouteMax, settings.routeMax.toString());
-        for (var i = 0; i < settings.routeMax; ++i) {
+        safeSetSubLabel(me, :settingsDisplayRouteMax, settings.routeMax().toString());
+        for (var i = 0; i < settings.routeMax(); ++i) {
             var routeName = settings.routeName(i);
             safeSetLabel(me, i, routeName.equals("") ? "<unlabeled>" : routeName);
             safeSetIcon(me, i, new ColourIcon(settings.routeColour(i)));
@@ -1137,12 +1137,9 @@ class SettingsMapChoiceDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
 class SettingsMapAttributionDelegate extends WatchUi.Menu2InputDelegate {
-    var parent as SettingsMap;
-    function initialize(parent as SettingsMap) {
+    function initialize() {
         WatchUi.Menu2InputDelegate.initialize();
-        me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
         var itemId = item.getId() as Object;
@@ -1337,7 +1334,7 @@ class SettingsRoutesDelegate extends WatchUi.Menu2InputDelegate {
             settings.toggleDisplayRouteNames();
             view.rerender();
         } else if (itemId == :settingsDisplayRouteMax) {
-            startPicker(new SettingsNumberPicker(method(:setRouteMax), settings.routeMax), view);
+            startPicker(new SettingsNumberPicker(method(:setRouteMax), settings.routeMax()), view);
         } else if (itemId == :settingsRoutesClearAll) {
             var dialog = new WatchUi.Confirmation(
                 WatchUi.loadResource(Rez.Strings.clearRoutes1) as String
@@ -1518,7 +1515,7 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
         } else if (itemId == :settingsMapAttribution) {
             WatchUi.pushView(
                 new $.Rez.Menus.SettingsMapAttribution(),
-                new $.SettingsMapAttributionDelegate(view),
+                new $.SettingsMapAttributionDelegate(),
                 WatchUi.SLIDE_IMMEDIATE
             );
         } else if (itemId == :settingsMapStorageSettings) {

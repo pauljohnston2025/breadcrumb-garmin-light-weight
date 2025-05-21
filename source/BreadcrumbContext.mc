@@ -32,7 +32,7 @@ class BreadcrumbContext {
         cachedValues.setup();
 
         // routes loaded from storage will be rescalrescaled on the first calculate in cached values
-        for (var i = 0; i < settings.routeMax; ++i) {
+        for (var i = 0; i < settings.routeMax(); ++i) {
             var route = BreadcrumbTrack.readFromDisk(ROUTE_KEY, i);
             if (route != null) {
                 routes.add(route);
@@ -46,11 +46,11 @@ class BreadcrumbContext {
     }
 
     function newRoute(name as String) as BreadcrumbTrack? {
-        if (settings.routeMax <= 0) {
+        if (settings.routeMax() <= 0) {
             WatchUi.showToast("Route Max is 0", {});
             return null; // cannot allocate routes
         }
-        
+
         // we could maybe just not load the route if they are not enabled?
         // but they are pushing a new route from the app for this to happen
         // so forcing the new route to be enabled
@@ -67,7 +67,7 @@ class BreadcrumbContext {
         // eg me.routes = [BreadcrumbTrack{storageIndex:0, name: "phoneroute"}] settings.routes = [{id:2, name: "customroute2"}, {id:0, name: "phoneroute"}],
         // the colours will be uneffected
         // note: the route will also be force enabled, as described above
-        if (routes.size() >= settings.routeMax) {
+        if (routes.size() >= settings.routeMax()) {
             var oldestOrFirstDisabledRoute = null;
             for (var i = 0; i < routes.size(); ++i) {
                 var thisRoute = routes[i];
@@ -84,7 +84,7 @@ class BreadcrumbContext {
                 }
             }
             if (oldestOrFirstDisabledRoute == null) {
-                System.println("not possible (routes should be at least 1): " + settings.routeMax);
+                System.println("not possible (routes should be at least 1): " + settings.routeMax());
                 return null;
             }
             routes.remove(oldestOrFirstDisabledRoute);
@@ -114,7 +114,7 @@ class BreadcrumbContext {
 
     function nextAvailableRouteId() as Number? {
         // ie. we might have storageIndex=0, storageIndex=3 so we should allocate storageIndex=1
-        for (var i = 0; i < settings.routeMax; ++i) {
+        for (var i = 0; i < settings.routeMax(); ++i) {
             if (haveRouteId(i)) {
                 continue;
             }
@@ -136,7 +136,7 @@ class BreadcrumbContext {
     }
 
     function clearRoutes() as Void {
-        for (var i = 0; i < settings.routeMax; ++i) {
+        for (var i = 0; i < settings.routeMax(); ++i) {
             BreadcrumbTrack.clearRoute(ROUTE_KEY, i);
         }
         routes = [];

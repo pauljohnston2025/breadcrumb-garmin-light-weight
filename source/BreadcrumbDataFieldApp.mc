@@ -54,6 +54,9 @@ class SettingsSent extends Communications.ConnectionListener {
 // cd <homedir>/AppData/Roaming/Garmin/ConnectIQ/Devices/
 // cat ./**/compiler.json | grep -E '"type": "datafield"|displayName' -B 1
 // we currently need 128.5Kb of memory
+// for supported image formats of devices
+// cat ./**/compiler.json | grep -E 'imageFormats|displayName' -A 5
+// looks like if it does not have a key for "imageFormats" the device only supports native formats and "Source must be native color format" if trying to use anything else.
 class BreadcrumbDataFieldApp extends Application.AppBase {
     var _breadcrumbContext as BreadcrumbContext;
     var _view as BreadcrumbDataFieldView;
@@ -91,6 +94,11 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         return [_view, new BreadcrumbDataFieldDelegate(_breadcrumbContext)];
     }
 
+    (:noSettingsView)
+    function getSettingsView() as [Views] or [Views, InputDelegates] or Null {
+        return [new $.Rez.Menus.SettingsMapAttribution(), new $.SettingsMapAttributionDelegate()];
+    }
+        
     (:settingsView)
     function getSettingsView() as [Views] or [Views, InputDelegates] or Null {
         var settings = new $.SettingsMain();
