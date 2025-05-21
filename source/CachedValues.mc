@@ -37,6 +37,7 @@ class CachedValues {
     var rotateCos as Float = Math.cos(rotationRad).toFloat();
     var rotateSin as Float = Math.sin(rotationRad).toFloat();
     var currentSpeed as Float = -1f;
+    var elapsedDistanceM as Float = 0f;
     var currentlyZoomingAroundUser as Boolean = false;
 
     // updated whenever onlayout changes (audit usages, these should not need to be floats, but sometimes are used to do float math)
@@ -261,7 +262,23 @@ class CachedValues {
         // System.println(
         //     "store heading, current speed etc. so we can know how to render the "
         //     + "map");
+        // garmin might already do this for us? the docs say
+        // track:
+        // The current track in radians.
+        // Track is the direction of travel in radians based on GPS movement. If supported by the device, this provides compass orientation when stopped.
+        // currentHeading :
+        // The true north referenced heading in radians.
+        // This provides compass orientation if it is supported by the device.
+        // based on some of the posts here, its better to use currentHeading if we want our compas to work whilst not moving, and track is only supported on some devices
+        // https://forums.garmin.com/developer/connect-iq/f/discussion/258978/currentheading
         var currentHeading = activityInfo.currentHeading;
+        if (activityInfo has :track) {
+            var track = activityInfo.track;
+            if (currentHeading == null && track != null) {
+                currentHeading = track;
+            }
+        }
+
         if (currentHeading != null) {
             rotationRad = currentHeading;
             rotateCos = Math.cos(rotationRad).toFloat();
@@ -273,6 +290,11 @@ class CachedValues {
         }
 
         updateRotationMatrix();
+
+        var _elapsedDistance = activityInfo.elapsedDistance;
+        if (_elapsedDistance != null) {
+            elapsedDistanceM = _elapsedDistance;
+        }
 
         // we are either in 2 cases
         // if we are moving at some pace check the mode we are in to determine if we

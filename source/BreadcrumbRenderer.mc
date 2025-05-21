@@ -1570,11 +1570,7 @@ class BreadcrumbRenderer {
             // drawAngledText and drawRadialText not available :(
         }
 
-        var distanceM = distancePixels;
-        var distanceScale = _cachedValues.currentScale;
-        if (distanceScale != 0f) {
-            distanceM = distancePixels / distanceScale;
-        }
+        var distanceM = _cachedValues.elapsedDistanceM;
         var distanceKM = distanceM / 1000f;
         var distText =
             distanceKM > 1
