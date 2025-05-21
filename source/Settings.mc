@@ -1010,7 +1010,7 @@ class Settings {
 
     function mapEnabledChanged() as Void {
         if (!mapEnabled) {
-            clearTileCache();
+            getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // do not remove our cached tiles, we might just be temporarily disabling maps
             clearPendingWebRequests();
             clearTileCacheStats();
             clearWebStats();
