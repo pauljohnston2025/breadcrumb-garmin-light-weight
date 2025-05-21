@@ -286,7 +286,7 @@ class MapRenderer {
                     // changing it to
                     // tileFromCache.bitmap.isCached() + " "
                     //  + " " + tileFromCache.bitmap
-                    logE("failed drawBitmap2: " + e.getErrorMessage());
+                    logE("failed drawBitmap2 (renderMap): " + e.getErrorMessage());
                     ++$.globalExceptionCounter;
                 }
                 if (_settings.showTileBorders) {

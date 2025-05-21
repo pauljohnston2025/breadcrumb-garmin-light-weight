@@ -434,7 +434,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                         }
                     );
                 } catch (e) {
-                    logE("failed drawBitmap2: " + e.getErrorMessage());
+                    logE("failed drawBitmap2 (attribution): " + e.getErrorMessage());
                     ++$.globalExceptionCounter;
                 }
             }
@@ -514,7 +514,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     dc.drawBitmap(0, 0, scratchPadBitmapLocal);
                 }
             } catch (e) {
-                logE("failed drawBitmap2 or drawBitmap: " + e.getErrorMessage());
+                logE("failed drawBitmap2 or drawBitmap (view class): " + e.getErrorMessage());
                 ++$.globalExceptionCounter;
             }
             return;

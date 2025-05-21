@@ -130,13 +130,20 @@ function drawScaledBitmapHelper(
     var scaleMatrix = new AffineTransform();
     scaleMatrix.scale(tileScaleFactor, tileScaleFactor); // scale
     try {
+        // a horrible fix for "Source must be native color format"
+        // see https://forums.garmin.com/developer/connect-iq/f/discussion/360257/bitmap-native-color-format-venusq2
+        // and https://forums.garmin.com/developer/connect-iq/i/bug-reports/bitmap-png-format-bug-fr-165-venu-sq-2
+        // the packing formats in the drawbles must have automaticPalette="false" and possibly packingFormat="default"
+        // but it then appears makeImageRequest tiles also fail (even when using :packingFormat => Communications.PACKING_FORMAT_DEFAULT)
+        // dc.drawBitmap(x, y, bitmap);
+        // need to add this as a user setting, test device is instinct 3 45mm. not sure if this is simulator bug, or if it happens on real deivce too (other reports seem to indicate it happens to real device)
         dc.drawBitmap2(x, y, bitmap, {
             :transform => scaleMatrix,
             // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
             :filterMode => Graphics.FILTER_MODE_BILINEAR,
         });
     } catch (e) {
-        logE("failed drawBitmap2: " + e.getErrorMessage());
+        logE("failed drawBitmap2 (drawScaledBitmapHelper): " + e.getErrorMessage());
         ++$.globalExceptionCounter;
     }
 }
