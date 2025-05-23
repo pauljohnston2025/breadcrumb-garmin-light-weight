@@ -75,6 +75,7 @@ enum /*AuthTokenType*/ {
 
 const COMPANION_APP_TILE_URL = "http://127.0.0.1:8080";
 
+(:imageTiles)
 class TileServerInfo {
     var attributionType as Number;
     var urlPrefix as Number;
@@ -99,6 +100,7 @@ class TileServerInfo {
     }
 }
 
+(:imageTiles)
 function getUrlPrefix(prefix as Number) as String {
     if (prefix == URL_PREFIX_NONE) {
         return "";
@@ -113,6 +115,7 @@ function getUrlPrefix(prefix as Number) as String {
     return "";
 }
 
+(:imageTiles)
 function getAuthTokenSuffix(type as Number) as String {
     switch (type) {
         case AUTH_TOKEN_TYPE_NONE:
@@ -124,10 +127,15 @@ function getAuthTokenSuffix(type as Number) as String {
     return "";
 }
 
-// prettier-ignore
-// This is an array instead of a dict because dict does not render correctly, also arrays are faster
-function getTileServerInfo(id as Number) as TileServerInfo?
-{
+(:noImageTiles)
+function getTileServerInfo(id as Number) as TileServerInfo? {
+    return null;
+}
+
+(:imageTiles)
+function getTileServerInfo(id as Number) as TileServerInfo? {
+    // prettier-ignore
+    // This is an array instead of a dict because dict does not render correctly, also arrays are faster
     // 0 => null, // special custom (no tile property changes will happen)
     // 1 => null, // special companion app (only the tileUrl will be updated)
     switch(id)
@@ -204,6 +212,7 @@ function getTileServerInfo(id as Number) as TileServerInfo?
     return null;
 }
 
+(:companionTiles)
 class TileUpdateHandler extends JsonWebHandler {
     var mapChoiceVersion as Number;
     function initialize(_mapChoiceVersion as Number) {
@@ -262,16 +271,22 @@ class TileUpdateHandler extends JsonWebHandler {
 // * Works fine
 class Settings {
     // todo only load these when needed (but cache them)
+    (:imageTiles)
     var googleAttribution as WatchUi.BitmapResource =
         WatchUi.loadResource(Rez.Drawables.GoogleAttribution) as BitmapResource;
+    (:imageTiles)
     var openTopMapAttribution as WatchUi.BitmapResource =
         WatchUi.loadResource(Rez.Drawables.OpenTopMapAttribution) as BitmapResource;
+    (:imageTiles)
     var esriAttribution as WatchUi.BitmapResource =
         WatchUi.loadResource(Rez.Drawables.EsriAttribution) as BitmapResource;
+    (:imageTiles)
     var openStreetMapAttribution as WatchUi.BitmapResource =
         WatchUi.loadResource(Rez.Drawables.OpenStreetMapAttribution) as BitmapResource;
+    (:imageTiles)
     var stadiaAttribution as WatchUi.BitmapResource =
         WatchUi.loadResource(Rez.Drawables.StadiaAttribution) as BitmapResource;
+    (:imageTiles)
     var cartoAttribution as WatchUi.BitmapResource =
         WatchUi.loadResource(Rez.Drawables.CartoAttribution) as BitmapResource;
 
@@ -279,7 +294,13 @@ class Settings {
     // we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes.
     // so math.ceil should be used what figuring out how many meters a tile is.
     // eg. maybe we cannot do 128 but we can do 120 (this would limit the number of tiles, but the resolution would be slightly off)
-    var tileSize as Number = 64; // The smaller tile size, mainly for use with companion app, allows slicing scaledTileSize into smaller tiles
+
+     // The smaller tile size, mainly for use with companion app, allows slicing scaledTileSize into smaller tiles
+    (:highMemory)
+    var tileSize as Number = 64;
+    (:lowMemory)
+    var tileSize as Number = 32;
+    
     var fullTileSize as Number = 256; // The tile size on the tile server
     // The tile size to scale images to, results in significantly smaller downloads (and faster speeds) but makes image slightly blurry.
     // 190 seems to be a good compromise between speed and crisp images. it does not effect the image too much, but gives us about 2X the speed.
@@ -406,12 +427,12 @@ class Settings {
     var includeDebugPageInOnScreenUi as Boolean = false;
     var drawHitboxes as Boolean = false; // not exposed yet
 
-    (:noStorage)
+    (:lowMemory)
     function routeMax() as Number {
         return 1; // can only get 1 route (second route crashed on storage save), we also still need space for the track
     }
 
-    (:storage)
+    (:highMemory)
     function routeMax() as Number {
         return _routeMax;
     }
@@ -567,6 +588,12 @@ class Settings {
         return requiresAuth && authToken.equals("");
     }
 
+    (:noImageTiles)
+    function getAttribution() as WatchUi.BitmapResource? {
+        return null;
+    }
+
+    (:imageTiles)
     function getAttribution() as WatchUi.BitmapResource? {
         if (mapChoice == 0) {
             // custom - no way to know which tile server
@@ -598,7 +625,7 @@ class Settings {
         return null;
     }
 
-    (:noStorage)
+    (:lowMemory)
     function maxTileCacheSizeGuess() as Number {
         return 8; // its in graphics memory, so it `should` be fine
     }
@@ -606,7 +633,7 @@ class Settings {
     // this is a wild guess, its only used to try and protect users
     // they can set it higher after configuring the tile server choice, or custom mode is full hands off
     // this is just to ry and limit it for users when they ar simply selecting a new map choice
-    (:storage)
+    (:highMemory)
     function maxTileCacheSizeGuess() as Number {
         var ROUTE_SIZE_BYTES = 7000; // a large route loaded onto the device
         // var MAX_CACHE_SIZE_USER_PROTECT_BYTES = 80 /*tiles*/ *64*64 /*tile size*/ * BYTES_PER_PIXEL;
@@ -675,6 +702,10 @@ class Settings {
         return;
     }
 
+    (:noImageTiles)
+    function updateTileServerMapChoiceChange(tileServerInfo as TileServerInfo) as Void {}
+
+    (:imageTiles)
     function updateTileServerMapChoiceChange(tileServerInfo as TileServerInfo) as Void {
         var defaultSettings = new Settings();
         if (tileLayerMax != tileServerInfo.tileLayerMax) {

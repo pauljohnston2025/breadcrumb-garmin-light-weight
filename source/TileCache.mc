@@ -311,6 +311,24 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
     }
 }
 
+(:noImageTiles)
+class ImageWebTileRequestHandler extends ImageWebHandler {
+    function initialize(
+        tileCache as TileCache,
+        tileKey as TileKey,
+        fullSizeTile as TileKey,
+        tileCacheVersion as Number,
+        onlySeedStorage as Boolean
+    ) {
+        ImageWebHandler.initialize();
+    }
+
+    function handle(
+        responseCode as Number,
+        data as WatchUi.BitmapResource or Graphics.BitmapReference or Null
+    ) as Void {}
+}
+(:imageTiles)
 class ImageWebTileRequestHandler extends ImageWebHandler {
     var _tileCache as TileCache;
     var _tileKey as TileKey;
@@ -1020,59 +1038,68 @@ class TileCache {
         // System.println("starting load tile: " + x + " " + y + " " + z);
 
         if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
-            // logD("small tile: " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
-            var x = tileKey.x / _cachedValues.smallTilesPerScaledTile;
-            var y = tileKey.y / _cachedValues.smallTilesPerScaledTile;
-            var fullSizeTile = new TileKey(x, y, tileKey.z);
-            // logD("fullSizeTile tile: " + fullSizeTile);
-            var imageReqHandler = new ImageWebTileRequestHandler(
-                me,
-                tileKey,
-                fullSizeTile,
-                _tileCacheVersion,
-                onlySeedStorage
-            );
-            var tileFromStorage = _storageTileCache.get(fullSizeTile);
-            if (tileFromStorage != null) {
-                var responseCode = tileFromStorage[0];
-                // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
-                if (responseCode != 200) {
-                    imageReqHandler.handleErroredTile(responseCode);
-                    return true;
-                }
-                // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
-                imageReqHandler.handleSuccessfulTile(tileFromStorage[1] as BitmapResource?, false);
-                return true;
-            }
-            if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
-                // we are running in storage only mode, but the tile is not in the cache
-                addErroredTile(tileKey, _tileCacheVersion, "S404", true);
-                return false;
-            }
-            _webRequestHandler.add(
-                new ImageRequest(
-                    "im" + tileKey.optimisedHashKey() + "-" + _tileCacheVersion, // the hash is for the small tile request, not the big one (they will send the same physical request out, but again use 256 tilSize if your using external sources)
-                    stringReplaceFirst(
-                        stringReplaceFirst(
-                            stringReplaceFirst(
-                                stringReplaceFirst(_settings.tileUrl, "{x}", x.toString()),
-                                "{y}",
-                                y.toString()
-                            ),
-                            "{z}",
-                            tileKey.z.toString()
-                        ),
-                        "{authToken}",
-                        _settings.authToken
-                    ),
-                    {},
-                    imageReqHandler
-                )
-            );
-            return false;
+            return seedImageTile(tileKey, onlySeedStorage);
         }
 
         return seedCompanionAppTile(tileKey, onlySeedStorage);
+    }
+
+    (:noImageTiles)
+    function seedImageTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
+        return false;
+    }
+    (:imageTiles)
+    function seedImageTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
+        // logD("small tile: " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
+        var x = tileKey.x / _cachedValues.smallTilesPerScaledTile;
+        var y = tileKey.y / _cachedValues.smallTilesPerScaledTile;
+        var fullSizeTile = new TileKey(x, y, tileKey.z);
+        // logD("fullSizeTile tile: " + fullSizeTile);
+        var imageReqHandler = new ImageWebTileRequestHandler(
+            me,
+            tileKey,
+            fullSizeTile,
+            _tileCacheVersion,
+            onlySeedStorage
+        );
+        var tileFromStorage = _storageTileCache.get(fullSizeTile);
+        if (tileFromStorage != null) {
+            var responseCode = tileFromStorage[0];
+            // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
+            if (responseCode != 200) {
+                imageReqHandler.handleErroredTile(responseCode);
+                return true;
+            }
+            // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
+            imageReqHandler.handleSuccessfulTile(tileFromStorage[1] as BitmapResource?, false);
+            return true;
+        }
+        if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
+            // we are running in storage only mode, but the tile is not in the cache
+            addErroredTile(tileKey, _tileCacheVersion, "S404", true);
+            return false;
+        }
+        _webRequestHandler.add(
+            new ImageRequest(
+                "im" + tileKey.optimisedHashKey() + "-" + _tileCacheVersion, // the hash is for the small tile request, not the big one (they will send the same physical request out, but again use 256 tilSize if your using external sources)
+                stringReplaceFirst(
+                    stringReplaceFirst(
+                        stringReplaceFirst(
+                            stringReplaceFirst(_settings.tileUrl, "{x}", x.toString()),
+                            "{y}",
+                            y.toString()
+                        ),
+                        "{z}",
+                        tileKey.z.toString()
+                    ),
+                    "{authToken}",
+                    _settings.authToken
+                ),
+                {},
+                imageReqHandler
+            )
+        );
+        return false;
     }
 
     (:noCompanionTiles)

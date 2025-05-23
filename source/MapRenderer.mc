@@ -66,6 +66,32 @@ class MapRenderer {
         return false;
     }
 
+    (:noImageTiles)
+    function renderMapUnrotated(dc as Dc) as Void {
+        if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
+            if (!_settings.mapEnabled) {
+                return;
+            }
+
+            var xHalf = _cachedValues.xHalf; // local lookup faster
+            var yHalf = _cachedValues.yHalf; // local lookup faster
+
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
+            dc.clear();
+
+            dc.drawText(
+                xHalf,
+                yHalf,
+                Graphics.FONT_XTINY,
+                "WEB\nTILE SERVER\nNOT SUPPORTED\nCONFIGURE TILE SERVER\nIN SETTINGS",
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            );
+            return;
+        }
+
+        renderMapUnrotatedInner(dc);
+    }
+
     (:noCompanionTiles)
     function renderMapUnrotated(dc as Dc) as Void {
         if (_settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
@@ -83,7 +109,7 @@ class MapRenderer {
                 xHalf,
                 yHalf,
                 Graphics.FONT_XTINY,
-                "COMPANION APP\nTILE SERVER\nNOT SUPPORTED\nCONFIGURE MAP\nIN SETTINGS",
+                "COMPANION APP\nTILE SERVER\nNOT SUPPORTED\nCONFIGURE TILE SERVER\nIN SETTINGS",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
             );
             return;
@@ -91,7 +117,8 @@ class MapRenderer {
 
         renderMapUnrotatedInner(dc);
     }
-    (:companionTiles)
+
+    (:companionTiles :imageTiles)
     function renderMapUnrotated(dc as Dc) as Void {
         renderMapUnrotatedInner(dc);
     }

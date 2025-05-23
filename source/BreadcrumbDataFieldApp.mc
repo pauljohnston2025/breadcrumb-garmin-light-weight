@@ -93,11 +93,6 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         // then to go back you need to Settings -> Time Out App Settings
         return [_view, new BreadcrumbDataFieldDelegate(_breadcrumbContext)];
     }
-
-    (:noSettingsView)
-    function getSettingsView() as [Views] or [Views, InputDelegates] or Null {
-        return [new $.Rez.Menus.SettingsMapAttribution(), new $.SettingsMapAttributionDelegate()];
-    }
         
     (:settingsView)
     function getSettingsView() as [Views] or [Views, InputDelegates] or Null {

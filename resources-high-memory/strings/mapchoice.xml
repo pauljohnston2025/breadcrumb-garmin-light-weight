@@ -1,0 +1,57 @@
+<strings>
+    <string id="attribution">Attribution</string>
+    <string id="openTopoMapAttribution">OpenTopoMap</string>
+    <string id="googleAttribution">Google</string>
+    <string id="esriAttribution">Powered by Esri</string>
+    <string id="openStreetmapAttribution">OpenStreetMap</string>
+    <string id="stadiaAttribution">Stadia Maps</string>
+    <string id="openmaptilesAttribution">OpenMapTiles</string>
+    <string id="cartoAttribution">CARTO</string>
+
+    <string id="esriPrefix">https://server.arcgisonline.com/arcgis/rest/services/</string>
+    <string id="stadiaPrefix">https://tiles.stadiamaps.com/tiles/</string>
+    <string id="cartoPrefix">https://a.basemaps.cartocdn.com/rastertiles/</string>
+
+    <string id="openTopoMapUrlTemplate">https://a.tile.opentopomap.org/{z}/{x}/{y}.png</string>
+    <string id="esriWorldImageryTemplate">World_Imagery/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
+    <string id="esriWorldStreetMapTemplate">World_Street_Map/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
+    <string id="esriWorldTopoMapTemplate">World_Topo_Map/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
+    <string id="esriWorldTransportationTemplate">Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
+    <string id="esriWorldDarkGrayBaseTemplate">Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
+    <string id="esriWorldHillshadeTemplate">Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
+    <string id="esriWorldHillshadeDarkTemplate">Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
+    <string id="esriWorldLightGrayBaseTemplate">Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
+    <string id="esriUsaTopoMapsTemplate">USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
+    <string id="esriWorldOceanBaseTemplate">Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
+    <string id="esriWorldShadedReliefTemplate">World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
+    <string id="esriNatgeoWorldMapTemplate">NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
+    <string id="esriWorldNavigationChartsTemplate">Specialty/World_Navigation_Charts/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
+    <string id="esriWorldPhysicalMapTemplate">World_Physical_Map/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
+    <string id="openstreetmapCyclosmTemplate">https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png</string>
+    <string id="stadiaAlidadeSmoothTemplate">alidade_smooth/{z}/{x}/{y}.png</string>
+    <string id="stadiaAlidadeSmoothDarkTemplate">alidade_smooth_dark/{z}/{x}/{y}.png</string>
+    <string id="stadiaOutdoorsTemplate">outdoors/{z}/{x}/{y}.png</string>
+    <string id="stadiaStamenTonerTemplate">stamen_toner/{z}/{x}/{y}.png</string>
+    <string id="stadiaStamenTonerLiteTemplate">stamen_toner_lite/{z}/{x}/{y}.png</string>
+    <string id="stadiaStamenTerrainTemplate">stamen_terrain/{z}/{x}/{y}.png</string>
+    <string id="stadiaStamenWatercolorTemplate">stamen_watercolor/{z}/{x}/{y}.jpg</string>
+    <string id="stadiaOsmBrightTemplate">osm_bright/{z}/{x}/{y}.png</string>
+    <string id="cartoVoyagerTemplate">voyager/{z}/{x}/{y}.png</string>
+    <string id="cartoDarkMatterTemplate">dark_all/{z}/{x}/{y}.png</string>
+    <string id="cartoLightAllTemplate">light_all/{z}/{x}/{y}.png</string>
+
+
+    <string id="enableMaps1">Enable maps. This breaks on some devices. Are you sure?</string>
+    <string id="enableMaps2">Confirm map enable</string>
+    <string id="enableMaps3">Enabling maps, LAST CHANCE!!!</string>
+    <string id="disableMaps1">Disable maps. Are you sure?</string>
+    <string id="disableMaps2">Confirm map disable</string>
+    <string id="disableMaps3">Disabling maps, LAST CHANCE!!!</string>
+    <string id="startTileCache1">Start tile caching. This breaks on some devices. Are you sure?</string>
+    <string id="startTileCache2">Confirm start tile caching</string>
+    <string id="startTileCache3">Start tile caching, LAST CHANCE!!!</string>
+    <string id="clearRoutes1">Clearing all routes, are you sure?</string>
+    <string id="clearRoutes2">Confirm route clear</string>
+    <string id="clearRoutes3">Clearing all routes, LAST CHANCE!!!</string>
+    
+</strings>
