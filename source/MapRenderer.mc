@@ -118,7 +118,7 @@ class MapRenderer {
         renderMapUnrotatedInner(dc);
     }
 
-    (:companionTiles :imageTiles)
+    (:companionTiles)
     function renderMapUnrotated(dc as Dc) as Void {
         renderMapUnrotatedInner(dc);
     }

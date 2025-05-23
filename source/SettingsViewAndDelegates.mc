@@ -1137,7 +1137,6 @@ class SettingsMapChoiceDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
 class SettingsMapAttributionDelegate extends WatchUi.Menu2InputDelegate {
     function initialize() {
         WatchUi.Menu2InputDelegate.initialize();

@@ -103,6 +103,46 @@
         </setting>
     </group>
     <group id="tileServerSettings" title="@Strings.tileServerSettingsTitle" enableIfTrue="@Properties.mapEnabled">
+        <setting propertyKey="@Properties.mapChoice" title="@Strings.mapChoice">
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.custom</listEntry>
+                <listEntry value="2">@Strings.openTopoMap</listEntry>
+                <listEntry value="3">@Strings.esriWorldImagery</listEntry>
+                <listEntry value="4">@Strings.esriWorldStreetMap</listEntry>
+                <listEntry value="5">@Strings.esriWorldTopoMap</listEntry>
+                <listEntry value="6">@Strings.esriWorldTransportation</listEntry>
+                <listEntry value="7">@Strings.esriWorldDarkGrayBase</listEntry>
+                <listEntry value="8">@Strings.esriWorldHillshade</listEntry>
+                <listEntry value="9">@Strings.esriWorldHillshadeDark</listEntry>
+                <listEntry value="10">@Strings.esriWorldLightGrayBase</listEntry>
+                <listEntry value="11">@Strings.esriUSATopoMaps</listEntry>
+                <listEntry value="12">@Strings.esriWorldOceanBase</listEntry>
+                <listEntry value="13">@Strings.esriWorldShadedRelief</listEntry>
+                <listEntry value="14">@Strings.esriNatGeoWorldMap</listEntry>
+                <listEntry value="15">@Strings.esriWorldNavigationCharts</listEntry>
+                <listEntry value="16">@Strings.esriWorldPhysicalMap</listEntry>
+                <listEntry value="17">@Strings.openStreetMapcyclosm</listEntry>
+                <listEntry value="18">@Strings.stadiaAlidadeSmooth</listEntry>
+                <listEntry value="19">@Strings.stadiaAlidadeSmoothDark</listEntry>
+                <listEntry value="20">@Strings.stadiaOutdoors</listEntry>
+                <listEntry value="21">@Strings.stadiaStamenToner</listEntry>
+                <listEntry value="22">@Strings.stadiaStamenTonerLite</listEntry>
+                <listEntry value="23">@Strings.stadiaStamenTerrain</listEntry>
+                <listEntry value="24">@Strings.stadiaStamenWatercolor</listEntry>
+                <listEntry value="25">@Strings.stadiaOSMBright</listEntry>
+                <listEntry value="26">@Strings.cartoVoyager</listEntry>
+                <listEntry value="27">@Strings.cartoDarkMatter</listEntry>
+                <listEntry value="28">@Strings.cartoDarkLightAll</listEntry>
+            </settingConfig>
+        </setting>
+        <setting propertyKey="@Properties.tileUrl" title="@Strings.tileUrlTitle" prompt="@Strings.tileUrlPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+
+        <setting propertyKey="@Properties.authToken" title="@Strings.authTokenTitle">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
+
         <setting propertyKey="@Properties.tileSize" title="@Strings.layerTileSize" prompt="@Strings.tileSizePrompt">
             <settingConfig type="numeric" min="2" max="256"/>
         </setting>

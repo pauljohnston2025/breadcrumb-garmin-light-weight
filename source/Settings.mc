@@ -132,7 +132,7 @@ function getTileServerInfo(id as Number) as TileServerInfo? {
     return null;
 }
 
-(:imageTiles)
+(:highMemory)
 function getTileServerInfo(id as Number) as TileServerInfo? {
     // prettier-ignore
     // This is an array instead of a dict because dict does not render correctly, also arrays are faster
@@ -208,6 +208,37 @@ function getTileServerInfo(id as Number) as TileServerInfo? {
             return new TileServerInfo(ATTRIBUTION_CARTO, URL_PREFIX_CARTO, AUTH_TOKEN_TYPE_NONE, Rez.Strings.cartoDarkMatterTemplate, 0, 20); // Carto - Dark Matter
         case 28:
             return new TileServerInfo(ATTRIBUTION_CARTO, URL_PREFIX_CARTO, AUTH_TOKEN_TYPE_NONE, Rez.Strings.cartoLightAllTemplate, 0, 20); // Carto - Light All
+    }
+    return null;
+}
+
+(:lowMemory)
+function getTileServerInfo(id as Number) as TileServerInfo? {
+    // prettier-ignore
+    // This is an array instead of a dict because dict does not render correctly, also arrays are faster
+    // 0 => null, // special custom (no tile property changes will happen)
+    // 1 => null, // special companion app (only the tileUrl will be updated)
+    switch(id)
+    {
+        case 2:
+            // open topo
+            return new TileServerInfo(ATTRIBUTION_OPENTOPOMAP, URL_PREFIX_NONE, AUTH_TOKEN_TYPE_NONE, Rez.Strings.openTopoMapUrlTemplate, 0, 15); // OpenTopoMap
+            // google - cannot use returns 404 - works from companion app (userAgent sent)
+            // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", 0, 20), // "Google - Hybrid"
+            // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", 0, 20), // "Google - Satellite"
+            // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", 0, 20), // "Google - Road"
+            // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}", 0, 20), // "Google - Terain"
+            // arcgis (esri) - note some of these have been removed due to not enough coverage, and others have had layermin/max altered for australian coverage
+            // _Reference maps are all the same - just the location names removing them
+            // Note: when testing on the simulator, some of theese occasionaly seem to produce   
+            // Error: Invalid Value
+            // Details: failed inside handle_image_callback
+        case 3:
+            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldImageryTemplate, 0, 20); // Esri - World Imagery
+        case 4:
+            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldStreetMapTemplate, 0, 19); // Esri - World Street Map
+        case 5:
+            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldTopoMapTemplate, 0, 19); // Esri - World Topo Map
     }
     return null;
 }
@@ -378,7 +409,10 @@ class Settings {
     // but you can also use something like https://a.tile.opentopomap.org/{z}/{x}/{y}.png
     // to make this work on the emulator you ned to run
     // adb forward tcp:8080 tcp:8080
+    (:companionTiles)
     var tileUrl as String = COMPANION_APP_TILE_URL;
+    (:noCompanionTiles)
+    var tileUrl as String = "https://a.tile.opentopomap.org/{z}/{x}/{y}.png";
     var authToken as String = "";
     var requiresAuth as Boolean = false;
     var mapChoice as Number = 0;
