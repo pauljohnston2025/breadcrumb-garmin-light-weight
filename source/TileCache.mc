@@ -476,8 +476,10 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         //                 :filterMode => Graphics.FILTER_MODE_BILINEAR,
         //             });
         //         } catch (e) {
-        //             logE("failed drawBitmap2 (handleSuccessfulTile): " + e.getErrorMessage());
-        //             ++$.globalExceptionCounter;
+        // var message = e.getErrorMessage();
+        // logE("failed drawBitmap2 (handleSuccessfulTile): " + message);
+        // ++$.globalExceptionCounter;
+        // incNativeColourFormatErrorIfMessageMatches(message);
         //         }
         //         // System.println("scaled up to: " + upscaledBitmap.getWidth() + " " + upscaledBitmap.getHeight());
         //         // System.println("from: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());

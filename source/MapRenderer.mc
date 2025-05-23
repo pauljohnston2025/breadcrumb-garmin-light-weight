@@ -160,6 +160,7 @@ class MapRenderer {
         var firstTileY = cachedValues.firstTileY; // local lookup faster
         var tileZ = cachedValues.tileZ; // local lookup faster
         var tileSize = _settings.tileSize;
+        var useDrawBitmap = _settings.useDrawBitmap;
 
         for (var x = 0; x < tileCountX; ++x) {
             for (var y = 0; y < tileCountY; ++y) {
@@ -183,14 +184,18 @@ class MapRenderer {
                 // we must scale as the tile we picked is only close to the resolution we need
                 var xPixel = tileOffsetX + x * tileScalePixelSize;
                 var yPixel = tileOffsetY + y * tileScalePixelSize;
-                $.drawScaledBitmapHelper(
-                    dc,
-                    xPixel,
-                    yPixel,
-                    tileScalePixelSize,
-                    tileScalePixelSize,
-                    tileFromCache.bitmap
-                );
+                if (useDrawBitmap) {
+                    dc.drawBitmap(xPixel, yPixel, tileFromCache.bitmap);
+                } else {
+                    $.drawScaledBitmapHelper(
+                        dc,
+                        xPixel,
+                        yPixel,
+                        tileScalePixelSize,
+                        tileScalePixelSize,
+                        tileFromCache.bitmap
+                    );
+                }
 
                 if (_settings.showTileBorders) {
                     dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
@@ -245,6 +250,7 @@ class MapRenderer {
         var xHalf = cachedValues.xHalf; // local lookup faster
         var yHalf = cachedValues.yHalf; // local lookup faster
         var tileSize = _settings.tileSize; // local lookup faster
+        var useDrawBitmap = _settings.useDrawBitmap; // local lookup faster
 
         // perhaps we should draw all tiles then draw all border lines in second for loop?
         // this for loop is noce though, as it only draws borders on the tiles that are drawn (and we have in our tile cache), not every possible tile on the screen
@@ -310,16 +316,20 @@ class MapRenderer {
                 //     Line: 293
                 //     Function: onUpdate
                 try {
-                    dc.drawBitmap2(xPos, yPos, tileFromCache.bitmap, {
-                        // :bitmapX =>
-                        // :bitmapY =>
-                        // :bitmapWidth =>
-                        // :bitmapHeight =>
-                        // :tintColor =>
-                        :transform => rotationMatrix,
-                        // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
-                        :filterMode => Graphics.FILTER_MODE_BILINEAR,
-                    });
+                    if (useDrawBitmap) {
+                        dc.drawBitmap(xPos, yPos, tileFromCache.bitmap);
+                    } else {
+                        dc.drawBitmap2(xPos, yPos, tileFromCache.bitmap, {
+                            // :bitmapX =>
+                            // :bitmapY =>
+                            // :bitmapWidth =>
+                            // :bitmapHeight =>
+                            // :tintColor =>
+                            :transform => rotationMatrix,
+                            // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
+                            :filterMode => Graphics.FILTER_MODE_BILINEAR,
+                        });
+                    }
                 } catch (e) {
                     // not sure what this exception was see above
                     // simultor keeps getting InvalidValueException: Source must not use a color palette but I never use a colour pallete for this very reason
@@ -330,8 +340,10 @@ class MapRenderer {
                     // changing it to
                     // tileFromCache.bitmap.isCached() + " "
                     //  + " " + tileFromCache.bitmap
-                    logE("failed drawBitmap2 (renderMap): " + e.getErrorMessage());
+                    var message = e.getErrorMessage();
+                    logE("failed drawBitmap2 (renderMap): " + message);
                     ++$.globalExceptionCounter;
+                    incNativeColourFormatErrorIfMessageMatches(message);
                 }
                 if (_settings.showTileBorders) {
                     // we have to manually draw rotated lines, since we cannot draw to a buffered bitmap (taking up too much memory)

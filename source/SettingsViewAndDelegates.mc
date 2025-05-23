@@ -360,10 +360,31 @@ class SettingsMap extends Rez.Menus.SettingsMap {
         safeSetToggle(
             me,
             :settingsMapScaleRestrictedToTileLayers,
-            settings.scaleRestrictedToTileLayers
+            settings.scaleRestrictedToTileLayers()
         );
         safeSetSubLabel(me, :settingsMapHttpErrorTileTTLS, settings.httpErrorTileTTLS.toString());
         safeSetSubLabel(me, :settingsMapErrorTileTTLS, settings.errorTileTTLS.toString());
+        safeSetToggle(
+            me,
+            :settingsMapUseDrawBitmap,
+            settings.useDrawBitmap
+        );
+        var packingFormatString = "";
+        switch (settings.packingFormat) {
+            case 0:
+                packingFormatString = Rez.Strings.packingFormatDefault;
+                break;
+            case 1:
+                packingFormatString = Rez.Strings.packingFormatYUV;
+                break;
+            case 2:
+                packingFormatString = Rez.Strings.packingFormatPNG;
+                break;
+            case 3:
+                packingFormatString = Rez.Strings.packingFormatJPG;
+                break;
+        }
+        safeSetSubLabel(me, :settingsMapPackingFormat, packingFormatString);
     }
 }
 
@@ -1137,6 +1158,36 @@ class SettingsMapChoiceDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
+(:settingsView)
+class SettingsPackingFormatDelegate extends WatchUi.Menu2InputDelegate {
+    var parent as SettingsMap;
+    function initialize(parent as SettingsMap) {
+        WatchUi.Menu2InputDelegate.initialize();
+        me.parent = parent;
+    }
+    public function onSelect(item as WatchUi.MenuItem) as Void {
+        var settings = getApp()._breadcrumbContext.settings;
+        var itemId = item.getId() as Object;
+        switch (itemId) {
+            case :settingsPackingFormatDefault:
+                settings.setPackingFormat(0);
+                break;
+            case :settingsPackingFormatYUV:
+                settings.setPackingFormat(1);
+                break;
+            case :settingsPackingFormatPNG:
+                settings.setPackingFormat(2);
+                break;
+            case :settingsPackingFormatJPG:
+                settings.setPackingFormat(3);
+                break;
+        }
+
+        parent.rerender();
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+    }
+}
+
 class SettingsMapAttributionDelegate extends WatchUi.Menu2InputDelegate {
     function initialize() {
         WatchUi.Menu2InputDelegate.initialize();
@@ -1516,6 +1567,15 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(
                 new $.Rez.Menus.SettingsMapAttribution(),
                 new $.SettingsMapAttributionDelegate(),
+                WatchUi.SLIDE_IMMEDIATE
+            );
+        } else if (itemId == :settingsMapUseDrawBitmap) {
+            settings.toggleUseDrawBitmap();
+            view.rerender();
+        } else if (itemId == :settingsMapPackingFormat) {
+            WatchUi.pushView(
+                new $.Rez.Menus.SettingsPackingFormat(),
+                new $.SettingsPackingFormatDelegate(view),
                 WatchUi.SLIDE_IMMEDIATE
             );
         } else if (itemId == :settingsMapStorageSettings) {

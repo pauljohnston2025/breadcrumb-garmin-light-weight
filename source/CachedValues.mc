@@ -195,7 +195,7 @@ class CachedValues {
 
         // 2 to 15 see https://opentopomap.org/#map=2/-43.2/305.9
         var desiredResolution = 1 / currentScale;
-        var z = Math.round(calculateTileLevel(desiredResolution)).toNumber();
+        var z = calculateTileLevel(desiredResolution);
         tileZ = minN(maxN(z, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
 
         var tileWidthM = (
@@ -342,7 +342,7 @@ class CachedValues {
     }
 
     function calculateScale(maxDistanceM as Float) as Float {
-        if (_settings.scaleRestrictedToTileLayers && _settings.mapEnabled) {
+        if (_settings.scaleRestrictedToTileLayers() && _settings.mapEnabled) {
             return tileLayerScale(maxDistanceM);
         }
         return calculateScaleStandard(maxDistanceM);
@@ -370,8 +370,7 @@ class CachedValues {
             return 0f;
         }
 
-        var currentZF = calculateTileLevel(1 / scaleL);
-        var currentZ = Math.round(currentZF).toNumber();
+        var currentZ = calculateTileLevel(1 / scaleL);
         currentZ = minN(maxN(currentZ, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits, otherwise we can decreent/increment outside the range if we are already at a bad scale
         var nextZ = currentZ + direction;
 
@@ -393,7 +392,7 @@ class CachedValues {
         // only allow map tile scale levels so that we can render the tiles without any gaps, and at the correct size
         // todo cache these calcs, it is for the slower devices after all
         var desiredResolution = 1 / perfectScale;
-        var z = Math.round(calculateTileLevel(desiredResolution)).toNumber();
+        var z = calculateTileLevel(desiredResolution);
         z = minN(maxN(z, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
 
         // we want these ratios to be the same
@@ -476,11 +475,13 @@ class CachedValues {
     }
 
     // Desired resolution (meters per pixel)
-    function calculateTileLevel(desiredResolution as Float) as Float {
-        return Math.log(
+    function calculateTileLevel(desiredResolution as Float) as Number {
+        var zF = Math.log(
             earthsCircumference / (_settings.tileSize * desiredResolution) / smallTilesPerFullTile,
             2
-        ).toFloat();
+        );
+
+        return Math.round(zF).toNumber();
     }
 
     function moveLatLong(

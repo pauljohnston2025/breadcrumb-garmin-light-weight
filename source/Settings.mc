@@ -431,7 +431,11 @@ class Settings {
 
     var drawLineToClosestPoint as Boolean = true;
     var displayLatLong as Boolean = true;
-    var scaleRestrictedToTileLayers as Boolean = false; // scale will be restricted to the tile layers - could do more optimised render in future
+    private var _scaleRestrictedToTileLayers as Boolean = false; // scale will be restricted to the tile layers - could do more optimised render in future
+    // https://developer.garmin.com/connect-iq/api-docs/Toybox/Communications.html#PackingFormat-module
+    // some devices do not support other colour pallets, and need to use default pallet and drawBitmap instead of drawBitmap2
+    var packingFormat as Number = 1;
+    var useDrawBitmap as Boolean = false; // implies scaleRestrictedToTileLayers, since the renders will be off if we do not
 
     // scratrchpad used for rotations, but it also means we have a large bitmap stored around
     // I will also use that bitmap for re-renders though, and just do rotations every render rather than re-drawing all the tracks/tiles again
@@ -941,9 +945,37 @@ class Settings {
     }
     function setScaledTileSizeWithoutSideEffect(value as Number) as Void {
         scaledTileSize = value;
+        if (useDrawBitmap) {
+            scaledTileSize = fullTileSize;
+        }
         Application.Properties.setValue("scaledTileSize", scaledTileSize);
         if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
             setTileSizeWithoutSideEffect(scaledTileSize);
+        }
+        tileServerPropChanged();
+    }
+    
+    (:settingsView)
+    function setPackingFormat(value as Number) as Void {
+        setPackingFormatWithoutSideEffect(value);
+        setValueSideEffect();
+    }
+    function setPackingFormatWithoutSideEffect(value as Number) as Void {
+        packingFormat = value;
+        Application.Properties.setValue("packingFormat", packingFormat);
+        tileServerPropChanged();
+    }
+    
+    (:settingsView)
+    function setUseDrawBitmap(value as Boolean) as Void {
+        setUseDrawBitmapWithoutSideEffect(value);
+        setValueSideEffect();
+    }
+    function setUseDrawBitmapWithoutSideEffect(value as Boolean) as Void {
+        useDrawBitmap = value;
+        Application.Properties.setValue("useDrawBitmap", useDrawBitmap);
+        if (useDrawBitmap) {
+            setScaledTileSizeWithoutSideEffect(fullTileSize);
         }
         tileServerPropChanged();
     }
@@ -1161,10 +1193,14 @@ class Settings {
         setValue("displayLatLong", displayLatLong);
     }
 
+    function scaleRestrictedToTileLayers() as Boolean {
+        return _scaleRestrictedToTileLayers || useDrawBitmap;
+    }
+
     (:settingsView)
     function setScaleRestrictedToTileLayers(value as Boolean) as Void {
-        scaleRestrictedToTileLayers = value;
-        setValue("scaleRestrictedToTileLayers", scaleRestrictedToTileLayers);
+        _scaleRestrictedToTileLayers = value;
+        setValue("scaleRestrictedToTileLayers", _scaleRestrictedToTileLayers);
     }
 
     (:settingsView)
@@ -1375,6 +1411,19 @@ class Settings {
 
         setMapEnabled(true);
     }
+    
+    function toggleUseDrawBitmap() as Void {
+        if (useDrawBitmap) {
+            setUseDrawBitmapWithoutSideEffect(false);
+            tileServerPropChanged();
+            setValueSideEffect();
+            return;
+        }
+
+        setUseDrawBitmapWithoutSideEffect(true);
+        tileServerPropChanged();
+        setValueSideEffect();
+    }
 
     (:settingsView)
     function toggleSimple(key as String, value as Boolean) as Boolean {
@@ -1424,9 +1473,9 @@ class Settings {
     }
     (:settingsView)
     function toggleScaleRestrictedToTileLayers() as Void {
-        scaleRestrictedToTileLayers = toggleSimple(
+        _scaleRestrictedToTileLayers = toggleSimple(
             "scaleRestrictedToTileLayers",
-            !scaleRestrictedToTileLayers
+            !_scaleRestrictedToTileLayers
         );
     }
     (:settingsView)
@@ -1815,6 +1864,8 @@ class Settings {
         errorTileTTLS = defaultSettings.errorTileTTLS;
         fullTileSize = defaultSettings.fullTileSize;
         scaledTileSize = defaultSettings.scaledTileSize;
+        packingFormat = defaultSettings.packingFormat;
+        useDrawBitmap = defaultSettings.useDrawBitmap;
         tileLayerMax = defaultSettings.tileLayerMax;
         tileLayerMin = defaultSettings.tileLayerMin;
         tileCacheSize = defaultSettings.tileCacheSize;
@@ -1832,7 +1883,7 @@ class Settings {
         showErrorTileMessages = defaultSettings.showErrorTileMessages;
         includeDebugPageInOnScreenUi = defaultSettings.includeDebugPageInOnScreenUi;
         displayLatLong = defaultSettings.displayLatLong;
-        scaleRestrictedToTileLayers = defaultSettings.scaleRestrictedToTileLayers;
+        _scaleRestrictedToTileLayers = defaultSettings.scaleRestrictedToTileLayers();
         trackColour = defaultSettings.trackColour;
         tileErrorColour = defaultSettings.tileErrorColour;
         elevationColour = defaultSettings.elevationColour;
@@ -1889,6 +1940,8 @@ class Settings {
             "errorTileTTLS" => errorTileTTLS,
             "fullTileSize" => fullTileSize,
             "scaledTileSize" => scaledTileSize,
+            "packingFormat" => packingFormat,
+            "useDrawBitmap" => useDrawBitmap,
             "tileLayerMax" => tileLayerMax,
             "tileLayerMin" => tileLayerMin,
             "tileCacheSize" => tileCacheSize,
@@ -1906,7 +1959,7 @@ class Settings {
             "showErrorTileMessages" => showErrorTileMessages,
             "includeDebugPageInOnScreenUi" => includeDebugPageInOnScreenUi,
             "displayLatLong" => displayLatLong,
-            "scaleRestrictedToTileLayers" => scaleRestrictedToTileLayers,
+            "scaleRestrictedToTileLayers" => scaleRestrictedToTileLayers(),
             "trackColour" => trackColour.format("%X"),
             "tileErrorColour" => tileErrorColour.format("%X"),
             "elevationColour" => elevationColour.format("%X"),
@@ -1961,7 +2014,12 @@ class Settings {
         httpErrorTileTTLS = parseNumber("httpErrorTileTTLS", httpErrorTileTTLS);
         errorTileTTLS = parseNumber("errorTileTTLS", errorTileTTLS);
         fullTileSize = parseNumber("fullTileSize", fullTileSize);
+        useDrawBitmap = parseBool("useDrawBitmap", useDrawBitmap);
+        packingFormat = parseNumber("packingFormat", packingFormat);
         scaledTileSize = parseNumber("scaledTileSize", scaledTileSize);
+        if (useDrawBitmap) {
+            scaledTileSize = fullTileSize;
+        }
         tileUrl = parseString("tileUrl", tileUrl);
         tileSize = parseNumber("tileSize", tileSize);
         if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
@@ -2005,9 +2063,9 @@ class Settings {
             includeDebugPageInOnScreenUi
         );
         displayLatLong = parseBool("displayLatLong", displayLatLong);
-        scaleRestrictedToTileLayers = parseBool(
+        _scaleRestrictedToTileLayers = parseBool(
             "scaleRestrictedToTileLayers",
-            scaleRestrictedToTileLayers
+            _scaleRestrictedToTileLayers
         );
         displayRouteNames = parseBool("displayRouteNames", displayRouteNames);
         enableOffTrackAlerts = parseBool("enableOffTrackAlerts", enableOffTrackAlerts);
@@ -2116,6 +2174,8 @@ class Settings {
         var oldErrorTileTTLS = errorTileTTLS;
         var oldFullTileSize = fullTileSize;
         var oldScaledTileSize = scaledTileSize;
+        var oldPackingFormat = packingFormat;
+        var oldUseDrawBitmap = useDrawBitmap;
         var oldTileCacheSize = tileCacheSize;
         var oldStorageTileCacheSize = storageTileCacheSize;
         var oldMapEnabled = mapEnabled;
@@ -2162,6 +2222,8 @@ class Settings {
             oldErrorTileTTLS != errorTileTTLS ||
             oldFullTileSize != fullTileSize ||
             oldScaledTileSize != scaledTileSize ||
+            oldUseDrawBitmap != useDrawBitmap ||
+            oldPackingFormat != packingFormat ||
             oldCacheTilesInStorage != cacheTilesInStorage ||
             oldTileCacheSize > tileCacheSize ||
             oldStorageTileCacheSize > storageTileCacheSize ||

@@ -6,6 +6,7 @@ import Toybox.WatchUi;
 import Toybox.Communications;
 
 var globalExceptionCounter as Number = 0;
+var sourceMustBeNativeColorFormatCounter as Number = 0;
 
 enum /* Protocol */ {
     // PROTOCOL_ROUTE_DATA = 0, - removed in favour of PROTOCOL_ROUTE_DATA2, users must update companion app

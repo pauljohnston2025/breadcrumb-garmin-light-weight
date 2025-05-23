@@ -984,8 +984,10 @@ class BreadcrumbRenderer {
                 );
             } catch (e) {
                 // not sure what this exception was see above
-                logE("failed drawBitmap2 (render ui): " + e.getErrorMessage());
+                var message = e.getErrorMessage();
+                logE("failed drawBitmap2 (render ui): " + message);
                 ++$.globalExceptionCounter;
+                incNativeColourFormatErrorIfMessageMatches(message);
             }
         }
 
@@ -1051,8 +1053,10 @@ class BreadcrumbRenderer {
                 }
             } catch (e) {
                 // not sure what this exception was see above
-                logE("failed drawBitmap2 (render ui 2): " + e.getErrorMessage());
+                var message = e.getErrorMessage();
+                logE("failed drawBitmap2 (render ui 2): " + message);
                 ++$.globalExceptionCounter;
+                incNativeColourFormatErrorIfMessageMatches(message);
             }
             return;
         }
@@ -1129,7 +1133,7 @@ class BreadcrumbRenderer {
             return 0f;
         }
 
-        if (settings.scaleRestrictedToTileLayers && settings.mapEnabled) {
+        if (settings.scaleRestrictedToTileLayers() && settings.mapEnabled) {
             var desiredScale = _cachedValues.nextTileLayerScale(direction);
             var toInc = desiredScale - scale;
             return toInc;

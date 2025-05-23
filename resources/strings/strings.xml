@@ -74,6 +74,12 @@
     <string id="fixedLongitudePrompt">0 - disabled, -180 to 180</string>
     <string id="recalculateIntervalSTitle">Compute Interval (s)</string>
     <string id="tileCachePaddingTitle">Tile Cache Padding (tiles)</string>
+    <string id="useDrawBitmapTitle">Use Draw Bitmap (legacy)</string>
+    <string id="packingFormatTitle">Packing Format</string>
+    <string id="packingFormatDefault">Default</string>
+    <string id="packingFormatYUV">YUV</string>
+    <string id="packingFormatPNG">PNG</string>
+    <string id="packingFormatJPG">JPG</string>
 
 
     <string id="mapStorageSettingsTitle">Offline Tile Storage</string>

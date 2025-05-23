@@ -349,7 +349,8 @@ class WebRequestHandler {
                     // PACKING_FORMAT_JPG - Image data is encoded in JPG format. This is a lossy encoding that is compressed, and is reasonably fast to load. It is ideal for photographic imagery.
                     // PACKING_FORMAT_YUV seems the fastest, compressed and fast to load
                     // should perf test the others on real device, eg. perhaps jpg is faser download but slightly slower draw
-                    :packingFormat => Communications.PACKING_FORMAT_YUV, // do not specify a pallete, as we cannot draw directly to dc on some devices
+                    // :packingFormat => Communications.PACKING_FORMAT_YUV, // do not specify a pallete, as we cannot draw directly to dc on some devices
+                    :packingFormat => _settings.packingFormat as Communications.PackingFormat,
                     // from android code
                     // val osName = "Garmin"
                     // val osVersion = Build.VERSION.RELEASE ?: "Unknown"

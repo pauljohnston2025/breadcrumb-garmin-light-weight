@@ -305,7 +305,7 @@ The full tile size of the server, if using the companion app as the tile server,
 
 ### Scaled Tile Size
 
-The tile size to fetch images from the web (or companion app). Setting this to something like 128 will result in 4 times the performance (compared to 256), since the images we need to download are much smaller. Smaller sizes such as 128 come at the cost of resolution as each pixel of the downloaded tile will be 4 pixels on the screen (at full resolution). Smaller values are much faster, but may not look as nice (slightly blurry). Setting the scaled tile size also reduces the size of the tile cache, see the calculations in the maps description above. For perfect resolution this should be set to Full Tile Size, along with setting Restrict Scale To Tile Layers to true.
+The tile size to fetch images from the web (or companion app). Setting this to something like 128 will result in 4 times the performance (compared to 256), since the images we need to download are much smaller. Smaller sizes such as 128 come at the cost of resolution as each pixel of the downloaded tile will be 4 pixels on the screen (at full resolution). Smaller values are much faster, but may not look as nice (slightly blurry). Setting the scaled tile size also reduces the size of the tile cache, see the calculations in the maps description above. For perfect resolution this should be set to Full Tile Size, along with setting Restrict Scale To Tile Layers to true. Note: This setting only works if you have disabled [Use Draw Bitmap](#use-draw-bitmap) (the default).  
 
 ### Tile Layer Max
 
@@ -314,6 +314,47 @@ The maximum tile layer that can be fetched.
 ### Tile Layer Min
 
 The minimum tile layer that can be fetched.
+
+
+### Use Draw Bitmap
+
+For devices that do not support using `drawBitmap2`, resort to drawing the bitmap with the older function `drawBitmap` instead. I noticed this in the simulator on some devices that drawBitmap2 would error is the device only has support for renderring the native colour format.  
+
+The devices that I saw this on are:
+* descentg2
+* fenix7
+* fenix7pro
+* fenix7pronowifi
+* fenix7s
+* fenix7spro
+* fenix7x
+* fenix7xpro
+* fenix7xpronowifi
+* fr165
+* fr255
+* fr255m
+* fr255s
+* fr255sm
+* instinct3amoled45mm
+* instinct3amoled50mm
+
+I suspect it may work on some physical devices, and the simulator is just bugged, please let me know your findings if you have any of these devices.  
+
+To use this settings you will need to:
+
+* Set [Scaled Tile Size](#scaled-tile-size) to the [Full Tile Size](#full-tile-size), this is because drawBitmap does not support scaling.
+* Set [Restrict Scale To Tile Layers](#restrict-scale-to-tile-layers) to true, we cannot scale the images.
+* You may also need to set [Packing Format](#packing-format) 
+
+Failure to do any of the above will result in incorrect map scaling.
+
+### Packing Format
+
+Some devices do not support all image formats, we default to PACKING_FORMAT_YUV for its loading speed, and compression (faster ble transfers).
+
+See garmins docs on each of the image formats available: https://developer.garmin.com/connect-iq/api-docs/Toybox/Communications.html#PackingFormat-module
+
+Some formats will result in faster downloads, others will result in better render speeds. Each has a trade off, eg. the default packing format is not compressed, so will take up more space on device, but can be rendered much faster.  
 
 ---
 

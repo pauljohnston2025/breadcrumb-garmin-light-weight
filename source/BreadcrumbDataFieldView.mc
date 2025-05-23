@@ -434,8 +434,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                         }
                     );
                 } catch (e) {
-                    logE("failed drawBitmap2 (attribution): " + e.getErrorMessage());
+                    var message = e.getErrorMessage();
+                    logE("failed drawBitmap2 (attribution): " + message);
                     ++$.globalExceptionCounter;
+                    incNativeColourFormatErrorIfMessageMatches(message);
                 }
             }
         }
@@ -514,8 +516,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     dc.drawBitmap(0, 0, scratchPadBitmapLocal);
                 }
             } catch (e) {
-                logE("failed drawBitmap2 or drawBitmap (view class): " + e.getErrorMessage());
+                var message = e.getErrorMessage();
+                logE("failed drawBitmap2 (view class): " + message);
                 ++$.globalExceptionCounter;
+                incNativeColourFormatErrorIfMessageMatches(message);
             }
             return;
         }
@@ -660,7 +664,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "except: " + $.globalExceptionCounter,
+            "except: " +
+                $.globalExceptionCounter +
+                " ncf: " +
+                $.sourceMustBeNativeColorFormatCounter,
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -732,7 +739,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "pts: " + _breadcrumbContext.track.coordinates.pointSize() + " onTrack: " + (offTrackInfo.onTrack ? "Y" : "N") + " dist: " + distToLastStr,
+            "pts: " +
+                _breadcrumbContext.track.coordinates.pointSize() +
+                " onTrack: " +
+                (offTrackInfo.onTrack ? "Y" : "N") +
+                " dist: " +
+                distToLastStr,
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;

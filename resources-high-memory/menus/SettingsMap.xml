@@ -11,5 +11,7 @@
     <menu-item id="settingsMapFixedLatitude" label="@Strings.fixedLatitude"/>
     <menu-item id="settingsMapFixedLongitude" label="@Strings.fixedLongitude"/>
     <toggle-menu-item id="settingsMapScaleRestrictedToTileLayers" label="@Strings.scaleRestrictedToTileLayersTitle"/>
+    <menu-item id="settingsMapPackingFormat" label="@Strings.packingFormatTitle"/>
+    <toggle-menu-item id="settingsMapUseDrawBitmap" label="@Strings.useDrawBitmapTitle"/>
     <menu-item id="settingsMapAttribution" label="@Strings.attribution"/>
 </menu2>

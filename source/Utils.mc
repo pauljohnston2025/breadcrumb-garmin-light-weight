@@ -143,8 +143,18 @@ function drawScaledBitmapHelper(
             :filterMode => Graphics.FILTER_MODE_BILINEAR,
         });
     } catch (e) {
-        logE("failed drawBitmap2 (drawScaledBitmapHelper): " + e.getErrorMessage());
+        var message = e.getErrorMessage();
+        logE("failed drawBitmap2 (drawScaledBitmapHelper): " + message);
         ++$.globalExceptionCounter;
+        incNativeColourFormatErrorIfMessageMatches(message);
+    }
+}
+
+function incNativeColourFormatErrorIfMessageMatches(message as String?) as Void {
+    // message seems to be the only way, could not find type
+    // full message is "Source must be native color format", but that was not comparing equal for some reason (perhaps trailing white space)
+    if (message != null && message.find("native color format") != null) {
+        ++$.sourceMustBeNativeColorFormatCounter;
     }
 }
 
@@ -198,10 +208,17 @@ function distance(x1 as Float, y1 as Float, x2 as Float, y2 as Float) as Float {
     return Math.sqrt(xDist * xDist + yDist * yDist).toFloat();
 }
 
-
-function inHitbox(x as Number, y as Number, hitboxX as Float, hitboxY as Float, halfHitboxSize as Float) as Boolean {
-    return y > hitboxY - halfHitboxSize &&
-            y < hitboxY + halfHitboxSize &&
-            x > hitboxX - halfHitboxSize &&
-            x < hitboxX + halfHitboxSize;
+function inHitbox(
+    x as Number,
+    y as Number,
+    hitboxX as Float,
+    hitboxY as Float,
+    halfHitboxSize as Float
+) as Boolean {
+    return (
+        y > hitboxY - halfHitboxSize &&
+        y < hitboxY + halfHitboxSize &&
+        x > hitboxX - halfHitboxSize &&
+        x < hitboxX + halfHitboxSize
+    );
 }

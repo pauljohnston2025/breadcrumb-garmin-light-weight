@@ -23,6 +23,7 @@
 	<property id="tileCachePadding" type="number">0</property>
 	<property id="maxPendingWebRequests" type="number">100</property>
 	<property id="storageTileCacheSize" type="number">350</property>
+	<property id="packingFormat" type="number">1</property>
 
 	<property id="trackColour" type="string">00FF00</property>
 	<property id="routeColour" type="string">0000FF</property>
@@ -54,6 +55,7 @@
 	<property id="showErrorTileMessages" type="boolean">false</property>
 	<property id="tileErrorColour" type="string">00000000</property>
 	<property id="includeDebugPageInOnScreenUi" type="boolean">false</property>
+	<property id="useDrawBitmap" type="boolean">false</property>
 
 
 	<property id="routes" type="array"></property>

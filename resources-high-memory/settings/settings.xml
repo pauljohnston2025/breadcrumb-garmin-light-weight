@@ -102,6 +102,18 @@
         <setting propertyKey="@Properties.scaleRestrictedToTileLayers" title="@Strings.scaleRestrictedToTileLayersTitle">
             <settingConfig type="boolean"/>
         </setting>
+        <setting propertyKey="@Properties.packingFormat" title="@Strings.packingFormatTitle">
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.packingFormatDefault</listEntry>
+                <listEntry value="1">@Strings.packingFormatYUV</listEntry>
+                <listEntry value="2">@Strings.packingFormatPNG</listEntry>
+                <listEntry value="3">@Strings.packingFormatJPG</listEntry>
+            </settingConfig>
+        </setting>
+
+        <setting propertyKey="@Properties.useDrawBitmap" title="@Strings.useDrawBitmapTitle">
+            <settingConfig type="boolean"/>
+        </setting>
     </group>
     <group id="tileServerSettings" title="@Strings.tileServerSettingsTitle" enableIfTrue="@Properties.mapEnabled">
         <setting propertyKey="@Properties.mapChoice" title="@Strings.mapChoice">
