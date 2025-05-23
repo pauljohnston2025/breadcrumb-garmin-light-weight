@@ -189,10 +189,10 @@ See [Storage Tile Cache Size (tiles)](#storage-tile-cache-size-tiles) for a way 
 
 ### Max Pending Web Requests
 
-The max number of tile fetch requests we can have queued ready to be sent.
+The max number of tile fetch requests we can have queued ready to be sent. (this can be 0, and we will only allow outstanding requests)
 
 ### Disable Maps After X Failures
-
+N
 Maps will be automatically disabled if this many tile fetch requests fail. 0 - unlimited
 
 ### Fixed Latitude
@@ -224,7 +224,7 @@ garmin error codes are documented [here](https://developer.garmin.com/connect-iq
 
 ### Map Choice
 
-Pick from a list on tile servers, select custom if you wish to manually specify a tileUrl. On some low memory devices this is hard coded to the companion app tile server and cannot be changed.  
+Pick from a list on tile servers, select custom if you wish to manually specify a tileUrl. The companion app tile server is not supported on some low memory devices.  
 Note: tiles that are more monochrome will download faster, as they have less colour variance and can be compressed further. Stadia's `Stamen Toner`, Stadia's `Alidade Smooth Dark`, Esri's `World Dark Gray Base` or Carto's `Dark Matter` are good examples of this. I noticed a 2X speed improvement on map tile downloads compared to full satellite tiles. Note: The tile load speed when using the companion app is a constant speed, as it can use a reduced palette. The companion app is often faster than full tile downloads when using the 64 colour mode, though the reduced colour palette may not appeal to some users. The faster tile loads also have the benefit if draining the battery less, as less bytes are sent over bluetooth.
 
 When using the companion app map choice the tile layer max and min (and any other settngs that need pulling from the app) will be loaded from the companion app tile server. If this is not running at he time the map choice is made, the update will fail, and you will be reduced to a low amount of xzoom levels (or blury map tiles). If this occurs the easiest way to fix it is open the companion app and change the companion apps tile server tosoething different, and then back to the desiredvalue (ensuring the tile server is running). Togleing the tile server on the companion app will also send an update of the tile layer max and min to the watch.
@@ -261,7 +261,7 @@ Please note, some map choices require an auth token, see [Auth Token](#auth-toke
 ### Tile Url
 
 Should be 'http://127.0.0.1:8080' for companion app (which supports offline maps) or template eg. 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png'.
-On some low memory devices this is hard coded to the companion app tile server and cannot be changed.  
+The companion app tile server is not supported on some low memory devices.  
 
 For online maps (requested directly from the watch), the tile server url can be set to something like:
 
@@ -297,7 +297,7 @@ For details on creating an account and auth token for stadia map choices please 
 
 ### Tile Size
 
-Tile size should be a multiple of Scaled Tile Size for best results. The tile size in pixels loaded from the companion app or other source. Should be equal to Scaled Tile Size if using a template url.
+Tile size should be a multiple of Scaled Tile Size for best results. The tile size in pixels loaded from the companion app or other source. Should be equal to Scaled Tile Size if using a template url. Will be ignored if using a templated url.  
 
 ### Full Tile Size
 

@@ -303,35 +303,21 @@ class TileUpdateHandler extends JsonWebHandler {
 class Settings {
     // todo only load these when needed (but cache them)
     (:imageTiles)
-    var googleAttribution as WatchUi.BitmapResource =
-        WatchUi.loadResource(Rez.Drawables.GoogleAttribution) as BitmapResource;
-    (:imageTiles)
-    var openTopMapAttribution as WatchUi.BitmapResource =
+    var attributionImage as WatchUi.BitmapResource =
         WatchUi.loadResource(Rez.Drawables.OpenTopMapAttribution) as BitmapResource;
-    (:imageTiles)
-    var esriAttribution as WatchUi.BitmapResource =
-        WatchUi.loadResource(Rez.Drawables.EsriAttribution) as BitmapResource;
-    (:imageTiles)
-    var openStreetMapAttribution as WatchUi.BitmapResource =
-        WatchUi.loadResource(Rez.Drawables.OpenStreetMapAttribution) as BitmapResource;
-    (:imageTiles)
-    var stadiaAttribution as WatchUi.BitmapResource =
-        WatchUi.loadResource(Rez.Drawables.StadiaAttribution) as BitmapResource;
-    (:imageTiles)
-    var cartoAttribution as WatchUi.BitmapResource =
-        WatchUi.loadResource(Rez.Drawables.CartoAttribution) as BitmapResource;
+    var attributionImageType as Number = ATTRIBUTION_OPENTOPOMAP;
 
     // should be a multiple of 256 (since thats how tiles are stored, though the companion app will render them scaled for you)
     // we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes.
     // so math.ceil should be used what figuring out how many meters a tile is.
     // eg. maybe we cannot do 128 but we can do 120 (this would limit the number of tiles, but the resolution would be slightly off)
 
-     // The smaller tile size, mainly for use with companion app, allows slicing scaledTileSize into smaller tiles
-    (:highMemory)
+    // The smaller tile size, mainly for use with companion app, allows slicing scaledTileSize into smaller tiles
+    (:companionTiles)
     var tileSize as Number = 64;
-    (:lowMemory)
-    var tileSize as Number = 32;
-    
+    (:noCompanionTiles)
+    var tileSize as Number = 192;
+
     var fullTileSize as Number = 256; // The tile size on the tile server
     // The tile size to scale images to, results in significantly smaller downloads (and faster speeds) but makes image slightly blurry.
     // 190 seems to be a good compromise between speed and crisp images. it does not effect the image too much, but gives us about 2X the speed.
@@ -379,7 +365,10 @@ class Settings {
     // 13 192X192 tiles 73840b = 5.680k per tile  0.000154k per pixel - consistent with previous calcs
 
     const BYTES_PER_PIXEL = 0.15f;
+    (:companionTiles)
     var tileCacheSize as Number = 64;
+    (:noCompanionTiles)
+    var tileCacheSize as Number = 8;
     var mode as Number = MODE_NORMAL;
     var elevationMode as Number = ELEVATION_MODE_STACKED;
     var mapEnabled as Boolean = false;
@@ -396,7 +385,7 @@ class Settings {
     var elevationColour as Number = Graphics.COLOR_ORANGE;
     var userColour as Number = Graphics.COLOR_ORANGE;
     // this should probably be the same as tileCacheSize? since there is no point hadving 20 outstanding if we can only store 10 of them
-    var maxPendingWebRequests as Number = 100;
+    var maxPendingWebRequests as Number = 5;
     // Renders around the users position
     var metersAroundUser as Number = 500; // keep this fairly high by default, too small and the map tiles start to go blury
     var zoomAtPaceMode as Number = ZOOM_AT_PACE_MODE_PACE;
@@ -415,7 +404,10 @@ class Settings {
     var tileUrl as String = "https://a.tile.opentopomap.org/{z}/{x}/{y}.png";
     var authToken as String = "";
     var requiresAuth as Boolean = false;
+    (:companionTiles)
     var mapChoice as Number = 0;
+    (:noCompanionTiles)
+    var mapChoice as Number = 2;
     var mapChoiceVersion as Number = 0;
     // see keys below in routes = getArraySchema(...)
     // see oddity with route name and route loading new in context.newRoute
@@ -641,22 +633,39 @@ class Settings {
         if (tileServerInfo == null) {
             return null; // invalid selection
         }
-        switch (tileServerInfo.attributionType) {
-            case ATTRIBUTION_GOOGLE:
-                return googleAttribution;
-            case ATTRIBUTION_OPENTOPOMAP:
-                return openTopMapAttribution;
-            case ATTRIBUTION_ESRI:
-                return esriAttribution;
-            case ATTRIBUTION_OPENSTREETMAP:
-                return openStreetMapAttribution;
-            case ATTRIBUTION_STADIA:
-                return stadiaAttribution;
-            case ATTRIBUTION_CARTO:
-                return cartoAttribution;
+
+        if (tileServerInfo.attributionType != attributionImageType) {
+            switch (tileServerInfo.attributionType) {
+                case ATTRIBUTION_GOOGLE:
+                    attributionImage =
+                        WatchUi.loadResource(Rez.Drawables.GoogleAttribution) as BitmapResource;
+                    break;
+                case ATTRIBUTION_OPENTOPOMAP:
+                    attributionImage =
+                        WatchUi.loadResource(Rez.Drawables.OpenTopMapAttribution) as BitmapResource;
+                    break;
+                case ATTRIBUTION_ESRI:
+                    attributionImage =
+                        WatchUi.loadResource(Rez.Drawables.EsriAttribution) as BitmapResource;
+                    break;
+                case ATTRIBUTION_OPENSTREETMAP:
+                    attributionImage =
+                        WatchUi.loadResource(Rez.Drawables.OpenStreetMapAttribution) as
+                        BitmapResource;
+                    break;
+                case ATTRIBUTION_STADIA:
+                    attributionImage =
+                        WatchUi.loadResource(Rez.Drawables.StadiaAttribution) as BitmapResource;
+                    break;
+                case ATTRIBUTION_CARTO:
+                    attributionImage =
+                        WatchUi.loadResource(Rez.Drawables.CartoAttribution) as BitmapResource;
+                    break;
+            }
         }
 
-        return null;
+        attributionImageType = tileServerInfo.attributionType;
+        return attributionImage;
     }
 
     (:lowMemory)
@@ -700,6 +709,9 @@ class Settings {
         // these values will be updated by companion app when tile serever changes, or the query below
         setTileLayerMaxWithoutSideEffect(8);
         setTileLayerMinWithoutSideEffect(0);
+        if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
+            setTileUrlWithoutSideEffect(COMPANION_APP_TILE_URL);
+        }
         if (fullTileSize != defaultSettings.fullTileSize) {
             setFullTileSizeWithoutSideEffect(defaultSettings.fullTileSize);
         }
@@ -708,9 +720,6 @@ class Settings {
         }
         if (tileSize != defaultSettings.tileSize) {
             setTileSizeWithoutSideEffect(defaultSettings.tileSize);
-        }
-        if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
-            setTileUrlWithoutSideEffect(COMPANION_APP_TILE_URL);
         }
         var tileCacheMax = maxTileCacheSizeGuess();
         if (tileCacheSize > tileCacheMax) {
@@ -742,6 +751,15 @@ class Settings {
     (:imageTiles)
     function updateTileServerMapChoiceChange(tileServerInfo as TileServerInfo) as Void {
         var defaultSettings = new Settings();
+        // auth token added later
+        var newUrl =
+            getUrlPrefix(tileServerInfo.urlPrefix) +
+            tileServerInfo.urlTemplate +
+            getAuthTokenSuffix(tileServerInfo.authTokenType);
+        if (!tileUrl.equals(newUrl)) {
+            // set url last to clear tile cache (if needed)
+            setTileUrlWithoutSideEffect(newUrl);
+        }
         if (tileLayerMax != tileServerInfo.tileLayerMax) {
             setTileLayerMaxWithoutSideEffect(tileServerInfo.tileLayerMax);
         }
@@ -757,15 +775,6 @@ class Settings {
         }
         if (tileSize != defaultSettings.scaledTileSize) {
             setTileSizeWithoutSideEffect(defaultSettings.scaledTileSize);
-        }
-        // auth token added later
-        var newUrl =
-            getUrlPrefix(tileServerInfo.urlPrefix) +
-            tileServerInfo.urlTemplate +
-            getAuthTokenSuffix(tileServerInfo.authTokenType);
-        if (!tileUrl.equals(newUrl)) {
-            // set url last to clear tile cache (if needed)
-            setTileUrlWithoutSideEffect(newUrl);
         }
         var tileCacheMax = maxTileCacheSizeGuess();
         if (tileCacheSize > tileCacheMax) {
@@ -888,6 +897,9 @@ class Settings {
     }
     function setTileSizeWithoutSideEffect(value as Number) as Void {
         tileSize = value;
+        if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
+            tileSize = scaledTileSize;
+        }
         Application.Properties.setValue("tileSize", tileSize);
         tileServerPropChanged();
     }
@@ -930,6 +942,9 @@ class Settings {
     function setScaledTileSizeWithoutSideEffect(value as Number) as Void {
         scaledTileSize = value;
         Application.Properties.setValue("scaledTileSize", scaledTileSize);
+        if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
+            setTileSizeWithoutSideEffect(scaledTileSize);
+        }
         tileServerPropChanged();
     }
 
@@ -1943,11 +1958,15 @@ class Settings {
     }
 
     function loadSettingsPart1() as Void {
-        tileSize = parseNumber("tileSize", tileSize);
         httpErrorTileTTLS = parseNumber("httpErrorTileTTLS", httpErrorTileTTLS);
         errorTileTTLS = parseNumber("errorTileTTLS", errorTileTTLS);
         fullTileSize = parseNumber("fullTileSize", fullTileSize);
         scaledTileSize = parseNumber("scaledTileSize", scaledTileSize);
+        tileUrl = parseString("tileUrl", tileUrl);
+        tileSize = parseNumber("tileSize", tileSize);
+        if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
+            tileSize = scaledTileSize;
+        }
         tileLayerMax = parseNumber("tileLayerMax", tileLayerMax);
         tileLayerMin = parseNumber("tileLayerMin", tileLayerMin);
         // System.println("tileSize: " + tileSize);
@@ -2016,7 +2035,6 @@ class Settings {
         fixedLatitude = parseOptionalFloat("fixedLatitude", fixedLatitude);
         fixedLongitude = parseOptionalFloat("fixedLongitude", fixedLongitude);
         setFixedPositionWithoutUpdate(fixedLatitude, fixedLongitude, false);
-        tileUrl = parseString("tileUrl", tileUrl);
         updateRequiresAuth();
         authToken = parseString("authToken", authToken);
         mapChoice = parseNumber("mapChoice", mapChoice);

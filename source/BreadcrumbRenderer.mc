@@ -1039,7 +1039,7 @@ class BreadcrumbRenderer {
                 dc.drawBitmap2(xHalf - _upArrow.getWidth() / 2, 0, _upArrow, {
                     :tintColor => settings.uiColour,
                 });
-                if (settings.getAttribution() == null) {
+                if (settings.getAttribution() == null || !settings.mapEnabled) {
                     dc.drawBitmap2(
                         xHalf - _downArrow.getWidth() / 2,
                         screenHeight - _downArrow.getHeight(),
@@ -1067,7 +1067,7 @@ class BreadcrumbRenderer {
             dc.drawLine(xHalf, lineFromEdge - halfLineLength, xHalf, lineFromEdge + halfLineLength);
         }
 
-        if (settings.getAttribution() == null) {
+        if (settings.getAttribution() == null || !settings.mapEnabled) {
             // minus at the bottom
             if (!_cachedValues.scaleCanDec) {
                 dc.drawBitmap2(

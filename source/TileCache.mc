@@ -446,60 +446,60 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         // we have to downsample the tile, not recomendedd, as this mean we will have to request the same tile multiple times (cant save big tiles around anywhere)
         // also means we have to use scratch space to draw the tile and downsample it
 
-        if (data.getWidth() != settings.tileSize || data.getHeight() != settings.tileSize) {
-            // dangerous large bitmap could cause oom, buts its the only way to upscale the image and then slice it
-            // we cannot downscale because we would be slicing a pixel in half
-            // I guess we could just figure out which pixels to double up on?
-            // anyone using an external tile server should be setting thier tileSize to 256, but perhaps some devices will run out of memory?
-            // if users are using a smaller size it should be a multiple of 256.
-            // if its not, we will stretch the image then downsize, if its already a multiple we will use the image as is (optimal)
-            var maxDim = maxN(data.getWidth(), data.getHeight()); // should be equal (every time server i know of is 256*256), but who knows
-            var pixelsPerTile = maxDim / cachedValues.smallTilesPerScaledTile.toFloat();
-            var sourceBitmap = data;
-            if (
-                Math.ceil(pixelsPerTile) != settings.tileSize ||
-                Math.floor(pixelsPerTile) != settings.tileSize
-            ) {
-                // we have an anoying situation - stretch/reduce the image
-                var scaleUpSize = cachedValues.smallTilesPerScaledTile * settings.tileSize;
-                var scaleFactor = scaleUpSize / maxDim.toFloat();
-                var upscaledBitmap = newBitmap(scaleUpSize, scaleUpSize);
-                var upscaledBitmapDc = upscaledBitmap.getDc();
+        // if (data.getWidth() != settings.tileSize || data.getHeight() != settings.tileSize) {
+        //     // dangerous large bitmap could cause oom, buts its the only way to upscale the image and then slice it
+        //     // we cannot downscale because we would be slicing a pixel in half
+        //     // I guess we could just figure out which pixels to double up on?
+        //     // anyone using an external tile server should be setting thier tileSize to 256, but perhaps some devices will run out of memory?
+        //     // if users are using a smaller size it should be a multiple of 256.
+        //     // if its not, we will stretch the image then downsize, if its already a multiple we will use the image as is (optimal)
+        //     var maxDim = maxN(data.getWidth(), data.getHeight()); // should be equal (every time server i know of is 256*256), but who knows
+        //     var pixelsPerTile = maxDim / cachedValues.smallTilesPerScaledTile.toFloat();
+        //     var sourceBitmap = data;
+        //     if (
+        //         Math.ceil(pixelsPerTile) != settings.tileSize ||
+        //         Math.floor(pixelsPerTile) != settings.tileSize
+        //     ) {
+        //         // we have an anoying situation - stretch/reduce the image
+        //         var scaleUpSize = cachedValues.smallTilesPerScaledTile * settings.tileSize;
+        //         var scaleFactor = scaleUpSize / maxDim.toFloat();
+        //         var upscaledBitmap = newBitmap(scaleUpSize, scaleUpSize);
+        //         var upscaledBitmapDc = upscaledBitmap.getDc();
 
-                var scaleMatrix = new AffineTransform();
-                scaleMatrix.scale(scaleFactor, scaleFactor); // scale
+        //         var scaleMatrix = new AffineTransform();
+        //         scaleMatrix.scale(scaleFactor, scaleFactor); // scale
 
-                try {
-                    upscaledBitmapDc.drawBitmap2(0, 0, sourceBitmap, {
-                        :transform => scaleMatrix,
-                        // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
-                        :filterMode => Graphics.FILTER_MODE_BILINEAR,
-                    });
-                } catch (e) {
-                    logE("failed drawBitmap2 (handleSuccessfulTile): " + e.getErrorMessage());
-                    ++$.globalExceptionCounter;
-                }
-                // System.println("scaled up to: " + upscaledBitmap.getWidth() + " " + upscaledBitmap.getHeight());
-                // System.println("from: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
-                sourceBitmap = upscaledBitmap; // resume what we were doing as if it was always the larger bitmap
-            }
+        //         try {
+        //             upscaledBitmapDc.drawBitmap2(0, 0, sourceBitmap, {
+        //                 :transform => scaleMatrix,
+        //                 // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
+        //                 :filterMode => Graphics.FILTER_MODE_BILINEAR,
+        //             });
+        //         } catch (e) {
+        //             logE("failed drawBitmap2 (handleSuccessfulTile): " + e.getErrorMessage());
+        //             ++$.globalExceptionCounter;
+        //         }
+        //         // System.println("scaled up to: " + upscaledBitmap.getWidth() + " " + upscaledBitmap.getHeight());
+        //         // System.println("from: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
+        //         sourceBitmap = upscaledBitmap; // resume what we were doing as if it was always the larger bitmap
+        //     }
 
-            var croppedSection = newBitmap(settings.tileSize, settings.tileSize);
-            var croppedSectionDc = croppedSection.getDc();
-            var xOffset = _tileKey.x % cachedValues.smallTilesPerScaledTile;
-            var yOffset = _tileKey.y % cachedValues.smallTilesPerScaledTile;
-            // System.println("tile: " + _tileKey);
-            // System.println("croppedSection: " + croppedSection.getWidth() + " " + croppedSection.getHeight());
-            // System.println("source: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
-            // System.println("drawing from: " + xOffset * settings.tileSize + " " + yOffset * settings.tileSize);
-            croppedSectionDc.drawBitmap(
-                -xOffset * settings.tileSize,
-                -yOffset * settings.tileSize,
-                sourceBitmap
-            );
+        //     var croppedSection = newBitmap(settings.tileSize, settings.tileSize);
+        //     var croppedSectionDc = croppedSection.getDc();
+        //     var xOffset = _tileKey.x % cachedValues.smallTilesPerScaledTile;
+        //     var yOffset = _tileKey.y % cachedValues.smallTilesPerScaledTile;
+        //     // System.println("tile: " + _tileKey);
+        //     // System.println("croppedSection: " + croppedSection.getWidth() + " " + croppedSection.getHeight());
+        //     // System.println("source: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
+        //     // System.println("drawing from: " + xOffset * settings.tileSize + " " + yOffset * settings.tileSize);
+        //     croppedSectionDc.drawBitmap(
+        //         -xOffset * settings.tileSize,
+        //         -yOffset * settings.tileSize,
+        //         sourceBitmap
+        //     );
 
-            data = croppedSection;
-        }
+        //     data = croppedSection;
+        // }
 
         var tile = new Tile(data);
         _tileCache.addTile(_tileKey, _tileCacheVersion, tile);

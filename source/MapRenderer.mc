@@ -118,7 +118,7 @@ class MapRenderer {
         renderMapUnrotatedInner(dc);
     }
 
-    (:companionTiles)
+    (:companionTiles,:imageTiles)
     function renderMapUnrotated(dc as Dc) as Void {
         renderMapUnrotatedInner(dc);
     }
@@ -159,6 +159,7 @@ class MapRenderer {
         var firstTileX = cachedValues.firstTileX; // local lookup faster
         var firstTileY = cachedValues.firstTileY; // local lookup faster
         var tileZ = cachedValues.tileZ; // local lookup faster
+        var tileSize = _settings.tileSize;
 
         for (var x = 0; x < tileCountX; ++x) {
             for (var y = 0; y < tileCountY; ++y) {
@@ -166,6 +167,14 @@ class MapRenderer {
                 var tileFromCache = _tileCache.getTile(tileKey); // seed it for the next render
                 if (tileFromCache == null) {
                     continue;
+                }
+
+                if (
+                    tileFromCache.bitmap.getWidth() != tileSize ||
+                    tileFromCache.bitmap.getHeight() != tileSize
+                ) {
+                    badTileSize(dc);
+                    return;
                 }
 
                 // Its best to have a 'scratch space' bitmap that we use for draws then rotate the whole thing
@@ -193,8 +202,7 @@ class MapRenderer {
     }
 
     (:noUnbufferedRotations)
-    function renderMap(dc as Dc) as Void {
-    }
+    function renderMap(dc as Dc) as Void {}
 
     (:unbufferedRotations)
     function renderMap(dc as Dc) as Void {
@@ -236,6 +244,7 @@ class MapRenderer {
         var tileZ = cachedValues.tileZ; // local lookup faster
         var xHalf = cachedValues.xHalf; // local lookup faster
         var yHalf = cachedValues.yHalf; // local lookup faster
+        var tileSize = _settings.tileSize; // local lookup faster
 
         // perhaps we should draw all tiles then draw all border lines in second for loop?
         // this for loop is noce though, as it only draws borders on the tiles that are drawn (and we have in our tile cache), not every possible tile on the screen
@@ -254,6 +263,14 @@ class MapRenderer {
                 var tileFromCache = _tileCache.getTile(tileKey); // seed it for the next render
                 if (tileFromCache == null) {
                     continue;
+                }
+
+                if (
+                    tileFromCache.bitmap.getWidth() != tileSize ||
+                    tileFromCache.bitmap.getHeight() != tileSize
+                ) {
+                    badTileSize(dc);
+                    return;
                 }
 
                 // Its best to have a 'scratch space' bitmap that we use for draws then rotate the whole thing
@@ -366,5 +383,21 @@ class MapRenderer {
                 }
             }
         }
+    }
+
+    function badTileSize(dc as Dc) as Void {
+        var xHalf = _cachedValues.xHalf; // local lookup faster
+        var yHalf = _cachedValues.yHalf; // local lookup faster
+
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
+        dc.clear();
+
+        dc.drawText(
+            xHalf,
+            yHalf,
+            Graphics.FONT_XTINY,
+            "TILE SIZE OF TILE\nIS INCORRECT\nCLEAR CHACE OR\nCHANGE TILE SIZE SETTING",
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+        );
     }
 }
