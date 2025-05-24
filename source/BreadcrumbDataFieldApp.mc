@@ -12,7 +12,7 @@ enum /* Protocol */ {
     // PROTOCOL_ROUTE_DATA = 0, - removed in favour of PROTOCOL_ROUTE_DATA2, users must update companion app
     // PROTOCOL_MAP_TILE = 1, - removed watch has pulled tiles from phone rather than phone pushing for a while
     PROTOCOL_REQUEST_LOCATION_LOAD = 2,
-    PROTOCOL_CANCEL_LOCATION_REQUEST = 3,
+    PROTOCOL_RETURN_TO_USER = 3,
     PROTOCOL_REQUEST_SETTINGS = 4,
     PROTOCOL_SAVE_SETTINGS = 5,
     PROTOCOL_COMPANION_APP_TILE_SERVER_CHANGED = 6, // generally because a new url has been selected on the companion app
@@ -178,9 +178,9 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                     _breadcrumbContext.cachedValues.setScale(scale);
                 }
                 return;
-            } else if (type == PROTOCOL_CANCEL_LOCATION_REQUEST) {
-                logT("got cancel location req: " + rawData);
-                _breadcrumbContext.settings.setFixedPosition(null, null, true);
+            } else if (type == PROTOCOL_RETURN_TO_USER) {
+                logT("got return to user req: " + rawData);
+                _breadcrumbContext.cachedValues.returnToUser();
                 return;
             } else if (type == PROTOCOL_REQUEST_SETTINGS) {
                 logT("got send settings req: " + rawData);

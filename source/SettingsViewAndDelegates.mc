@@ -868,6 +868,11 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
                 WatchUi.loadResource(Rez.Strings.clearStorage) as String
             );
             WatchUi.pushView(dialog, new ClearStorageDelegate(), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMainReturnToUser) {
+            var dialog = new WatchUi.Confirmation(
+                WatchUi.loadResource(Rez.Strings.returnToUserTitle) as String
+            );
+            WatchUi.pushView(dialog, new ReturnToUserDelegate(), WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMainResetDefaults) {
             var dialog = new WatchUi.Confirmation(
                 WatchUi.loadResource(Rez.Strings.resetDefaults) as String
@@ -911,6 +916,20 @@ class ResetSettingsDelegate extends WatchUi.ConfirmationDelegate {
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
             getApp()._breadcrumbContext.settings.resetDefaults();
+        }
+
+        return true; // we always handle it
+    }
+}
+
+(:settingsView)
+class ReturnToUserDelegate extends WatchUi.ConfirmationDelegate {
+    function initialize() {
+        WatchUi.ConfirmationDelegate.initialize();
+    }
+    function onResponse(response as Confirm) as Boolean {
+        if (response == WatchUi.CONFIRM_YES) {
+            getApp()._breadcrumbContext.cachedValues.returnToUser();
         }
 
         return true; // we always handle it

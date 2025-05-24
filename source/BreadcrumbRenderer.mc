@@ -1359,11 +1359,11 @@ class BreadcrumbRenderer {
         return [false, variable];
     }
 
-    function resetScale() as Void {
+    function returnToUser() as Void {
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
             return;
         }
-        _cachedValues.setScale(null);
+        _cachedValues.returnToUser();
     }
 
     // todo move most of these into a ui class

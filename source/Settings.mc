@@ -2132,6 +2132,12 @@ class Settings {
             resetDefaults();
             return;
         }
+        
+        var returnToUser = Application.Properties.getValue("returnToUser") as Boolean;
+        if (returnToUser) {
+            Application.Properties.setValue("returnToUser", false);
+            getApp()._breadcrumbContext.cachedValues.returnToUser();
+        }
 
         System.println("loadSettings: Loading all settings");
         loadSettingsPart1();

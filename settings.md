@@ -513,6 +513,17 @@ Include the debug page when navigating between pages in the on screen ui.
 
 ---
 
+### Return To User
+
+Return to the users location, and automatic scaling. Use this after you have manually zoomed, or set the displayed latitude/longitude. Users with the on screen ui can also touch the crosshairs to return to the users location.  
+
+
+### Restore Defaults
+
+Clear all storage and reset settings to their default values.
+
+---
+
 # On Device
 
 Only some high memory devices allow configuring the settings directly from the watch, all other devices will need to use an alternate method for configuring the settings.  

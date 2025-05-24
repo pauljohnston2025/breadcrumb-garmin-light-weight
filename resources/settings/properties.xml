@@ -43,6 +43,7 @@
 	<property id="disableMapsFailureCount" type="number">200</property>
 	<property id="routeMax" type="number">3</property>
 
+	<property id="returnToUser" type="boolean">false</property>
 	<property id="resetDefaults" type="boolean">false</property>
 
 	<property id="cacheTilesInStorage" type="boolean">false</property>

@@ -667,6 +667,11 @@ class CachedValues {
         return new RectangularPoint(0f, 0f, 0f); // highly unlikely code path
     }
 
+    function returnToUser() as Void {
+        _settings.setFixedPosition(null, null, true);
+        setScale(null);
+    }
+    
     function setScale(_scale as Float?) as Void {
         scale = _scale;
         // be very careful about putting null into properties, it breaks everything
