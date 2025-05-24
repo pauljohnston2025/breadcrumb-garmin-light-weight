@@ -118,4 +118,5 @@ venusq2m.excludeAnnotations = round;scaledbitmap;noSettingsView;noUnbufferedRota
 venusq2m.resourcePath = $(venusq2m.resourcePath);resources-high-memory
 vivoactive5.excludeAnnotations = rectangle;scaledbitmap;noSettingsView;noUnbufferedRotations;noStorage;noCompanionTiles;lowMemory;noImageTiles
 vivoactive5.resourcePath = $(vivoactive5.resourcePath);resources-high-memory
-vivoactive6.excludeAnnotations = rectangle;noscaledbitmap;noSettingsView;noUnbufferedRotations;high;noCompanionTiles;lowMemory;noImageTiles
+vivoactive6.excludeAnnotations = rectangle;noscaledbitmap;noSettingsView;noUnbufferedRotations;noStorage;noCompanionTiles;lowMemory;noImageTiles
+vivoactive6.resourcePath = $(vivoactive6.resourcePath);resources-high-memory
