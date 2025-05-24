@@ -1035,8 +1035,10 @@ class TileCache {
         startSeedTile(tileKey, true);
     }
 
-    // reurns true if seed should stop and wait for next calculate (to prevent watchdog errors)
-    private function startSeedTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
+    // reurns [<webCacheFull>, <fromStorage>]
+    // webCacheFull - true if seed should stop, no need to seed anymore (we cannot, unless its from storage?)
+    // fromStorage - true if seed should stop and wait for next calculate (to prevent watchdog errors)
+    private function startSeedTile(tileKey as TileKey, onlySeedStorage as Boolean) as [Boolean, Boolean] {
         // System.println("starting load tile: " + x + " " + y + " " + z);
 
         if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
@@ -1047,11 +1049,11 @@ class TileCache {
     }
 
     (:noImageTiles)
-    function seedImageTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
-        return false;
+    function seedImageTile(tileKey as TileKey, onlySeedStorage as Boolean) as [Boolean, Boolean] {
+        return [false, false];
     }
     (:imageTiles)
-    function seedImageTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
+    function seedImageTile(tileKey as TileKey, onlySeedStorage as Boolean) as [Boolean, Boolean] {
         // logD("small tile: " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
         var x = tileKey.x / _cachedValues.smallTilesPerScaledTile;
         var y = tileKey.y / _cachedValues.smallTilesPerScaledTile;
@@ -1070,18 +1072,18 @@ class TileCache {
             // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
             if (responseCode != 200) {
                 imageReqHandler.handleErroredTile(responseCode);
-                return true;
+                return [false, true];
             }
             // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
             imageReqHandler.handleSuccessfulTile(tileFromStorage[1] as BitmapResource?, false);
-            return true;
+            return [false, true];
         }
         if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
             // we are running in storage only mode, but the tile is not in the cache
             addErroredTile(tileKey, _tileCacheVersion, "S404", true);
-            return false;
+            return [false, false];
         }
-        _webRequestHandler.add(
+        var webReqFull = _webRequestHandler.add(
             new ImageRequest(
                 "im" + tileKey.optimisedHashKey() + "-" + _tileCacheVersion, // the hash is for the small tile request, not the big one (they will send the same physical request out, but again use 256 tilSize if your using external sources)
                 stringReplaceFirst(
@@ -1101,16 +1103,16 @@ class TileCache {
                 imageReqHandler
             )
         );
-        return false;
+        return [webReqFull, false];
     }
 
     (:noCompanionTiles)
-    function seedCompanionAppTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
-        return false;
+    function seedCompanionAppTile(tileKey as TileKey, onlySeedStorage as Boolean) as [Boolean, Boolean] {
+        return [false, false];
     }
 
     (:companionTiles)
-    function seedCompanionAppTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
+    function seedCompanionAppTile(tileKey as TileKey, onlySeedStorage as Boolean) as [Boolean, Boolean] {
         // logD("small tile (companion): " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
         var jsonWebHandler = new JsonWebTileRequestHandler(
             me,
@@ -1124,18 +1126,18 @@ class TileCache {
             // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
             if (responseCode != 200) {
                 jsonWebHandler.handleErroredTile(responseCode);
-                return true;
+                return [false, true];
             }
             // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
             jsonWebHandler.handleSuccessfulTile(tileFromStorage[1] as Dictionary?, false);
-            return true;
+            return [false, true];
         }
         if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
             // we are running in storage only mode, but the tile is not in the cache
             addErroredTile(tileKey, _tileCacheVersion, "S404", true);
-            return false;
+            return [false, false];
         }
-        _webRequestHandler.add(
+        var webReqFull = _webRequestHandler.add(
             new JsonRequest(
                 "json" + tileKey.optimisedHashKey() + "-" + _tileCacheVersion,
                 _settings.tileUrl + "/loadtile",
@@ -1149,7 +1151,7 @@ class TileCache {
                 jsonWebHandler
             )
         );
-        return false;
+        return [webReqFull, false];
     }
 
     // puts a tile into the cache
