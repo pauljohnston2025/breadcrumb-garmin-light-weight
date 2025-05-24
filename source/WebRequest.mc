@@ -215,15 +215,14 @@ class WebRequestHandler {
         pendingTransmit.add([content, options, listener]);
     }
 
-    // returns true when already full
-    function add(jsonOrImageReq as JsonRequest or ImageRequest) as Boolean {
+    function add(jsonOrImageReq as JsonRequest or ImageRequest) as Void {
         // todo remove old requests if we get too many (slow network and requests too often mean the internal array grows and we OOM)
         // hard to know if there is one outstanding though, also need to startNext() on a timer if we have not seen any requests in a while
         if (pending.size() > _settings.maxPendingWebRequests) {
             // we have too many, don't try and get the tile
             // we should try and dedupe - as its making a request for the same tile twice (2 renders cause 2 requests)
             // logE("Too many pending requests dropping: " + jsonReq.hash);
-            return true;
+            return;
         }
 
         var hash = jsonOrImageReq.hash;
@@ -234,12 +233,12 @@ class WebRequestHandler {
             // stack overflow comes when it completes immediately, and calls into handle
             // see report at end of TileCache.mc
             // startNextIfWeCan(); // start any other ones whilst we are in a different function
-            return false;
+            return;
         }
 
         if (outstandingHashes.indexOf(hash) > -1) {
             // we already have an outstanding request, do not queue up another to run as soon as the outstanding one completes
-            return false;
+            return;
         }
 
         pending.add(jsonOrImageReq);
@@ -253,7 +252,6 @@ class WebRequestHandler {
         // stack overflow comes when it completes immediately, and calls into handle
         // see report at end of TileCache.mc
         // startNextIfWeCan();
-        return false;
     }
 
     function startNextIfWeCan() as Boolean {

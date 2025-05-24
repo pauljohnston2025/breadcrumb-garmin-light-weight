@@ -954,7 +954,7 @@ class Settings {
         }
         tileServerPropChanged();
     }
-
+    
     (:settingsView)
     function setPackingFormat(value as Number) as Void {
         setPackingFormatWithoutSideEffect(value);
@@ -965,7 +965,7 @@ class Settings {
         Application.Properties.setValue("packingFormat", packingFormat);
         tileServerPropChanged();
     }
-
+    
     (:settingsView)
     function setUseDrawBitmap(value as Boolean) as Void {
         setUseDrawBitmapWithoutSideEffect(value);
@@ -1411,7 +1411,7 @@ class Settings {
 
         setMapEnabled(true);
     }
-
+    
     function toggleUseDrawBitmap() as Void {
         if (useDrawBitmap) {
             setUseDrawBitmapWithoutSideEffect(false);
