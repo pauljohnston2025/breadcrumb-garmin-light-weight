@@ -504,6 +504,15 @@ class BreadcrumbRenderer {
     }
 
     // function name is to keep consistency with other methods, the chverons themselves will be rotated
+    (:noUnbufferedRotations)
+    function renderTrackCheveronsUnrotated(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType
+     ) as Void {
+
+}
+    (:unbufferedRotations)
     function renderTrackCheveronsUnrotated(
         dc as Dc,
         breadcrumb as BreadcrumbTrack,
