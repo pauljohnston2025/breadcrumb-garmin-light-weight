@@ -428,6 +428,8 @@ class Settings {
     var offTrackAlertsMaxReportIntervalS as Number = 60;
     var offTrackCheckIntervalS as Number = 30;
     var alertType as Number = ALERT_TYPE_TOAST;
+    var offTrackWrongDirection as Boolean = true;
+    var drawCheverons as Boolean = true;
 
     var drawLineToClosestPoint as Boolean = true;
     var displayLatLong as Boolean = true;

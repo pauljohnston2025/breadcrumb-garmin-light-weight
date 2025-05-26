@@ -11,11 +11,11 @@ const MIN_DISTANCE_M = 5; // meters
 const RESTART_STABILITY_POINT_COUNT = 10; // number of points in a row that need to be within RESTART_STABILITY_DISTANCE_M to be onsisiddered a valid course
 //note: RESTART_STABILITY_POINT_COUNT should be set based on DELAY_COMPUTE_COUNT
 // if DELAY_COMPUTE_COUNT = 5 seconds, 10 points give us startup cheking for 50 seconds, enough time to get a lock
-// max distance allowed to move to be consisdered a stable point (distance from previous point) 
+// max distance allowed to move to be consisdered a stable point (distance from previous point)
 // this needs to be relatively high, since the compute interval could be set quite large, or the user could be  on a motortransport (car, bike, jetski)
 // eg. at 80kmph with a 5 second compute interval (that may not run for 3 attempts, 15 seconds)
 // 80000/60/60*15 = 333.333
-const STABILITY_MAX_DISTANCE_M = 400; 
+const STABILITY_MAX_DISTANCE_M = 400;
 // note: onActivityInfo is called once per second but delayed by DELAY_COMPUTE_COUNT make sure STABILITY_MAX_DISTANCE_M takes that into account
 // ie human averge running speed is 3m/s if DELAY_COMPUTE_COUNT is set to 5 STABILITY_MAX_DISTANCE_M should be set to at least 15
 const DELAY_COMPUTE_COUNT = 5;
@@ -33,18 +33,24 @@ class OffTrackInfo {
     var onTrack as Boolean;
     //  pointWeLeftTrack is already scaled to pixels
     var pointWeLeftTrack as RectangularPoint?;
-    function initialize(onTrack as Boolean, pointWeLeftTrack as RectangularPoint?) {
+    var wrongDirection as Boolean;
+    function initialize(
+        onTrack as Boolean,
+        pointWeLeftTrack as RectangularPoint?,
+        wrongDirection as Boolean
+    ) {
         me.onTrack = onTrack;
         me.pointWeLeftTrack = pointWeLeftTrack;
+        me.wrongDirection = wrongDirection;
     }
 
     function clone() as OffTrackInfo {
         var pointWeLeftTrackL = pointWeLeftTrack;
         if (pointWeLeftTrackL == null) {
-            return new OffTrackInfo(onTrack, null);
+            return new OffTrackInfo(onTrack, null, wrongDirection);
         }
 
-        return new OffTrackInfo(onTrack, pointWeLeftTrackL.clone());
+        return new OffTrackInfo(onTrack, pointWeLeftTrackL.clone(), wrongDirection);
     }
 }
 
@@ -131,7 +137,10 @@ class BreadcrumbTrack {
                 boundingBoxCenter.y,
                 boundingBoxCenter.altitude,
             ]);
-            Storage.setValue(key + "coords", coordinates._internalArrayBuffer as Array<PropertyValueType>);
+            Storage.setValue(
+                key + "coords",
+                coordinates._internalArrayBuffer as Array<PropertyValueType>
+            );
             Storage.setValue(key + "coordsSize", coordinates._size);
             Storage.setValue(key + "distanceTotal", distanceTotal);
             Storage.setValue(key + "elevationMin", elevationMin);
@@ -468,11 +477,12 @@ class BreadcrumbTrack {
         // within some limit of that line
         var sizeRaw = coordinates.size();
         if (sizeRaw < 2) {
-            return new OffTrackInfo(false, lastClosePoint);
+            return new OffTrackInfo(false, lastClosePoint, false);
         }
 
         var endSecondScanAtRaw = sizeRaw;
         var coordinatesRaw = coordinates._internalArrayBuffer; // raw dog access means we can do the calcs much faster (and do not need to create a point with altitude)
+        var oldLastClosePointIndex = lastClosePointIndex;
         if (lastClosePointIndex != null) {
             var lastClosePointRawStart = lastClosePointIndex * ARRAY_POINT_SIZE;
             // note: this algoriithm will likely fail if the user is doing the track in the oposite direction
@@ -502,13 +512,13 @@ class BreadcrumbTrack {
                     );
 
                     if (distToSegmentAndSegPoint[0] < distanceCheck) {
-                        lastClosePointIndex = i;
+                        lastClosePointIndex = i / ARRAY_POINT_SIZE;
                         lastClosePoint = new RectangularPoint(
                             distToSegmentAndSegPoint[1],
                             distToSegmentAndSegPoint[2],
                             0f
                         );
-                        return new OffTrackInfo(true, lastClosePoint);
+                        return new OffTrackInfo(true, lastClosePoint, false); // we are travelling in the correct direction, as we found a point in the end of the array
                     }
 
                     lastPointX = nextX;
@@ -539,13 +549,19 @@ class BreadcrumbTrack {
                 nextY
             );
             if (distToSegmentAndSegPoint[0] < distanceCheck) {
-                lastClosePointIndex = i;
+                lastClosePointIndex = i / ARRAY_POINT_SIZE;
                 lastClosePoint = new RectangularPoint(
                     distToSegmentAndSegPoint[1],
                     distToSegmentAndSegPoint[2],
                     0f
                 );
-                return new OffTrackInfo(true, lastClosePoint);
+                return new OffTrackInfo(
+                    true,
+                    lastClosePoint,
+                    oldLastClosePointIndex != null &&
+                        lastClosePointIndex != null &&
+                        oldLastClosePointIndex > lastClosePointIndex
+                );
             }
 
             if (distToSegmentAndSegPoint[0] < lastClosestDist) {
@@ -559,7 +575,7 @@ class BreadcrumbTrack {
         }
 
         lastClosePoint = new RectangularPoint(lastClosestX, lastClosestY, 0f);
-        return new OffTrackInfo(false, lastClosePoint);
+        return new OffTrackInfo(false, lastClosePoint, false); // we are not on track, therefore cannot be travelling in reverse
     }
 
     // returns [if a new point was added to the track, if a complex operation occurred]

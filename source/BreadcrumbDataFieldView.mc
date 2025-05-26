@@ -7,8 +7,11 @@ import Toybox.Graphics;
 import Toybox.Attention;
 
 class OffTrackAlert extends WatchUi.DataFieldAlert {
-    function initialize() {
+    var message as String;
+
+    function initialize(message as String) {
         WatchUi.DataFieldAlert.initialize();
+        self.message = message;
     }
 
     function onUpdate(dc as Dc) as Void {
@@ -18,7 +21,7 @@ class OffTrackAlert extends WatchUi.DataFieldAlert {
             halfHeight,
             halfHeight,
             Graphics.FONT_SYSTEM_MEDIUM,
-            "OFF TRACK",
+            message,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
     }
@@ -34,7 +37,7 @@ class OffTrackAlert extends WatchUi.DataFieldAlert {
 // note: this only allows taps, cannot handle swipes/holds etc. (need to test on
 // real device)
 class BreadcrumbDataFieldView extends WatchUi.DataField {
-    var offTrackInfo as OffTrackInfo = new OffTrackInfo(true, null);
+    var offTrackInfo as OffTrackInfo = new OffTrackInfo(true, null, false);
     var _breadcrumbContext as BreadcrumbContext;
     var _scratchPadBitmap as BufferedBitmap?;
     var settings as Settings;
@@ -104,6 +107,40 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         } catch (e) {
             logE("failed compute: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
+        }
+    }
+
+    function showMyAlert(epoch as Number, text as String) as Void {
+        lastOffTrackAlertNotified = epoch; // if showAlert fails, we will still have vibrated and turned the screen on
+
+        try {
+            // logD("trying to trigger alert");
+            if (settings.alertType == ALERT_TYPE_ALERT) {
+                // allerts are really annoying bevcause users have to remember to enable them
+                // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
+                // this is why we default to toasts, the virration will still occur, and maybe should be a seperate setting?
+                showAlert(new OffTrackAlert(text));
+            } else {
+                WatchUi.showToast(text, {});
+            }
+
+            if (Attention has :backlight) {
+                // turn the screen on so we can see the alert, it does not resond to us gesturing to see the alert (think gesture controls are suppressed during vibration)
+                Attention.backlight(true);
+            }
+
+            if (Attention has :vibrate) {
+                var vibeData = [
+                    new Attention.VibeProfile(100, 500),
+                    new Attention.VibeProfile(0, 150),
+                    new Attention.VibeProfile(100, 500),
+                    new Attention.VibeProfile(0, 150),
+                    new Attention.VibeProfile(100, 500),
+                ];
+                Attention.vibrate(vibeData);
+            }
+        } catch (e) {
+            System.println("failed to show alert: " + e.getErrorMessage());
         }
     }
 
@@ -190,7 +227,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 var lastPoint = _breadcrumbContext.track.lastPoint();
                 if (
                     lastPoint != null &&
-                    (settings.enableOffTrackAlerts || settings.drawLineToClosestPoint)
+                    (settings.enableOffTrackAlerts ||
+                        settings.drawLineToClosestPoint ||
+                        settings.offTrackWrongDirection)
                 ) {
                     handleOffTrackAlerts(lastPoint);
                 }
@@ -222,6 +261,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
             if (routeOffTrackInfo.onTrack) {
                 offTrackInfo = routeOffTrackInfo.clone(); // never store the point we got or rescales could occur twice on the same object
+                if (settings.offTrackWrongDirection && offTrackInfo.wrongDirection) {
+                    showMyAlert(epoch, "WRONG DIRECTION");
+                }
+
                 return;
             }
 
@@ -251,37 +294,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
 
         if (settings.enableOffTrackAlerts) {
-            lastOffTrackAlertNotified = epoch; // if showAlert fails, we will still have vibrated and turned the screen on
-
-            try {
-                // logD("trying to trigger alert");
-                if (settings.alertType == ALERT_TYPE_ALERT) {
-                    // allerts are really annoying bevcause users have to remember to enable them
-                    // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
-                    // this is why we default to toasts, the virration will still occur, and maybe should be a seperate setting?
-                    showAlert(new OffTrackAlert());
-                } else {
-                    WatchUi.showToast("OFF TRACK", {});
-                }
-
-                if (Attention has :backlight) {
-                    // turn the screen on so we can see the alert, it does not resond to us gesturing to see the alert (think gesture controls are suppressed during vibration)
-                    Attention.backlight(true);
-                }
-
-                if (Attention has :vibrate) {
-                    var vibeData = [
-                        new Attention.VibeProfile(100, 500),
-                        new Attention.VibeProfile(0, 150),
-                        new Attention.VibeProfile(100, 500),
-                        new Attention.VibeProfile(0, 150),
-                        new Attention.VibeProfile(100, 500),
-                    ];
-                    Attention.vibrate(vibeData);
-                }
-            } catch (e) {
-                System.println("failed to show alert: " + e.getErrorMessage());
-            }
+            showMyAlert(epoch, "OFF TRACK");
         }
     }
 
@@ -290,7 +303,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         // or modified routes
         lastOffTrackAlertNotified = 0;
         lastOffTrackAlertChecked = 0;
-        offTrackInfo = new OffTrackInfo(true, null);
+        offTrackInfo = new OffTrackInfo(true, null, false);
         // render mode could have changed
         updateScratchPadBitmap();
         resetRenderTime();
