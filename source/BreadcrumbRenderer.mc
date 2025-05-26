@@ -467,11 +467,11 @@ class BreadcrumbRenderer {
         var size = breadcrumb.coordinates.size();
         var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
 
-        var lastClosePointIndexRaw = lastClosePointIndex * ARRAY_POINT_SIZE;
-        if (lastClosePointIndexRaw < size - ARRAY_POINT_SIZE) {
-            var firstXScaledAtCenter = coordinatesRaw[lastClosePointIndexRaw] - centerPosition.x;
+        var nextClosePointIndexRaw = lastClosePointIndex * ARRAY_POINT_SIZE + ARRAY_POINT_SIZE;
+        if (nextClosePointIndexRaw < size - ARRAY_POINT_SIZE) {
+            var firstXScaledAtCenter = coordinatesRaw[nextClosePointIndexRaw] - centerPosition.x;
             var firstYScaledAtCenter =
-                coordinatesRaw[lastClosePointIndexRaw + 1] - centerPosition.y;
+                coordinatesRaw[nextClosePointIndexRaw + 1] - centerPosition.y;
             var firstXRotated =
                 xHalf + rotateCos * firstXScaledAtCenter - rotateSin * firstYScaledAtCenter;
             var firstYRotated =
@@ -480,8 +480,8 @@ class BreadcrumbRenderer {
             var lastYRotated = firstYRotated;
 
             for (
-                var i = lastClosePointIndexRaw + ARRAY_POINT_SIZE;
-                i < size && i <= lastClosePointIndexRaw + CHEVRON_POINTS * ARRAY_POINT_SIZE;
+                var i = nextClosePointIndexRaw + ARRAY_POINT_SIZE;
+                i < size && i <= nextClosePointIndexRaw + CHEVRON_POINTS * ARRAY_POINT_SIZE;
                 i += ARRAY_POINT_SIZE
             ) {
                 var nextX = coordinatesRaw[i];
@@ -532,14 +532,14 @@ class BreadcrumbRenderer {
         var size = breadcrumb.coordinates.size();
         var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
 
-        var lastClosePointIndexRaw = lastClosePointIndex * ARRAY_POINT_SIZE;
-        if (lastClosePointIndexRaw < size - ARRAY_POINT_SIZE) {
-            var lastX = xHalf + coordinatesRaw[lastClosePointIndexRaw] - centerPosition.x;
-            var lastY = yHalf - coordinatesRaw[lastClosePointIndexRaw + 1] - centerPosition.y;
+        var nextClosePointIndexRaw = lastClosePointIndex * ARRAY_POINT_SIZE + ARRAY_POINT_SIZE;
+        if (nextClosePointIndexRaw < size - ARRAY_POINT_SIZE) {
+            var lastX = xHalf + coordinatesRaw[nextClosePointIndexRaw] - centerPosition.x;
+            var lastY = yHalf - coordinatesRaw[nextClosePointIndexRaw + 1] - centerPosition.y;
 
             for (
-                var i = lastClosePointIndexRaw + ARRAY_POINT_SIZE;
-                i < size && i <= lastClosePointIndexRaw + CHEVRON_POINTS * ARRAY_POINT_SIZE;
+                var i = nextClosePointIndexRaw + ARRAY_POINT_SIZE;
+                i < size && i <= nextClosePointIndexRaw + CHEVRON_POINTS * ARRAY_POINT_SIZE;
                 i += ARRAY_POINT_SIZE
             ) {
                 var nextX = xHalf + (coordinatesRaw[i] - centerPosition.x);
