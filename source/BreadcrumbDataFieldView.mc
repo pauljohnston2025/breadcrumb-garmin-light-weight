@@ -229,7 +229,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     lastPoint != null &&
                     (settings.enableOffTrackAlerts ||
                         settings.drawLineToClosestPoint ||
-                        settings.offTrackWrongDirection)
+                        settings.offTrackWrongDirection || settings.drawCheverons)
                 ) {
                     handleOffTrackAlerts(lastPoint);
                 }
@@ -552,6 +552,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 if (settings.showPoints) {
                     renderer.renderTrackPoints(dc, route, Graphics.COLOR_ORANGE);
                 }
+                if (settings.drawCheverons) {
+                    renderer.renderTrackCheverons(
+                        dc,
+                        route,
+                        settings.routeColour(route.storageIndex)
+                    );
+                }
             }
             renderer.renderTrack(dc, track, settings.trackColour, false);
             if (settings.showPoints) {
@@ -589,6 +596,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             );
             if (settings.showPoints) {
                 renderer.renderTrackPointsUnrotated(dc, route, Graphics.COLOR_ORANGE);
+            }
+            if (settings.drawCheverons) {
+                renderer.renderTrackCheveronsUnrotated(
+                    dc,
+                    route,
+                    settings.routeColour(route.storageIndex)
+                );
             }
         }
         renderer.renderTrackUnrotated(dc, track, settings.trackColour, false);

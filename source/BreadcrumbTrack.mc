@@ -512,7 +512,7 @@ class BreadcrumbTrack {
                     );
 
                     if (distToSegmentAndSegPoint[0] < distanceCheck) {
-                        lastClosePointIndex = i / ARRAY_POINT_SIZE;
+                        lastClosePointIndex = (i - 1) / ARRAY_POINT_SIZE;
                         lastClosePoint = new RectangularPoint(
                             distToSegmentAndSegPoint[1],
                             distToSegmentAndSegPoint[2],
@@ -549,7 +549,7 @@ class BreadcrumbTrack {
                 nextY
             );
             if (distToSegmentAndSegPoint[0] < distanceCheck) {
-                lastClosePointIndex = i / ARRAY_POINT_SIZE;
+                lastClosePointIndex = (i - 1) / ARRAY_POINT_SIZE;
                 lastClosePoint = new RectangularPoint(
                     distToSegmentAndSegPoint[1],
                     distToSegmentAndSegPoint[2],

@@ -402,6 +402,157 @@ class BreadcrumbRenderer {
         }
     }
 
+    const CHEVRON_SPREAD_RADIANS = 0.75;
+    const CHEVRON_ARM_LENGTH = 15;
+    const CHEVRON_POINTS = 6; // the last point is not counted, as we only use it to get the line angle, number of cheverons = CHEVRON_POINTS - 1
+
+    function drawCheveron(
+        dc as Dc,
+        lastX as Float,
+        lastY as Float,
+        nextX as Float,
+        nextY as Float
+    ) as Void {
+        var dx = nextX - lastX;
+        var dy = nextY - lastY;
+
+        var segmentAngle = Math.atan2(dy, dx);
+
+        // Calculate angles for the two arms (pointing backward from the tip)
+        // Base direction for arms is opposite to segment direction
+        var baseArmAngle = segmentAngle + Math.PI;
+
+        var angleArm1 = baseArmAngle - CHEVRON_SPREAD_RADIANS;
+        var angleArm2 = baseArmAngle + CHEVRON_SPREAD_RADIANS;
+
+        // Calculate endpoints of the chevron arms
+        var arm1EndX = lastX + CHEVRON_ARM_LENGTH * Math.cos(angleArm1);
+        var arm1EndY = lastY + CHEVRON_ARM_LENGTH * Math.sin(angleArm1);
+
+        var arm2EndX = lastX + CHEVRON_ARM_LENGTH * Math.cos(angleArm2);
+        var arm2EndY = lastY + CHEVRON_ARM_LENGTH * Math.sin(angleArm2);
+
+        // Draw the chevron
+        dc.drawLine(lastX, lastY, arm1EndX, arm1EndY);
+        dc.drawLine(lastX, lastY, arm2EndX, arm2EndY);
+    }
+
+    function renderTrackCheverons(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType
+    ) as Void {
+        var lastClosePointIndex = breadcrumb.lastClosePointIndex;
+        if (lastClosePointIndex == null) {
+            // we have never seen the track, cheverons only extend out from the users last point on the track
+            // this means off track alerts must be enabled too
+            return;
+        }
+
+        var centerPosition = _cachedValues.centerPosition; // local lookup faster
+        var xHalf = _cachedValues.xHalf; // local lookup faster
+        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var rotateCos = _cachedValues.rotateCos; // local lookup faster
+        var rotateSin = _cachedValues.rotateSin; // local lookup faster
+
+        if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
+            // its very cofusing seeing the routes disappear when scrolling
+            // and it makes sense to want to sroll around the route too
+            return;
+        }
+
+        dc.setColor(colour, Graphics.COLOR_BLACK);
+        dc.setPenWidth(4);
+
+        var size = breadcrumb.coordinates.size();
+        var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
+
+        var lastClosePointIndexRaw = lastClosePointIndex * ARRAY_POINT_SIZE;
+        if (lastClosePointIndexRaw < size - ARRAY_POINT_SIZE) {
+            var firstXScaledAtCenter = coordinatesRaw[lastClosePointIndexRaw] - centerPosition.x;
+            var firstYScaledAtCenter =
+                coordinatesRaw[lastClosePointIndexRaw + 1] - centerPosition.y;
+            var firstXRotated =
+                xHalf + rotateCos * firstXScaledAtCenter - rotateSin * firstYScaledAtCenter;
+            var firstYRotated =
+                yHalf - (rotateSin * firstXScaledAtCenter + rotateCos * firstYScaledAtCenter);
+            var lastXRotated = firstXRotated;
+            var lastYRotated = firstYRotated;
+
+            for (
+                var i = lastClosePointIndexRaw + ARRAY_POINT_SIZE;
+                i < size && i <= lastClosePointIndexRaw + CHEVRON_POINTS * ARRAY_POINT_SIZE;
+                i += ARRAY_POINT_SIZE
+            ) {
+                var nextX = coordinatesRaw[i];
+                var nextY = coordinatesRaw[i + 1];
+
+                var nextXScaledAtCenter = nextX - centerPosition.x;
+                var nextYScaledAtCenter = nextY - centerPosition.y;
+
+                var nextXRotated =
+                    xHalf + rotateCos * nextXScaledAtCenter - rotateSin * nextYScaledAtCenter;
+                var nextYRotated =
+                    yHalf - (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
+
+                drawCheveron(dc, lastXRotated, lastYRotated, nextXRotated, nextYRotated);
+
+                lastXRotated = nextXRotated;
+                lastYRotated = nextYRotated;
+            }
+        }
+    }
+
+    // function name is to keep consistency with other methods, the chverons themselves will be rotated
+    function renderTrackCheveronsUnrotated(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType
+    ) as Void {
+        var lastClosePointIndex = breadcrumb.lastClosePointIndex;
+        if (lastClosePointIndex == null) {
+            // we have never seen the track, cheverons only extend out from the users last point on the track
+            // this means off track alerts must be enabled too
+            return;
+        }
+
+        var centerPosition = _cachedValues.centerPosition; // local lookup faster
+        var xHalf = _cachedValues.xHalf; // local lookup faster
+        var yHalf = _cachedValues.yHalf; // local lookup faster
+
+        if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
+            // its very cofusing seeing the routes disappear when scrolling
+            // and it makes sense to want to sroll around the route too
+            return;
+        }
+
+        dc.setColor(colour, Graphics.COLOR_BLACK);
+        dc.setPenWidth(4);
+
+        var size = breadcrumb.coordinates.size();
+        var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
+
+        var lastClosePointIndexRaw = lastClosePointIndex * ARRAY_POINT_SIZE;
+        if (lastClosePointIndexRaw < size - ARRAY_POINT_SIZE) {
+            var lastX = xHalf + coordinatesRaw[lastClosePointIndexRaw] - centerPosition.x;
+            var lastY = yHalf - coordinatesRaw[lastClosePointIndexRaw + 1] - centerPosition.y;
+
+            for (
+                var i = lastClosePointIndexRaw + ARRAY_POINT_SIZE;
+                i < size && i <= lastClosePointIndexRaw + CHEVRON_POINTS * ARRAY_POINT_SIZE;
+                i += ARRAY_POINT_SIZE
+            ) {
+                var nextX = xHalf + (coordinatesRaw[i] - centerPosition.x);
+                var nextY = yHalf - (coordinatesRaw[i + 1] - centerPosition.y);
+
+                drawCheveron(dc, lastX, lastY, nextX, nextY);
+
+                lastX = nextX;
+                lastY = nextY;
+            }
+        }
+    }
+
     (:noUnbufferedRotations)
     function renderTrackName(
         dc as Dc,
