@@ -2,6 +2,8 @@
     <menu-item id="settingsAlertsOffTrackDistanceM" label="@Strings.offTrackAlertsDistanceMTitle"/>
     <menu-item id="settingsAlertsOffTrackCheckIntervalS" label="@Strings.offTrackCheckIntervalSTitle"/>
     <toggle-menu-item id="settingsAlertsDrawLineToClosestPoint" label="@Strings.drawLineToClosestPointTitle"/>
+    <toggle-menu-item id="settingsAlertsDrawCheverons" label="@Strings.drawCheveronsTitle"/>
+    <toggle-menu-item id="settingsAlertsOffTrackWrongDirection" label="@Strings.offTrackWrongDirectionTitle"/>
     <toggle-menu-item id="settingsAlertsEnabled" label="@Strings.enableOffTrackAlertsTitle"/>
     <menu-item id="settingsAlertsOffTrackAlertsMaxReportIntervalS" label="@Strings.offTrackAlertsMaxReportIntervalSTitle"/>
     <menu-item id="settingsAlertsAlertType" label="@Strings.alertTypeTitle"/>

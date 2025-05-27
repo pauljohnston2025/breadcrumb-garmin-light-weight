@@ -35,6 +35,8 @@
     <string id="alertTypeToast">Toast (notification)</string>
     <string id="alertTypeAlert">Alerts (requires enable in garmin settings)</string>
     <string id="enableOffTrackAlertsTitle">Off Track Alerts</string>
+    <string id="offTrackWrongDirectionTitle">Wrong Direction Alerts</string>
+    <string id="drawCheveronsTitle">Draw Cheverons</string>
     <string id="drawLineToClosestPointTitle">Draw Line To Closest Point</string>
     <string id="disableMapsFailureCountTitle">Disable Maps After X Failures (0 for unlimited failures)</string>
     <string id="disableMapsFailureCountTitleShort">Disable After Failures</string>

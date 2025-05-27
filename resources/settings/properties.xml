@@ -57,6 +57,8 @@
 	<property id="tileErrorColour" type="string">00000000</property>
 	<property id="includeDebugPageInOnScreenUi" type="boolean">false</property>
 	<property id="useDrawBitmap" type="boolean">false</property>
+	<property id="offTrackWrongDirection" type="boolean">false</property>
+	<property id="drawCheverons" type="boolean">false</property>
 
 
 	<property id="routes" type="array"></property>

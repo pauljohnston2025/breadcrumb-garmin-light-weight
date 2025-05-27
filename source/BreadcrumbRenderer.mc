@@ -509,9 +509,7 @@ class BreadcrumbRenderer {
         dc as Dc,
         breadcrumb as BreadcrumbTrack,
         colour as Graphics.ColorType
-     ) as Void {
-
-}
+    ) as Void {}
     (:unbufferedRotations)
     function renderTrackCheveronsUnrotated(
         dc as Dc,

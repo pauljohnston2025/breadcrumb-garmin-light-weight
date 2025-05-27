@@ -407,16 +407,17 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 if (!settings.routeEnabled(route.storageIndex)) {
                     continue;
                 }
+                var routeColour = settings.routeColour(route.storageIndex);
                 if (
                     settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
                     settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING
                 ) {
-                    renderer.renderTrackName(dc, route, settings.routeColour(route.storageIndex));
+                    renderer.renderTrackName(dc, route, routeColour);
                 } else {
                     renderer.renderTrackNameUnrotated(
                         dc,
                         route,
-                        settings.routeColour(route.storageIndex)
+                        routeColour
                     );
                 }
             }
@@ -548,7 +549,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 if (!settings.routeEnabled(route.storageIndex)) {
                     continue;
                 }
-                renderer.renderTrack(dc, route, settings.routeColour(route.storageIndex), true);
+                var routeColour = settings.routeColour(route.storageIndex);
+                renderer.renderTrack(dc, route, routeColour, true);
                 if (settings.showPoints) {
                     renderer.renderTrackPoints(dc, route, Graphics.COLOR_ORANGE);
                 }
@@ -556,7 +558,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     renderer.renderTrackCheverons(
                         dc,
                         route,
-                        settings.routeColour(route.storageIndex)
+                        routeColour
                     );
                 }
             }
@@ -588,10 +590,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             if (!settings.routeEnabled(route.storageIndex)) {
                 continue;
             }
+            var routeColour = settings.routeColour(route.storageIndex);
             renderer.renderTrackUnrotated(
                 dc,
                 route,
-                settings.routeColour(route.storageIndex),
+                routeColour,
                 true
             );
             if (settings.showPoints) {
@@ -601,7 +604,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 renderer.renderTrackCheveronsUnrotated(
                     dc,
                     route,
-                    settings.routeColour(route.storageIndex)
+                    routeColour
                 );
             }
         }

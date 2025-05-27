@@ -364,11 +364,7 @@ class SettingsMap extends Rez.Menus.SettingsMap {
         );
         safeSetSubLabel(me, :settingsMapHttpErrorTileTTLS, settings.httpErrorTileTTLS.toString());
         safeSetSubLabel(me, :settingsMapErrorTileTTLS, settings.errorTileTTLS.toString());
-        safeSetToggle(
-            me,
-            :settingsMapUseDrawBitmap,
-            settings.useDrawBitmap
-        );
+        safeSetToggle(me, :settingsMapUseDrawBitmap, settings.useDrawBitmap);
         var packingFormatString = "";
         switch (settings.packingFormat) {
             case 0:
@@ -546,7 +542,9 @@ class SettingsAlerts extends Rez.Menus.SettingsAlerts {
     function rerender() as Void {
         var settings = getApp()._breadcrumbContext.settings;
         safeSetToggle(me, :settingsAlertsDrawLineToClosestPoint, settings.drawLineToClosestPoint);
-        safeSetToggle(me, :settingsAlertsEnabled, true);
+        safeSetToggle(me, :settingsAlertsEnabled, settings.enableOffTrackAlerts);
+        safeSetToggle(me, :settingsAlertsOffTrackWrongDirection, settings.offTrackWrongDirection);
+        safeSetToggle(me, :settingsAlertsDrawCheverons, settings.drawCheverons);
         safeSetSubLabel(
             me,
             :settingsAlertsOffTrackDistanceM,
@@ -595,7 +593,9 @@ class SettingsAlertsDisabled extends Rez.Menus.SettingsAlertsDisabled {
             :settingsAlertsOffTrackCheckIntervalS,
             settings.offTrackCheckIntervalS.toString()
         );
-        safeSetToggle(me, :settingsAlertsEnabled, false);
+        safeSetToggle(me, :settingsAlertsEnabled, settings.enableOffTrackAlerts);
+        safeSetToggle(me, :settingsAlertsOffTrackWrongDirection, settings.offTrackWrongDirection);
+        safeSetToggle(me, :settingsAlertsDrawCheverons, settings.drawCheverons);
     }
 }
 
@@ -846,7 +846,7 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
                 WatchUi.SLIDE_IMMEDIATE
             );
         } else if (itemId == :settingsMainAlerts) {
-            if (settings.enableOffTrackAlerts) {
+            if (settings.offTrackWrongDirection || settings.enableOffTrackAlerts) {
                 var view = new SettingsAlerts();
                 WatchUi.pushView(view, new $.SettingsAlertsDelegate(view), WatchUi.SLIDE_IMMEDIATE);
                 return;
@@ -1743,14 +1743,34 @@ class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
             settings.toggleDrawLineToClosestPoint();
             view.rerender();
         } else if (itemId == :settingsAlertsEnabled) {
-            settings.setEnableOffTrackAlerts(false);
-            var view = new SettingsAlertsDisabled();
-            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-            WatchUi.pushView(
-                view,
-                new $.SettingsAlertsDisabledDelegate(view),
-                WatchUi.SLIDE_IMMEDIATE
-            );
+            settings.toggleEnableOffTrackAlerts();
+            if (!settings.offTrackWrongDirection && !settings.enableOffTrackAlerts) {
+                var view = new SettingsAlertsDisabled();
+                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+                WatchUi.pushView(
+                    view,
+                    new $.SettingsAlertsDisabledDelegate(view),
+                    WatchUi.SLIDE_IMMEDIATE
+                );
+            } else {
+                view.rerender();
+            }
+        } else if (itemId == :settingsAlertsOffTrackWrongDirection) {
+            settings.toggleOffTrackWrongDirection();
+            if (!settings.offTrackWrongDirection && !settings.enableOffTrackAlerts) {
+                var view = new SettingsAlertsDisabled();
+                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+                WatchUi.pushView(
+                    view,
+                    new $.SettingsAlertsDisabledDelegate(view),
+                    WatchUi.SLIDE_IMMEDIATE
+                );
+            } else {
+                view.rerender();
+            }
+        } else if (itemId == :settingsAlertsDrawCheverons) {
+            settings.toggleDrawCheverons();
+            view.rerender();
         } else if (itemId == :settingsAlertsOffTrackDistanceM) {
             startPicker(
                 new SettingsNumberPicker(
@@ -1799,10 +1819,34 @@ class SettingsAlertsDisabledDelegate extends WatchUi.Menu2InputDelegate {
             settings.toggleDrawLineToClosestPoint();
             view.rerender();
         } else if (itemId == :settingsAlertsEnabled) {
-            settings.setEnableOffTrackAlerts(true);
-            var view = new SettingsAlerts();
-            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-            WatchUi.pushView(view, new $.SettingsAlertsDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+            settings.toggleEnableOffTrackAlerts();
+            if (settings.offTrackWrongDirection || settings.enableOffTrackAlerts) {
+                var view = new SettingsAlerts();
+                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+                WatchUi.pushView(
+                    view,
+                    new $.SettingsAlertsDelegate(view),
+                    WatchUi.SLIDE_IMMEDIATE
+                );
+            } else {
+                view.rerender();
+            }
+        } else if (itemId == :settingsAlertsOffTrackWrongDirection) {
+            settings.toggleOffTrackWrongDirection();
+            if (settings.offTrackWrongDirection || settings.enableOffTrackAlerts) {
+                var view = new SettingsAlerts();
+                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+                WatchUi.pushView(
+                    view,
+                    new $.SettingsAlertsDelegate(view),
+                    WatchUi.SLIDE_IMMEDIATE
+                );
+            } else {
+                view.rerender();
+            }
+        }else if (itemId == :settingsAlertsDrawCheverons) {
+            settings.toggleDrawCheverons();
+            view.rerender();
         } else if (itemId == :settingsAlertsOffTrackDistanceM) {
             startPicker(
                 new SettingsNumberPicker(

@@ -426,10 +426,10 @@ class Settings {
     var enableOffTrackAlerts as Boolean = true;
     var offTrackAlertsDistanceM as Number = 20;
     var offTrackAlertsMaxReportIntervalS as Number = 60;
-    var offTrackCheckIntervalS as Number = 30;
+    var offTrackCheckIntervalS as Number = 15;
     var alertType as Number = ALERT_TYPE_TOAST;
-    var offTrackWrongDirection as Boolean = true;
-    var drawCheverons as Boolean = true;
+    var offTrackWrongDirection as Boolean = false;
+    var drawCheverons as Boolean = false;
 
     var drawLineToClosestPoint as Boolean = true;
     var displayLatLong as Boolean = true;
@@ -1211,13 +1211,6 @@ class Settings {
         setValue("displayRouteNames", displayRouteNames);
     }
 
-    (:settingsView)
-    function setEnableOffTrackAlerts(_enableOffTrackAlerts as Boolean) as Void {
-        enableOffTrackAlerts = _enableOffTrackAlerts;
-        setValue("enableOffTrackAlerts", enableOffTrackAlerts);
-        updateViewSettings();
-    }
-
     function setRoutesEnabled(_routesEnabled as Boolean) as Void {
         routesEnabled = _routesEnabled;
         setValue("routesEnabled", routesEnabled);
@@ -1487,6 +1480,14 @@ class Settings {
     (:settingsView)
     function toggleEnableOffTrackAlerts() as Void {
         enableOffTrackAlerts = toggleSimple("enableOffTrackAlerts", !enableOffTrackAlerts);
+    }
+    (:settingsView)
+    function toggleOffTrackWrongDirection() as Void {
+        offTrackWrongDirection = toggleSimple("offTrackWrongDirection", !offTrackWrongDirection);
+    }
+    (:settingsView)
+    function toggleDrawCheverons() as Void {
+        drawCheverons = toggleSimple("drawCheverons", !drawCheverons);
     }
     (:settingsView)
     function toggleRoutesEnabled() as Void {
@@ -1908,6 +1909,8 @@ class Settings {
         displayRouteNames = defaultSettings.displayRouteNames;
         disableMapsFailureCount = defaultSettings.disableMapsFailureCount;
         enableOffTrackAlerts = defaultSettings.enableOffTrackAlerts;
+        offTrackWrongDirection = defaultSettings.offTrackWrongDirection;
+        drawCheverons = defaultSettings.drawCheverons;
         offTrackAlertsDistanceM = defaultSettings.offTrackAlertsDistanceM;
         offTrackAlertsMaxReportIntervalS = defaultSettings.offTrackAlertsMaxReportIntervalS;
         offTrackCheckIntervalS = defaultSettings.offTrackCheckIntervalS;
@@ -1984,6 +1987,8 @@ class Settings {
             "displayRouteNames" => displayRouteNames,
             "disableMapsFailureCount" => disableMapsFailureCount,
             "enableOffTrackAlerts" => enableOffTrackAlerts,
+            "offTrackWrongDirection" => offTrackWrongDirection,
+            "drawCheverons" => drawCheverons,
             "offTrackAlertsDistanceM" => offTrackAlertsDistanceM,
             "offTrackAlertsMaxReportIntervalS" => offTrackAlertsMaxReportIntervalS,
             "offTrackCheckIntervalS" => offTrackCheckIntervalS,
@@ -2071,6 +2076,8 @@ class Settings {
         );
         displayRouteNames = parseBool("displayRouteNames", displayRouteNames);
         enableOffTrackAlerts = parseBool("enableOffTrackAlerts", enableOffTrackAlerts);
+        offTrackWrongDirection = parseBool("offTrackWrongDirection", offTrackWrongDirection);
+        drawCheverons = parseBool("drawCheverons", drawCheverons);
         routesEnabled = parseBool("routesEnabled", routesEnabled);
         trackColour = parseColour("trackColour", trackColour);
         tileErrorColour = parseColour("tileErrorColour", tileErrorColour);

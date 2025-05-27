@@ -404,18 +404,26 @@ How often, in seconds, to run the calculation of off track alerts (since its exp
 
 Draw a line to the closests point on the closest enabled route.
 
+### Draw Cheverons
+
+Draw arrows in the direction of travel. Uses off track calculation to know where we are up to on the track, and draws arrows for the next few points on the trail.  
+
 ### Off Track Alerts
 
 Trigger an alert when you leave a route by `Off Track Distance`.
 
+### Wrong Direction Alerts
+
+Trigger an alert when you navigate the track in the wrong direction. Note: this can take up to twice as long as [Off Track Check Interval](#off-track-check-interval) to detect travel in the wrong direction.  
+
 ### Off Track Alerts Max Report Interval
 
-How often, in seconds, an alert should fire. Alerts will continue firing until you return to the planned route (or reach a section of another enabled route).
+How often, in seconds, an alert should fire. Alerts will continue firing until you return to the planned route (or reach a section of another enabled route). Also controls the max alert speed for [Wrong Direction Alerts](#wrong-direction-alerts)
 
 ### Off Track Alerts Alert Type
 
 Toast (notification): Some devices have issues with alerts rendering, so you can use a toast. This is the default as it does not require enabling alerts on the device.  
-Alerts: Send an alert instead of a toast, to use this you need to also enable alerts for the datafield in the activity settings. see [Through Alerts](#through-alerts)
+Alerts: Send an alert instead of a toast, to use this you need to also enable alerts for the datafield in the activity settings. see [Through Alerts](#through-alerts). Also controls the alert type for [Wrong Direction Alerts](#wrong-direction-alerts)
 
 ---
 

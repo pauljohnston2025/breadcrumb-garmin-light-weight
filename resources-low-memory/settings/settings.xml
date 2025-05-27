@@ -164,6 +164,12 @@
         <setting propertyKey="@Properties.drawLineToClosestPoint" title="@Strings.drawLineToClosestPointTitle">
             <settingConfig type="boolean"/>
         </setting>
+        <setting propertyKey="@Properties.drawCheverons" title="@Strings.drawCheveronsTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+        <setting propertyKey="@Properties.offTrackWrongDirection" title="@Strings.offTrackWrongDirectionTitle">
+            <settingConfig type="boolean"/>
+        </setting>
         <setting propertyKey="@Properties.enableOffTrackAlerts" title="@Strings.enableOffTrackAlertsTitle">
             <settingConfig type="boolean"/>
         </setting>
