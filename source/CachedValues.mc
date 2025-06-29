@@ -68,6 +68,7 @@ class CachedValues {
     var seedingRectanglarBottomRight as RectangularPoint = new RectangularPoint(0f, 0f, 0f);
     var seedingUpToTileX as Number = 0;
     var seedingUpToTileY as Number = 0;
+    var seedingUpToRoutePoint as Number = 0;
     var seedingTilesOnThisLayer as Number = NUMBER_MAX;
     var seedingTilesProgressForThisLayer as Number = 0;
 
@@ -697,6 +698,7 @@ class CachedValues {
         seedingRectanglarBottomRight = new RectangularPoint(0f, 0f, 0f);
         seedingUpToTileX = 0;
         seedingUpToTileY = 0;
+        seedingUpToRoutePoint = 0;
         seedingTilesOnThisLayer = NUMBER_MAX;
         seedingTilesProgressForThisLayer = 0;
     }
@@ -750,10 +752,14 @@ class CachedValues {
             return false;
         }
 
-        if (seedNextTilesToStorage()) {
+        if (
+            (_settings.storageSeedBoundingBox && seedNextTilesToStorageBoundingBox()) ||
+            (!_settings.storageSeedBoundingBox && seedNextTilesToStorageAlongRoute())
+        ) {
             seedingZ--;
             seedingUpToTileX = 0;
             seedingUpToTileY = 0;
+            seedingUpToRoutePoint = 0;
         }
 
         if (seedingZ < _settings.tileLayerMin) {
@@ -766,7 +772,12 @@ class CachedValues {
     }
 
     (:storage)
-    function seedNextTilesToStorage() as Boolean {
+    function seedNextTilesToStorageAlongRoute() as Boolean {
+        return true;
+    }
+        
+    (:storage)
+    function seedNextTilesToStorageBoundingBox() as Boolean {
         var tileWidthM = earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
 
         // find which tile we are closest to

@@ -31,16 +31,25 @@ class BreadcrumbContext {
         settings.loadSettings(); // we want to make sure everything is done later
         cachedValues.setup();
 
-        // routes loaded from storage will be rescalrescaled on the first calculate in cached values
-        for (var i = 0; i < settings.routeMax(); ++i) {
+        // routes loaded from storage will be rescaled on the first calculate in cached values
+        // had a bug where routes were stil in storage, but removed from settings, so load everything that is enabled (up to 10 routes)
+        // was some strange issue that i never could quitre figure out, possibly when changing route max and disabling routes in settings in the same settings commit?
+        for (var i = 0; i < 10; ++i) {
             var route = BreadcrumbTrack.readFromDisk(ROUTE_KEY, i);
-            if (route != null) {
-                routes.add(route);
-                settings.ensureRouteId(route.storageIndex);
-                if (settings.routeName(route.storageIndex).equals("")) {
-                    // settings label takes precedence over our internal one until the setting route entry removed
-                    settings.setRouteName(route.storageIndex, route.name);
-                }
+            if (route == null) {
+                continue;
+            }
+            settings.ensureRouteId(route.storageIndex); // may not actualy add the route if we are over route max
+            if (settings.getRouteIndexById(route.storageIndex) == null) {
+                clearRouteId(route.storageIndex); // clear it from storage, it was meant to get purged when we changed the settings
+                continue;
+            }
+
+            routes.add(route);
+
+            if (settings.routeName(route.storageIndex).equals("")) {
+                // settings label takes precedence over our internal one until the setting route entry removed
+                settings.setRouteName(route.storageIndex, route.name);
             }
         }
     }
@@ -84,7 +93,9 @@ class BreadcrumbContext {
                 }
             }
             if (oldestOrFirstDisabledRoute == null) {
-                System.println("not possible (routes should be at least 1): " + settings.routeMax());
+                System.println(
+                    "not possible (routes should be at least 1): " + settings.routeMax()
+                );
                 return null;
             }
             routes.remove(oldestOrFirstDisabledRoute);

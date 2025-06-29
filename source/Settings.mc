@@ -381,7 +381,7 @@ class Settings {
     // can be much larger for companion app is used, since the tiles can be much smaller with TILE_DATA_TYPE_BASE64_FULL_COLOUR
     // saw a crash around 513 tiles, which would be from our internal array StorageTileCache._tilesInStorage
     var storageTileCacheSize as Number = 350;
-    var storageSeedBoundingBox as Boolean = false; // seed entire bounding box
+    var storageSeedBoundingBox as Boolean = true; // seed entire bounding box
     var storageSeedRouteDistanceM as Float = 100f; // if seeding based on route (storageSeedBoundingBox = false) seed this far around the route
 
     var trackColour as Number = Graphics.COLOR_GREEN;
@@ -1060,7 +1060,7 @@ class Settings {
             // do not use the clear route helper method, it will stack overflow
             var routeIndex = getRouteIndexById(routeId);
             if (routeIndex == null) {
-                return;
+                continue;
             }
             routes.remove(routes[routeIndex]);
         }
