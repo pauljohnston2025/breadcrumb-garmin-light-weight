@@ -667,7 +667,31 @@ class StorageTileCache {
     }
 
     function haveTile(tileKey as TileKey) as Boolean {
-        return _tilesInStorage.indexOf(tileKey.optimisedHashKey()) >= 0;
+        // need to check for expired tiles
+        // we could call get, but that also loads the tile data, and increments the "lastUsed" time
+
+        var tileKeyStr = tileKey.optimisedHashKey();
+
+        if (_tilesInStorage.indexOf(tileKeyStr) < 0) {
+            // we do not have the tile key
+            return false;
+        }
+
+        var metaKeyStr = metaKey(tileKeyStr);
+        var tileMeta = Storage.getValue(metaKeyStr);
+        if (tileMeta == null || !(tileMeta instanceof Array) || tileMeta.size() < 3) {
+            logE("bad tile metadata in storage" + tileMeta);
+            return false;
+        }
+        
+        var epoch = Time.now().value();
+        var expiresAt = tileMeta[2] as Number;
+        if (expired(expiresAt, epoch)) {
+            logE("tile expired" + tileMeta);
+            return false;
+        }
+
+        return true;
     }
 
     function addErroredTile(tileKey as TileKey, responseCode as Number) as Void {
@@ -1028,7 +1052,7 @@ class TileCache {
     // seedTileToStorage only puts the tile into storage
     function seedTileToStorage(tileKey as TileKey) as Void {
         if (_storageTileCache.haveTile(tileKey)) {
-            // we already have the tile (it might be errored, but we have it)
+            // we already have the tile (and it is not expired)
             return;
         }
 

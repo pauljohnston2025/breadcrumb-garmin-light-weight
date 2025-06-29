@@ -821,13 +821,7 @@ class CachedValues {
             ) {
                 ++tileStarted;
                 var tileKey = new TileKey(x, y, seedingZ);
-                if (!tileCache._storageTileCache.haveTile(tileKey)) {
-                    // should we check if this tile is a 404/403 response?
-                    // problem is we will keep trying to get it even if its a new tile that we just got
-                    // we should probably store a 'downloadedAt' time on each tile in the cache so we can calculate a TTL
-                    // logD("seeding storage tile: " + tileKey);
-                    tileCache.seedTileToStorage(tileKey);
-                }
+                tileCache.seedTileToStorage(tileKey);
 
                 if (tileStarted >= maxTilesAtATime) {
                     return false;
