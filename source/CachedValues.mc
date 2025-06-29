@@ -92,7 +92,7 @@ class CachedValues {
         ).toNumber();
         fixedPosition = null;
         // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
-        mapMoveDistanceM = _settings.metersAroundUser.toFloat();
+        mapMoveDistanceM = _settings.metersAroundUser.toFloat() * _settings.mapMoveScreenSize;
         recalculateAll();
     }
 
@@ -135,9 +135,8 @@ class CachedValues {
         if (_settings.mapEnabled) {
             updateMapData();
         }
-        // move half way across the screen
         if (currentScale != 0f) {
-            mapMoveDistanceM = minScreenDim / 2.0 / currentScale;
+            mapMoveDistanceM = (minScreenDim * _settings.mapMoveScreenSize) / currentScale;
         }
         return rescaleOccurred;
     }
@@ -671,7 +670,7 @@ class CachedValues {
         _settings.setFixedPosition(null, null, true);
         setScale(null);
     }
-    
+
     function setScale(_scale as Float?) as Void {
         scale = _scale;
         // be very careful about putting null into properties, it breaks everything

@@ -381,6 +381,9 @@ class Settings {
     // can be much larger for companion app is used, since the tiles can be much smaller with TILE_DATA_TYPE_BASE64_FULL_COLOUR
     // saw a crash around 513 tiles, which would be from our internal array StorageTileCache._tilesInStorage
     var storageTileCacheSize as Number = 350;
+    var storageSeedBoundingBox as Boolean = false; // seed entire bounding box
+    var storageSeedRouteDistanceM as Float = 100f; // if seeding based on route (storageSeedBoundingBox = false) seed this far around the route
+
     var trackColour as Number = Graphics.COLOR_GREEN;
     var elevationColour as Number = Graphics.COLOR_ORANGE;
     var userColour as Number = Graphics.COLOR_ORANGE;
@@ -388,6 +391,8 @@ class Settings {
     var maxPendingWebRequests as Number = 5;
     // Renders around the users position
     var metersAroundUser as Number = 500; // keep this fairly high by default, too small and the map tiles start to go blury
+    var centerUserOffsetY as Float = 0.0f; // number of pixels to move the user down the screen, negative values will move the user up the screen. useful to see more of the route infront of the user. units in pixels.
+    var mapMoveScreenSize as Float = 0.5f; // how far to move the map when the user presses on screen buttons, a fraction of the screen size.
     var zoomAtPaceMode as Number = ZOOM_AT_PACE_MODE_PACE;
     var zoomAtPaceSpeedMPS as Float = 1.0; // meters per second
     var uiMode as Number = UI_MODE_SHOW_ALL;
@@ -956,7 +961,7 @@ class Settings {
         }
         tileServerPropChanged();
     }
-    
+
     (:settingsView)
     function setPackingFormat(value as Number) as Void {
         setPackingFormatWithoutSideEffect(value);
@@ -967,7 +972,7 @@ class Settings {
         Application.Properties.setValue("packingFormat", packingFormat);
         tileServerPropChanged();
     }
-    
+
     (:settingsView)
     function setUseDrawBitmap(value as Boolean) as Void {
         setUseDrawBitmapWithoutSideEffect(value);
@@ -1407,7 +1412,7 @@ class Settings {
 
         setMapEnabled(true);
     }
-    
+
     function toggleUseDrawBitmap() as Void {
         if (useDrawBitmap) {
             setUseDrawBitmapWithoutSideEffect(false);
@@ -2143,7 +2148,7 @@ class Settings {
             resetDefaults();
             return;
         }
-        
+
         var returnToUser = Application.Properties.getValue("returnToUser") as Boolean;
         if (returnToUser) {
             Application.Properties.setValue("returnToUser", false);
