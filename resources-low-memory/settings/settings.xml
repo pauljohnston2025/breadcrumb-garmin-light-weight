@@ -27,7 +27,7 @@
     </setting>
 
     <setting propertyKey="@Properties.recalculateIntervalS" title="@Strings.recalculateIntervalSTitle">
-        <settingConfig type="numeric" min="0"/>
+        <settingConfig type="numeric" min="1"/>
     </setting>
 
     <setting propertyKey="@Properties.renderMode" title="@Strings.renderModeTitle">

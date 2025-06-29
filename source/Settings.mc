@@ -1109,6 +1109,7 @@ class Settings {
     (:settingsView)
     function setRecalculateIntervalS(value as Number) as Void {
         recalculateIntervalS = value;
+        recalculateIntervalS = recalculateIntervalS <= 0 ? 1 : recalculateIntervalS;
         setValue("recalculateIntervalS", recalculateIntervalS);
     }
 
@@ -2055,6 +2056,7 @@ class Settings {
         storageTileCacheSize = parseNumber("storageTileCacheSize", storageTileCacheSize);
         tileCachePadding = parseNumber("tileCachePadding", tileCachePadding);
         recalculateIntervalS = parseNumber("recalculateIntervalS", recalculateIntervalS);
+        recalculateIntervalS = recalculateIntervalS <= 0 ? 1 : recalculateIntervalS;
         mode = parseNumber("mode", mode);
         mapEnabled = parseBool("mapEnabled", mapEnabled);
         setMapEnabledRaw(mapEnabled); // prompt for app to open if needed
