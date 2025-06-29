@@ -833,16 +833,7 @@ class BreadcrumbRenderer {
             "Caching Tile Layer " +
                 _cachedValues.seedingZ +
                 " ...\n" +
-                _cachedValues.seedingTilesProgressForThisLayer +
-                "/" +
-                _cachedValues.seedingTilesOnThisLayer +
-                "  (" +
-                (
-                    (_cachedValues.seedingTilesProgressForThisLayer /
-                        _cachedValues.seedingTilesOnThisLayer.toFloat()) *
-                    100
-                ).format("%.1f") +
-                "%)" +
+                _cachedValues.seedingProgressString() +
                 "\npending web: " +
                 breadcrumbContext.webRequestHandler.pending.size() +
                 "\noutstanding: " +

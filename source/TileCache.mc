@@ -1103,7 +1103,7 @@ class TileCache {
         if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
             // we are running in storage only mode, but the tile is not in the cache
             addErroredTile(tileKey, _tileCacheVersion, "S404", true);
-            return false;
+            return true; // this could be a complicated op if we are getting all these tiles from storage
         }
         _webRequestHandler.add(
             new ImageRequest(
@@ -1157,7 +1157,7 @@ class TileCache {
         if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
             // we are running in storage only mode, but the tile is not in the cache
             addErroredTile(tileKey, _tileCacheVersion, "S404", true);
-            return false;
+            return true; // this could be a complicated op if we are getting all these tiles from storage
         }
         _webRequestHandler.add(
             new JsonRequest(

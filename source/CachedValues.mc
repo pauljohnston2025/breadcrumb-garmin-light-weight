@@ -4,6 +4,76 @@ import Toybox.Graphics;
 import Toybox.System;
 import Toybox.Activity;
 
+// An iterator that walks along a line segment, yielding one point at a time.
+class SegmentPointIterator {
+    private var _x1 as Float;
+    private var _y1 as Float;
+    private var _x2 as Float;
+    private var _y2 as Float;
+    private var _stepDistance as Float;
+
+    // State variables
+    private var _totalDistance as Float;
+    private var _dirX as Float;
+    private var _dirY as Float;
+    private var _distanceTraveled as Float;
+    private var _isFinished as Boolean;
+
+    // Constructor
+    function initialize(
+        x1 as Float,
+        y1 as Float,
+        x2 as Float,
+        y2 as Float,
+        stepDistanceM as Float
+    ) {
+        _x1 = x1;
+        _y1 = y1;
+        _x2 = x2;
+        _y2 = y2;
+        _stepDistance = stepDistanceM;
+
+        var dx = _x2 - _x1;
+        var dy = _y2 - _y1;
+        _totalDistance = Math.sqrt(dx * dx + dy * dy).toFloat();
+
+        if (_totalDistance > 0) {
+            _dirX = dx / _totalDistance;
+            _dirY = dy / _totalDistance;
+        } else {
+            _dirX = 0f;
+            _dirY = 0f;
+        }
+
+        _distanceTraveled = 0f;
+        _isFinished = false;
+    }
+
+    // Returns the next point [x, y] on the segment, or null if finished.
+    function next() as [Float, Float]? {
+        if (_isFinished) {
+            return null;
+        }
+
+        var point;
+        if (_distanceTraveled >= _totalDistance) {
+            // We have reached or passed the end. Return the exact end point.
+            point = [_x2, _y2];
+            _isFinished = true;
+        } else {
+            // Calculate the current point based on distance traveled.
+            var currentX = _x1 + _distanceTraveled * _dirX;
+            var currentY = _y1 + _distanceTraveled * _dirY;
+            point = [currentX, currentY];
+
+            // Advance our state for the next call.
+            _distanceTraveled += _stepDistance;
+        }
+
+        return point;
+    }
+}
+
 // https://developer.garmin.com/connect-iq/reference-guides/monkey-c-reference/
 // Monkey C is a message-passed language. When a function is called, the virtual machine searches a hierarchy at runtime in the following order to find the function:
 // Instance members of the class
@@ -68,9 +138,12 @@ class CachedValues {
     var seedingRectanglarBottomRight as RectangularPoint = new RectangularPoint(0f, 0f, 0f);
     var seedingUpToTileX as Number = 0;
     var seedingUpToTileY as Number = 0;
+    var seedingUpToRoute as Number = 0;
     var seedingUpToRoutePoint as Number = 0;
+    var seedingUpToRoutePointPartial as SegmentPointIterator? = null;
     var seedingTilesOnThisLayer as Number = NUMBER_MAX;
     var seedingTilesProgressForThisLayer as Number = 0;
+    var seedingMapCacheDistanceM as Float = -1f;
 
     function atMinTileLayer() as Boolean {
         return tileZ == _settings.tileLayerMin;
@@ -94,6 +167,7 @@ class CachedValues {
         fixedPosition = null;
         // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
         mapMoveDistanceM = _settings.metersAroundUser.toFloat() * _settings.mapMoveScreenSize;
+        seedingMapCacheDistanceM = _settings.metersAroundUser.toFloat() * 0.5;
         recalculateAll();
     }
 
@@ -138,6 +212,7 @@ class CachedValues {
         }
         if (currentScale != 0f) {
             mapMoveDistanceM = (minScreenDim * _settings.mapMoveScreenSize) / currentScale;
+            seedingMapCacheDistanceM = (minScreenDim * 0.5) / currentScale;
         }
         return rescaleOccurred;
     }
@@ -697,7 +772,9 @@ class CachedValues {
         seedingRectanglarBottomRight = new RectangularPoint(0f, 0f, 0f);
         seedingUpToTileX = 0;
         seedingUpToTileY = 0;
+        seedingUpToRoute = 0;
         seedingUpToRoutePoint = 0;
+        seedingUpToRoutePointPartial = null;
         seedingTilesOnThisLayer = NUMBER_MAX;
         seedingTilesProgressForThisLayer = 0;
     }
@@ -717,17 +794,22 @@ class CachedValues {
         // Details: failed inside handle_image_callback
         tileCache.clearValuesWithoutStorage();
 
-        var centerRectangular = getScreenCenter();
-        seedingRectanglarTopLeft = new RectangularPoint(
-            centerRectangular.x - mapMoveDistanceM,
-            centerRectangular.y + mapMoveDistanceM,
-            0f
-        );
-        seedingRectanglarBottomRight = new RectangularPoint(
-            centerRectangular.x + mapMoveDistanceM,
-            centerRectangular.y - mapMoveDistanceM,
-            0f
-        );
+        if (_settings.storageSeedBoundingBox) {
+            var centerRectangular = getScreenCenter();
+            seedingRectanglarTopLeft = new RectangularPoint(
+                centerRectangular.x - seedingMapCacheDistanceM,
+                centerRectangular.y + seedingMapCacheDistanceM,
+                0f
+            );
+            seedingRectanglarBottomRight = new RectangularPoint(
+                centerRectangular.x + seedingMapCacheDistanceM,
+                centerRectangular.y - seedingMapCacheDistanceM,
+                0f
+            );
+        } else {
+            nextRoutePointTileArea();
+        }
+
         // start at max, and move towards min.
         // It's slower to do the lower layers first, but means if we run out of storage the higher layers will still be cached, so we will get a better experiece.
         // Rather than having all the fine details, but no overview, we at least get the overview tiles. Users can set tileLayerMin and tileLayerMax if they would prefer to cache only a single layer.
@@ -758,7 +840,9 @@ class CachedValues {
             seedingZ--;
             seedingUpToTileX = 0;
             seedingUpToTileY = 0;
+            seedingUpToRoute = 0;
             seedingUpToRoutePoint = 0;
+            seedingUpToRoutePointPartial = null;
         }
 
         if (seedingZ < _settings.tileLayerMin) {
@@ -769,12 +853,113 @@ class CachedValues {
 
         return true;
     }
-        
+
+    (:storage)
+    function nextRoutePointTileArea() as Boolean {
+        var routes = getApp()._breadcrumbContext.routes;
+        // might be no enabled routes? or the routes might have no coordinates. Guess we just have to return finished?
+        if (routes.size() == 0 || !_settings.atLeast1RouteEnabled()) {
+            // set up a tile to be downloaded, so that 'seedNextTilesToStorageBoundingBox' returns true
+            seedingRectanglarTopLeft = new RectangularPoint(0f, 0f, 0f);
+            seedingRectanglarBottomRight = new RectangularPoint(0f, 0f, 0f);
+            seedingUpToTileX = 0;
+            seedingUpToTileY = 0;
+            return true; // there is nothing to process
+        }
+
+        if (seedingUpToRoute >= routes.size()) {
+            seedingUpToRoute = 0;
+            seedingUpToRoutePoint = 0;
+            seedingUpToRoutePointPartial = null;
+            return true; // we have processed all the routes
+        }
+
+        var route = routes[seedingUpToRoute];
+        if (!_settings.routeEnabled(route.storageIndex)) {
+            ++seedingUpToRoute;
+            seedingUpToRoutePoint = 0;
+            seedingUpToRoutePointPartial = null;
+            return false; // call me again asap
+        }
+        var routePoint = route.coordinates.getPoint(seedingUpToRoutePoint);
+        var nextRoutePoint = route.coordinates.getPoint(seedingUpToRoutePoint + 1);
+        if (routePoint == null || nextRoutePoint == null) {
+            // we are at the end of the route, no more points, move onto the next route
+            ++seedingUpToRoute;
+            seedingUpToRoutePoint = 0;
+            seedingUpToRoutePointPartial = null;
+            return false; // call me again asap
+        }
+
+        var divisor = currentScale;
+        if (divisor == 0f) {
+            // we should always have a current scale at this point, since we manually set scale (or we are caching map tiles)
+            System.println("Warning: current scale was somehow not set");
+            divisor = 1f;
+        }
+
+        if (seedingUpToRoutePointPartial == null) {
+            var tileWidthM = earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
+            seedingUpToRoutePointPartial = new SegmentPointIterator(
+                routePoint.x / divisor,
+                routePoint.y / divisor,
+                nextRoutePoint.x / divisor,
+                nextRoutePoint.y / divisor,
+                tileWidthM.toFloat() / 2.0f // we only need to step at half the tile distance, this guarantees we do not miss any tiles (if we have a large gap in coordinates)
+            );
+        }
+
+        var seedingUpToRoutePointPartialLocal = seedingUpToRoutePointPartial;
+        if (seedingUpToRoutePointPartialLocal == null) {
+            // wtf? we just set it - must be completely broken, pretend we are finished
+            seedingRectanglarTopLeft = new RectangularPoint(0f, 0f, 0f);
+            seedingRectanglarBottomRight = new RectangularPoint(0f, 0f, 0f);
+            seedingUpToTileX = 0;
+            seedingUpToTileY = 0;
+            return true;
+        }
+
+        var nextPoint = seedingUpToRoutePointPartialLocal.next();
+        if (nextPoint == null) {
+            // we are onto the next route point
+            ++seedingUpToRoutePoint;
+            seedingUpToRoutePointPartial = null;
+            return false; // call us again soon asap
+        }
+
+        seedingRectanglarTopLeft = new RectangularPoint(
+            nextPoint[0] - _settings.storageSeedRouteDistanceM,
+            nextPoint[1] + _settings.storageSeedRouteDistanceM,
+            0f
+        );
+
+        seedingRectanglarBottomRight = new RectangularPoint(
+            nextPoint[0] + _settings.storageSeedRouteDistanceM,
+            nextPoint[1] - _settings.storageSeedRouteDistanceM,
+            0f
+        );
+
+        seedingUpToTileX = 0;
+        seedingUpToTileY = 0;
+        return false;
+    }
+
     (:storage)
     function seedNextTilesToStorageAlongRoute() as Boolean {
-        return true;
+        // could use Bresenham's Line Algorithm to find all tiles on the path
+        // instead we split the routes points up into segments, and download all the tiles for each point in the route,
+        // factoring in the max distance around the route to cache
+
+        // each point is downloaded as a bounding box, there will be overlaps
+        // this is also highly ineffcient, as there might only be one tile for the entire route ayt low zoom levels, but we still try and get the same
+        // tile over and over
+        if (seedNextTilesToStorageBoundingBox()) {
+            return nextRoutePointTileArea();
+        }
+
+        return false;
     }
-        
+
     (:storage)
     function seedNextTilesToStorageBoundingBox() as Boolean {
         var tileWidthM = earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
@@ -869,5 +1054,41 @@ class CachedValues {
                 seedingUpToTileY = y;
             }
         }
+    }
+
+    function seedingProgressString() as String {
+        if (_settings.storageSeedBoundingBox) {
+            return (
+                seedingTilesProgressForThisLayer +
+                "/" +
+                seedingTilesOnThisLayer +
+                "  (" +
+                (
+                    (seedingTilesProgressForThisLayer / seedingTilesOnThisLayer.toFloat()) *
+                    100
+                ).format("%.1f") +
+                "%)"
+            );
+        }
+
+        var routes = getApp()._breadcrumbContext.routes;
+        if (seedingUpToRoute >= routes.size()) {
+            return "Route: " + seedingUpToRoute + "/" + routes.size();
+        }
+        var coords = routes[seedingUpToRoute].coordinates;
+        var points = coords.pointSize();
+        return (
+            "Route: " +
+            (seedingUpToRoute + 1) +
+            "/" +
+            routes.size() +
+            " P: " +
+            seedingUpToRoutePoint +
+            "/" +
+            points +
+            " (" +
+            (seedingUpToRoutePoint.toFloat() / points).format("%.1f") +
+            "%)"
+        );
     }
 }

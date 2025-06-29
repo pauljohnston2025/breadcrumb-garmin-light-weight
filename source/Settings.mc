@@ -381,18 +381,18 @@ class Settings {
     // can be much larger for companion app is used, since the tiles can be much smaller with TILE_DATA_TYPE_BASE64_FULL_COLOUR
     // saw a crash around 513 tiles, which would be from our internal array StorageTileCache._tilesInStorage
     var storageTileCacheSize as Number = 350;
-    var storageSeedBoundingBox as Boolean = true; // seed entire bounding box
-    var storageSeedRouteDistanceM as Float = 100f; // if seeding based on route (storageSeedBoundingBox = false) seed this far around the route
+    var storageSeedBoundingBox as Boolean = false; // seed entire bounding box - TODO ADD SETTINGS SUPPORT
+    var storageSeedRouteDistanceM as Float = 10f; // if seeding based on route (storageSeedBoundingBox = false) seed this far around the route - TODO ADD SETTINGS SUPPORT
 
     var trackColour as Number = Graphics.COLOR_GREEN;
     var elevationColour as Number = Graphics.COLOR_ORANGE;
     var userColour as Number = Graphics.COLOR_ORANGE;
-    // this should probably be the same as tileCacheSize? since there is no point hadving 20 outstanding if we can only store 10 of them
+    // this should probably be the same as tileCacheSize? since there is no point having 20 outstanding if we can only store 10 of them
     var maxPendingWebRequests as Number = 5;
     // Renders around the users position
     var metersAroundUser as Number = 500; // keep this fairly high by default, too small and the map tiles start to go blury
-    var centerUserOffsetY as Float = 0.0f; // number of pixels to move the user down the screen, negative values will move the user up the screen. useful to see more of the route infront of the user. units in pixels.
-    var mapMoveScreenSize as Float = 0.5f; // how far to move the map when the user presses on screen buttons, a fraction of the screen size.
+    var centerUserOffsetY as Float = 0.0f; // number of pixels to move the user down the screen, negative values will move the user up the screen. useful to see more of the route infront of the user. units in pixels.  - TODO ADD SETTINGS SUPPORT AND IMPL
+    var mapMoveScreenSize as Float = 0.5f; // how far to move the map when the user presses on screen buttons, a fraction of the screen size.  - TODO ADD SETTINGS SUPPORT
     var zoomAtPaceMode as Number = ZOOM_AT_PACE_MODE_PACE;
     var zoomAtPaceSpeedMPS as Float = 1.0; // meters per second
     var uiMode as Number = UI_MODE_SHOW_ALL;
@@ -1241,6 +1241,22 @@ class Settings {
         return routes[routeIndex]["name"] as String;
     }
 
+    (:storage)
+    function atLeast1RouteEnabled() as Boolean {
+        if (!routesEnabled) {
+            return false;
+        }
+
+        for (var i = 0; i < routes.size(); ++i) {
+            var route = routes[i];
+            if (route["enabled"]) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     function routeEnabled(routeId as Number) as Boolean {
         if (!routesEnabled) {
             return false;
@@ -1460,6 +1476,7 @@ class Settings {
     (:settingsView)
     function toggleShowErrorTileMessages() as Void {
         showErrorTileMessages = toggleSimple("showErrorTileMessages", !showErrorTileMessages);
+        getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // remove the errored tiles from cache and redraw
     }
     (:settingsView)
     function toggleIncludeDebugPageInOnScreenUi() as Void {
