@@ -623,11 +623,6 @@ class CachedValues {
     }
 
     function setPositionAndScaleIfNotSet() as Void {
-        fixedPosition = getScreenCenter();
-        // System.println("new fixed pos: " + fixedPosition);
-    }
-
-    function getScreenCenter() as RectangularPoint {
         // we need to set a fixed scale so that a user moving does not change the zoom level randomly whilst they are viewing a map and panning
         if (scale == null) {
             var scaleToSet = currentScale;
@@ -636,10 +631,14 @@ class CachedValues {
             }
             setScale(scaleToSet);
         }
+        fixedPosition = getScreenCenter();
+        // System.println("new fixed pos: " + fixedPosition);
+    }
 
+    function getScreenCenter() as RectangularPoint {
         var divisor = currentScale;
         if (divisor == 0f) {
-            // we should always have a current scale at this point, since we manually set scale
+            // we should always have a current scale at this point, since we manually set scale (or we are caching map tiles)
             System.println("Warning: current scale was somehow not set");
             divisor = 1f;
         }
@@ -770,7 +769,7 @@ class CachedValues {
 
         return true;
     }
-
+        
     (:storage)
     function seedNextTilesToStorageAlongRoute() as Boolean {
         return true;
