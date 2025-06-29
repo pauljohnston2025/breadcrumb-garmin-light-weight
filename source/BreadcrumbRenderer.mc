@@ -14,7 +14,7 @@ const MIN_SCALE as Float = DESIRED_SCALE_PIXEL_WIDTH / 1000000000.0f;
 class BreadcrumbRenderer {
     // todo put into ui class
     var _clearRouteProgress as Number = 0;
-    var _starCacheTilesProgress as Number = 0;
+    var _startCacheTilesProgress as Number = 0;
     var _enableMapProgress as Number = 0;
     var _disableMapProgress as Number = 0;
     var settings as Settings;
@@ -782,7 +782,7 @@ class BreadcrumbRenderer {
         if (
             renderLeftStartConfirmation(
                 dc,
-                _starCacheTilesProgress,
+                _startCacheTilesProgress,
                 Rez.Strings.startTileCache1,
                 Rez.Strings.startTileCache2,
                 Rez.Strings.startTileCache3
@@ -1381,6 +1381,10 @@ class BreadcrumbRenderer {
             return false; // debug and map move do not clear routes
         }
 
+        if (exclusiveOpRunning(3)) {
+            return false; // something else is running, do not handle touch events
+        }
+
         switch (_clearRouteProgress) {
             case 0:
                 // press top left to start clear route
@@ -1418,14 +1422,31 @@ class BreadcrumbRenderer {
         return false;
     }
 
+    function exclusiveOpRunning(current as Number) as Boolean {
+        // _startCacheTilesProgress - 0
+        // _enableMapProgress - 1
+        // _disableMapProgress - 2
+        // _clearRouteProgress - 3
+        return (
+            (_startCacheTilesProgress != 0 && current != 0) ||
+            (_enableMapProgress != 0 && current != 1) ||
+            (_disableMapProgress != 0 && current != 2) ||
+            (_clearRouteProgress != 0 && current != 3)
+        );
+    }
+
     (:noStorage)
     function handleStartCacheRoute(x as Number, y as Number) as Boolean {
         return false;
     }
     (:storage)
     function handleStartCacheRoute(x as Number, y as Number) as Boolean {
+        if (exclusiveOpRunning(0)) {
+            return false; // something else is running, do not handle touch events
+        }
+
         if (!settings.mapEnabled) {
-            _starCacheTilesProgress = 0;
+            _startCacheTilesProgress = 0;
             return false; // maps are not enabled, we hide the start symbol in this case
         }
         var res = handleStartLeftYNUi(
@@ -1433,14 +1454,18 @@ class BreadcrumbRenderer {
             y,
             _cachedValues.screenWidth - halfHitboxSize, // right of screen
             _cachedValues.yHalf,
-            _starCacheTilesProgress,
+            _startCacheTilesProgress,
             _cachedValues.method(:startCacheCurrentMapArea)
         );
-        _starCacheTilesProgress = res[1];
+        _startCacheTilesProgress = res[1];
         return res[0];
     }
 
     function handleStartMapEnable(x as Number, y as Number) as Boolean {
+        if (exclusiveOpRunning(1)) {
+            return false; // something else is running, do not handle touch events
+        }
+
         if (settings.mapEnabled) {
             _enableMapProgress = 0;
             return false; // already enabled
@@ -1457,6 +1482,9 @@ class BreadcrumbRenderer {
         return res[0];
     }
     function handleStartMapDisable(x as Number, y as Number) as Boolean {
+        if (exclusiveOpRunning(2)) {
+            return false; // something else is running, do not handle touch events
+        }
         if (!settings.mapEnabled) {
             _disableMapProgress = 0;
             return false; // already disabled
