@@ -129,6 +129,8 @@ class CachedValues {
     var rotateAroundScreenX as Float = physicalScreenWidth / 2f;
     var rotateAroundScreenXOffsetFactoredIn as Float = rotateAroundScreenX - bufferedBitmapOffsetX;
     var rotateAroundScreenY as Float = physicalScreenHeight / 2f;
+    var mapScreenWidth as Float = physicalScreenWidth;
+    var mapScreenHeight as Float = physicalScreenHeight;
     var rotateAroundMinScreenDim as Float = minPhysicalScreenDim;
     var rotateAroundMaxScreenDim as Float = maxPhysicalScreenDim;
     // var bufferedBitmapOffsetY as Float = // always 0, since centerUserOffsetY only touches the y axis, the left to right is the only one that can be wrong
@@ -294,12 +296,12 @@ class CachedValues {
             Math.pow(2, tileZ) /
             smallTilesPerScaledTile
         ).toFloat();
-        var screenSizeM = rotateAroundMaxScreenDim / currentScale;
+        var halfScreenWidthM = mapScreenWidth / 2.0f / currentScale;
+        var halfScreenHeightM = mapScreenHeight / 2.0f / currentScale;
 
         // where the screen corner starts
-        var halfScreenSizeM = screenSizeM / 2f;
-        var screenLeftM = centerPositionRaw.x - halfScreenSizeM;
-        var screenTopM = centerPositionRaw.y + halfScreenSizeM;
+        var screenLeftM = centerPositionRaw.x - halfScreenWidthM;
+        var screenTopM = centerPositionRaw.y + halfScreenHeightM;
 
         // find which tile we are closest to
         firstTileX = ((screenLeftM + originShift) / tileWidthM).toNumber();
@@ -340,10 +342,10 @@ class CachedValues {
         tileOffsetY = Math.round((screenTopM - firstTileTopM) * currentScale).toNumber();
 
         tileCountX = Math.ceil(
-            (-tileOffsetX + rotateAroundMaxScreenDim) / tileScalePixelSize
+            (-tileOffsetX + physicalScreenWidth) / tileScalePixelSize
         ).toNumber();
         tileCountY = Math.ceil(
-            (-tileOffsetY + rotateAroundMaxScreenDim) / tileScalePixelSize
+            (-tileOffsetY + physicalScreenHeight) / tileScalePixelSize
         ).toNumber();
         mapDataCanBeUsed = true;
     }
@@ -444,17 +446,29 @@ class CachedValues {
             rotateAroundScreenY = yHalfVirtual;
             rotateAroundMinScreenDim = minVirtualScreenDim;
             rotateAroundMaxScreenDim = maxVirtualScreenDim;
+            mapScreenWidth = rotateAroundMaxScreenDim;
+            mapScreenHeight = rotateAroundMaxScreenDim;
+
+            if (_settings.renderMode == RENDER_MODE_UNBUFFERED_NO_ROTATION) {
+                mapScreenWidth = virtualScreenWidth;
+                mapScreenHeight = virtualScreenHeight;
+            }
         } else {
             rotateAroundScreenX = xHalfPhysical;
             rotateAroundScreenY = yHalfPhysical;
             rotateAroundMinScreenDim = minPhysicalScreenDim;
             rotateAroundMaxScreenDim = maxPhysicalScreenDim;
+            mapScreenWidth = physicalScreenWidth;
+            mapScreenHeight = physicalScreenHeight;
         }
 
         // todo check RENDER_MODE_UNBUFFERED_ROTATING not sure what offset needs to be
         // map calcs need to change for RENDER_MODE_UNBUFFERED_NO_ROTATION and RENDER_MODE_UNBUFFERED_ROTATING - use screen size instead, maybe we can just set rotateAroundMaxScreenDim to maxPhysicalScreenDim?
-        if (_settings.renderMode == RENDER_MODE_BUFFERED_ROTATING || _settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION) {
-            bufferedBitmapOffsetX = -(maxVirtualScreenDim - physicalScreenWidth) / 2f;
+        if (
+            _settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
+            _settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
+        ) {
+            bufferedBitmapOffsetX = -(rotateAroundMaxScreenDim - physicalScreenWidth) / 2f;
             rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX - bufferedBitmapOffsetX;
         } else {
             bufferedBitmapOffsetX = 0f;

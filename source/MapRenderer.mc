@@ -247,7 +247,8 @@ class MapRenderer {
         var firstTileX = cachedValues.firstTileX; // local lookup faster
         var firstTileY = cachedValues.firstTileY; // local lookup faster
         var tileZ = cachedValues.tileZ; // local lookup faster
-        var rotateAroundMaxScreenDim = cachedValues.rotateAroundMaxScreenDim; // local lookup faster
+        var rotateAroundScreenX = cachedValues.rotateAroundScreenX; // local lookup faster
+        var rotateAroundScreenY = cachedValues.rotateAroundScreenY; // local lookup faster
         var tileSize = _settings.tileSize; // local lookup faster
         var useDrawBitmap = _settings.useDrawBitmap; // local lookup faster
 
@@ -284,8 +285,8 @@ class MapRenderer {
                 // we must scale as the tile we picked is only close to the resolution we need
                 var xPos = (tileOffsetX + x * tileScalePixelSize).toFloat();
                 var yPos = (tileOffsetY + y * tileScalePixelSize).toFloat();
-                var xTranslate = rotateAroundMaxScreenDim - xPos;
-                var yTranslate = rotateAroundMaxScreenDim - yPos;
+                var xTranslate = rotateAroundScreenX - xPos;
+                var yTranslate = rotateAroundScreenY - yPos;
                 var rotationMatrix = new AffineTransform();
                 // Apply transformations in REVERSE order of visual effect:
                 rotationMatrix.translate(xTranslate, yTranslate); // move to center
@@ -358,33 +359,33 @@ class MapRenderer {
                     var brX = trX;
                     var brY = blY;
 
-                    var tlUnrotatedX = tlX - rotateAroundMaxScreenDim;
-                    var tlUnrotatedY = tlY - rotateAroundMaxScreenDim;
+                    var tlUnrotatedX = tlX - rotateAroundScreenX;
+                    var tlUnrotatedY = tlY - rotateAroundScreenY;
                     var tlRotatedX =
-                        rotateAroundMaxScreenDim + rotateCosNeg * tlUnrotatedX - rotateSinNeg * tlUnrotatedY;
+                        rotateAroundScreenX + rotateCosNeg * tlUnrotatedX - rotateSinNeg * tlUnrotatedY;
                     var tlRotatedY =
-                        rotateAroundMaxScreenDim + (rotateSinNeg * tlUnrotatedX + rotateCosNeg * tlUnrotatedY);
+                        rotateAroundScreenY + (rotateSinNeg * tlUnrotatedX + rotateCosNeg * tlUnrotatedY);
 
-                    var trUnrotatedX = trX - rotateAroundMaxScreenDim;
-                    var trUnrotatedY = trY - rotateAroundMaxScreenDim;
+                    var trUnrotatedX = trX - rotateAroundScreenX;
+                    var trUnrotatedY = trY - rotateAroundScreenY;
                     var trRotatedX =
-                        rotateAroundMaxScreenDim + rotateCosNeg * trUnrotatedX - rotateSinNeg * trUnrotatedY;
+                        rotateAroundScreenX + rotateCosNeg * trUnrotatedX - rotateSinNeg * trUnrotatedY;
                     var trRotatedY =
-                        rotateAroundMaxScreenDim + (rotateSinNeg * trUnrotatedX + rotateCosNeg * trUnrotatedY);
+                        rotateAroundScreenY + (rotateSinNeg * trUnrotatedX + rotateCosNeg * trUnrotatedY);
 
-                    var blUnrotatedX = blX - rotateAroundMaxScreenDim;
-                    var blUnrotatedY = blY - rotateAroundMaxScreenDim;
+                    var blUnrotatedX = blX - rotateAroundScreenX;
+                    var blUnrotatedY = blY - rotateAroundScreenY;
                     var blRotatedX =
-                        rotateAroundMaxScreenDim + rotateCosNeg * blUnrotatedX - rotateSinNeg * blUnrotatedY;
+                        rotateAroundScreenX + rotateCosNeg * blUnrotatedX - rotateSinNeg * blUnrotatedY;
                     var blRotatedY =
-                        rotateAroundMaxScreenDim + (rotateSinNeg * blUnrotatedX + rotateCosNeg * blUnrotatedY);
+                        rotateAroundScreenY + (rotateSinNeg * blUnrotatedX + rotateCosNeg * blUnrotatedY);
 
-                    var brUnrotatedX = brX - rotateAroundMaxScreenDim;
-                    var brUnrotatedY = brY - rotateAroundMaxScreenDim;
+                    var brUnrotatedX = brX - rotateAroundScreenX;
+                    var brUnrotatedY = brY - rotateAroundScreenY;
                     var brRotatedX =
-                        rotateAroundMaxScreenDim + rotateCosNeg * brUnrotatedX - rotateSinNeg * brUnrotatedY;
+                        rotateAroundScreenX + rotateCosNeg * brUnrotatedX - rotateSinNeg * brUnrotatedY;
                     var brRotatedY =
-                        rotateAroundMaxScreenDim + (rotateSinNeg * brUnrotatedX + rotateCosNeg * brUnrotatedY);
+                        rotateAroundScreenY + (rotateSinNeg * brUnrotatedX + rotateCosNeg * brUnrotatedY);
 
                     // draw our 4 lines
                     dc.drawLine(tlRotatedX, tlRotatedY, trRotatedX, trRotatedY);
