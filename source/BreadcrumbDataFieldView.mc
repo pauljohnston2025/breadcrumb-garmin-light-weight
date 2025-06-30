@@ -229,7 +229,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     lastPoint != null &&
                     (settings.enableOffTrackAlerts ||
                         settings.drawLineToClosestPoint ||
-                        settings.offTrackWrongDirection || settings.drawCheverons)
+                        settings.offTrackWrongDirection ||
+                        settings.drawCheverons)
                 ) {
                     handleOffTrackAlerts(lastPoint);
                 }
@@ -414,11 +415,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 ) {
                     renderer.renderTrackName(dc, route, routeColour);
                 } else {
-                    renderer.renderTrackNameUnrotated(
-                        dc,
-                        route,
-                        routeColour
-                    );
+                    renderer.renderTrackNameUnrotated(dc, route, routeColour);
                 }
             }
         }
@@ -517,7 +514,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
             try {
                 if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING) {
-                    dc.drawBitmap2(_cachedValues.bufferedBitmapOffsetX, 0, scratchPadBitmapLocal, {
+                    dc.drawBitmap2(0, 0, scratchPadBitmapLocal, {
                         // :bitmapX =>
                         // :bitmapY =>
                         // :bitmapWidth =>
@@ -539,39 +536,51 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
 
         if (settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING) {
-            var mapRenderer = _breadcrumbContext.mapRenderer;
-            var renderer = _breadcrumbContext.breadcrumbRenderer;
-            dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-            dc.clear();
-            mapRenderer.renderMap(dc);
-            for (var i = 0; i < routes.size(); ++i) {
-                var route = routes[i];
-                if (!settings.routeEnabled(route.storageIndex)) {
-                    continue;
-                }
-                var routeColour = settings.routeColour(route.storageIndex);
-                renderer.renderTrack(dc, route, routeColour, true);
-                if (settings.showPoints) {
-                    renderer.renderTrackPoints(dc, route, Graphics.COLOR_ORANGE);
-                }
-                if (settings.drawCheverons) {
-                    renderer.renderTrackCheverons(
-                        dc,
-                        route,
-                        routeColour
-                    );
-                }
-            }
-            renderer.renderTrack(dc, track, settings.trackColour, false);
-            if (settings.showPoints) {
-                renderer.renderTrackPoints(dc, track, Graphics.COLOR_ORANGE);
-            }
-            renderOffTrackPoint(dc);
+            renderUnbufferedRotating(dc, routes, track);
             return;
         }
 
         // RENDER_MODE_UNBUFFERED_NO_ROTATION
         rederUnrotated(dc, routes, track);
+    }
+
+    (:noUnbufferedRotations)
+    function renderUnbufferedRotating(
+        dc as Dc,
+        routes as Array<BreadcrumbTrack>,
+        track as BreadcrumbTrack
+    ) as Void {}
+
+    (:unbufferedRotations)
+    function renderUnbufferedRotating(
+        dc as Dc,
+        routes as Array<BreadcrumbTrack>,
+        track as BreadcrumbTrack
+    ) as Void {
+        var mapRenderer = _breadcrumbContext.mapRenderer;
+        var renderer = _breadcrumbContext.breadcrumbRenderer;
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.clear();
+        mapRenderer.renderMap(dc);
+        for (var i = 0; i < routes.size(); ++i) {
+            var route = routes[i];
+            if (!settings.routeEnabled(route.storageIndex)) {
+                continue;
+            }
+            var routeColour = settings.routeColour(route.storageIndex);
+            renderer.renderTrack(dc, route, routeColour, true);
+            if (settings.showPoints) {
+                renderer.renderTrackPoints(dc, route, Graphics.COLOR_ORANGE);
+            }
+            if (settings.drawCheverons) {
+                renderer.renderTrackCheverons(dc, route, routeColour);
+            }
+        }
+        renderer.renderTrack(dc, track, settings.trackColour, false);
+        if (settings.showPoints) {
+            renderer.renderTrackPoints(dc, track, Graphics.COLOR_ORANGE);
+        }
+        renderOffTrackPoint(dc);
     }
 
     function rederUnrotated(
@@ -591,21 +600,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 continue;
             }
             var routeColour = settings.routeColour(route.storageIndex);
-            renderer.renderTrackUnrotated(
-                dc,
-                route,
-                routeColour,
-                true
-            );
+            renderer.renderTrackUnrotated(dc, route, routeColour, true);
             if (settings.showPoints) {
                 renderer.renderTrackPointsUnrotated(dc, route, Graphics.COLOR_ORANGE);
             }
             if (settings.drawCheverons) {
-                renderer.renderTrackCheveronsUnrotated(
-                    dc,
-                    route,
-                    routeColour
-                );
+                renderer.renderTrackCheveronsUnrotated(dc, route, routeColour);
             }
         }
         renderer.renderTrackUnrotated(dc, track, settings.trackColour, false);
@@ -616,6 +616,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         renderOffTrackPointUnrotated(dc);
     }
 
+    (:noUnbufferedRotations)
+    function renderOffTrackPoint(dc as Dc) as Void {}
+
+    (:unbufferedRotations)
     function renderOffTrackPoint(dc as Dc) as Void {
         var lastPoint = _breadcrumbContext.track.lastPoint();
         var renderer = _breadcrumbContext.breadcrumbRenderer;

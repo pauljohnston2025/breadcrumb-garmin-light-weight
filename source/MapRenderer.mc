@@ -148,7 +148,7 @@ class MapRenderer {
             return;
         }
 
-        dc.setColor(Graphics.COLOR_PURPLE, Graphics.COLOR_PURPLE);
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
 
         var tileScalePixelSize = cachedValues.tileScalePixelSize; // local lookup faster

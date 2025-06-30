@@ -468,7 +468,7 @@ class CachedValues {
         rotationMatrix = new AffineTransform();
         rotationMatrix.translate(rotateAroundScreenX, rotateAroundScreenY); // move to center
         rotationMatrix.rotate(-rotationRad); // rotate
-        rotationMatrix.translate(-rotateAroundScreenX, -rotateAroundScreenY); // move back to position
+        rotationMatrix.translate(-rotateAroundScreenXOffsetFactoredIn, -rotateAroundScreenY); // move back to position
     }
 
     function calculateScale(maxDistanceM as Float) as Float {
