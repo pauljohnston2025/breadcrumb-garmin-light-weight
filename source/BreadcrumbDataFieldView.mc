@@ -321,8 +321,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             ) {
                 // make sure we are at the correct size (settings/layout change at any point)
                 // could optimise this to be done in cached values rather than every render
-                var width = _cachedValues.screenWidth.toNumber();
-                var height = _cachedValues.screenHeight.toNumber();
+                var width = _cachedValues.maxVirtualScreenDim.toNumber();
+                var height = _cachedValues.maxVirtualScreenDim.toNumber();
                 if (
                     _scratchPadBitmap == null ||
                     _scratchPadBitmap.getWidth() != width ||
@@ -440,8 +440,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             if (attrib != null) {
                 try {
                     dc.drawBitmap2(
-                        _cachedValues.xHalf - attrib.getWidth() / 2,
-                        _cachedValues.screenHeight - 25,
+                        _cachedValues.xHalfPhysical - attrib.getWidth() / 2,
+                        _cachedValues.physicalScreenHeight - 25,
                         attrib,
                         {
                             :tintColor => settings.uiColour,
@@ -490,8 +490,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
                 dc.clear();
                 dc.drawText(
-                    _cachedValues.xHalf,
-                    _cachedValues.yHalf,
+                    _cachedValues.xHalfPhysical,
+                    _cachedValues.yHalfPhysical,
                     Graphics.FONT_SYSTEM_MEDIUM,
                     "COULD NOT ALLOCATE BUFFER\nSWITCH RENDER MODE",
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
@@ -517,7 +517,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
             try {
                 if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING) {
-                    dc.drawBitmap2(0, 0, scratchPadBitmapLocal, {
+                    dc.drawBitmap2(_cachedValues.bufferedBitmapOffsetX, 0, scratchPadBitmapLocal, {
                         // :bitmapX =>
                         // :bitmapY =>
                         // :bitmapWidth =>
@@ -527,7 +527,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                         :transform => _cachedValues.rotationMatrix,
                     });
                 } else {
-                    dc.drawBitmap(0, 0, scratchPadBitmapLocal);
+                    dc.drawBitmap(_cachedValues.bufferedBitmapOffsetX, 0, scratchPadBitmapLocal);
                 }
             } catch (e) {
                 var message = e.getErrorMessage();
@@ -689,7 +689,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var y = 5;
         var bottomSpacing = 5; // physical devices seem to clip the bottom of the datafield
         var spacing = (dc.getHeight() - y - bottomSpacing).toFloat() / fieldCount;
-        var x = _cachedValues.xHalf;
+        var x = _cachedValues.xHalfPhysical;
         dc.drawText(
             x,
             y,

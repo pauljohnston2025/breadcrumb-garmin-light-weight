@@ -143,17 +143,17 @@ class BreadcrumbRenderer {
 
         var foundName = SCALE_NAMES[distanceM];
 
-        var y = _cachedValues.screenHeight - 25;
+        var y = _cachedValues.physicalScreenHeight - 25;
         dc.setColor(settings.normalModeColour, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(4);
         dc.drawLine(
-            _cachedValues.xHalf - pixelWidth / 2.0f,
+            _cachedValues.xHalfPhysical - pixelWidth / 2.0f,
             y,
-            _cachedValues.xHalf + pixelWidth / 2.0f,
+            _cachedValues.xHalfPhysical + pixelWidth / 2.0f,
             y
         );
         dc.drawText(
-            _cachedValues.xHalf,
+            _cachedValues.xHalfPhysical,
             y - 30,
             Graphics.FONT_XTINY,
             foundName,
@@ -186,22 +186,26 @@ class BreadcrumbRenderer {
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var rotateCos = _cachedValues.rotateCos; // local lookup faster
         var rotateSin = _cachedValues.rotateSin; // local lookup faster
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
+        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
 
         var lastPointUnrotatedX = lastPoint.x - centerPosition.x;
         var lastPointUnrotatedY = lastPoint.y - centerPosition.y;
         var lastPointRotatedX =
-            xHalf + rotateCos * lastPointUnrotatedX - rotateSin * lastPointUnrotatedY;
+            rotateAroundScreenXOffsetFactoredIn + rotateCos * lastPointUnrotatedX - rotateSin * lastPointUnrotatedY;
         var lastPointRotatedY =
-            yHalf - (rotateSin * lastPointUnrotatedX + rotateCos * lastPointUnrotatedY);
+            rotateAroundScreenY -
+            (rotateSin * lastPointUnrotatedX + rotateCos * lastPointUnrotatedY);
 
         var offTrackPointUnrotatedX = offTrackPoint.x - centerPosition.x;
         var offTrackPointUnrotatedY = offTrackPoint.y - centerPosition.y;
         var offTrackPointRotatedX =
-            xHalf + rotateCos * offTrackPointUnrotatedX - rotateSin * offTrackPointUnrotatedY;
+            rotateAroundScreenXOffsetFactoredIn +
+            rotateCos * offTrackPointUnrotatedX -
+            rotateSin * offTrackPointUnrotatedY;
         var offTrackPointRotatedY =
-            yHalf - (rotateSin * offTrackPointUnrotatedX + rotateCos * offTrackPointUnrotatedY);
+            rotateAroundScreenY -
+            (rotateSin * offTrackPointUnrotatedX + rotateCos * offTrackPointUnrotatedY);
 
         dc.setPenWidth(4);
         dc.setColor(colour, Graphics.COLOR_BLACK);
@@ -226,14 +230,14 @@ class BreadcrumbRenderer {
         }
 
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
+        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
 
-        var lastPointUnrotatedX = xHalf + (lastPoint.x - centerPosition.x);
-        var lastPointUnrotatedY = yHalf - (lastPoint.y - centerPosition.y);
+        var lastPointUnrotatedX = rotateAroundScreenXOffsetFactoredIn + (lastPoint.x - centerPosition.x);
+        var lastPointUnrotatedY = rotateAroundScreenY - (lastPoint.y - centerPosition.y);
 
-        var offTrackPointUnrotatedX = xHalf + (offTrackPoint.x - centerPosition.x);
-        var offTrackPointUnrotatedY = yHalf - (offTrackPoint.y - centerPosition.y);
+        var offTrackPointUnrotatedX = rotateAroundScreenXOffsetFactoredIn + (offTrackPoint.x - centerPosition.x);
+        var offTrackPointUnrotatedY = rotateAroundScreenY - (offTrackPoint.y - centerPosition.y);
 
         dc.setPenWidth(4);
         dc.setColor(colour, Graphics.COLOR_BLACK);
@@ -250,21 +254,23 @@ class BreadcrumbRenderer {
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var rotateCos = _cachedValues.rotateCos; // local lookup faster
         var rotateSin = _cachedValues.rotateSin; // local lookup faster
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var rotateAroundScreenX = _cachedValues.rotateAroundScreenX; // local lookup faster
+        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
 
         var userPosUnrotatedX = usersLastLocation.x - centerPosition.x;
         var userPosUnrotatedY = usersLastLocation.y - centerPosition.y;
 
-        var userPosRotatedX = xHalf + userPosUnrotatedX;
-        var userPosRotatedY = yHalf - userPosUnrotatedY;
+        var userPosRotatedX = rotateAroundScreenX + userPosUnrotatedX;
+        var userPosRotatedY = rotateAroundScreenY - userPosUnrotatedY;
         if (
             settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
             settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING
         ) {
-            userPosRotatedX = xHalf + rotateCos * userPosUnrotatedX - rotateSin * userPosUnrotatedY;
+            userPosRotatedX =
+                rotateAroundScreenX + rotateCos * userPosUnrotatedX - rotateSin * userPosUnrotatedY;
             userPosRotatedY =
-                yHalf - (rotateSin * userPosUnrotatedX + rotateCos * userPosUnrotatedY);
+                rotateAroundScreenY -
+                (rotateSin * userPosUnrotatedX + rotateCos * userPosUnrotatedY);
         }
 
         var triangleSizeY = 10;
@@ -335,8 +341,8 @@ class BreadcrumbRenderer {
         drawEndMarker as Boolean
     ) as Void {
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
+        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
 
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
             // its very cofusing seeing the routes disappear when scrolling
@@ -355,14 +361,14 @@ class BreadcrumbRenderer {
         if (size >= ARRAY_POINT_SIZE * 2) {
             var firstXScaledAtCenter = coordinatesRaw[0] - centerPosition.x;
             var firstYScaledAtCenter = coordinatesRaw[1] - centerPosition.y;
-            var firstX = xHalf + firstXScaledAtCenter;
-            var firstY = yHalf - firstYScaledAtCenter;
+            var firstX = rotateAroundScreenXOffsetFactoredIn + firstXScaledAtCenter;
+            var firstY = rotateAroundScreenY - firstYScaledAtCenter;
             var lastX = firstX;
             var lastY = firstY;
 
             for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
-                var nextX = xHalf + (coordinatesRaw[i] - centerPosition.x);
-                var nextY = yHalf - (coordinatesRaw[i + 1] - centerPosition.y);
+                var nextX = rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
+                var nextY = rotateAroundScreenY - (coordinatesRaw[i + 1] - centerPosition.y);
 
                 dc.drawLine(lastX, lastY, nextX, nextY);
 
@@ -380,8 +386,8 @@ class BreadcrumbRenderer {
         colour as Graphics.ColorType
     ) as Void {
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
+        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
 
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
             // its very cofusing seeing the routes disappear when scrolling
@@ -395,8 +401,8 @@ class BreadcrumbRenderer {
         var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
 
         for (var i = 0; i < size; i += ARRAY_POINT_SIZE) {
-            var x = xHalf + (coordinatesRaw[i] - centerPosition.x);
-            var y = yHalf - (coordinatesRaw[i + 1] - centerPosition.y);
+            var x = rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
+            var y = rotateAroundScreenY - (coordinatesRaw[i + 1] - centerPosition.y);
 
             dc.fillCircle(x, y, 5);
         }
@@ -450,8 +456,8 @@ class BreadcrumbRenderer {
         }
 
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
+        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
         var rotateCos = _cachedValues.rotateCos; // local lookup faster
         var rotateSin = _cachedValues.rotateSin; // local lookup faster
 
@@ -473,9 +479,12 @@ class BreadcrumbRenderer {
             var firstYScaledAtCenter =
                 coordinatesRaw[nextClosePointIndexRaw + 1] - centerPosition.y;
             var firstXRotated =
-                xHalf + rotateCos * firstXScaledAtCenter - rotateSin * firstYScaledAtCenter;
+                rotateAroundScreenXOffsetFactoredIn +
+                rotateCos * firstXScaledAtCenter -
+                rotateSin * firstYScaledAtCenter;
             var firstYRotated =
-                yHalf - (rotateSin * firstXScaledAtCenter + rotateCos * firstYScaledAtCenter);
+                rotateAroundScreenY -
+                (rotateSin * firstXScaledAtCenter + rotateCos * firstYScaledAtCenter);
             var lastXRotated = firstXRotated;
             var lastYRotated = firstYRotated;
 
@@ -491,9 +500,12 @@ class BreadcrumbRenderer {
                 var nextYScaledAtCenter = nextY - centerPosition.y;
 
                 var nextXRotated =
-                    xHalf + rotateCos * nextXScaledAtCenter - rotateSin * nextYScaledAtCenter;
+                    rotateAroundScreenXOffsetFactoredIn +
+                    rotateCos * nextXScaledAtCenter -
+                    rotateSin * nextYScaledAtCenter;
                 var nextYRotated =
-                    yHalf - (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
+                    rotateAroundScreenY -
+                    (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
 
                 drawCheveron(dc, lastXRotated, lastYRotated, nextXRotated, nextYRotated);
 
@@ -524,8 +536,8 @@ class BreadcrumbRenderer {
         }
 
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
+        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
 
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
             // its very cofusing seeing the routes disappear when scrolling
@@ -541,16 +553,18 @@ class BreadcrumbRenderer {
 
         var nextClosePointIndexRaw = lastClosePointIndex * ARRAY_POINT_SIZE + ARRAY_POINT_SIZE;
         if (nextClosePointIndexRaw < size - ARRAY_POINT_SIZE) {
-            var lastX = xHalf + coordinatesRaw[nextClosePointIndexRaw] - centerPosition.x;
-            var lastY = yHalf - coordinatesRaw[nextClosePointIndexRaw + 1] - centerPosition.y;
+            var lastX =
+                rotateAroundScreenXOffsetFactoredIn + coordinatesRaw[nextClosePointIndexRaw] - centerPosition.x;
+            var lastY =
+                rotateAroundScreenY - coordinatesRaw[nextClosePointIndexRaw + 1] - centerPosition.y;
 
             for (
                 var i = nextClosePointIndexRaw + ARRAY_POINT_SIZE;
                 i < size && i <= nextClosePointIndexRaw + CHEVRON_POINTS * ARRAY_POINT_SIZE;
                 i += ARRAY_POINT_SIZE
             ) {
-                var nextX = xHalf + (coordinatesRaw[i] - centerPosition.x);
-                var nextY = yHalf - (coordinatesRaw[i + 1] - centerPosition.y);
+                var nextX = rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
+                var nextY = rotateAroundScreenY - (coordinatesRaw[i + 1] - centerPosition.y);
 
                 drawCheveron(dc, lastX, lastY, nextX, nextY);
 
@@ -576,16 +590,16 @@ class BreadcrumbRenderer {
         dc.setColor(colour, Graphics.COLOR_BLACK);
         dc.setPenWidth(4);
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
+        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
         var rotateCos = _cachedValues.rotateCos; // local lookup faster
         var rotateSin = _cachedValues.rotateSin; // local lookup faster
 
         var xScaledAtCenter = breadcrumb.boundingBoxCenter.x - centerPosition.x;
         var yScaledAtCenter = breadcrumb.boundingBoxCenter.y - centerPosition.y;
 
-        var x = xHalf + rotateCos * xScaledAtCenter - rotateSin * yScaledAtCenter;
-        var y = yHalf - (rotateSin * xScaledAtCenter + rotateCos * yScaledAtCenter);
+        var x = rotateAroundScreenXOffsetFactoredIn + rotateCos * xScaledAtCenter - rotateSin * yScaledAtCenter;
+        var y = rotateAroundScreenY - (rotateSin * xScaledAtCenter + rotateCos * yScaledAtCenter);
         dc.drawText(
             x,
             y,
@@ -603,14 +617,14 @@ class BreadcrumbRenderer {
         dc.setColor(colour, Graphics.COLOR_BLACK);
         dc.setPenWidth(4);
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
+        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
 
         var xScaledAtCenter = breadcrumb.boundingBoxCenter.x - centerPosition.x;
         var yScaledAtCenter = breadcrumb.boundingBoxCenter.y - centerPosition.y;
 
-        var x = xHalf + xScaledAtCenter;
-        var y = yHalf - yScaledAtCenter;
+        var x = rotateAroundScreenXOffsetFactoredIn + xScaledAtCenter;
+        var y = rotateAroundScreenY - yScaledAtCenter;
 
         dc.drawText(
             x,
@@ -628,15 +642,15 @@ class BreadcrumbRenderer {
         colour as Graphics.ColorType,
         drawEndMarker as Boolean
     ) as Void {
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
+        var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
 
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
         dc.clear();
 
         dc.drawText(
-            xHalf,
-            yHalf,
+            xHalfPhysical,
+            yHalfPhysical,
             Graphics.FONT_XTINY,
             "RENDER MODE\nNOT SUPPORTED",
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
@@ -653,8 +667,8 @@ class BreadcrumbRenderer {
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var rotateCos = _cachedValues.rotateCos; // local lookup faster
         var rotateSin = _cachedValues.rotateSin; // local lookup faster
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
+        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
 
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
             // its very cofusing seeing the routes disappear when scrolling
@@ -674,9 +688,12 @@ class BreadcrumbRenderer {
             var firstXScaledAtCenter = coordinatesRaw[0] - centerPosition.x;
             var firstYScaledAtCenter = coordinatesRaw[1] - centerPosition.y;
             var firstXRotated =
-                xHalf + rotateCos * firstXScaledAtCenter - rotateSin * firstYScaledAtCenter;
+                rotateAroundScreenXOffsetFactoredIn +
+                rotateCos * firstXScaledAtCenter -
+                rotateSin * firstYScaledAtCenter;
             var firstYRotated =
-                yHalf - (rotateSin * firstXScaledAtCenter + rotateCos * firstYScaledAtCenter);
+                rotateAroundScreenY -
+                (rotateSin * firstXScaledAtCenter + rotateCos * firstYScaledAtCenter);
             var lastXRotated = firstXRotated;
             var lastYRotated = firstYRotated;
 
@@ -688,9 +705,12 @@ class BreadcrumbRenderer {
                 var nextYScaledAtCenter = nextY - centerPosition.y;
 
                 var nextXRotated =
-                    xHalf + rotateCos * nextXScaledAtCenter - rotateSin * nextYScaledAtCenter;
+                    rotateAroundScreenXOffsetFactoredIn +
+                    rotateCos * nextXScaledAtCenter -
+                    rotateSin * nextYScaledAtCenter;
                 var nextYRotated =
-                    yHalf - (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
+                    rotateAroundScreenY -
+                    (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
 
                 dc.drawLine(lastXRotated, lastYRotated, nextXRotated, nextYRotated);
 
@@ -725,8 +745,8 @@ class BreadcrumbRenderer {
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var rotateCos = _cachedValues.rotateCos; // local lookup faster
         var rotateSin = _cachedValues.rotateSin; // local lookup faster
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
+        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
 
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
             // its very cofusing seeing the routes disappear when scrolling
@@ -745,8 +765,13 @@ class BreadcrumbRenderer {
             var nextXScaledAtCenter = nextX - centerPosition.x;
             var nextYScaledAtCenter = nextY - centerPosition.y;
 
-            var x = xHalf + rotateCos * nextXScaledAtCenter - rotateSin * nextYScaledAtCenter;
-            var y = yHalf - (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
+            var x =
+                rotateAroundScreenXOffsetFactoredIn +
+                rotateCos * nextXScaledAtCenter -
+                rotateSin * nextYScaledAtCenter;
+            var y =
+                rotateAroundScreenY -
+                (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
 
             dc.fillCircle(x, y, 5);
         }
@@ -791,8 +816,8 @@ class BreadcrumbRenderer {
             return true;
         }
 
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
+        var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
 
         if (!_cachedValues.seeding()) {
             // not seeding, no ui
@@ -812,23 +837,23 @@ class BreadcrumbRenderer {
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_DK_GREEN);
         dc.setPenWidth(8);
         dc.drawLine(
-            xHalf - halfLineLength,
+            xHalfPhysical - halfLineLength,
             lineFromEdge,
-            xHalf + halfLineLength,
+            xHalfPhysical + halfLineLength,
             lineFromEdge + lineLength
         );
         dc.drawLine(
-            xHalf - halfLineLength,
+            xHalfPhysical - halfLineLength,
             lineFromEdge + lineLength,
-            xHalf + halfLineLength,
+            xHalfPhysical + halfLineLength,
             lineFromEdge
         );
 
         dc.setColor(settings.uiColour, Graphics.COLOR_DK_GREEN);
 
         dc.drawText(
-            xHalf,
-            yHalf,
+            xHalfPhysical,
+            yHalfPhysical,
             Graphics.FONT_XTINY,
             "Caching Tile Layer " +
                 _cachedValues.seedingZ +
@@ -887,17 +912,17 @@ class BreadcrumbRenderer {
         leftColour as Number,
         rightColour as Number
     ) as Void {
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
-        var screenHeight = _cachedValues.screenHeight; // local lookup faster
-        var screenWidth = _cachedValues.screenWidth; // local lookup faster
-        var padding = xHalf / 2.0f;
-        var topText = yHalf / 2.0f;
+        var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
+        var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
+        var physicalScreenHeight = _cachedValues.physicalScreenHeight; // local lookup faster
+        var physicalScreenWidth = _cachedValues.physicalScreenWidth; // local lookup faster
+        var padding = xHalfPhysical / 2.0f;
+        var topText = yHalfPhysical / 2.0f;
 
         dc.setColor(leftColour, leftColour);
-        dc.fillRectangle(0, 0, xHalf, screenHeight);
+        dc.fillRectangle(0, 0, xHalfPhysical, physicalScreenHeight);
         dc.setColor(rightColour, rightColour);
-        dc.fillRectangle(xHalf, 0, xHalf, screenHeight);
+        dc.fillRectangle(xHalfPhysical, 0, xHalfPhysical, physicalScreenHeight);
 
         var textArea = new WatchUi.TextArea({
             :text => text,
@@ -906,22 +931,22 @@ class BreadcrumbRenderer {
             :justification => Graphics.TEXT_JUSTIFY_CENTER,
             :locX => WatchUi.LAYOUT_HALIGN_CENTER,
             :locY => topText,
-            :width => screenWidth * 0.8f, // round devices cannot show text at top of screen
-            :height => xHalf,
+            :width => physicalScreenWidth * 0.8f, // round devices cannot show text at top of screen
+            :height => xHalfPhysical,
         });
         textArea.draw(dc);
 
         dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            xHalf - padding,
-            yHalf,
+            xHalfPhysical - padding,
+            yHalfPhysical,
             Graphics.FONT_XTINY,
             leftText,
             Graphics.TEXT_JUSTIFY_CENTER
         );
         dc.drawText(
-            xHalf + padding,
-            yHalf,
+            xHalfPhysical + padding,
+            yHalfPhysical,
             Graphics.FONT_XTINY,
             rightText,
             Graphics.TEXT_JUSTIFY_CENTER
@@ -999,13 +1024,13 @@ class BreadcrumbRenderer {
     function renderTileCacheButton(dc as Dc) as Void {}
     (:storage)
     function renderTileCacheButton(dc as Dc) as Void {
-        var screenWidth = _cachedValues.screenWidth; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var physicalScreenWidth = _cachedValues.physicalScreenWidth; // local lookup faster
+        var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
 
         // right of screen
         dc.drawText(
-            screenWidth - halfHitboxSize,
-            yHalf,
+            physicalScreenWidth - halfHitboxSize,
+            yHalfPhysical,
             Graphics.FONT_XTINY,
             "G",
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
@@ -1015,10 +1040,10 @@ class BreadcrumbRenderer {
     function renderUi(dc as Dc) as Void {
         var currentScale = _cachedValues.currentScale; // local lookup faster
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
-        var screenWidth = _cachedValues.screenWidth; // local lookup faster
-        var screenHeight = _cachedValues.screenHeight; // local lookup faster
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var physicalScreenWidth = _cachedValues.physicalScreenWidth; // local lookup faster
+        var physicalScreenHeight = _cachedValues.physicalScreenHeight; // local lookup faster
+        var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
+        var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
 
         if (settings.drawHitboxes) {
             dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
@@ -1049,10 +1074,20 @@ class BreadcrumbRenderer {
             );
 
             // top bottom left right
-            dc.drawLine(0, hitboxSize, screenWidth, hitboxSize);
-            dc.drawLine(0, screenHeight - hitboxSize, screenWidth, screenHeight - hitboxSize);
-            dc.drawLine(hitboxSize, 0, hitboxSize, screenHeight);
-            dc.drawLine(screenWidth - hitboxSize, 0, screenWidth - hitboxSize, screenHeight);
+            dc.drawLine(0, hitboxSize, physicalScreenWidth, hitboxSize);
+            dc.drawLine(
+                0,
+                physicalScreenHeight - hitboxSize,
+                physicalScreenWidth,
+                physicalScreenHeight - hitboxSize
+            );
+            dc.drawLine(hitboxSize, 0, hitboxSize, physicalScreenHeight);
+            dc.drawLine(
+                physicalScreenWidth - hitboxSize,
+                0,
+                physicalScreenWidth - hitboxSize,
+                physicalScreenHeight
+            );
         }
 
         dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
@@ -1150,8 +1185,8 @@ class BreadcrumbRenderer {
             ) {
                 var txt = fixedLatitude.format("%.3f") + ", " + fixedLongitude.format("%.3f");
                 dc.drawText(
-                    xHalf,
-                    screenHeight - scaleFromEdge,
+                    xHalfPhysical,
+                    physicalScreenHeight - scaleFromEdge,
                     Graphics.FONT_XTINY,
                     txt,
                     Graphics.TEXT_JUSTIFY_CENTER
@@ -1164,8 +1199,8 @@ class BreadcrumbRenderer {
                 if (latLong != null) {
                     var txt = latLong[0].format("%.3f") + ", " + latLong[1].format("%.3f");
                     dc.drawText(
-                        xHalf,
-                        screenHeight - scaleFromEdge,
+                        xHalfPhysical,
+                        physicalScreenHeight - scaleFromEdge,
                         Graphics.FONT_XTINY,
                         txt,
                         Graphics.TEXT_JUSTIFY_CENTER
@@ -1176,24 +1211,24 @@ class BreadcrumbRenderer {
 
         if (settings.mode == MODE_MAP_MOVE) {
             try {
-                dc.drawBitmap2(0, yHalf - _leftArrow.getHeight() / 2, _leftArrow, {
+                dc.drawBitmap2(0, yHalfPhysical - _leftArrow.getHeight() / 2, _leftArrow, {
                     :tintColor => settings.uiColour,
                 });
                 dc.drawBitmap2(
-                    screenWidth - _rightArrow.getWidth(),
-                    yHalf - _rightArrow.getHeight() / 2,
+                    physicalScreenWidth - _rightArrow.getWidth(),
+                    yHalfPhysical - _rightArrow.getHeight() / 2,
                     _rightArrow,
                     {
                         :tintColor => settings.uiColour,
                     }
                 );
-                dc.drawBitmap2(xHalf - _upArrow.getWidth() / 2, 0, _upArrow, {
+                dc.drawBitmap2(xHalfPhysical - _upArrow.getWidth() / 2, 0, _upArrow, {
                     :tintColor => settings.uiColour,
                 });
                 if (settings.getAttribution() == null || !settings.mapEnabled) {
                     dc.drawBitmap2(
-                        xHalf - _downArrow.getWidth() / 2,
-                        screenHeight - _downArrow.getHeight(),
+                        xHalfPhysical - _downArrow.getWidth() / 2,
+                        physicalScreenHeight - _downArrow.getHeight(),
                         _downArrow,
                         {
                             :tintColor => settings.uiColour,
@@ -1212,20 +1247,30 @@ class BreadcrumbRenderer {
 
         // plus at the top of screen
         if (!_cachedValues.scaleCanInc) {
-            dc.drawBitmap2(xHalf - _nosmoking.getWidth() / 2, 0, _nosmoking, {
+            dc.drawBitmap2(xHalfPhysical - _nosmoking.getWidth() / 2, 0, _nosmoking, {
                 :tintColor => settings.uiColour,
             });
         } else {
-            dc.drawLine(xHalf - halfLineLength, lineFromEdge, xHalf + halfLineLength, lineFromEdge);
-            dc.drawLine(xHalf, lineFromEdge - halfLineLength, xHalf, lineFromEdge + halfLineLength);
+            dc.drawLine(
+                xHalfPhysical - halfLineLength,
+                lineFromEdge,
+                xHalfPhysical + halfLineLength,
+                lineFromEdge
+            );
+            dc.drawLine(
+                xHalfPhysical,
+                lineFromEdge - halfLineLength,
+                xHalfPhysical,
+                lineFromEdge + halfLineLength
+            );
         }
 
         if (settings.getAttribution() == null || !settings.mapEnabled) {
             // minus at the bottom
             if (!_cachedValues.scaleCanDec) {
                 dc.drawBitmap2(
-                    xHalf - _nosmoking.getWidth() / 2,
-                    screenHeight - _nosmoking.getHeight() - 3, // small padding for physcial device clipping
+                    xHalfPhysical - _nosmoking.getWidth() / 2,
+                    physicalScreenHeight - _nosmoking.getHeight() - 3, // small padding for physcial device clipping
                     _nosmoking,
                     {
                         :tintColor => settings.uiColour,
@@ -1233,10 +1278,10 @@ class BreadcrumbRenderer {
                 );
             } else {
                 dc.drawLine(
-                    xHalf - halfLineLength,
-                    screenHeight - lineFromEdge,
-                    xHalf + halfLineLength,
-                    screenHeight - lineFromEdge
+                    xHalfPhysical - halfLineLength,
+                    physicalScreenHeight - lineFromEdge,
+                    xHalfPhysical + halfLineLength,
+                    physicalScreenHeight - lineFromEdge
                 );
             }
         }
@@ -1264,7 +1309,7 @@ class BreadcrumbRenderer {
         }
         dc.drawText(
             halfHitboxSize,
-            yHalf,
+            yHalfPhysical,
             Graphics.FONT_XTINY,
             fvText,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
@@ -1362,7 +1407,7 @@ class BreadcrumbRenderer {
     }
 
     function handleClearRoute(x as Number, y as Number) as Boolean {
-        var xHalf = _cachedValues.xHalf; // local lookup faster
+        var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
 
         if (
             settings.mode != MODE_NORMAL &&
@@ -1386,7 +1431,7 @@ class BreadcrumbRenderer {
                 return false;
             case 1:
                 // press right to confirm, left cancels
-                if (x > xHalf) {
+                if (x > xHalfPhysical) {
                     _clearRouteProgress = 2;
                     return true;
                 }
@@ -1395,7 +1440,7 @@ class BreadcrumbRenderer {
 
             case 2:
                 // press left to confirm, right cancels
-                if (x < xHalf) {
+                if (x < xHalfPhysical) {
                     _clearRouteProgress = 3;
                     return true;
                 }
@@ -1403,7 +1448,7 @@ class BreadcrumbRenderer {
                 return true;
             case 3:
                 // press right to confirm, left cancels
-                if (x > xHalf) {
+                if (x > xHalfPhysical) {
                     getApp()._breadcrumbContext.clearRoutes();
                 }
                 _clearRouteProgress = 0;
@@ -1443,8 +1488,8 @@ class BreadcrumbRenderer {
         var res = handleStartLeftYNUi(
             x,
             y,
-            _cachedValues.screenWidth - halfHitboxSize, // right of screen
-            _cachedValues.yHalf,
+            _cachedValues.physicalScreenWidth - halfHitboxSize, // right of screen
+            _cachedValues.yHalfPhysical,
             _startCacheTilesProgress,
             _cachedValues.method(:startCacheCurrentMapArea)
         );
@@ -1500,7 +1545,7 @@ class BreadcrumbRenderer {
         variable as Number,
         method as Method
     ) as [Boolean, Number] {
-        var xHalf = _cachedValues.xHalf; // local lookup faster
+        var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
 
         if (settings.mode != MODE_NORMAL) {
             return [false, variable]; // only normal mode can start y/n confirms atm
@@ -1514,20 +1559,20 @@ class BreadcrumbRenderer {
                 return [false, 0];
             case 1:
                 // press left to confirm, right cancels
-                if (x < xHalf) {
+                if (x < xHalfPhysical) {
                     return [true, 2];
                 }
                 return [true, 0];
 
             case 2:
                 // press right to confirm, left cancels
-                if (x > xHalf) {
+                if (x > xHalfPhysical) {
                     return [true, 3];
                 }
                 return [true, 0];
             case 3:
                 // press left to confirm, right cancels
-                if (x < xHalf) {
+                if (x < xHalfPhysical) {
                     method.invoke();
                 }
                 return [true, 0];
@@ -1564,71 +1609,72 @@ class BreadcrumbRenderer {
     var halfHitboxSize as Float = hitboxSize / 2.0f;
 
     function setElevationAndUiData(xElevationStart as Float) as Void {
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
-        var screenWidth = _cachedValues.screenWidth; // local lookup faster
+        var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
+        var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
+        var physicalScreenWidth = _cachedValues.physicalScreenWidth; // local lookup faster
 
         _xElevationStart = xElevationStart;
-        _xElevationEnd = screenWidth - _xElevationStart;
-        var xElevationFromCenter = xHalf - _xElevationStart;
+        _xElevationEnd = physicalScreenWidth - _xElevationStart;
+        var xElevationFromCenter = xHalfPhysical - _xElevationStart;
         _yElevationHeight =
-            Math.sqrt(xHalf * xHalf - xElevationFromCenter * xElevationFromCenter).toFloat() * 2 -
+            Math.sqrt(
+                xHalfPhysical * xHalfPhysical - xElevationFromCenter * xElevationFromCenter
+            ).toFloat() *
+                2 -
             40;
         _halfYElevationHeight = _yElevationHeight / 2.0f;
-        yElevationTop = yHalf - _halfYElevationHeight;
-        yElevationBottom = yHalf + _halfYElevationHeight;
+        yElevationTop = yHalfPhysical - _halfYElevationHeight;
+        yElevationBottom = yHalfPhysical + _halfYElevationHeight;
 
         setCornerPositions();
     }
 
     (:round)
     function setCornerPositions() as Void {
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
+        var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
 
         var offsetSize = Math.sqrt(
-            ((yHalf - halfHitboxSize) * (yHalf - halfHitboxSize)) / 2
+            ((yHalfPhysical - halfHitboxSize) * (yHalfPhysical - halfHitboxSize)) / 2
         ).toFloat();
 
         // top left
-        clearRouteX = xHalf - offsetSize;
-        clearRouteY = yHalf - offsetSize;
+        clearRouteX = xHalfPhysical - offsetSize;
+        clearRouteY = yHalfPhysical - offsetSize;
 
         // top right
-        modeSelectX = xHalf + offsetSize;
-        modeSelectY = yHalf - offsetSize;
+        modeSelectX = xHalfPhysical + offsetSize;
+        modeSelectY = yHalfPhysical - offsetSize;
 
         // bottom left
-        returnToUserX = xHalf - offsetSize;
-        returnToUserY = yHalf + offsetSize;
+        returnToUserX = xHalfPhysical - offsetSize;
+        returnToUserY = yHalfPhysical + offsetSize;
 
         // bottom right
-        mapEnabledX = xHalf + offsetSize;
-        mapEnabledY = yHalf + offsetSize;
+        mapEnabledX = xHalfPhysical + offsetSize;
+        mapEnabledY = yHalfPhysical + offsetSize;
     }
 
     (:rectangle)
     function setCornerPositions() as Void {
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
-        var screenWidth = _cachedValues.screenWidth; // local lookup faster
-        var screenHeight = _cachedValues.screenHeight; // local lookup faster
+        var physicalScreenWidth = _cachedValues.physicalScreenWidth; // local lookup faster
+        var physicalScreenHeight = _cachedValues.physicalScreenHeight; // local lookup faster
 
         // top left
         clearRouteX = halfHitboxSize;
         clearRouteY = halfHitboxSize;
 
         // top right
-        modeSelectX = screenWidth - halfHitboxSize;
+        modeSelectX = physicalScreenWidth - halfHitboxSize;
         modeSelectY = halfHitboxSize;
 
         // bottom left
         returnToUserX = halfHitboxSize;
-        returnToUserY = screenHeight - halfHitboxSize;
+        returnToUserY = physicalScreenHeight - halfHitboxSize;
 
         // bottom right
-        mapEnabledX = screenWidth - halfHitboxSize;
-        mapEnabledY = screenHeight - halfHitboxSize;
+        mapEnabledX = physicalScreenWidth - halfHitboxSize;
+        mapEnabledY = physicalScreenHeight - halfHitboxSize;
     }
 
     function renderElevationChart(
@@ -1639,9 +1685,9 @@ class BreadcrumbRenderer {
         distancePixels as Float,
         elevationText as String
     ) as Void {
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
-        var screenHeight = _cachedValues.screenHeight; // local lookup faster
+        var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
+        var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
+        var physicalScreenHeight = _cachedValues.physicalScreenHeight; // local lookup faster
 
         var hScaleData = getScaleSizeGeneric(hScalePPM, DESIRED_SCALE_PIXEL_WIDTH, SCALE_NAMES, 1);
         var hPixelWidth = hScaleData[0];
@@ -1659,16 +1705,16 @@ class BreadcrumbRenderer {
 
         // vertical and horizontal lines for extreems
         dc.drawLine(_xElevationStart, yElevationTop, _xElevationStart, yElevationBottom);
-        dc.drawLine(_xElevationStart, yHalf, _xElevationEnd, yHalf);
+        dc.drawLine(_xElevationStart, yHalfPhysical, _xElevationEnd, yHalfPhysical);
         // border (does not look great)
-        // dc.drawRectangle(_xElevationStart, yHalf - _halfYElevationHeight, screenWidth - _xElevationStart * 2, _yElevationHeight);
+        // dc.drawRectangle(_xElevationStart, yHalfPhysical - _halfYElevationHeight, screenWidth - _xElevationStart * 2, _yElevationHeight);
 
         // horizontal lines vertical scale
         if (vPixelWidth != 0) {
             // do not want infinite for loop
             for (var i = 0; i < _halfYElevationHeight; i += vPixelWidth) {
-                var yTop = yHalf - i;
-                var yBottom = yHalf + i;
+                var yTop = yHalfPhysical - i;
+                var yBottom = yHalfPhysical + i;
                 dc.drawLine(_xElevationStart, yTop, _xElevationEnd, yTop);
                 dc.drawLine(_xElevationStart, yBottom, _xElevationEnd, yBottom);
             }
@@ -1684,7 +1730,7 @@ class BreadcrumbRenderer {
 
         dc.drawText(
             0,
-            yHalf - 15,
+            yHalfPhysical - 15,
             Graphics.FONT_XTINY,
             startAt.format("%.0f"),
             Graphics.TEXT_JUSTIFY_LEFT
@@ -1696,7 +1742,7 @@ class BreadcrumbRenderer {
             var textDim = dc.getTextDimensions(topText, Graphics.FONT_XTINY);
             dc.drawText(
                 _xElevationStart,
-                yHalf - _halfYElevationHeight - textDim[1],
+                yHalfPhysical - _halfYElevationHeight - textDim[1],
                 Graphics.FONT_XTINY,
                 topText,
                 Graphics.TEXT_JUSTIFY_LEFT
@@ -1704,7 +1750,7 @@ class BreadcrumbRenderer {
             var bottomScaleM = startAt - _halfYElevationHeight / vScale;
             dc.drawText(
                 _xElevationStart,
-                yHalf + _halfYElevationHeight,
+                yHalfPhysical + _halfYElevationHeight,
                 Graphics.FONT_XTINY,
                 bottomScaleM.format("%.0f") + "m",
                 Graphics.TEXT_JUSTIFY_LEFT
@@ -1718,10 +1764,15 @@ class BreadcrumbRenderer {
             // if statement makes sure that we can get a SCALE_NAMES[hDistanceM]
             var hFoundName = SCALE_NAMES[hDistanceM];
 
-            var y = screenHeight - 20;
-            dc.drawLine(xHalf - hPixelWidth / 2.0f, y, xHalf + hPixelWidth / 2.0f, y);
+            var y = physicalScreenHeight - 20;
+            dc.drawLine(
+                xHalfPhysical - hPixelWidth / 2.0f,
+                y,
+                xHalfPhysical + hPixelWidth / 2.0f,
+                y
+            );
             dc.drawText(
-                xHalf,
+                xHalfPhysical,
                 y - 30,
                 Graphics.FONT_XTINY,
                 hFoundName,
@@ -1733,8 +1784,8 @@ class BreadcrumbRenderer {
             // if statement makes sure that we can get a ELEVATION_SCALE_NAMES[vDistanceM]
             var vFoundName = ELEVATION_SCALE_NAMES[vDistanceM];
 
-            var x = xHalf + DESIRED_SCALE_PIXEL_WIDTH / 2.0f;
-            var y = screenHeight - 20 - 5 - vPixelWidth / 2.0f;
+            var x = xHalfPhysical + DESIRED_SCALE_PIXEL_WIDTH / 2.0f;
+            var y = physicalScreenHeight - 20 - 5 - vPixelWidth / 2.0f;
             dc.drawLine(x, y - vPixelWidth / 2.0f, x, y + vPixelWidth / 2.0f);
             dc.drawText(x + 5, y - 15, Graphics.FONT_XTINY, vFoundName, Graphics.TEXT_JUSTIFY_LEFT);
             // var vectorFont = Graphics.getVectorFont(
@@ -1746,8 +1797,8 @@ class BreadcrumbRenderer {
             //     // :scale=>1.0f
             //   }
             // );
-            // dc.drawAngledText(0, yHalf, vectorFont, vFoundName, Graphics.TEXT_JUSTIFY_LEFT, 90);
-            // dc.drawRadialText(0, yHalf, vectorFont, vFoundName, Graphics.TEXT_JUSTIFY_LEFT, 90, 0, Graphics.RADIAL_TEXT_DIRECTION_COUNTER_CLOCKWISE);
+            // dc.drawAngledText(0, yHalfPhysical, vectorFont, vFoundName, Graphics.TEXT_JUSTIFY_LEFT, 90);
+            // dc.drawRadialText(0, yHalfPhysical, vectorFont, vFoundName, Graphics.TEXT_JUSTIFY_LEFT, 90, 0, Graphics.RADIAL_TEXT_DIRECTION_COUNTER_CLOCKWISE);
             // drawAngledText and drawRadialText not available :(
         }
 
@@ -1758,7 +1809,7 @@ class BreadcrumbRenderer {
                 ? distanceKM.format("%.1f") + "km"
                 : distanceM.toNumber().toString() + "m";
         var text = "dist: " + distText + "\n" + "elev: " + elevationText;
-        dc.drawText(xHalf, 20, Graphics.FONT_XTINY, text, Graphics.TEXT_JUSTIFY_CENTER);
+        dc.drawText(xHalfPhysical, 20, Graphics.FONT_XTINY, text, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     function getElevationScale(
@@ -1839,7 +1890,7 @@ class BreadcrumbRenderer {
         }
 
         // clip to a a square (since we cannot see the edges of the circle)
-        var totalXDistance = _cachedValues.screenWidth - 2 * _xElevationStart;
+        var totalXDistance = _cachedValues.physicalScreenWidth - 2 * _xElevationStart;
         var totalYDistance = _yElevationHeight;
 
         if (distanceScaled == 0 && elevationChange == 0) {
@@ -1870,7 +1921,7 @@ class BreadcrumbRenderer {
         vScale as Float,
         startAt as Float
     ) as Float {
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
 
         var sizeRaw = track.coordinates.size();
         if (sizeRaw < ARRAY_POINT_SIZE * 2) {
@@ -1885,7 +1936,7 @@ class BreadcrumbRenderer {
         var prevPointY = coordinatesRaw[1];
         var prevPointAlt = coordinatesRaw[2];
         var prevChartX = xElevationStart;
-        var prevChartY = yHalf + (startAt - prevPointAlt) * vScale;
+        var prevChartY = yHalfPhysical + (startAt - prevPointAlt) * vScale;
         for (var i = ARRAY_POINT_SIZE; i < sizeRaw; i += ARRAY_POINT_SIZE) {
             var currPointX = coordinatesRaw[i];
             var currPointY = coordinatesRaw[i + 1];

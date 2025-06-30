@@ -106,8 +106,8 @@ class MapRenderer {
             dc.clear();
 
             dc.drawText(
-                xHalf,
-                yHalf,
+                xHalfPhysical,
+                yHalfPhysical,
                 Graphics.FONT_XTINY,
                 "COMPANION APP\nTILE SERVER\nNOT SUPPORTED\nCONFIGURE TILE SERVER\nIN SETTINGS",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
@@ -137,9 +137,10 @@ class MapRenderer {
         if (_settings.authMissing()) {
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
             dc.clear();
+            // todo this should probably render to the raw dc, not the buffered one, since it may rotate out of view
             dc.drawText(
-                _cachedValues.xHalf,
-                _cachedValues.yHalf,
+                _cachedValues.xHalfPhysical,
+                _cachedValues.yHalfPhysical,
                 Graphics.FONT_SYSTEM_MEDIUM,
                 "AUTH TOKEN\nMISSING",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
@@ -147,8 +148,7 @@ class MapRenderer {
             return;
         }
 
-        // for debug its purple so we can see any issues, otherwise it should be black
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.setColor(Graphics.COLOR_PURPLE, Graphics.COLOR_PURPLE);
         dc.clear();
 
         var tileScalePixelSize = cachedValues.tileScalePixelSize; // local lookup faster
@@ -225,8 +225,8 @@ class MapRenderer {
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
             dc.clear();
             dc.drawText(
-                _cachedValues.xHalf,
-                _cachedValues.yHalf,
+                _cachedValues.xHalfPhysical,
+                _cachedValues.yHalfPhysical,
                 Graphics.FONT_SYSTEM_MEDIUM,
                 "AUTH TOKEN\nMISSING",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
@@ -247,8 +247,7 @@ class MapRenderer {
         var firstTileX = cachedValues.firstTileX; // local lookup faster
         var firstTileY = cachedValues.firstTileY; // local lookup faster
         var tileZ = cachedValues.tileZ; // local lookup faster
-        var xHalf = cachedValues.xHalf; // local lookup faster
-        var yHalf = cachedValues.yHalf; // local lookup faster
+        var rotateAroundMaxScreenDim = cachedValues.rotateAroundMaxScreenDim; // local lookup faster
         var tileSize = _settings.tileSize; // local lookup faster
         var useDrawBitmap = _settings.useDrawBitmap; // local lookup faster
 
@@ -285,8 +284,8 @@ class MapRenderer {
                 // we must scale as the tile we picked is only close to the resolution we need
                 var xPos = (tileOffsetX + x * tileScalePixelSize).toFloat();
                 var yPos = (tileOffsetY + y * tileScalePixelSize).toFloat();
-                var xTranslate = cachedValues.xHalf - xPos;
-                var yTranslate = cachedValues.yHalf - yPos;
+                var xTranslate = rotateAroundMaxScreenDim - xPos;
+                var yTranslate = rotateAroundMaxScreenDim - yPos;
                 var rotationMatrix = new AffineTransform();
                 // Apply transformations in REVERSE order of visual effect:
                 rotationMatrix.translate(xTranslate, yTranslate); // move to center
@@ -359,33 +358,33 @@ class MapRenderer {
                     var brX = trX;
                     var brY = blY;
 
-                    var tlUnrotatedX = tlX - xHalf;
-                    var tlUnrotatedY = tlY - yHalf;
+                    var tlUnrotatedX = tlX - rotateAroundMaxScreenDim;
+                    var tlUnrotatedY = tlY - rotateAroundMaxScreenDim;
                     var tlRotatedX =
-                        xHalf + rotateCosNeg * tlUnrotatedX - rotateSinNeg * tlUnrotatedY;
+                        rotateAroundMaxScreenDim + rotateCosNeg * tlUnrotatedX - rotateSinNeg * tlUnrotatedY;
                     var tlRotatedY =
-                        yHalf + (rotateSinNeg * tlUnrotatedX + rotateCosNeg * tlUnrotatedY);
+                        rotateAroundMaxScreenDim + (rotateSinNeg * tlUnrotatedX + rotateCosNeg * tlUnrotatedY);
 
-                    var trUnrotatedX = trX - xHalf;
-                    var trUnrotatedY = trY - yHalf;
+                    var trUnrotatedX = trX - rotateAroundMaxScreenDim;
+                    var trUnrotatedY = trY - rotateAroundMaxScreenDim;
                     var trRotatedX =
-                        xHalf + rotateCosNeg * trUnrotatedX - rotateSinNeg * trUnrotatedY;
+                        rotateAroundMaxScreenDim + rotateCosNeg * trUnrotatedX - rotateSinNeg * trUnrotatedY;
                     var trRotatedY =
-                        yHalf + (rotateSinNeg * trUnrotatedX + rotateCosNeg * trUnrotatedY);
+                        rotateAroundMaxScreenDim + (rotateSinNeg * trUnrotatedX + rotateCosNeg * trUnrotatedY);
 
-                    var blUnrotatedX = blX - xHalf;
-                    var blUnrotatedY = blY - yHalf;
+                    var blUnrotatedX = blX - rotateAroundMaxScreenDim;
+                    var blUnrotatedY = blY - rotateAroundMaxScreenDim;
                     var blRotatedX =
-                        xHalf + rotateCosNeg * blUnrotatedX - rotateSinNeg * blUnrotatedY;
+                        rotateAroundMaxScreenDim + rotateCosNeg * blUnrotatedX - rotateSinNeg * blUnrotatedY;
                     var blRotatedY =
-                        yHalf + (rotateSinNeg * blUnrotatedX + rotateCosNeg * blUnrotatedY);
+                        rotateAroundMaxScreenDim + (rotateSinNeg * blUnrotatedX + rotateCosNeg * blUnrotatedY);
 
-                    var brUnrotatedX = brX - xHalf;
-                    var brUnrotatedY = brY - yHalf;
+                    var brUnrotatedX = brX - rotateAroundMaxScreenDim;
+                    var brUnrotatedY = brY - rotateAroundMaxScreenDim;
                     var brRotatedX =
-                        xHalf + rotateCosNeg * brUnrotatedX - rotateSinNeg * brUnrotatedY;
+                        rotateAroundMaxScreenDim + rotateCosNeg * brUnrotatedX - rotateSinNeg * brUnrotatedY;
                     var brRotatedY =
-                        yHalf + (rotateSinNeg * brUnrotatedX + rotateCosNeg * brUnrotatedY);
+                        rotateAroundMaxScreenDim + (rotateSinNeg * brUnrotatedX + rotateCosNeg * brUnrotatedY);
 
                     // draw our 4 lines
                     dc.drawLine(tlRotatedX, tlRotatedY, trRotatedX, trRotatedY);
@@ -398,15 +397,15 @@ class MapRenderer {
     }
 
     function badTileSize(dc as Dc) as Void {
-        var xHalf = _cachedValues.xHalf; // local lookup faster
-        var yHalf = _cachedValues.yHalf; // local lookup faster
+        var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
+        var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
 
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
         dc.clear();
 
         dc.drawText(
-            xHalf,
-            yHalf,
+            xHalfPhysical,
+            yHalfPhysical,
             Graphics.FONT_XTINY,
             "TILE SIZE OF TILE\nIS INCORRECT\nCLEAR CHACE OR\nCHANGE TILE SIZE SETTING",
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER

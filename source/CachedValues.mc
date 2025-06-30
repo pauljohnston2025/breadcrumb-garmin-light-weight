@@ -5,6 +5,7 @@ import Toybox.System;
 import Toybox.Activity;
 
 // An iterator that walks along a line segment, yielding one point at a time.
+(:storage)
 class SegmentPointIterator {
     private var _x1 as Float;
     private var _y1 as Float;
@@ -112,11 +113,25 @@ class CachedValues {
 
     // updated whenever onlayout changes (audit usages, these should not need to be floats, but sometimes are used to do float math)
     // default to full screen guess
-    var screenWidth as Float = System.getDeviceSettings().screenWidth.toFloat();
-    var screenHeight as Float = System.getDeviceSettings().screenHeight.toFloat();
-    var minScreenDim as Float = minF(screenWidth, screenHeight);
-    var xHalf as Float = screenWidth / 2f;
-    var yHalf as Float = screenHeight / 2f;
+    var physicalScreenWidth as Float = System.getDeviceSettings().screenWidth.toFloat();
+    var physicalScreenHeight as Float = System.getDeviceSettings().screenHeight.toFloat();
+    var minPhysicalScreenDim as Float = minF(physicalScreenWidth, physicalScreenHeight);
+    var maxPhysicalScreenDim as Float = maxF(physicalScreenWidth, physicalScreenHeight);
+    var xHalfPhysical as Float = physicalScreenWidth / 2f;
+    var yHalfPhysical as Float = physicalScreenHeight / 2f;
+    var virtualScreenWidth as Float = System.getDeviceSettings().screenWidth.toFloat();
+    var virtualScreenHeight as Float = System.getDeviceSettings().screenHeight.toFloat();
+    var minVirtualScreenDim as Float = minF(virtualScreenWidth, virtualScreenHeight);
+    var maxVirtualScreenDim as Float = maxF(virtualScreenWidth, virtualScreenHeight);
+    var xHalfVirtual as Float = virtualScreenWidth / 2f;
+    var yHalfVirtual as Float = virtualScreenHeight / 2f;
+    var bufferedBitmapOffsetX as Float = -(maxVirtualScreenDim - physicalScreenWidth) / 2f;
+    var rotateAroundScreenX as Float = physicalScreenWidth / 2f;
+    var rotateAroundScreenXOffsetFactoredIn as Float = rotateAroundScreenX - bufferedBitmapOffsetX;
+    var rotateAroundScreenY as Float = physicalScreenHeight / 2f;
+    var rotateAroundMinScreenDim as Float = minPhysicalScreenDim;
+    var rotateAroundMaxScreenDim as Float = maxPhysicalScreenDim;
+    // var bufferedBitmapOffsetY as Float = // always 0, since centerUserOffsetY only touches the y axis, the left to right is the only one that can be wrong
     var rotationMatrix as AffineTransform = new AffineTransform();
 
     // map related fields updated whenever scale changes
@@ -211,8 +226,9 @@ class CachedValues {
             updateMapData();
         }
         if (currentScale != 0f) {
-            mapMoveDistanceM = (minScreenDim * _settings.mapMoveScreenSize) / currentScale;
-            seedingMapCacheDistanceM = (minScreenDim * 0.5) / currentScale;
+            mapMoveDistanceM =
+                (rotateAroundMaxScreenDim * _settings.mapMoveScreenSize) / currentScale;
+            seedingMapCacheDistanceM = (rotateAroundMaxScreenDim * 0.5) / currentScale;
         }
         return rescaleOccurred;
     }
@@ -278,16 +294,12 @@ class CachedValues {
             Math.pow(2, tileZ) /
             smallTilesPerScaledTile
         ).toFloat();
-        // var minScreenDim = minF(_screenWidth, _screenHeight);
-        // var minScreenDimM = minScreenDim / currentScale;
-        var screenWidthM = screenWidth / currentScale;
-        var screenHeightM = screenHeight / currentScale;
+        var screenSizeM = rotateAroundMaxScreenDim / currentScale;
 
         // where the screen corner starts
-        var halfScreenWidthM = screenWidthM / 2f;
-        var halfScreenHeightM = screenHeightM / 2f;
-        var screenLeftM = centerPositionRaw.x - halfScreenWidthM;
-        var screenTopM = centerPositionRaw.y + halfScreenHeightM;
+        var halfScreenSizeM = screenSizeM / 2f;
+        var screenLeftM = centerPositionRaw.x - halfScreenSizeM;
+        var screenTopM = centerPositionRaw.y + halfScreenSizeM;
 
         // find which tile we are closest to
         firstTileX = ((screenLeftM + originShift) / tileWidthM).toNumber();
@@ -327,8 +339,12 @@ class CachedValues {
         tileOffsetX = Math.round((firstTileLeftM - screenLeftM) * currentScale).toNumber();
         tileOffsetY = Math.round((screenTopM - firstTileTopM) * currentScale).toNumber();
 
-        tileCountX = Math.ceil((-tileOffsetX + screenWidth) / tileScalePixelSize).toNumber();
-        tileCountY = Math.ceil((-tileOffsetY + screenHeight) / tileScalePixelSize).toNumber();
+        tileCountX = Math.ceil(
+            (-tileOffsetX + rotateAroundMaxScreenDim) / tileScalePixelSize
+        ).toNumber();
+        tileCountY = Math.ceil(
+            (-tileOffsetY + rotateAroundMaxScreenDim) / tileScalePixelSize
+        ).toNumber();
         mapDataCanBeUsed = true;
     }
 
@@ -389,6 +405,7 @@ class CachedValues {
             _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_ALWAYS_ZOOM;
         if (currentlyZoomingAroundUser != weShouldZoomAroundUser) {
             currentlyZoomingAroundUser = weShouldZoomAroundUser;
+            updateUserRotationElements();
             var ret = updateScaleCenterAndMap();
             _settings.clearPendingWebRequests();
             getApp()._view.resetRenderTime();
@@ -399,21 +416,59 @@ class CachedValues {
     }
 
     function setScreenSize(width as Number, height as Number) as Void {
-        screenWidth = width.toFloat();
-        screenHeight = height.toFloat();
-        minScreenDim = minF(screenWidth, screenHeight);
-        xHalf = width / 2.0f;
-        yHalf = height / 2.0f;
+        physicalScreenWidth = width.toFloat();
+        physicalScreenHeight = height.toFloat();
+        minPhysicalScreenDim = minF(physicalScreenWidth, physicalScreenHeight);
+        maxPhysicalScreenDim = maxF(physicalScreenWidth, physicalScreenHeight);
+        xHalfPhysical = physicalScreenWidth / 2f;
+        yHalfPhysical = physicalScreenHeight / 2f;
+
+        updateVirtualScreenSize();
+        updateScaleCenterAndMap();
+    }
+
+    function updateVirtualScreenSize() as Void {
+        virtualScreenWidth = physicalScreenWidth; // always the same, just using naming for consistency
+        virtualScreenHeight = physicalScreenHeight * _settings.centerUserOffsetY * 2;
+        minVirtualScreenDim = minF(virtualScreenWidth, virtualScreenHeight);
+        maxVirtualScreenDim = maxF(virtualScreenWidth, virtualScreenHeight);
+        xHalfVirtual = virtualScreenWidth / 2f;
+        yHalfVirtual = virtualScreenHeight / 2f;
+
+        updateUserRotationElements();
+    }
+
+    function updateUserRotationElements() as Void {
+        if (currentlyZoomingAroundUser) {
+            rotateAroundScreenX = xHalfVirtual;
+            rotateAroundScreenY = yHalfVirtual;
+            rotateAroundMinScreenDim = minVirtualScreenDim;
+            rotateAroundMaxScreenDim = maxVirtualScreenDim;
+        } else {
+            rotateAroundScreenX = xHalfPhysical;
+            rotateAroundScreenY = yHalfPhysical;
+            rotateAroundMinScreenDim = minPhysicalScreenDim;
+            rotateAroundMaxScreenDim = maxPhysicalScreenDim;
+        }
+
+        // todo check RENDER_MODE_UNBUFFERED_ROTATING not sure what offset needs to be
+        // map calcs need to change for RENDER_MODE_UNBUFFERED_NO_ROTATION and RENDER_MODE_UNBUFFERED_ROTATING - use screen size instead, maybe we can just set rotateAroundMaxScreenDim to maxPhysicalScreenDim?
+        if (_settings.renderMode == RENDER_MODE_BUFFERED_ROTATING || _settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION) {
+            bufferedBitmapOffsetX = -(maxVirtualScreenDim - physicalScreenWidth) / 2f;
+            rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX - bufferedBitmapOffsetX;
+        } else {
+            bufferedBitmapOffsetX = 0f;
+            rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX;
+        }
 
         updateRotationMatrix();
-        updateScaleCenterAndMap();
     }
 
     function updateRotationMatrix() as Void {
         rotationMatrix = new AffineTransform();
-        rotationMatrix.translate(xHalf, yHalf); // move to center
+        rotationMatrix.translate(rotateAroundScreenX, rotateAroundScreenY); // move to center
         rotationMatrix.rotate(-rotationRad); // rotate
-        rotationMatrix.translate(-xHalf, -yHalf); // move back to position
+        rotationMatrix.translate(-rotateAroundScreenX, -rotateAroundScreenY); // move back to position
     }
 
     function calculateScale(maxDistanceM as Float) as Float {
@@ -436,7 +491,7 @@ class CachedValues {
         // venu 2s
         // but this would only work for sqaures, so 0.75 fudge factor for circle
         // watch face
-        return (minScreenDim / maxDistanceM) * 0.75;
+        return (rotateAroundMinScreenDim / maxDistanceM) * 0.75;
     }
 
     function nextTileLayerScale(direction as Number) as Float {
@@ -536,6 +591,7 @@ class CachedValues {
             _settings.fullTileSize / _settings.tileSize.toFloat()
         ).toNumber();
         updateFixedPositionFromSettings();
+        updateVirtualScreenSize();
         updateScaleCenterAndMap();
     }
 
