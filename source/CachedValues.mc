@@ -341,7 +341,9 @@ class CachedValues {
 
         // find the closest pixel size
         tileOffsetX = Math.round((firstTileLeftM - screenLeftM) * currentScale).toNumber();
-        tileOffsetY = Math.round((screenTopM - firstTileTopM) * currentScale + mapBitmapOffsetY).toNumber();
+        tileOffsetY = Math.round(
+            (screenTopM - firstTileTopM) * currentScale + mapBitmapOffsetY
+        ).toNumber();
 
         tileCountX = Math.ceil(
             (-tileOffsetX + physicalScreenWidth) / tileScalePixelSize
@@ -483,18 +485,20 @@ class CachedValues {
             _settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
         ) {
             rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX - bufferedBitmapOffsetX;
+            rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY - bufferedBitmapOffsetY;
 
-            if (_settings.centerUserOffsetY >= 0.5) {
-                rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY;
-            } else {
-                
-                rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY - bufferedBitmapOffsetY;
+            if (_settings.centerUserOffsetY >= 0.5 && _settings.renderMode == RENDER_MODE_BUFFERED_ROTATING) {
+                rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY; // draw straight to the buffered canvas, since the canvas top matches our top
             }
+
+            if (currentlyZoomingAroundUser && _settings.centerUserOffsetY >= 0.5 && _settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION) {
+                mapBitmapOffsetY = -bufferedBitmapOffsetY; // should probably be an x offset too?
+            }
+
         } else {
             // unbuffered mode -> draws straight to dc
-            if(currentlyZoomingAroundUser)
-            {
-            mapBitmapOffsetY = bufferedBitmapOffsetY; // should probably be an x offset too, but we fudge it by setting the map width
+            if (currentlyZoomingAroundUser && _settings.centerUserOffsetY < 0.5) {
+                mapBitmapOffsetY = bufferedBitmapOffsetY; // should probably be an x offset too, but we fudge it by setting the map width
             }
             rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX;
             rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY;
@@ -507,7 +511,10 @@ class CachedValues {
         rotationMatrix = new AffineTransform();
         rotationMatrix.translate(rotateAroundScreenX, rotateAroundScreenY); // move to center
         rotationMatrix.rotate(-rotationRad); // rotate
-        rotationMatrix.translate(-rotateAroundScreenXOffsetFactoredIn, -rotateAroundScreenYOffsetFactoredIn); // move back to position
+        rotationMatrix.translate(
+            -rotateAroundScreenXOffsetFactoredIn,
+            -rotateAroundScreenYOffsetFactoredIn
+        ); // move back to position
     }
 
     function calculateScale(maxDistanceM as Float) as Float {
