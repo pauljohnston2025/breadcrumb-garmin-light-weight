@@ -73,15 +73,15 @@ class MapRenderer {
                 return;
             }
 
-            var xHalf = _cachedValues.xHalf; // local lookup faster
-            var yHalf = _cachedValues.yHalf; // local lookup faster
+            var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
+            var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
 
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
             dc.clear();
 
             dc.drawText(
-                xHalf,
-                yHalf,
+                xHalfPhysical,
+                yHalfPhysical,
                 Graphics.FONT_XTINY,
                 "WEB\nTILE SERVER\nNOT SUPPORTED\nCONFIGURE TILE SERVER\nIN SETTINGS",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
@@ -99,8 +99,8 @@ class MapRenderer {
                 return;
             }
 
-            var xHalf = _cachedValues.xHalf; // local lookup faster
-            var yHalf = _cachedValues.yHalf; // local lookup faster
+            var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
+            var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
 
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
             dc.clear();

@@ -126,14 +126,16 @@ class CachedValues {
     var xHalfVirtual as Float = virtualScreenWidth / 2f;
     var yHalfVirtual as Float = virtualScreenHeight / 2f;
     var bufferedBitmapOffsetX as Float = -(maxVirtualScreenDim - physicalScreenWidth) / 2f;
+    var bufferedBitmapOffsetY as Float = 0f; // only neeed for buffered rotation mode, with user offset values less than 0.5
     var rotateAroundScreenX as Float = physicalScreenWidth / 2f;
-    var rotateAroundScreenXOffsetFactoredIn as Float = rotateAroundScreenX - bufferedBitmapOffsetX;
     var rotateAroundScreenY as Float = physicalScreenHeight / 2f;
+    var rotateAroundScreenXOffsetFactoredIn as Float = rotateAroundScreenX - bufferedBitmapOffsetX;
+    var rotateAroundScreenYOffsetFactoredIn as Float = rotateAroundScreenY;
     var mapScreenWidth as Float = physicalScreenWidth;
     var mapScreenHeight as Float = physicalScreenHeight;
+    var mapBitmapOffsetY as Float = 0f;
     var rotateAroundMinScreenDim as Float = minPhysicalScreenDim;
     var rotateAroundMaxScreenDim as Float = maxPhysicalScreenDim;
-    // var bufferedBitmapOffsetY as Float = // always 0, since centerUserOffsetY only touches the y axis, the left to right is the only one that can be wrong
     var rotationMatrix as AffineTransform = new AffineTransform();
 
     // map related fields updated whenever scale changes
@@ -339,7 +341,7 @@ class CachedValues {
 
         // find the closest pixel size
         tileOffsetX = Math.round((firstTileLeftM - screenLeftM) * currentScale).toNumber();
-        tileOffsetY = Math.round((screenTopM - firstTileTopM) * currentScale).toNumber();
+        tileOffsetY = Math.round((screenTopM - firstTileTopM) * currentScale + mapBitmapOffsetY).toNumber();
 
         tileCountX = Math.ceil(
             (-tileOffsetX + physicalScreenWidth) / tileScalePixelSize
@@ -431,7 +433,13 @@ class CachedValues {
 
     function updateVirtualScreenSize() as Void {
         virtualScreenWidth = physicalScreenWidth; // always the same, just using naming for consistency
-        virtualScreenHeight = physicalScreenHeight * _settings.centerUserOffsetY * 2;
+        if (_settings.centerUserOffsetY >= 0.5) {
+            virtualScreenHeight = physicalScreenHeight * _settings.centerUserOffsetY * 2;
+        } else {
+            virtualScreenHeight =
+                (physicalScreenHeight - physicalScreenHeight * _settings.centerUserOffsetY) * 2;
+        }
+
         minVirtualScreenDim = minF(virtualScreenWidth, virtualScreenHeight);
         maxVirtualScreenDim = maxF(virtualScreenWidth, virtualScreenHeight);
         xHalfVirtual = virtualScreenWidth / 2f;
@@ -443,13 +451,17 @@ class CachedValues {
     function updateUserRotationElements() as Void {
         if (currentlyZoomingAroundUser) {
             rotateAroundScreenX = xHalfVirtual;
-            rotateAroundScreenY = yHalfVirtual;
+            rotateAroundScreenY = physicalScreenHeight * _settings.centerUserOffsetY;
             rotateAroundMinScreenDim = minVirtualScreenDim;
             rotateAroundMaxScreenDim = maxVirtualScreenDim;
             mapScreenWidth = rotateAroundMaxScreenDim;
             mapScreenHeight = rotateAroundMaxScreenDim;
 
-            if (_settings.renderMode == RENDER_MODE_UNBUFFERED_NO_ROTATION || _settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING) {
+            if (
+                _settings.renderMode == RENDER_MODE_UNBUFFERED_NO_ROTATION ||
+                _settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING
+            ) {
+                // todo (memory perf, tile cache size) make map tile max/min better and only load tiles that are in frame (hard to do on rotating modes, but should be ok on unrotating)
                 mapScreenWidth = virtualScreenWidth;
                 mapScreenHeight = virtualScreenHeight;
             }
@@ -462,17 +474,30 @@ class CachedValues {
             mapScreenHeight = physicalScreenHeight;
         }
 
-        // todo check RENDER_MODE_UNBUFFERED_ROTATING not sure what offset needs to be
-        // map calcs need to change for RENDER_MODE_UNBUFFERED_NO_ROTATION and RENDER_MODE_UNBUFFERED_ROTATING - use screen size instead, maybe we can just set rotateAroundMaxScreenDim to maxPhysicalScreenDim?
+        mapBitmapOffsetY = 0f;
+        bufferedBitmapOffsetX = -(rotateAroundMaxScreenDim - physicalScreenWidth) / 2f;
+        bufferedBitmapOffsetY = -(rotateAroundMaxScreenDim - physicalScreenHeight);
+
         if (
             _settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
             _settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
         ) {
-            bufferedBitmapOffsetX = -(rotateAroundMaxScreenDim - physicalScreenWidth) / 2f;
             rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX - bufferedBitmapOffsetX;
+
+            if (_settings.centerUserOffsetY >= 0.5) {
+                rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY;
+            } else {
+                
+                rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY - bufferedBitmapOffsetY;
+            }
         } else {
-            bufferedBitmapOffsetX = 0f;
+            // unbuffered mode -> draws straight to dc
+            if(currentlyZoomingAroundUser)
+            {
+            mapBitmapOffsetY = bufferedBitmapOffsetY; // should probably be an x offset too, but we fudge it by setting the map width
+            }
             rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX;
+            rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY;
         }
 
         updateRotationMatrix();
@@ -482,7 +507,7 @@ class CachedValues {
         rotationMatrix = new AffineTransform();
         rotationMatrix.translate(rotateAroundScreenX, rotateAroundScreenY); // move to center
         rotationMatrix.rotate(-rotationRad); // rotate
-        rotationMatrix.translate(-rotateAroundScreenXOffsetFactoredIn, -rotateAroundScreenY); // move back to position
+        rotationMatrix.translate(-rotateAroundScreenXOffsetFactoredIn, -rotateAroundScreenYOffsetFactoredIn); // move back to position
     }
 
     function calculateScale(maxDistanceM as Float) as Float {

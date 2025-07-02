@@ -187,14 +187,14 @@ class BreadcrumbRenderer {
         var rotateCos = _cachedValues.rotateCos; // local lookup faster
         var rotateSin = _cachedValues.rotateSin; // local lookup faster
         var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
-        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
+        var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
 
         var lastPointUnrotatedX = lastPoint.x - centerPosition.x;
         var lastPointUnrotatedY = lastPoint.y - centerPosition.y;
         var lastPointRotatedX =
             rotateAroundScreenXOffsetFactoredIn + rotateCos * lastPointUnrotatedX - rotateSin * lastPointUnrotatedY;
         var lastPointRotatedY =
-            rotateAroundScreenY -
+            rotateAroundScreenYOffsetFactoredIn -
             (rotateSin * lastPointUnrotatedX + rotateCos * lastPointUnrotatedY);
 
         var offTrackPointUnrotatedX = offTrackPoint.x - centerPosition.x;
@@ -204,7 +204,7 @@ class BreadcrumbRenderer {
             rotateCos * offTrackPointUnrotatedX -
             rotateSin * offTrackPointUnrotatedY;
         var offTrackPointRotatedY =
-            rotateAroundScreenY -
+            rotateAroundScreenYOffsetFactoredIn -
             (rotateSin * offTrackPointUnrotatedX + rotateCos * offTrackPointUnrotatedY);
 
         dc.setPenWidth(4);
@@ -231,13 +231,13 @@ class BreadcrumbRenderer {
 
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
-        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
+        var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
 
         var lastPointUnrotatedX = rotateAroundScreenXOffsetFactoredIn + (lastPoint.x - centerPosition.x);
-        var lastPointUnrotatedY = rotateAroundScreenY - (lastPoint.y - centerPosition.y);
+        var lastPointUnrotatedY = rotateAroundScreenYOffsetFactoredIn - (lastPoint.y - centerPosition.y);
 
         var offTrackPointUnrotatedX = rotateAroundScreenXOffsetFactoredIn + (offTrackPoint.x - centerPosition.x);
-        var offTrackPointUnrotatedY = rotateAroundScreenY - (offTrackPoint.y - centerPosition.y);
+        var offTrackPointUnrotatedY = rotateAroundScreenYOffsetFactoredIn - (offTrackPoint.y - centerPosition.y);
 
         dc.setPenWidth(4);
         dc.setColor(colour, Graphics.COLOR_BLACK);
@@ -342,7 +342,7 @@ class BreadcrumbRenderer {
     ) as Void {
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
-        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
+        var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
 
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
             // its very cofusing seeing the routes disappear when scrolling
@@ -362,13 +362,13 @@ class BreadcrumbRenderer {
             var firstXScaledAtCenter = coordinatesRaw[0] - centerPosition.x;
             var firstYScaledAtCenter = coordinatesRaw[1] - centerPosition.y;
             var firstX = rotateAroundScreenXOffsetFactoredIn + firstXScaledAtCenter;
-            var firstY = rotateAroundScreenY - firstYScaledAtCenter;
+            var firstY = rotateAroundScreenYOffsetFactoredIn - firstYScaledAtCenter;
             var lastX = firstX;
             var lastY = firstY;
 
             for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
                 var nextX = rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
-                var nextY = rotateAroundScreenY - (coordinatesRaw[i + 1] - centerPosition.y);
+                var nextY = rotateAroundScreenYOffsetFactoredIn - (coordinatesRaw[i + 1] - centerPosition.y);
 
                 dc.drawLine(lastX, lastY, nextX, nextY);
 
@@ -387,7 +387,7 @@ class BreadcrumbRenderer {
     ) as Void {
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
-        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
+        var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
 
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
             // its very cofusing seeing the routes disappear when scrolling
@@ -402,7 +402,7 @@ class BreadcrumbRenderer {
 
         for (var i = 0; i < size; i += ARRAY_POINT_SIZE) {
             var x = rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
-            var y = rotateAroundScreenY - (coordinatesRaw[i + 1] - centerPosition.y);
+            var y = rotateAroundScreenYOffsetFactoredIn - (coordinatesRaw[i + 1] - centerPosition.y);
 
             dc.fillCircle(x, y, 5);
         }
@@ -457,7 +457,7 @@ class BreadcrumbRenderer {
 
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
-        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
+        var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
         var rotateCos = _cachedValues.rotateCos; // local lookup faster
         var rotateSin = _cachedValues.rotateSin; // local lookup faster
 
@@ -483,7 +483,7 @@ class BreadcrumbRenderer {
                 rotateCos * firstXScaledAtCenter -
                 rotateSin * firstYScaledAtCenter;
             var firstYRotated =
-                rotateAroundScreenY -
+                rotateAroundScreenYOffsetFactoredIn -
                 (rotateSin * firstXScaledAtCenter + rotateCos * firstYScaledAtCenter);
             var lastXRotated = firstXRotated;
             var lastYRotated = firstYRotated;
@@ -504,7 +504,7 @@ class BreadcrumbRenderer {
                     rotateCos * nextXScaledAtCenter -
                     rotateSin * nextYScaledAtCenter;
                 var nextYRotated =
-                    rotateAroundScreenY -
+                    rotateAroundScreenYOffsetFactoredIn -
                     (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
 
                 drawCheveron(dc, lastXRotated, lastYRotated, nextXRotated, nextYRotated);
@@ -537,7 +537,7 @@ class BreadcrumbRenderer {
 
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
-        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
+        var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
 
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
             // its very cofusing seeing the routes disappear when scrolling
@@ -556,7 +556,7 @@ class BreadcrumbRenderer {
             var lastX =
                 rotateAroundScreenXOffsetFactoredIn + coordinatesRaw[nextClosePointIndexRaw] - centerPosition.x;
             var lastY =
-                rotateAroundScreenY - coordinatesRaw[nextClosePointIndexRaw + 1] - centerPosition.y;
+                rotateAroundScreenYOffsetFactoredIn - coordinatesRaw[nextClosePointIndexRaw + 1] - centerPosition.y;
 
             for (
                 var i = nextClosePointIndexRaw + ARRAY_POINT_SIZE;
@@ -564,7 +564,7 @@ class BreadcrumbRenderer {
                 i += ARRAY_POINT_SIZE
             ) {
                 var nextX = rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
-                var nextY = rotateAroundScreenY - (coordinatesRaw[i + 1] - centerPosition.y);
+                var nextY = rotateAroundScreenYOffsetFactoredIn - (coordinatesRaw[i + 1] - centerPosition.y);
 
                 drawCheveron(dc, lastX, lastY, nextX, nextY);
 
@@ -591,7 +591,7 @@ class BreadcrumbRenderer {
         dc.setPenWidth(4);
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
-        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
+        var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
         var rotateCos = _cachedValues.rotateCos; // local lookup faster
         var rotateSin = _cachedValues.rotateSin; // local lookup faster
 
@@ -599,7 +599,7 @@ class BreadcrumbRenderer {
         var yScaledAtCenter = breadcrumb.boundingBoxCenter.y - centerPosition.y;
 
         var x = rotateAroundScreenXOffsetFactoredIn + rotateCos * xScaledAtCenter - rotateSin * yScaledAtCenter;
-        var y = rotateAroundScreenY - (rotateSin * xScaledAtCenter + rotateCos * yScaledAtCenter);
+        var y = rotateAroundScreenYOffsetFactoredIn - (rotateSin * xScaledAtCenter + rotateCos * yScaledAtCenter);
         dc.drawText(
             x,
             y,
@@ -618,13 +618,13 @@ class BreadcrumbRenderer {
         dc.setPenWidth(4);
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
-        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
+        var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
 
         var xScaledAtCenter = breadcrumb.boundingBoxCenter.x - centerPosition.x;
         var yScaledAtCenter = breadcrumb.boundingBoxCenter.y - centerPosition.y;
 
         var x = rotateAroundScreenXOffsetFactoredIn + xScaledAtCenter;
-        var y = rotateAroundScreenY - yScaledAtCenter;
+        var y = rotateAroundScreenYOffsetFactoredIn - yScaledAtCenter;
 
         dc.drawText(
             x,
@@ -668,7 +668,7 @@ class BreadcrumbRenderer {
         var rotateCos = _cachedValues.rotateCos; // local lookup faster
         var rotateSin = _cachedValues.rotateSin; // local lookup faster
         var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
-        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
+        var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
 
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
             // its very cofusing seeing the routes disappear when scrolling
@@ -692,7 +692,7 @@ class BreadcrumbRenderer {
                 rotateCos * firstXScaledAtCenter -
                 rotateSin * firstYScaledAtCenter;
             var firstYRotated =
-                rotateAroundScreenY -
+                rotateAroundScreenYOffsetFactoredIn -
                 (rotateSin * firstXScaledAtCenter + rotateCos * firstYScaledAtCenter);
             var lastXRotated = firstXRotated;
             var lastYRotated = firstYRotated;
@@ -709,7 +709,7 @@ class BreadcrumbRenderer {
                     rotateCos * nextXScaledAtCenter -
                     rotateSin * nextYScaledAtCenter;
                 var nextYRotated =
-                    rotateAroundScreenY -
+                    rotateAroundScreenYOffsetFactoredIn -
                     (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
 
                 dc.drawLine(lastXRotated, lastYRotated, nextXRotated, nextYRotated);
@@ -746,7 +746,7 @@ class BreadcrumbRenderer {
         var rotateCos = _cachedValues.rotateCos; // local lookup faster
         var rotateSin = _cachedValues.rotateSin; // local lookup faster
         var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
-        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
+        var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
 
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
             // its very cofusing seeing the routes disappear when scrolling
@@ -770,7 +770,7 @@ class BreadcrumbRenderer {
                 rotateCos * nextXScaledAtCenter -
                 rotateSin * nextYScaledAtCenter;
             var y =
-                rotateAroundScreenY -
+                rotateAroundScreenYOffsetFactoredIn -
                 (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
 
             dc.fillCircle(x, y, 5);

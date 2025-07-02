@@ -524,7 +524,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                         :transform => _cachedValues.rotationMatrix,
                     });
                 } else {
-                    dc.drawBitmap(_cachedValues.bufferedBitmapOffsetX, 0, scratchPadBitmapLocal);
+                    // todo make buffered no rotation mode have a smaller buffer size (we can draw to it the same as dc if its set to the physical screen size)
+                    dc.drawBitmap(_cachedValues.bufferedBitmapOffsetX, _cachedValues.bufferedBitmapOffsetY, scratchPadBitmapLocal);
                 }
             } catch (e) {
                 var message = e.getErrorMessage();
