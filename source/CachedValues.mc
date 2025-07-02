@@ -449,7 +449,7 @@ class CachedValues {
             mapScreenWidth = rotateAroundMaxScreenDim;
             mapScreenHeight = rotateAroundMaxScreenDim;
 
-            if (_settings.renderMode == RENDER_MODE_UNBUFFERED_NO_ROTATION) {
+            if (_settings.renderMode == RENDER_MODE_UNBUFFERED_NO_ROTATION || _settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING) {
                 mapScreenWidth = virtualScreenWidth;
                 mapScreenHeight = virtualScreenHeight;
             }
