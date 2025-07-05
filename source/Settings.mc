@@ -381,8 +381,8 @@ class Settings {
     // can be much larger for companion app is used, since the tiles can be much smaller with TILE_DATA_TYPE_BASE64_FULL_COLOUR
     // saw a crash around 513 tiles, which would be from our internal array StorageTileCache._tilesInStorage
     var storageTileCacheSize as Number = 350;
-    var storageSeedBoundingBox as Boolean = false; // seed entire bounding box - TODO ADD SETTINGS SUPPORT
-    var storageSeedRouteDistanceM as Float = 10f; // if seeding based on route (storageSeedBoundingBox = false) seed this far around the route - TODO ADD SETTINGS SUPPORT
+    var storageSeedBoundingBox as Boolean = false; // seed entire bounding box
+    var storageSeedRouteDistanceM as Float = 10f; // if seeding based on route (storageSeedBoundingBox = false) seed this far around the route
 
     var trackColour as Number = Graphics.COLOR_GREEN;
     var elevationColour as Number = Graphics.COLOR_ORANGE;
@@ -391,8 +391,8 @@ class Settings {
     var maxPendingWebRequests as Number = 5;
     // Renders around the users position
     var metersAroundUser as Number = 500; // keep this fairly high by default, too small and the map tiles start to go blury
-    var centerUserOffsetY as Float = 0.75f; // fraction of the screen to move the user down the page 0.5 - user appears in center, 0.75 - user appears 3/4 down the screen. Useful to see more of the route infront of the user. - TODO ADD SETTINGS SUPPORT - needs to call view.onSettingsChanged for the bitmap size change, and change the cached values first
-    var mapMoveScreenSize as Float = 0.5f; // how far to move the map when the user presses on screen buttons, a fraction of the screen size.  - TODO ADD SETTINGS SUPPORT
+    var centerUserOffsetY as Float = 0.75f; // fraction of the screen to move the user down the page 0.5 - user appears in center, 0.75 - user appears 3/4 down the screen. Useful to see more of the route infront of the user.
+    var mapMoveScreenSize as Float = 0.3f; // how far to move the map when the user presses on screen buttons, a fraction of the screen size.
     var zoomAtPaceMode as Number = ZOOM_AT_PACE_MODE_PACE;
     var zoomAtPaceSpeedMPS as Float = 1.0; // meters per second
     var uiMode as Number = UI_MODE_SHOW_ALL;
@@ -718,7 +718,7 @@ class Settings {
         // setting back to defaults otherwise when we chose companion app we will not get the correct tilesize and it will crash
         var defaultSettings = new Settings();
         // we want a tile layer that all tile servers should be able to show, it should also be low enough that users see there is a problem
-        // these values will be updated by companion app when tile serever changes, or the query below
+        // these values will be updated by companion app when tile server changes, or the query below
         setTileLayerMaxWithoutSideEffect(8);
         setTileLayerMinWithoutSideEffect(0);
         if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
@@ -1111,6 +1111,24 @@ class Settings {
         tileCachePadding = value;
         setValue("tileCachePadding", tileCachePadding);
     }
+    
+    (:settingsView)
+    function setStorageSeedRouteDistanceM(value as Float) as Void {
+        storageSeedRouteDistanceM = value;
+        setValue("storageSeedRouteDistanceM", storageSeedRouteDistanceM);
+    }
+    
+    (:settingsView)
+    function setMapMoveScreenSize(value as Float) as Void {
+        mapMoveScreenSize = value;
+        setValue("mapMoveScreenSize", mapMoveScreenSize);
+    }
+    
+    (:settingsView)
+    function setCenterUserOffsetY(value as Float) as Void {
+        centerUserOffsetY = value;
+        setValue("centerUserOffsetY", centerUserOffsetY);
+    }
 
     (:settingsView)
     function setRecalculateIntervalS(value as Number) as Void {
@@ -1477,6 +1495,10 @@ class Settings {
         return value;
     }
 
+    (:settingsView)
+    function toggleStorageSeedBoundingBox() as Void {
+        storageSeedBoundingBox = toggleSimple("storageSeedBoundingBox", !storageSeedBoundingBox);
+    }
     (:settingsView)
     function toggleCacheTilesInStorage() as Void {
         cacheTilesInStorage = toggleSimple("cacheTilesInStorage", !cacheTilesInStorage);
@@ -1925,6 +1947,10 @@ class Settings {
         tileLayerMin = defaultSettings.tileLayerMin;
         tileCacheSize = defaultSettings.tileCacheSize;
         storageTileCacheSize = defaultSettings.storageTileCacheSize;
+        storageSeedBoundingBox = defaultSettings.storageSeedBoundingBox;
+        storageSeedRouteDistanceM = defaultSettings.storageSeedRouteDistanceM;
+        centerUserOffsetY = defaultSettings.centerUserOffsetY;
+        mapMoveScreenSize = defaultSettings.mapMoveScreenSize;
         tileCachePadding = defaultSettings.tileCachePadding;
         recalculateIntervalS = defaultSettings.recalculateIntervalS;
         mode = defaultSettings.mode;
@@ -2003,6 +2029,10 @@ class Settings {
             "tileLayerMin" => tileLayerMin,
             "tileCacheSize" => tileCacheSize,
             "storageTileCacheSize" => storageTileCacheSize,
+            "storageSeedBoundingBox" => storageSeedBoundingBox,
+            "storageSeedRouteDistanceM" => storageSeedRouteDistanceM,
+            "centerUserOffsetY" => centerUserOffsetY,
+            "mapMoveScreenSize" => mapMoveScreenSize,
             "tileCachePadding" => tileCachePadding,
             "recalculateIntervalS" => recalculateIntervalS,
             "mode" => mode,
@@ -2105,6 +2135,10 @@ class Settings {
 
         tileCacheSize = parseNumber("tileCacheSize", tileCacheSize);
         storageTileCacheSize = parseNumber("storageTileCacheSize", storageTileCacheSize);
+        storageSeedBoundingBox = parseBool("storageSeedBoundingBox", storageSeedBoundingBox);
+        storageSeedRouteDistanceM = parseFloat("storageSeedRouteDistanceM", storageSeedRouteDistanceM);
+        centerUserOffsetY = parseFloat("centerUserOffsetY", centerUserOffsetY);
+        mapMoveScreenSize = parseFloat("mapMoveScreenSize", mapMoveScreenSize);
         tileCachePadding = parseNumber("tileCachePadding", tileCachePadding);
         recalculateIntervalS = parseNumber("recalculateIntervalS", recalculateIntervalS);
         recalculateIntervalS = recalculateIntervalS <= 0 ? 1 : recalculateIntervalS;

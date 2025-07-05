@@ -93,7 +93,7 @@ Map Enabled - See [Map Enabled](#map-enabled)
 `G` Button (right of screen) Get the current tiles for the currently viewed area and put them into app storage (all tile layers), this allows offline navigation without a phone connection. This is an incredibly slow process, but should improve battery as all bluetooth can be done in advance before heading out the door, then the device can be fully charged. note: this will cache tiles regardless of the [Store Tiles For Offline Use](#store-tiles-for-offline-use) setting. For more details see [Offline Tile Storage](#offline-tile-storage). The process of downloading all the tiles takes a very long time, it is best to set the tile server max/min layers so that the tiels downloaded are limited.
 
 Other Screens:  
-Map move allows you to pan around the map, clear routes and toggle the display mode.  
+Map move allows you to pan around the map, clear routes and toggle the display mode. see [Map Move Screen Size](#map-move-screen-size) for configuring how far to move.
 Elevation allows you to clear routes and toggle display mode.  
 The debug screen only allows you to toggle the display mode.
 
@@ -122,6 +122,10 @@ Buffered Rotations - Keeps a buffer of the map, track and routes in memory (only
 Unbuffered Rotations - No buffer, all rotations are done manually every compute, will take more cpu to calculate each time a render occurs. Allows low memory devices to still have rotating maps. Note: this mode does make the map tiles visible as small artifacts between the map tiles, so maps do not look the best in this mode.  
 Buffered Without Rotations - Same as Buffered Rotations mode but does not rotate the map.  
 No Buffer No Rotations - Same as Unbuffered Rotations mode but does not rotate the map.
+
+### Center User Offset Y
+
+Offsets the users vertical position by a fraction of the screen size. Larger values will move the position further down the screen. eg. 0.5 - user in the middle, 0.75 user 3/4 of the way down the screen (near the bottom), 0.25 user near the top of the screen. Larger values are generally preferred, as it allow you to see more of the route in front of the users position. Beware though, moving the user from the center position can have implications on the number of tiles that need to be cached if using rotating [render modes](#render-mode) and [maps](#map-enabled).  
 
 ---
 
@@ -158,6 +162,10 @@ Choose these values wisely. Too big = crash, too small = crash or slow performan
 note: Map support is disabled by default, this is because map tile loading is memory intensive and may cause crashes on some devices. You must set `Tile Cache Size` if using maps to avoid crashes.
 
 Best Guess for map settings:  
+Note the screen size is effected by [Center User Offset Y](#center-user-offset-y) if the user is moved away from teh center, we need to emulate a larger virtual screen so that the tiles can be cached for any upcomming rotations. This is only an issue if using a rotating [render mode](#render-mode).   
+screen size = (abs((<Center User Offset Y> * <pyhsical screen size>) - <half pyhsical screen size>) + <half pyhsical screen size>) * 2  
+ie. Twice the largest dimension from the screen edge to the users center position.   
+
 Tile Cache Size if using zoom at pace: `2*<Tile Cache Size without zoom at pace>`  
 Tile Cache Size if NOT using zoom at pace: `((2 * ceil(<screen size>/<tile size>)) + 2 * <tile cache padding>)^2`  
 Tile Cache Size if using Restrict Scale To Tile Layers: `((ceil(<screen size>/<tile size>)) + 2 * <tile cache padding>)^2`  
@@ -217,6 +225,10 @@ How long to wait before querying errored tiles again, this is for valid htp erro
 
 How long to wait before querying errored tiles again, this is for garmin errors (ble unavailable, etc.)  
 garmin error codes are documented [here](https://developer.garmin.com/connect-iq/api-docs/Toybox/Communications.html#Error-module)
+
+### Map Move Screen Size
+
+How far to move across the screen when panning the map using the on screen ui. Relative to screen size, eg. 0.3 moves a third of the screen, 0.5 moves half the screen.   
 
 ---
 
@@ -386,6 +398,14 @@ Only used the stored tiles from the watch, no ble data will be used to fetch til
 
 How many tiles to store on the watch. Take care with this settings, large values can cause crashes. Similar to [Tile Cache Size](#tile-cache-size), ensure you test the limits of your device and set this value with a reasonable buffer in mind. The storage cache (like the in memory cache) is a LRU (last recently used) cache, the least used tiles will be removed once the cache is full and a new tile needs to be added.
 
+### Storage Seed Bounding Box
+
+If enabled all tiles will be seeded for the on screen bounding box. This caches alot more tiles (and may hit limits of the offline storage cache), but is faster than processing all the routes. If it is disabled only the tiles that touch the path along the routes will be cached. The max distance of tiles from the route can be configured from [Storage Seed Route Distance M](#storage-seed-route-distance-m)
+
+### Storage Seed Route Distance M
+
+The number of meters to cache tiles around the routes path when using [Storage Seed Bounding Box](#storage-seed-bounding-box) = false.
+
 ---
 
 # Off Track Alerts
@@ -465,6 +485,7 @@ Id - The id of the route - read only
 Name - Defaults to the route name that was added, but can be modified to anything you desire.  
 Enabled - If this route appears on any of the device screens, routes can be disabled so that multiple routes can be pre loaded and enabled when needed. eg. Day 1, Day 2.  
 Route Colour - The colour of the route.
+Reversed - To reverse the direction of the route.
 
 ---
 

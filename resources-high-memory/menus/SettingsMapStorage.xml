@@ -2,6 +2,8 @@
     <toggle-menu-item id="settingsMapStorageCacheTilesInStorage" label="@Strings.cacheTilesInStorageTitle"/>
     <toggle-menu-item id="settingsMapStorageStorageMapTilesOnly" label="@Strings.storageMapTilesOnlyTitle"/>
     <menu-item id="settingsMapStorageStorageTileCacheSize" label="@Strings.storageTileCacheSizeShortTitle"/>
+    <toggle-menu-item id="settingsMapStorageStorageSeedBoundingBox" label="@Strings.storageSeedBoundingBoxTitle"/>
+    <menu-item id="settingsMapStorageStorageSeedRouteDistanceM" label="@Strings.storageSeedRouteDistanceMTitle"/>
     <menu-item id="settingsMapStorageCacheCurrentArea" label="@Strings.cacheCurrentArea"/>
     <menu-item id="settingsMapStorageCancelCacheDownload" label="@Strings.cancelCacheDownload"/>
     <menu-item id="settingsMapStorageClearCachedTiles" label="@Strings.clearCachedTiles"/>

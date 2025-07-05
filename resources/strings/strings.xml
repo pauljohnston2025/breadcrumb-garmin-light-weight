@@ -61,6 +61,8 @@
     <string id="zoomAtPaceModeAlways">Always Zoom</string>
     <string id="zoomAtPaceSpeedMPS">Speed (m/s)</string>
     <string id="zoomAtPaceSpeedMPSPrompt">1.0</string>
+    <string id="centerUserOffsetYTitle">Center User Offset Y (ratio)</string>
+    <string id="mapMoveScreenSizeTitle">Map Move Screen Size (ratio)</string>
     <string id="renderModeTitle">Render Mode</string>
     <string id="renderModeBufferedRotating">Buffered Rotations - performance</string>
     <string id="renderModeUnbufferedRotating">Unbuffered Rotations - low memory</string>
@@ -90,6 +92,8 @@
     <string id="storageMapTilesOnlyTitle">Only Use Stored Tiles (no ble data)</string>
     <string id="storageTileCacheSizeTitle">Storage Tile Cache Size (tiles)</string>
     <string id="storageTileCacheSizeShortTitle">Storage Cache Size (tiles)</string>
+    <string id="storageSeedBoundingBoxTitle">Seed Entire Bounding Box</string>
+    <string id="storageSeedRouteDistanceMTitle">Seed Route Path Distance (m)</string>
 
     <string id="coloursTitle">Colours</string>
     <string id="mapsettingsTitle">Map Settings</string>

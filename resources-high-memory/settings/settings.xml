@@ -39,6 +39,10 @@
         </settingConfig>
     </setting>
 
+    <setting propertyKey="@Properties.centerUserOffsetY" title="@Strings.centerUserOffsetYTitle">
+        <settingConfig type="numeric" min="0" max="1"/>
+    </setting>
+
     <setting propertyKey="@Properties.displayLatLong" title="@Strings.displayLatLongTitle">
         <settingConfig type="boolean"/>
     </setting>
@@ -69,6 +73,10 @@
     <group id="mapSettings" title="@Strings.mapsettingsTitle" enableIfTrue="@Properties.mapEnabled">
         <setting propertyKey="@Properties.tileCacheSize" title="@Strings.tileCacheSizeTitle" prompt="@Strings.tileCacheSizePrompt">
             <settingConfig type="numeric" min="0"/>
+        </setting>
+
+        <setting propertyKey="@Properties.mapMoveScreenSize" title="@Strings.mapMoveScreenSizeTitle">
+            <settingConfig type="numeric" min="0" max="1"/>
         </setting>
 
         <setting propertyKey="@Properties.tileCachePadding" title="@Strings.tileCachePaddingTitle">
@@ -185,8 +193,16 @@
         <setting propertyKey="@Properties.storageMapTilesOnly" title="@Strings.storageMapTilesOnlyTitle">
             <settingConfig type="boolean"/>
         </setting>
-
+        
         <setting propertyKey="@Properties.storageTileCacheSize" title="@Strings.storageTileCacheSizeTitle">
+            <settingConfig type="numeric" min="0"/>
+        </setting>
+
+        <setting propertyKey="@Properties.storageSeedBoundingBox" title="@Strings.storageSeedBoundingBoxTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+
+        <setting propertyKey="@Properties.storageSeedRouteDistanceM" title="@Strings.storageSeedRouteDistanceMTitle">
             <settingConfig type="numeric" min="0"/>
         </setting>
     </group>
