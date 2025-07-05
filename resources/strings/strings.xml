@@ -116,6 +116,7 @@
     <string id="routeName">Name</string>
     <string id="routeMax">Max Routes</string>
     <string id="routeEnabled">Enabled</string>
+    <string id="routeReversed">Reversed</string>
     <string id="routesEnabled">Enable Routes</string>
     <string id="mapMove">Map Move</string>
     <string id="debug">Debug</string>

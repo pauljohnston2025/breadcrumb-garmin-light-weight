@@ -164,6 +164,40 @@ class PointArray {
         return true;
     }
 
+    function reversePoints() as Void {
+        var pointsCount = pointSize();
+        if (pointsCount <= 1) {
+            return;
+        }
+
+        for (
+            var leftIndex = -1, rightIndex = size() - ARRAY_POINT_SIZE;
+            leftIndex < rightIndex;
+            rightIndex -= ARRAY_POINT_SIZE /*left increment done in loop*/
+        ) {
+            // hard code instead of for loop to hopefully optimise better
+            var rightIndex0 = rightIndex;
+            var rightIndex1 = rightIndex + 1;
+            var rightIndex2 = rightIndex + 2;
+            ++leftIndex;
+            var temp = _internalArrayBuffer[leftIndex];
+            _internalArrayBuffer[leftIndex] = _internalArrayBuffer[rightIndex0];
+            _internalArrayBuffer[rightIndex0] = temp;
+
+            ++leftIndex;
+            temp = _internalArrayBuffer[leftIndex];
+            _internalArrayBuffer[leftIndex] = _internalArrayBuffer[rightIndex1];
+            _internalArrayBuffer[rightIndex1] = temp;
+
+            ++leftIndex;
+            temp = _internalArrayBuffer[leftIndex];
+            _internalArrayBuffer[leftIndex] = _internalArrayBuffer[rightIndex2];
+            _internalArrayBuffer[rightIndex2] = temp;
+        }
+
+        logD("reversePoints occurred");
+    }
+
     function _add(item as Float) as Void {
         if (_size < _internalArrayBuffer.size()) {
             _internalArrayBuffer[_size] = item;

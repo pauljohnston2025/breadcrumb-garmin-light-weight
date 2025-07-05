@@ -1270,6 +1270,15 @@ class Settings {
     }
 
     (:settingsView)
+    function routeReversed(routeId as Number) as Boolean {
+        var routeIndex = getRouteIndexById(routeId);
+        if (routeIndex == null) {
+            return false;
+        }
+        return routes[routeIndex]["reversed"] as Boolean;
+    }
+
+    (:settingsView)
     function setRouteColour(routeId as Number, value as Number) as Void {
         ensureRouteId(routeId);
         var routeIndex = getRouteIndexById(routeId);
@@ -1305,6 +1314,23 @@ class Settings {
         updateViewSettings(); // routes enabled/disabled can effect off track alerts and other view renderring
     }
 
+    (:settingsView)
+    function setRouteReversed(routeId as Number, value as Boolean) as Void {
+        ensureRouteId(routeId);
+        var routeIndex = getRouteIndexById(routeId);
+        if (routeIndex == null) {
+            return;
+        }
+
+        var oldVal = routes[routeIndex]["reversed"];
+        if (oldVal != value) {
+            getApp()._breadcrumbContext.reverseRouteId(routeId);
+        }
+        routes[routeIndex]["reversed"] = value;
+        saveRoutes();
+        updateViewSettings();
+    }
+
     function ensureRouteId(routeId as Number) as Void {
         var routeIndex = getRouteIndexById(routeId);
         if (routeIndex != null) {
@@ -1320,6 +1346,7 @@ class Settings {
             "name" => routeName(routeId),
             "enabled" => true,
             "colour" => routeColour(routeId),
+            "reversed" => routeReversed(routeId),
         });
         saveRoutes();
     }
@@ -1358,6 +1385,7 @@ class Settings {
                 "name" => entry["name"] as String,
                 "enabled" => entry["enabled"] as Boolean,
                 "colour" => (entry["colour"] as Number).format("%X"), // this is why we have to copy it :(
+                "reversed" => entry["reversed"] as Boolean,
             };
             toSave.add(toAdd);
         }
@@ -2131,12 +2159,13 @@ class Settings {
         mapChoice = parseNumber("mapChoice", mapChoice);
         routes = getArraySchema(
             "routes",
-            ["routeId", "name", "enabled", "colour"],
+            ["routeId", "name", "enabled", "colour", "reversed"],
             [
                 method(:defaultNumberParser),
                 method(:emptyString),
                 method(:defaultFalse),
                 method(:defaultColourParser),
+                method(:defaultFalse),
             ],
             routes
         );
@@ -2233,6 +2262,10 @@ class Settings {
             var routeIndex = getRouteIndexById(oldRouteId);
             if (routeIndex != null) {
                 // we have the same route
+                if (oldRouteEntry["reversed"] != routes[routeIndex]["reversed"]) {
+                    getApp()._breadcrumbContext.reverseRouteId(oldRouteId);
+                }
+
                 continue;
             }
 

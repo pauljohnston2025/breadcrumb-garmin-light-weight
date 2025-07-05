@@ -170,6 +170,16 @@ class BreadcrumbContext {
         }
     }
 
+    function reverseRouteId(routeId as Number) as Void {
+        for (var i = 0; i < routes.size(); ++i) {
+            var route = routes[i];
+            if (route.storageIndex == routeId) {
+                route.reverse();
+                return;
+            }
+        }
+    }
+
     function purgeRoutes() as Void {
         routes = [];
     }

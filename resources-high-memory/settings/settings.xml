@@ -282,6 +282,9 @@
         <setting title="@Strings.routeColourTitle" type="string" prompt="@Strings.colourPrompt">
             <settingConfig id="colour" type="alphaNumeric"/>
         </setting>
+        <setting title="@Strings.routeReversed" type="boolean">
+            <settingConfig id="reversed" type="boolean"/>
+        </setting>
     </setting>
 
     <group id="debugSettings" title="@Strings.debugSettingsTitle">

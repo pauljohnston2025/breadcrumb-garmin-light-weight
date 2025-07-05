@@ -95,6 +95,14 @@ class BreadcrumbTrack {
         self.name = name;
     }
 
+    function reverse() as Void {
+        // distanceTotal  // we can't reverse the track, (the only one tracking distance total)
+
+        coordinates.reversePoints();
+        lastClosePoint = null; // we want to recalculate off track, since the cheveron direction will change
+        writeToDisk(ROUTE_KEY); // write ourselves back to storage in reverse, so next time we load (on app restart) it is correct
+    }
+
     function rescale(scaleFactor as Float) as Void {
         boundingBox[0] = boundingBox[0] * scaleFactor;
         boundingBox[1] = boundingBox[1] * scaleFactor;

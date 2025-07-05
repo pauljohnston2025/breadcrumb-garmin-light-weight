@@ -662,6 +662,7 @@ class SettingsRoute extends Rez.Menus.SettingsRoute {
         safeSetSubLabel(me, :settingsRouteName, name);
         safeSetToggle(me, :settingsRouteEnabled, settings.routeEnabled(routeId));
         safeSetIcon(me, :settingsRouteColour, new ColourIcon(settings.routeColour(routeId)));
+        safeSetToggle(me, :settingsRouteReversed, settings.routeReversed(routeId));
         parent.rerender();
     }
 
@@ -673,8 +674,16 @@ class SettingsRoute extends Rez.Menus.SettingsRoute {
         settings.setRouteEnabled(routeId, value);
     }
 
+    function setReversed(value as Boolean) as Void {
+        settings.setRouteReversed(routeId, value);
+    }
+
     function routeEnabled() as Boolean {
         return settings.routeEnabled(routeId);
+    }
+    
+    function routeReversed() as Boolean {
+        return settings.routeReversed(routeId);
     }
 
     function routeColour() as Number {
@@ -1447,6 +1456,13 @@ class SettingsRouteDelegate extends WatchUi.Menu2InputDelegate {
                 view.setEnabled(false);
             } else {
                 view.setEnabled(true);
+            }
+            view.rerender();
+        } else if (itemId == :settingsRouteReversed) {
+            if (view.routeReversed()) {
+                view.setReversed(false);
+            } else {
+                view.setReversed(true);
             }
             view.rerender();
         } else if (itemId == :settingsRouteColour) {
