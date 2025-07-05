@@ -234,7 +234,6 @@ class MapRenderer {
             return;
         }
 
-        // for debug its purple so we can see any issues, otherwise it should be black
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
 
@@ -249,6 +248,8 @@ class MapRenderer {
         var tileZ = cachedValues.tileZ; // local lookup faster
         var rotateAroundScreenX = cachedValues.rotateAroundScreenX; // local lookup faster
         var rotateAroundScreenY = cachedValues.rotateAroundScreenY; // local lookup faster
+        var bufferedBitmapOffsetX = cachedValues.bufferedBitmapOffsetX; // local lookup faster
+        var bufferedBitmapOffsetY = cachedValues.bufferedBitmapOffsetY; // local lookup faster
         var tileSize = _settings.tileSize; // local lookup faster
         var useDrawBitmap = _settings.useDrawBitmap; // local lookup faster
 
@@ -287,11 +288,13 @@ class MapRenderer {
                 var yPos = (tileOffsetY + y * tileScalePixelSize).toFloat();
                 var xTranslate = rotateAroundScreenX - xPos;
                 var yTranslate = rotateAroundScreenY - yPos;
+                var xTranslate2 = bufferedBitmapOffsetX - xPos;
+                var yTranslate2 = bufferedBitmapOffsetY - yPos;
                 var rotationMatrix = new AffineTransform();
                 // Apply transformations in REVERSE order of visual effect:
                 rotationMatrix.translate(xTranslate, yTranslate); // move to center
                 rotationMatrix.rotate(-cachedValues.rotationRad); // rotate
-                rotationMatrix.translate(-xTranslate, -yTranslate); // move back to position
+                rotationMatrix.translate(-xTranslate2, -yTranslate2); // move back to position
                 rotationMatrix.scale(tileScaleFactor, tileScaleFactor); // scale
 
                 // Error: Unhandled Exception
@@ -359,29 +362,29 @@ class MapRenderer {
                     var brX = trX;
                     var brY = blY;
 
-                    var tlUnrotatedX = tlX - rotateAroundScreenX;
-                    var tlUnrotatedY = tlY - rotateAroundScreenY;
+                    var tlUnrotatedX = tlX - bufferedBitmapOffsetX;
+                    var tlUnrotatedY = tlY - bufferedBitmapOffsetY;
                     var tlRotatedX =
                         rotateAroundScreenX + rotateCosNeg * tlUnrotatedX - rotateSinNeg * tlUnrotatedY;
                     var tlRotatedY =
                         rotateAroundScreenY + (rotateSinNeg * tlUnrotatedX + rotateCosNeg * tlUnrotatedY);
 
-                    var trUnrotatedX = trX - rotateAroundScreenX;
-                    var trUnrotatedY = trY - rotateAroundScreenY;
+                    var trUnrotatedX = trX - bufferedBitmapOffsetX;
+                    var trUnrotatedY = trY - bufferedBitmapOffsetY;
                     var trRotatedX =
                         rotateAroundScreenX + rotateCosNeg * trUnrotatedX - rotateSinNeg * trUnrotatedY;
                     var trRotatedY =
                         rotateAroundScreenY + (rotateSinNeg * trUnrotatedX + rotateCosNeg * trUnrotatedY);
 
-                    var blUnrotatedX = blX - rotateAroundScreenX;
-                    var blUnrotatedY = blY - rotateAroundScreenY;
+                    var blUnrotatedX = blX - bufferedBitmapOffsetX;
+                    var blUnrotatedY = blY - bufferedBitmapOffsetY;
                     var blRotatedX =
                         rotateAroundScreenX + rotateCosNeg * blUnrotatedX - rotateSinNeg * blUnrotatedY;
                     var blRotatedY =
                         rotateAroundScreenY + (rotateSinNeg * blUnrotatedX + rotateCosNeg * blUnrotatedY);
 
-                    var brUnrotatedX = brX - rotateAroundScreenX;
-                    var brUnrotatedY = brY - rotateAroundScreenY;
+                    var brUnrotatedX = brX - bufferedBitmapOffsetX;
+                    var brUnrotatedY = brY - bufferedBitmapOffsetY;
                     var brRotatedX =
                         rotateAroundScreenX + rotateCosNeg * brUnrotatedX - rotateSinNeg * brUnrotatedY;
                     var brRotatedY =

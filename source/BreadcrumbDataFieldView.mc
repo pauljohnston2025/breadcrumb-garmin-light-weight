@@ -489,7 +489,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 dc.drawText(
                     _cachedValues.xHalfPhysical,
                     _cachedValues.yHalfPhysical,
-                    Graphics.FONT_SYSTEM_MEDIUM,
+                    Graphics.FONT_XTINY,
                     "COULD NOT ALLOCATE BUFFER\nSWITCH RENDER MODE",
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
                 );

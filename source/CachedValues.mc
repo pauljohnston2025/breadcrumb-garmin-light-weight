@@ -133,6 +133,7 @@ class CachedValues {
     var rotateAroundScreenYOffsetFactoredIn as Float = rotateAroundScreenY;
     var mapScreenWidth as Float = physicalScreenWidth;
     var mapScreenHeight as Float = physicalScreenHeight;
+    var mapBitmapOffsetX as Float = 0f;
     var mapBitmapOffsetY as Float = 0f;
     var rotateAroundMinScreenDim as Float = minPhysicalScreenDim;
     var rotateAroundMaxScreenDim as Float = maxPhysicalScreenDim;
@@ -306,8 +307,10 @@ class CachedValues {
         var screenTopM = centerPositionRaw.y + halfScreenHeightM;
 
         // find which tile we are closest to
-        firstTileX = ((screenLeftM + originShift) / tileWidthM).toNumber();
-        firstTileY = ((originShift - screenTopM) / tileWidthM).toNumber();
+        var mapBitmapOffsetXM = mapBitmapOffsetX / currentScale;
+        var mapBitmapOffsetYM = mapBitmapOffsetY / currentScale;
+        firstTileX = ((screenLeftM + originShift - mapBitmapOffsetXM) / tileWidthM).toNumber();
+        firstTileY = ((originShift - screenTopM - mapBitmapOffsetYM) / tileWidthM).toNumber();
 
         // remember, lat/long is a different coordinate system (the lower we are the more negative we are)
         //  x calculations are the same - more left = more negative
@@ -340,17 +343,15 @@ class CachedValues {
         tileScalePixelSize = Math.round(_settings.tileSize * tileScaleFactor).toNumber();
 
         // find the closest pixel size
-        tileOffsetX = Math.round((firstTileLeftM - screenLeftM) * currentScale).toNumber();
+        tileOffsetX = Math.round(
+            (firstTileLeftM - screenLeftM) * currentScale + mapBitmapOffsetX
+        ).toNumber();
         tileOffsetY = Math.round(
             (screenTopM - firstTileTopM) * currentScale + mapBitmapOffsetY
         ).toNumber();
 
-        tileCountX = Math.ceil(
-            (-tileOffsetX + physicalScreenWidth) / tileScalePixelSize
-        ).toNumber();
-        tileCountY = Math.ceil(
-            (-tileOffsetY + physicalScreenHeight) / tileScalePixelSize
-        ).toNumber();
+        tileCountX = Math.ceil((-tileOffsetX + mapScreenWidth) / tileScalePixelSize).toNumber();
+        tileCountY = Math.ceil((-tileOffsetY + mapScreenHeight) / tileScalePixelSize).toNumber();
         mapDataCanBeUsed = true;
     }
 
@@ -461,11 +462,14 @@ class CachedValues {
 
             if (
                 _settings.renderMode == RENDER_MODE_UNBUFFERED_NO_ROTATION ||
-                _settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING
+                _settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
             ) {
-                // todo (memory perf, tile cache size) make map tile max/min better and only load tiles that are in frame (hard to do on rotating modes, but should be ok on unrotating)
-                mapScreenWidth = virtualScreenWidth;
-                mapScreenHeight = virtualScreenHeight;
+                // attempt to reduce the number of map tiles needed in render modes without roatations
+                // rotation mode still needs all the map tiles, since it could rotate to any of them at any point
+                // RENDER_MODE_BUFFERED_ROTATING is a pretty rarely used mode, so not sure its worth this.
+                // we do not modify virtual screen size, since that would mean the buffered bitmap would change size and need updating too. We could do it for RENDER_MODE_UNBUFFERED_ROTATING only.
+                mapScreenWidth = physicalScreenWidth;
+                mapScreenHeight = physicalScreenHeight;
             }
         } else {
             rotateAroundScreenX = xHalfPhysical;
@@ -476,30 +480,56 @@ class CachedValues {
             mapScreenHeight = physicalScreenHeight;
         }
 
+        mapBitmapOffsetX = 0f;
         mapBitmapOffsetY = 0f;
-        bufferedBitmapOffsetX = -(rotateAroundMaxScreenDim - physicalScreenWidth) / 2f;
-        bufferedBitmapOffsetY = -(rotateAroundMaxScreenDim - physicalScreenHeight);
 
-        if (
-            _settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
-            _settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
-        ) {
+        if (_settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION) {
+            // draw it top left, so we can make our map tiles less (and possibly reduce the whole bitmap size)
+            bufferedBitmapOffsetX = 0f;
+            bufferedBitmapOffsetY = 0f;
+
             rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX - bufferedBitmapOffsetX;
             rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY - bufferedBitmapOffsetY;
 
-            if (_settings.centerUserOffsetY >= 0.5 && _settings.renderMode == RENDER_MODE_BUFFERED_ROTATING) {
+            if (currentlyZoomingAroundUser) {
+                mapBitmapOffsetY = rotateAroundScreenY - yHalfPhysical;
+            }
+        } else if (_settings.renderMode == RENDER_MODE_BUFFERED_ROTATING) {
+            bufferedBitmapOffsetX = -(rotateAroundMaxScreenDim - physicalScreenWidth) / 2f;
+            bufferedBitmapOffsetY = -(rotateAroundMaxScreenDim - physicalScreenHeight);
+            rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX - bufferedBitmapOffsetX;
+            rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY - bufferedBitmapOffsetY;
+
+            if (_settings.centerUserOffsetY >= 0.5 && currentlyZoomingAroundUser) {
                 rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY; // draw straight to the buffered canvas, since the canvas top matches our top
             }
-
-            if (currentlyZoomingAroundUser && _settings.centerUserOffsetY >= 0.5 && _settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION) {
-                mapBitmapOffsetY = -bufferedBitmapOffsetY; // should probably be an x offset too?
-            }
-
-        } else {
+        } else if (_settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING) {
             // unbuffered mode -> draws straight to dc
-            if (currentlyZoomingAroundUser && _settings.centerUserOffsetY < 0.5) {
-                mapBitmapOffsetY = bufferedBitmapOffsetY; // should probably be an x offset too, but we fudge it by setting the map width
+            rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX;
+            rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY;
+            bufferedBitmapOffsetX = rotateAroundScreenX;
+                bufferedBitmapOffsetY = rotateAroundScreenY;
+
+            if (currentlyZoomingAroundUser) {
+                bufferedBitmapOffsetX = -(rotateAroundMaxScreenDim - physicalScreenWidth) / 2f;
+                bufferedBitmapOffsetY = -(rotateAroundMaxScreenDim - physicalScreenHeight);
+                // dirty hacks, using bufferedBitmapOffsetX for map rednerer to do the tile offsets
+                // if we use just mapBitmapOffsetX/mapBitmapOffsetY we get clipping
+                bufferedBitmapOffsetX = rotateAroundScreenX - bufferedBitmapOffsetX;
+                bufferedBitmapOffsetY = rotateAroundScreenY - bufferedBitmapOffsetY;
+
+                if (_settings.centerUserOffsetY >= 0.5) {
+                    bufferedBitmapOffsetY = rotateAroundScreenY;
+                }
             }
+            
+        } else {
+            // RENDER_MODE_UNBUFFERED_NO_ROTATION
+            // unbuffered mode -> draws straight to dc
+            if (currentlyZoomingAroundUser) {
+                mapBitmapOffsetY = rotateAroundScreenY - yHalfPhysical;
+            }
+
             rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX;
             rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY;
         }

@@ -501,6 +501,7 @@ class Settings {
     function setRenderMode(_renderMode as Number) as Void {
         renderMode = _renderMode;
         setValue("renderMode", renderMode);
+        updateCachedValues();
         updateViewSettings();
     }
 
