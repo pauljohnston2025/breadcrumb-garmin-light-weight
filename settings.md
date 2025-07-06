@@ -281,14 +281,16 @@ For online maps (requested directly from the watch), the tile server url can be 
 Open Topo Map:  
 Terain: https://a.tile.opentopomap.org/{z}/{x}/{y}.png
 
-OpenStreetMap will not work as a templated tile server on the watch because makeImageRequest does not allow headers to be sent. OpenStreetMap requires that the User-Agent header be sent or it will respond with 403. Use the tile server hosted on the companion app if you wish to use OpenStreetMap.  
+OpenStreetMap  
+Will not work as a templated tile server on the watch because makeImageRequest does not allow headers to be sent. OpenStreetMap requires that the User-Agent header be sent or it will respond with 403. Use the tile server hosted on the companion app if you wish to use OpenStreetMap.  
 ~~OpenStreetMap:~~  
 ~~Standard: https://tile.openstreetmap.org/{z}/{x}/{y}.png~~
 
 Google:  
-Hybrid: https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}  
-Satellite: https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}  
-Road: https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}
+Will not work as a templated tile server on the watch because makeImageRequest does not allow headers to be sent. Google also requires that the User-Agent header be sent.
+~~Hybrid: https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}~~  
+~~Satellite: https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}~~    
+~~Road: https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}~~  
 
 Esri:  
 View available tiles at https://server.arcgisonline.com/arcgis/rest/services/

@@ -183,7 +183,7 @@ function getTileServerInfo(id as Number) as TileServerInfo? {
             return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldPhysicalMapTemplate, 0, 8); // Esri - World Physical Map
         case 17:
             // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
-            return new TileServerInfo(ATTRIBUTION_OPENSTREETMAP, URL_PREFIX_NONE, AUTH_TOKEN_TYPE_NONE, Rez.Strings.openstreetmapCyclosmTemplate, 0, 12); // OpenStreetMap - cyclosm
+            return new TileServerInfo(ATTRIBUTION_OPENSTREETMAP, URL_PREFIX_NONE, AUTH_TOKEN_TYPE_NONE, Rez.Strings.openstreetmapCyclosmTemplate, 0, 20); // OpenStreetMap - cyclosm
         case 18:
             // stadia (also includes stamen) https://docs.stadiamaps.com/themes/
             return new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, Rez.Strings.stadiaAlidadeSmoothTemplate, 0, 20); // Stadia - Alidade Smooth (auth required)
