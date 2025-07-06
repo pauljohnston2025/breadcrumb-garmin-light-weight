@@ -1087,7 +1087,7 @@ class Settings {
 
     function tileCacheSizeReduced() as Void {
         clearPendingWebRequests();
-        clearTileCache();
+        getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // do not remove our cached tiles, we only reduced the caches size, so they are still valid
     }
 
     (:settingsView)
