@@ -61,7 +61,7 @@
 	<property id="drawCheverons" type="boolean">false</property>
 	<property id="storageSeedBoundingBox" type="boolean">false</property>
 	<property id="storageSeedRouteDistanceM" type="float">10</property>
-	<property id="centerUserOffsetY" type="float">0.75</property>
+	<property id="centerUserOffsetY" type="float">0.5</property>
 	<property id="mapMoveScreenSize" type="float">0.3</property>
 
 

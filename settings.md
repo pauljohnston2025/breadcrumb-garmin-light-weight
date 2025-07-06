@@ -125,7 +125,7 @@ No Buffer No Rotations - Same as Unbuffered Rotations mode but does not rotate t
 
 ### Center User Offset Y
 
-Offsets the users vertical position by a fraction of the screen size. Larger values will move the position further down the screen. eg. 0.5 - user in the middle, 0.75 user 3/4 of the way down the screen (near the bottom), 0.25 user near the top of the screen. Larger values are generally preferred, as it allow you to see more of the route in front of the users position. Beware though, moving the user from the center position can have implications on the number of tiles that need to be cached if using rotating [render modes](#render-mode) and [maps](#map-enabled).  
+Offsets the users vertical position by a fraction of the screen size. Larger values will move the position further down the screen. eg. 0.5 - user in the middle, 0.75 user 3/4 of the way down the screen (near the bottom), 0.25 user near the top of the screen. Larger values are generally preferred, as it allow you to see more of the route in front of the users position. Beware though, moving the user from the center position can have implications on the number of tiles that need to be cached if using rotating [render modes](#render-mode) and [maps](#map-enabled). Furthermore since the virtual screen size is increased when using buffered rendering modes the app also needs to store a larger frame buffer in order to be able to rotate. The larger buffer, along with the larger number of tiles required, puts alot of strain on the graphics memory pool and it is quite easy to either crash the app or cause it to throw exceptions every time if the users offset is moved away from the center position. It is highly encouraged to thouroughly test the limits of the cache by panning around the map and looking at debug page to ensure the app is at full cache capacity to ensure no crashes occur with the values selected. On my venu2s I have found 56 companion app tiles (size: 64X64) to be the limit when using buffered rotation render mode and a user center offset of 0.7. When using image tiles (served straight to the watch) the limit will be much lower.          
 
 ---
 
@@ -163,7 +163,7 @@ note: Map support is disabled by default, this is because map tile loading is me
 
 Best Guess for map settings:  
 Note the screen size is effected by [Center User Offset Y](#center-user-offset-y) if the user is moved away from teh center, we need to emulate a larger virtual screen so that the tiles can be cached for any upcomming rotations. This is only an issue if using a rotating [render mode](#render-mode).   
-screen size = (abs((<Center User Offset Y> * <pyhsical screen size>) - <half pyhsical screen size>) + <half pyhsical screen size>) * 2  
+`screen size = (abs((<Center User Offset Y> * <pyhsical screen size>) - <half pyhsical screen size>) + <half pyhsical screen size>) * 2`  
 ie. Twice the largest dimension from the screen edge to the users center position.   
 
 Tile Cache Size if using zoom at pace: `2*<Tile Cache Size without zoom at pace>`  
