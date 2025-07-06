@@ -191,6 +191,7 @@ class RerenderIgnoredView extends WatchUi.View {
         View.initialize();
 
         // for seom reason WatchUi.requestUpdate(); was not working so im pushing this view just to remove it, which should force a re-render
+        // note: this seems to be a problem with datafields settings views on physical devices, appears to work fine on the sim
         // timer = new Timer.Timer();
         // need a timer running of this, since button presses from within the delegate were not trigering a reload
         // timer.start(method(:onTimer), 1000, true);
