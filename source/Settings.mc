@@ -382,7 +382,7 @@ class Settings {
     // saw a crash around 513 tiles, which would be from our internal array StorageTileCache._tilesInStorage
     var storageTileCacheSize as Number = 350;
     var storageSeedBoundingBox as Boolean = false; // seed entire bounding box
-    var storageSeedRouteDistanceM as Float = 10f; // if seeding based on route (storageSeedBoundingBox = false) seed this far around the route
+    var storageSeedRouteDistanceM as Float = 30f; // if seeding based on route (storageSeedBoundingBox = false) seed this far around the route
 
     var trackColour as Number = Graphics.COLOR_GREEN;
     var elevationColour as Number = Graphics.COLOR_ORANGE;
@@ -1111,19 +1111,19 @@ class Settings {
         tileCachePadding = value;
         setValue("tileCachePadding", tileCachePadding);
     }
-    
+
     (:settingsView)
     function setStorageSeedRouteDistanceM(value as Float) as Void {
         storageSeedRouteDistanceM = value;
         setValue("storageSeedRouteDistanceM", storageSeedRouteDistanceM);
     }
-    
+
     (:settingsView)
     function setMapMoveScreenSize(value as Float) as Void {
         mapMoveScreenSize = value;
         setValue("mapMoveScreenSize", mapMoveScreenSize);
     }
-    
+
     (:settingsView)
     function setCenterUserOffsetY(value as Float) as Void {
         centerUserOffsetY = value;
@@ -2136,7 +2136,10 @@ class Settings {
         tileCacheSize = parseNumber("tileCacheSize", tileCacheSize);
         storageTileCacheSize = parseNumber("storageTileCacheSize", storageTileCacheSize);
         storageSeedBoundingBox = parseBool("storageSeedBoundingBox", storageSeedBoundingBox);
-        storageSeedRouteDistanceM = parseFloat("storageSeedRouteDistanceM", storageSeedRouteDistanceM);
+        storageSeedRouteDistanceM = parseFloat(
+            "storageSeedRouteDistanceM",
+            storageSeedRouteDistanceM
+        );
         centerUserOffsetY = parseFloat("centerUserOffsetY", centerUserOffsetY);
         mapMoveScreenSize = parseFloat("mapMoveScreenSize", mapMoveScreenSize);
         tileCachePadding = parseNumber("tileCachePadding", tileCachePadding);
@@ -2332,11 +2335,14 @@ class Settings {
             oldUseDrawBitmap != useDrawBitmap ||
             oldPackingFormat != packingFormat ||
             oldCacheTilesInStorage != cacheTilesInStorage ||
-            oldTileCacheSize > tileCacheSize ||
             oldStorageTileCacheSize > storageTileCacheSize ||
             !oldAuthToken.equals(authToken)
         ) {
             tileServerPropChanged();
+        }
+
+        if (oldTileCacheSize > tileCacheSize) {
+            tileCacheSizeReduced();
         }
 
         if (oldMapEnabled != mapEnabled) {

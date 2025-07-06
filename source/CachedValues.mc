@@ -153,17 +153,24 @@ class CachedValues {
     var firstTileX as Number = -1;
     var firstTileY as Number = -1;
 
+    // todo store all these in a 'seeding' class so the variables are not using memory when the seeding is not happening
     var seedingZ as Number = -1; // -1 means not seeding
     var seedingRectanglarTopLeft as RectangularPoint = new RectangularPoint(0f, 0f, 0f);
     var seedingRectanglarBottomRight as RectangularPoint = new RectangularPoint(0f, 0f, 0f);
     var seedingUpToTileX as Number = 0;
     var seedingUpToTileY as Number = 0;
+    var seedingRouteLeftRightValid as Boolean = false;
     var seedingUpToRoute as Number = 0;
     var seedingUpToRoutePoint as Number = 0;
     var seedingUpToRoutePointPartial as SegmentPointIterator? = null;
     var seedingTilesOnThisLayer as Number = NUMBER_MAX;
     var seedingTilesProgressForThisLayer as Number = 0;
     var seedingMapCacheDistanceM as Float = -1f;
+    var seedingInProgressTiles as Array<TileKey> = [];
+    var seedingFirstTileX as Number = 0;
+    var seedingFirstTileY as Number = 0;
+    var seedingLastTileX as Number = 0;
+    var seedingLastTileY as Number = 0;
 
     function atMinTileLayer() as Boolean {
         return tileZ == _settings.tileLayerMin;
@@ -508,7 +515,7 @@ class CachedValues {
             rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX;
             rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY;
             bufferedBitmapOffsetX = rotateAroundScreenX;
-                bufferedBitmapOffsetY = rotateAroundScreenY;
+            bufferedBitmapOffsetY = rotateAroundScreenY;
 
             if (currentlyZoomingAroundUser) {
                 bufferedBitmapOffsetX = -(rotateAroundMaxScreenDim - physicalScreenWidth) / 2f;
@@ -522,7 +529,6 @@ class CachedValues {
                     bufferedBitmapOffsetY = rotateAroundScreenY;
                 }
             }
-            
         } else {
             // RENDER_MODE_UNBUFFERED_NO_ROTATION
             // unbuffered mode -> draws straight to dc
@@ -904,11 +910,17 @@ class CachedValues {
         seedingRectanglarBottomRight = new RectangularPoint(0f, 0f, 0f);
         seedingUpToTileX = 0;
         seedingUpToTileY = 0;
+        seedingFirstTileX = 0;
+        seedingFirstTileY = 0;
+        seedingLastTileX = 0;
+        seedingLastTileY = 0;
+        seedingRouteLeftRightValid = false;
         seedingUpToRoute = 0;
         seedingUpToRoutePoint = 0;
         seedingUpToRoutePointPartial = null;
         seedingTilesOnThisLayer = NUMBER_MAX;
         seedingTilesProgressForThisLayer = 0;
+        seedingInProgressTiles = [];
     }
 
     (:noStorage)
@@ -938,8 +950,6 @@ class CachedValues {
                 centerRectangular.y - seedingMapCacheDistanceM,
                 0f
             );
-        } else {
-            nextRoutePointTileArea();
         }
 
         // start at max, and move towards min.
@@ -952,7 +962,7 @@ class CachedValues {
     }
 
     function seeding() as Boolean {
-        return seedingZ >= 0;
+        return seedingZ >= 0 || seedingInProgressTiles.size() != 0;
     }
 
     (:noStorage)
@@ -966,15 +976,28 @@ class CachedValues {
         }
 
         if (
-            (_settings.storageSeedBoundingBox && seedNextTilesToStorageBoundingBox()) ||
-            (!_settings.storageSeedBoundingBox && seedNextTilesToStorageAlongRoute())
+            seedingZ >= _settings.tileLayerMin &&
+            ((_settings.storageSeedBoundingBox && seedNextTilesToStorageBoundingBox()) ||
+                (!_settings.storageSeedBoundingBox && seedNextTilesToStorageAlongRoute()))
         ) {
             seedingZ--;
             seedingUpToTileX = 0;
             seedingUpToTileY = 0;
+            seedingFirstTileX = 0;
+            seedingFirstTileY = 0;
+            seedingLastTileX = 0;
+            seedingLastTileY = 0;
+            seedingRouteLeftRightValid = false;
             seedingUpToRoute = 0;
             seedingUpToRoutePoint = 0;
             seedingUpToRoutePointPartial = null;
+            seedingInProgressTiles = [];
+        }
+
+        if (seedingInProgressTiles.size() != 0) {
+            // keep seeding them until they are all done
+            removeFromSeedingInProgressTilesAndSeedThem();
+            return true;
         }
 
         if (seedingZ < _settings.tileLayerMin) {
@@ -986,98 +1009,160 @@ class CachedValues {
         return true;
     }
 
+    // null indicates no more tiles
     (:storage)
-    function nextRoutePointTileArea() as Boolean {
-        var routes = getApp()._breadcrumbContext.routes;
-        // might be no enabled routes? or the routes might have no coordinates. Guess we just have to return finished?
-        if (routes.size() == 0 || !_settings.atLeast1RouteEnabled()) {
-            // set up a tile to be downloaded, so that 'seedNextTilesToStorageBoundingBox' returns true
-            seedingRectanglarTopLeft = new RectangularPoint(0f, 0f, 0f);
-            seedingRectanglarBottomRight = new RectangularPoint(0f, 0f, 0f);
-            seedingUpToTileX = 0;
-            seedingUpToTileY = 0;
-            return true; // there is nothing to process
-        }
+    function nextRoutePointTileKey() as TileKey? {
+        // DANGEROUS - could trigger watchdog
+        var counter = 0;
+        while (true) {
+            ++counter;
+            if (counter > 20) {
+                // we should not take any amount of time to do this
+                // the while lloop ony oves the state machine forward
+                // one iteration each for
+                //
+                // next route (routes might not be enabled so X maxroutes)
+                // next point in route
+                // next partial point bwteen route points
+                // get the tile coordinates from the partial point
+                // inc tile x
+                // inc tile y
 
-        if (seedingUpToRoute >= routes.size()) {
-            seedingUpToRoute = 0;
-            seedingUpToRoutePoint = 0;
-            seedingUpToRoutePointPartial = null;
-            return true; // we have processed all the routes
-        }
+                // most will return within 1 or 2 iterations, some will take more to increent each level of the loop
+                logE("we reached or recursion limit");
+                seedingRouteLeftRightValid = false;
+                return null; // pretend we are done, something seems wrong
+            }
 
-        var route = routes[seedingUpToRoute];
-        if (!_settings.routeEnabled(route.storageIndex)) {
-            ++seedingUpToRoute;
-            seedingUpToRoutePoint = 0;
-            seedingUpToRoutePointPartial = null;
-            return false; // call me again asap
-        }
-        var routePoint = route.coordinates.getPoint(seedingUpToRoutePoint);
-        var nextRoutePoint = route.coordinates.getPoint(seedingUpToRoutePoint + 1);
-        if (routePoint == null || nextRoutePoint == null) {
-            // we are at the end of the route, no more points, move onto the next route
-            ++seedingUpToRoute;
-            seedingUpToRoutePoint = 0;
-            seedingUpToRoutePointPartial = null;
-            return false; // call me again asap
-        }
+            if (seedingRouteLeftRightValid) {
+                // grab the current tile
+                var x = seedingUpToTileX;
+                var y = seedingUpToTileY;
 
-        var divisor = currentScale;
-        if (divisor == 0f) {
-            // we should always have a current scale at this point, since we manually set scale (or we are caching map tiles)
-            System.println("Warning: current scale was somehow not set");
-            divisor = 1f;
-        }
+                // increment for the next call
+                ++seedingUpToTileX;
+                if (seedingUpToTileX >= seedingLastTileX) {
+                    seedingUpToTileX = seedingFirstTileX;
+                    ++seedingUpToTileY;
+                }
 
-        if (seedingUpToRoutePointPartial == null) {
-            var tileWidthM = earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
-            seedingUpToRoutePointPartial = new SegmentPointIterator(
-                routePoint.x / divisor,
-                routePoint.y / divisor,
-                nextRoutePoint.x / divisor,
-                nextRoutePoint.y / divisor,
-                tileWidthM.toFloat() / 2.0f // we only need to step at half the tile distance, this guarantees we do not miss any tiles (if we have a large gap in coordinates)
+                if (seedingUpToTileY >= seedingLastTileY) {
+                    // we were on our last tile for this partial point, reset for the next layer
+                    seedingRouteLeftRightValid = false;
+                }
+
+                return new TileKey(x, y, seedingZ);
+            }
+
+            var routes = getApp()._breadcrumbContext.routes;
+            // might be no enabled routes? or the routes might have no coordinates. Guess we just have to return finished?
+            if (routes.size() == 0 || !_settings.atLeast1RouteEnabled()) {
+                // set up a tile to be downloaded, so that 'seedNextTilesToStorageBoundingBox' returns true
+                seedingRouteLeftRightValid = false;
+                return null; // there is nothing to process
+            }
+
+            if (seedingUpToRoute >= routes.size()) {
+                seedingUpToRoute = 0;
+                seedingUpToRoutePoint = 0;
+                seedingUpToRoutePointPartial = null;
+                return null; // we have processed all the routes
+            }
+
+            var route = routes[seedingUpToRoute];
+            if (!_settings.routeEnabled(route.storageIndex)) {
+                ++seedingUpToRoute;
+                seedingUpToRoutePoint = 0;
+                seedingUpToRoutePointPartial = null;
+                continue; // call me again asap
+            }
+            var routePoint = route.coordinates.getPoint(seedingUpToRoutePoint);
+            var nextRoutePoint = route.coordinates.getPoint(seedingUpToRoutePoint + 1);
+            if (routePoint == null || nextRoutePoint == null) {
+                // we are at the end of the route, no more points, move onto the next route
+                ++seedingUpToRoute;
+                seedingUpToRoutePoint = 0;
+                seedingUpToRoutePointPartial = null;
+                continue; // call me again asap
+            }
+
+            var divisor = currentScale;
+            if (divisor == 0f) {
+                // we should always have a current scale at this point, since we manually set scale (or we are caching map tiles)
+                System.println("Warning: current scale was somehow not set");
+                divisor = 1f;
+            }
+
+            if (seedingUpToRoutePointPartial == null) {
+                var tileWidthM =
+                    earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
+                seedingUpToRoutePointPartial = new SegmentPointIterator(
+                    routePoint.x / divisor,
+                    routePoint.y / divisor,
+                    nextRoutePoint.x / divisor,
+                    nextRoutePoint.y / divisor,
+                    tileWidthM.toFloat() / 2.0f // we only need to step at half the tile distance, this guarantees we do not miss any tiles (if we have a large gap in coordinates)
+                );
+            }
+
+            var seedingUpToRoutePointPartialLocal = seedingUpToRoutePointPartial;
+            if (seedingUpToRoutePointPartialLocal == null) {
+                // wtf? we just set it - must be completely broken, pretend we are finished
+                seedingRouteLeftRightValid = false;
+                return null;
+            }
+
+            var nextPoint = seedingUpToRoutePointPartialLocal.next();
+            if (nextPoint == null) {
+                // we are onto the next route point
+                ++seedingUpToRoutePoint;
+                seedingUpToRoutePointPartial = null;
+                continue; // call us again soon asap
+            }
+
+            // we have reached a new point, update the our bounding box for the point
+            seedingRectanglarTopLeft = new RectangularPoint(
+                nextPoint[0] - _settings.storageSeedRouteDistanceM,
+                nextPoint[1] + _settings.storageSeedRouteDistanceM,
+                0f
             );
+
+            seedingRectanglarBottomRight = new RectangularPoint(
+                nextPoint[0] + _settings.storageSeedRouteDistanceM,
+                nextPoint[1] - _settings.storageSeedRouteDistanceM,
+                0f
+            );
+
+            var tileWidthM = earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
+
+            // find which tile we are closest to
+            seedingFirstTileX = (
+                (seedingRectanglarTopLeft.x + originShift) /
+                tileWidthM
+            ).toNumber();
+            seedingFirstTileY = (
+                (originShift - seedingRectanglarTopLeft.y) /
+                tileWidthM
+            ).toNumber();
+            // last tile is open ended range (+1)
+            seedingLastTileX =
+                ((seedingRectanglarBottomRight.x + originShift) / tileWidthM).toNumber() + 1;
+            seedingLastTileY =
+                ((originShift - seedingRectanglarBottomRight.y) / tileWidthM).toNumber() + 1;
+
+            seedingUpToTileX = seedingFirstTileX;
+            seedingUpToTileY = seedingFirstTileY;
+            seedingRouteLeftRightValid = true;
+            continue;
         }
 
-        var seedingUpToRoutePointPartialLocal = seedingUpToRoutePointPartial;
-        if (seedingUpToRoutePointPartialLocal == null) {
-            // wtf? we just set it - must be completely broken, pretend we are finished
-            seedingRectanglarTopLeft = new RectangularPoint(0f, 0f, 0f);
-            seedingRectanglarBottomRight = new RectangularPoint(0f, 0f, 0f);
-            seedingUpToTileX = 0;
-            seedingUpToTileY = 0;
-            return true;
-        }
-
-        var nextPoint = seedingUpToRoutePointPartialLocal.next();
-        if (nextPoint == null) {
-            // we are onto the next route point
-            ++seedingUpToRoutePoint;
-            seedingUpToRoutePointPartial = null;
-            return false; // call us again soon asap
-        }
-
-        seedingRectanglarTopLeft = new RectangularPoint(
-            nextPoint[0] - _settings.storageSeedRouteDistanceM,
-            nextPoint[1] + _settings.storageSeedRouteDistanceM,
-            0f
-        );
-
-        seedingRectanglarBottomRight = new RectangularPoint(
-            nextPoint[0] + _settings.storageSeedRouteDistanceM,
-            nextPoint[1] - _settings.storageSeedRouteDistanceM,
-            0f
-        );
-
-        seedingUpToTileX = 0;
-        seedingUpToTileY = 0;
-        return false;
+        seedingRouteLeftRightValid = false;
+        return null; // should alwasy return fromt he shile loop above, this should be unreachable, but pretend we are finished if we hit here
     }
 
     (:storage)
     function seedNextTilesToStorageAlongRoute() as Boolean {
+        var tileCache = getApp()._breadcrumbContext.tileCache;
         // could use Bresenham's Line Algorithm to find all tiles on the path
         // instead we split the routes points up into segments, and download all the tiles for each point in the route,
         // factoring in the max distance around the route to cache
@@ -1085,13 +1170,70 @@ class CachedValues {
         // each point is downloaded as a bounding box, there will be overlaps
         // this is also highly ineffcient, as there might only be one tile for the entire route ayt low zoom levels, but we still try and get the same
         // tile over and over
-        if (seedNextTilesToStorageBoundingBox()) {
-            return nextRoutePointTileArea();
+        removeFromSeedingInProgressTilesAndSeedThem(); // do not call in for loop, we want to break out so we do not get watchdog errors
+
+        // max 10 outstanding requests, and 10 lots of work for the watchdog, work is variable depending on nextRoutePointTileKey complexity
+        // we also need the i tracking it, because on the lower layers we can add the same tile multiple times. eg. layer 0 all the route points will likely point at a single tile, but we stil have to precess the entire route
+        var maxTilesAtATime = 50;
+        maxTilesAtATime = minN(maxTilesAtATime, _settings.storageTileCacheSize);
+        // logD("starting for");
+        for (
+            var i = 0;
+            i < maxTilesAtATime && seedingInProgressTiles.size() < maxTilesAtATime;
+            ++i
+        ) {
+            var nextTileKey = nextRoutePointTileKey();
+            // logD("tile:" + nextTileKey);
+            if (nextTileKey == null) {
+                // we are finished the z layer, move on to the next
+                return true;
+            }
+
+            // only add it if it's not already present
+            if (seedingInProgressTiles.indexOf(nextTileKey) > -1) {
+                // logD("already had it");
+                continue;
+            }
+
+            // logD("adding");
+            // we might already have the tile in the storage cache, queue it up anyway so we reach our terminating condition faster
+            seedingInProgressTiles.add(nextTileKey);
+            tileCache.seedTileToStorage(nextTileKey);
         }
 
-        return false;
+        return false; // only the for loop may return that we are completed
     }
 
+    (:storage)
+    function removeFromSeedingInProgressTilesAndSeedThem() as Void {
+        var tileCache = getApp()._breadcrumbContext.tileCache;
+        var toRemove = [];
+        for (var i = 0; i < seedingInProgressTiles.size(); ++i) {
+            var item = seedingInProgressTiles[i];
+
+            if (tileCache._storageTileCache.haveTile(item)) {
+                toRemove.add(item);
+            }
+        }
+
+        for (var i = 0; i < toRemove.size(); ++i) {
+            var item = toRemove[i];
+            seedingInProgressTiles.remove(item as TileKey);
+        }
+
+        for (var i = 0; i < seedingInProgressTiles.size(); ++i) {
+            var item = seedingInProgressTiles[i];
+            // we better request it again, it might not have reached the web handler before
+            tileCache.seedTileToStorage(item);
+        }
+    }
+
+    // todo: switch seedNextTilesToStorageBoundingBox over to use seedingInProgressTiles, so we can start tiles on the next layer before they are done
+    // and should also be using cached values for
+    // seedingFirstTileX = 0;
+    // seedingFirstTileY = 0;
+    // seedingLastTileX = 0;
+    // seedingLastTileY = 0;
     (:storage)
     function seedNextTilesToStorageBoundingBox() as Boolean {
         var tileWidthM = earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
@@ -1136,7 +1278,7 @@ class CachedValues {
         // * only fit the last 9 tiles in storage
         // * then we do not have all 10, so we will start again
         // ideally we would progress the storage seed based on the web handler responding with a tile
-        var maxTilesAtATime = 10;
+        var maxTilesAtATime = 50;
         maxTilesAtATime = minN(maxTilesAtATime, _settings.storageTileCacheSize);
 
         var tileStarted = 0;
@@ -1146,9 +1288,10 @@ class CachedValues {
                 x < lastTileX;
                 ++x
             ) {
-                ++tileStarted;
                 var tileKey = new TileKey(x, y, seedingZ);
-                tileCache.seedTileToStorage(tileKey);
+                if (tileCache.seedTileToStorage(tileKey)) {
+                    ++tileStarted;
+                }
 
                 if (tileStarted >= maxTilesAtATime) {
                     return false;
@@ -1219,8 +1362,14 @@ class CachedValues {
             "/" +
             points +
             " (" +
-            (seedingUpToRoutePoint.toFloat() / points).format("%.1f") +
-            "%)"
+            ((seedingUpToRoutePoint.toFloat() / points) * 100).format("%.1f") +
+            "%)\n" +
+            (seedingLastTileX - seedingFirstTileX) +
+            " X " +
+            (seedingLastTileY - seedingFirstTileY) +
+            " tiles (" +
+            _settings.storageSeedRouteDistanceM.format("%.1f") +
+            "m)"
         );
     }
 }

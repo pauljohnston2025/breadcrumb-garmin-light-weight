@@ -1050,13 +1050,15 @@ class TileCache {
 
     // seedTile puts the tile into memory, either by pulling from storage, or by runnung a web request
     // seedTileToStorage only puts the tile into storage
-    function seedTileToStorage(tileKey as TileKey) as Void {
+    // returns true if a tile seed was started, flase if we already have the tile
+    function seedTileToStorage(tileKey as TileKey) as Boolean {
         if (_storageTileCache.haveTile(tileKey)) {
             // we already have the tile (and it is not expired)
-            return;
+            return false;
         }
 
         startSeedTile(tileKey, true);
+        return true;
     }
 
     // reurns true if seed should stop and wait for next calculate (to prevent watchdog errors)
