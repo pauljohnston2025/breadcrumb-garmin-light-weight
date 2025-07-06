@@ -58,7 +58,8 @@ Determines if the curent latitude and longitide are displayed on the watch scree
 
 ### UI Mode
 
-There is an on screen ui that can be used to control different parts of the watch app, this ui can be hidden or entirely disabled.
+There is an on screen ui that can be used to control different parts of the watch app, this ui can be hidden or entirely disabled.  
+Note: There is a limitation on garmin that datafields can only receive tap events see [input-handling](https://developer.garmin.com/connect-iq/core-topics/input-handling/), this also means I cannot handle any physical button presses. All of the settings should be configurable from the companion app without using the onscreen ui.  
 
 Show On Top - Show the ui and the current state of everything its controlling  
 Hidden - Still responds to touch but does not display the current state  

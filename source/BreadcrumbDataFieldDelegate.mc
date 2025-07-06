@@ -11,11 +11,6 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
         _breadcrumbContext = breadcrumbContext;
     }
 
-    function onKey(keyEvent as WatchUi.KeyEvent) {
-        System.println("got key event: " + keyEvent.getKey()); // e.g. KEY_MENU = 7
-        return false;
-    }
-
     // see BreadcrumbDataFieldView if touch stops working
     function onTap(evt as WatchUi.ClickEvent) as Boolean {
         // System.println("got tap (x,y): (" + evt.getCoordinates()[0] + "," +
