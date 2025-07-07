@@ -1288,7 +1288,6 @@ class Settings {
         return routes[routeIndex]["enabled"] as Boolean;
     }
 
-    (:settingsView)
     function routeReversed(routeId as Number) as Boolean {
         var routeIndex = getRouteIndexById(routeId);
         if (routeIndex == null) {

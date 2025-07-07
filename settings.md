@@ -500,7 +500,7 @@ The maximum number of routes to store on the device, set to 1 if you want each n
 Id - The id of the route - read only  
 Name - Defaults to the route name that was added, but can be modified to anything you desire.  
 Enabled - If this route appears on any of the device screens, routes can be disabled so that multiple routes can be pre loaded and enabled when needed. eg. Day 1, Day 2.  
-Route Colour - The colour of the route.
+Route Colour - The colour of the route.  
 Reversed - To reverse the direction of the route.
 
 ---
