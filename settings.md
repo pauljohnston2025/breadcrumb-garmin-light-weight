@@ -126,7 +126,20 @@ No Buffer No Rotations - Same as Unbuffered Rotations mode but does not rotate t
 
 ### Center User Offset Y
 
-Offsets the users vertical position by a fraction of the screen size. Larger values will move the position further down the screen. eg. 0.5 - user in the middle, 0.75 user 3/4 of the way down the screen (near the bottom), 0.25 user near the top of the screen. Larger values are generally preferred, as it allow you to see more of the route in front of the users position. Beware though, moving the user from the center position can have implications on the number of tiles that need to be cached if using rotating [render modes](#render-mode) and [maps](#map-enabled). Furthermore since the virtual screen size is increased when using buffered rendering modes the app also needs to store a larger frame buffer in order to be able to rotate. The larger buffer, along with the larger number of tiles required, puts alot of strain on the graphics memory pool and it is quite easy to either crash the app or cause it to throw exceptions every time if the users offset is moved away from the center position. It is highly encouraged to thouroughly test the limits of the cache by panning around the map and looking at debug page to ensure the app is at full cache capacity to ensure no crashes occur with the values selected. On my venu2s I have found 56 companion app tiles (size: 64X64) to be the limit when using buffered rotation render mode and a user center offset of 0.7. When using image tiles (served straight to the watch) the limit will be much lower.          
+Offsets the users vertical position by a fraction of the screen size. Larger values will move the position further down the screen. eg. 0.5 - user in the middle, 0.75 user 3/4 of the way down the screen (near the bottom), 0.25 user near the top of the screen. Larger values are generally preferred, as it allow you to see more of the route in front of the users position. Beware though, moving the user from the center position can have implications on the number of tiles that need to be cached if using rotating [render modes](#render-mode) and [maps](#map-enabled). Furthermore since the virtual screen size is increased when using buffered rendering modes the app also needs to store a larger frame buffer in order to be able to rotate. The larger buffer, along with the larger number of tiles required, puts alot of strain on the graphics memory pool and it is quite easy to either crash the app or cause it to throw exceptions every time if the users offset is moved away from the center position. It is highly encouraged to thouroughly test the limits of the cache by panning around the map and looking at debug page to ensure the app is at full cache capacity to ensure no crashes occur with the values selected. On my venu2s I have found 56 companion app tiles (size: 64X64) to be the limit when using buffered rotation render mode and a user center offset of 0.7. When using image tiles (served straight to the watch) the limit will be much lower. It is receomended to use unbuffered rotation mode for any large offset from the center position (ie <0.25 or >0.75), but this has the downside of seeing the tile seams.  
+
+some math:  
+
+screen size: 360
+offset: 0.75
+virtual screen size (buffered bitmap size): 0.75*360*2 = 540
+tile size: 64*64
+require tile cache size just to fill one buffered bitmap: ceil(540/64)^2 = 81
+
+
+Redoing the math for offset 0.6 the required cache size is just 49 tiles.
+
+Of course different zoom levels and scaled tile size will result in each tile taking up more/less of the space than 64, but its a generally good guage of how large the cache needs to be.
 
 ---
 

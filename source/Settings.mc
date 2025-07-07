@@ -382,7 +382,7 @@ class Settings {
     // saw a crash around 513 tiles, which would be from our internal array StorageTileCache._tilesInStorage
     var storageTileCacheSize as Number = 350;
     var storageSeedBoundingBox as Boolean = false; // seed entire bounding box
-    var storageSeedRouteDistanceM as Float = 30f; // if seeding based on route (storageSeedBoundingBox = false) seed this far around the route
+    var storageSeedRouteDistanceM as Float = 10f; // if seeding based on route (storageSeedBoundingBox = false) seed this far around the route
 
     var trackColour as Number = Graphics.COLOR_GREEN;
     var elevationColour as Number = Graphics.COLOR_ORANGE;

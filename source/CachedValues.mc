@@ -123,8 +123,6 @@ class CachedValues {
     var virtualScreenHeight as Float = System.getDeviceSettings().screenHeight.toFloat();
     var minVirtualScreenDim as Float = minF(virtualScreenWidth, virtualScreenHeight);
     var maxVirtualScreenDim as Float = maxF(virtualScreenWidth, virtualScreenHeight);
-    var xHalfVirtual as Float = virtualScreenWidth / 2f;
-    var yHalfVirtual as Float = virtualScreenHeight / 2f;
     var bufferedBitmapOffsetX as Float = -(maxVirtualScreenDim - physicalScreenWidth) / 2f;
     var bufferedBitmapOffsetY as Float = 0f; // only neeed for buffered rotation mode, with user offset values less than 0.5
     var rotateAroundScreenX as Float = physicalScreenWidth / 2f;
@@ -443,24 +441,26 @@ class CachedValues {
 
     function updateVirtualScreenSize() as Void {
         virtualScreenWidth = physicalScreenWidth; // always the same, just using naming for consistency
-        if (_settings.centerUserOffsetY >= 0.5) {
-            virtualScreenHeight = physicalScreenHeight * _settings.centerUserOffsetY * 2;
+        if (_settings.renderMode == RENDER_MODE_BUFFERED_ROTATING) {
+            if (_settings.centerUserOffsetY >= 0.5) {
+                virtualScreenHeight = physicalScreenHeight * _settings.centerUserOffsetY * 2;
+            } else {
+                virtualScreenHeight =
+                    (physicalScreenHeight - physicalScreenHeight * _settings.centerUserOffsetY) * 2;
+            }
         } else {
-            virtualScreenHeight =
-                (physicalScreenHeight - physicalScreenHeight * _settings.centerUserOffsetY) * 2;
+            virtualScreenHeight = physicalScreenHeight;
         }
 
         minVirtualScreenDim = minF(virtualScreenWidth, virtualScreenHeight);
         maxVirtualScreenDim = maxF(virtualScreenWidth, virtualScreenHeight);
-        xHalfVirtual = virtualScreenWidth / 2f;
-        yHalfVirtual = virtualScreenHeight / 2f;
 
         updateUserRotationElements();
     }
 
     function updateUserRotationElements() as Void {
         if (currentlyZoomingAroundUser) {
-            rotateAroundScreenX = xHalfVirtual;
+            rotateAroundScreenX = virtualScreenWidth / 2f;
             rotateAroundScreenY = physicalScreenHeight * _settings.centerUserOffsetY;
             rotateAroundMinScreenDim = minVirtualScreenDim;
             rotateAroundMaxScreenDim = maxVirtualScreenDim;
