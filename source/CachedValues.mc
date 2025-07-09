@@ -441,7 +441,10 @@ class CachedValues {
 
     function updateVirtualScreenSize() as Void {
         virtualScreenWidth = physicalScreenWidth; // always the same, just using naming for consistency
-        if (_settings.renderMode == RENDER_MODE_BUFFERED_ROTATING) {
+        if (
+            _settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
+            _settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING
+        ) {
             if (_settings.centerUserOffsetY >= 0.5) {
                 virtualScreenHeight = physicalScreenHeight * _settings.centerUserOffsetY * 2;
             } else {
