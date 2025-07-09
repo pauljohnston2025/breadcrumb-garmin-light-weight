@@ -349,55 +349,86 @@ class MapRenderer {
                     incNativeColourFormatErrorIfMessageMatches(message);
                 }
                 if (_settings.showTileBorders) {
-                    // we have to manually draw rotated lines, since we cannot draw to a buffered bitmap (taking up too much memory)
-                    // we could probably avoid drawing 2 wher ethe tiles overlap, but then have to handle the outer tiles diferently
-                    // its only a debug settings in a rarely used mode, so fine to do multiple draws
-                    var tlX = tileOffsetX + x * tileScalePixelSize;
-                    var tlY = tileOffsetY + y * tileScalePixelSize;
-                    var trX = tlX + tileScalePixelSize;
-                    var trY = tlY;
-
-                    var blX = tlX;
-                    var blY = tlY + tileScalePixelSize;
-                    var brX = trX;
-                    var brY = blY;
-
-                    var tlUnrotatedX = tlX - bufferedBitmapOffsetX;
-                    var tlUnrotatedY = tlY - bufferedBitmapOffsetY;
-                    var tlRotatedX =
-                        rotateAroundScreenX + rotateCosNeg * tlUnrotatedX - rotateSinNeg * tlUnrotatedY;
-                    var tlRotatedY =
-                        rotateAroundScreenY + (rotateSinNeg * tlUnrotatedX + rotateCosNeg * tlUnrotatedY);
-
-                    var trUnrotatedX = trX - bufferedBitmapOffsetX;
-                    var trUnrotatedY = trY - bufferedBitmapOffsetY;
-                    var trRotatedX =
-                        rotateAroundScreenX + rotateCosNeg * trUnrotatedX - rotateSinNeg * trUnrotatedY;
-                    var trRotatedY =
-                        rotateAroundScreenY + (rotateSinNeg * trUnrotatedX + rotateCosNeg * trUnrotatedY);
-
-                    var blUnrotatedX = blX - bufferedBitmapOffsetX;
-                    var blUnrotatedY = blY - bufferedBitmapOffsetY;
-                    var blRotatedX =
-                        rotateAroundScreenX + rotateCosNeg * blUnrotatedX - rotateSinNeg * blUnrotatedY;
-                    var blRotatedY =
-                        rotateAroundScreenY + (rotateSinNeg * blUnrotatedX + rotateCosNeg * blUnrotatedY);
-
-                    var brUnrotatedX = brX - bufferedBitmapOffsetX;
-                    var brUnrotatedY = brY - bufferedBitmapOffsetY;
-                    var brRotatedX =
-                        rotateAroundScreenX + rotateCosNeg * brUnrotatedX - rotateSinNeg * brUnrotatedY;
-                    var brRotatedY =
-                        rotateAroundScreenY + (rotateSinNeg * brUnrotatedX + rotateCosNeg * brUnrotatedY);
-
-                    // draw our 4 lines
-                    dc.drawLine(tlRotatedX, tlRotatedY, trRotatedX, trRotatedY);
-                    dc.drawLine(trRotatedX, trRotatedY, brRotatedX, brRotatedY);
-                    dc.drawLine(brRotatedX, brRotatedY, blRotatedX, blRotatedY);
-                    dc.drawLine(blRotatedX, blRotatedY, tlRotatedX, tlRotatedY);
+                    drawTileBorders(
+                        dc,
+                        x,
+                        y,
+                        tileOffsetX,
+                        tileOffsetY,
+                        tileScalePixelSize,
+                        rotateSinNeg,
+                        rotateCosNeg,
+                        bufferedBitmapOffsetX,
+                        bufferedBitmapOffsetY,
+                        rotateAroundScreenX,
+                        rotateAroundScreenY
+                    );
                 }
             }
         }
+    }
+
+    (:unbufferedRotations)
+    function drawTileBorders(
+        dc as Dc,
+        x as Number,
+        y as Number,
+        tileOffsetX as Number,
+        tileOffsetY as Number,
+        tileScalePixelSize as Number,
+        rotateSinNeg as Decimal,
+        rotateCosNeg as Decimal,
+        bufferedBitmapOffsetX as Float,
+        bufferedBitmapOffsetY as Float,
+        rotateAroundScreenX as Float,
+        rotateAroundScreenY as Float
+    ) as Void {
+        // we have to manually draw rotated lines, since we cannot draw to a buffered bitmap (taking up too much memory)
+        // we could probably avoid drawing 2 wher ethe tiles overlap, but then have to handle the outer tiles diferently
+        // its only a debug settings in a rarely used mode, so fine to do multiple draws
+        var tlX = tileOffsetX + x * tileScalePixelSize;
+        var tlY = tileOffsetY + y * tileScalePixelSize;
+        var trX = tlX + tileScalePixelSize;
+        var trY = tlY;
+
+        var blX = tlX;
+        var blY = tlY + tileScalePixelSize;
+        var brX = trX;
+        var brY = blY;
+
+        var tlUnrotatedX = tlX - bufferedBitmapOffsetX;
+        var tlUnrotatedY = tlY - bufferedBitmapOffsetY;
+        var tlRotatedX =
+            rotateAroundScreenX + rotateCosNeg * tlUnrotatedX - rotateSinNeg * tlUnrotatedY;
+        var tlRotatedY =
+            rotateAroundScreenY + (rotateSinNeg * tlUnrotatedX + rotateCosNeg * tlUnrotatedY);
+
+        var trUnrotatedX = trX - bufferedBitmapOffsetX;
+        var trUnrotatedY = trY - bufferedBitmapOffsetY;
+        var trRotatedX =
+            rotateAroundScreenX + rotateCosNeg * trUnrotatedX - rotateSinNeg * trUnrotatedY;
+        var trRotatedY =
+            rotateAroundScreenY + (rotateSinNeg * trUnrotatedX + rotateCosNeg * trUnrotatedY);
+
+        var blUnrotatedX = blX - bufferedBitmapOffsetX;
+        var blUnrotatedY = blY - bufferedBitmapOffsetY;
+        var blRotatedX =
+            rotateAroundScreenX + rotateCosNeg * blUnrotatedX - rotateSinNeg * blUnrotatedY;
+        var blRotatedY =
+            rotateAroundScreenY + (rotateSinNeg * blUnrotatedX + rotateCosNeg * blUnrotatedY);
+
+        var brUnrotatedX = brX - bufferedBitmapOffsetX;
+        var brUnrotatedY = brY - bufferedBitmapOffsetY;
+        var brRotatedX =
+            rotateAroundScreenX + rotateCosNeg * brUnrotatedX - rotateSinNeg * brUnrotatedY;
+        var brRotatedY =
+            rotateAroundScreenY + (rotateSinNeg * brUnrotatedX + rotateCosNeg * brUnrotatedY);
+
+        // draw our 4 lines
+        dc.drawLine(tlRotatedX, tlRotatedY, trRotatedX, trRotatedY);
+        dc.drawLine(trRotatedX, trRotatedY, brRotatedX, brRotatedY);
+        dc.drawLine(brRotatedX, brRotatedY, blRotatedX, blRotatedY);
+        dc.drawLine(blRotatedX, blRotatedY, tlRotatedX, tlRotatedY);
     }
 
     function badTileSize(dc as Dc) as Void {

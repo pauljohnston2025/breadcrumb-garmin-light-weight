@@ -398,7 +398,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             return;
         }
 
-        renderMain(dc);
+        if (settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING) {
+            renderUnbufferedRotating(dc);
+        } else {
+            renderMain(dc);
+        }
 
         var routes = _breadcrumbContext.routes;
 
@@ -525,7 +529,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     });
                 } else {
                     // todo make buffered no rotation mode have a smaller buffer size (we can draw to it the same as dc if its set to the physical screen size)
-                    dc.drawBitmap(_cachedValues.bufferedBitmapOffsetX, _cachedValues.bufferedBitmapOffsetY, scratchPadBitmapLocal);
+                    dc.drawBitmap(
+                        _cachedValues.bufferedBitmapOffsetX,
+                        _cachedValues.bufferedBitmapOffsetY,
+                        scratchPadBitmapLocal
+                    );
                 }
             } catch (e) {
                 var message = e.getErrorMessage();
@@ -536,28 +544,22 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             return;
         }
 
-        if (settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING) {
-            renderUnbufferedRotating(dc, routes, track);
-            return;
-        }
-
         // RENDER_MODE_UNBUFFERED_NO_ROTATION
         rederUnrotated(dc, routes, track);
     }
 
     (:noUnbufferedRotations)
     function renderUnbufferedRotating(
-        dc as Dc,
-        routes as Array<BreadcrumbTrack>,
-        track as BreadcrumbTrack
+        dc as Dc
     ) as Void {}
 
     (:unbufferedRotations)
     function renderUnbufferedRotating(
-        dc as Dc,
-        routes as Array<BreadcrumbTrack>,
-        track as BreadcrumbTrack
+        dc as Dc
     ) as Void {
+        var routes = _breadcrumbContext.routes;
+            var track = _breadcrumbContext.track;
+            
         var mapRenderer = _breadcrumbContext.mapRenderer;
         var renderer = _breadcrumbContext.breadcrumbRenderer;
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
