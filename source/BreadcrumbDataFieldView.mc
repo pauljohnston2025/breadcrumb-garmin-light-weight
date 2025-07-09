@@ -549,17 +549,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
 
     (:noUnbufferedRotations)
-    function renderUnbufferedRotating(
-        dc as Dc
-    ) as Void {}
+    function renderUnbufferedRotating(dc as Dc) as Void {}
 
     (:unbufferedRotations)
-    function renderUnbufferedRotating(
-        dc as Dc
-    ) as Void {
+    function renderUnbufferedRotating(dc as Dc) as Void {
         var routes = _breadcrumbContext.routes;
-            var track = _breadcrumbContext.track;
-            
+        var track = _breadcrumbContext.track;
+
         var mapRenderer = _breadcrumbContext.mapRenderer;
         var renderer = _breadcrumbContext.breadcrumbRenderer;
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
