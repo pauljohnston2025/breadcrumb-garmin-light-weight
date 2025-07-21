@@ -1225,12 +1225,6 @@ class Settings {
     }
 
     (:settingsView)
-    function setScaleRestrictedToTileLayers(value as Boolean) as Void {
-        _scaleRestrictedToTileLayers = value;
-        setValue("scaleRestrictedToTileLayers", _scaleRestrictedToTileLayers);
-    }
-
-    (:settingsView)
     function setDisplayRouteNames(_displayRouteNames as Boolean) as Void {
         displayRouteNames = _displayRouteNames;
         setValue("displayRouteNames", displayRouteNames);
@@ -1489,82 +1483,86 @@ class Settings {
     }
 
     (:settingsView)
-    function toggleSimple(key as String, value as Boolean) as Boolean {
-        setValue(key, value);
-        return value;
-    }
-
-    (:settingsView)
     function toggleStorageSeedBoundingBox() as Void {
-        storageSeedBoundingBox = toggleSimple("storageSeedBoundingBox", !storageSeedBoundingBox);
+        storageSeedBoundingBox = !storageSeedBoundingBox;
+        setValue("storageSeedBoundingBox", storageSeedBoundingBox);
     }
     (:settingsView)
     function toggleCacheTilesInStorage() as Void {
-        cacheTilesInStorage = toggleSimple("cacheTilesInStorage", !cacheTilesInStorage);
+        cacheTilesInStorage = !cacheTilesInStorage;
+        setValue("cacheTilesInStorage", cacheTilesInStorage);
         tileServerPropChanged();
     }
     (:settingsView)
     function toggleStorageMapTilesOnly() as Void {
-        storageMapTilesOnly = toggleSimple("storageMapTilesOnly", !storageMapTilesOnly);
+        storageMapTilesOnly = !storageMapTilesOnly;
+        setValue("storageMapTilesOnly", storageMapTilesOnly);
     }
     (:settingsView)
     function toggleDrawLineToClosestPoint() as Void {
-        drawLineToClosestPoint = toggleSimple("drawLineToClosestPoint", !drawLineToClosestPoint);
+        drawLineToClosestPoint = !drawLineToClosestPoint;
+        setValue("drawLineToClosestPoint", drawLineToClosestPoint);
     }
     (:settingsView)
     function toggleShowPoints() as Void {
-        showPoints = toggleSimple("showPoints", !showPoints);
+        showPoints = !showPoints;
+        setValue("showPoints", showPoints);
     }
     (:settingsView)
     function toggleDrawLineToClosestTrack() as Void {
-        drawLineToClosestTrack = toggleSimple("drawLineToClosestTrack", !drawLineToClosestTrack);
+        drawLineToClosestTrack = !drawLineToClosestTrack;
+        setValue("drawLineToClosestTrack", drawLineToClosestTrack);
     }
     (:settingsView)
     function toggleShowTileBorders() as Void {
-        showTileBorders = toggleSimple("showTileBorders", !showTileBorders);
+        showTileBorders = !showTileBorders;
+        setValue("showTileBorders", showTileBorders);
     }
     (:settingsView)
     function toggleShowErrorTileMessages() as Void {
-        showErrorTileMessages = toggleSimple("showErrorTileMessages", !showErrorTileMessages);
+        showErrorTileMessages = !showErrorTileMessages;
+        setValue("showErrorTileMessages", showErrorTileMessages);
         getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // remove the errored tiles from cache and redraw
     }
     (:settingsView)
     function toggleIncludeDebugPageInOnScreenUi() as Void {
-        includeDebugPageInOnScreenUi = toggleSimple(
-            "includeDebugPageInOnScreenUi",
-            !includeDebugPageInOnScreenUi
-        );
+        includeDebugPageInOnScreenUi = !includeDebugPageInOnScreenUi;
+        setValue( "includeDebugPageInOnScreenUi", includeDebugPageInOnScreenUi);
     }
     (:settingsView)
     function toggleDisplayLatLong() as Void {
-        displayLatLong = toggleSimple("displayLatLong", !displayLatLong);
+        displayLatLong = !displayLatLong;
+        setValue("displayLatLong", displayLatLong);
     }
     (:settingsView)
     function toggleScaleRestrictedToTileLayers() as Void {
-        _scaleRestrictedToTileLayers = toggleSimple(
-            "scaleRestrictedToTileLayers",
-            !_scaleRestrictedToTileLayers
-        );
+        _scaleRestrictedToTileLayers = !_scaleRestrictedToTileLayers;
+        setValue("scaleRestrictedToTileLayers", _scaleRestrictedToTileLayers);
     }
     (:settingsView)
     function toggleDisplayRouteNames() as Void {
-        displayRouteNames = toggleSimple("displayRouteNames", !displayRouteNames);
+        displayRouteNames = !displayRouteNames;
+        setValue("displayRouteNames", displayRouteNames);
     }
     (:settingsView)
     function toggleEnableOffTrackAlerts() as Void {
-        enableOffTrackAlerts = toggleSimple("enableOffTrackAlerts", !enableOffTrackAlerts);
+        enableOffTrackAlerts = !enableOffTrackAlerts;
+        setValue("enableOffTrackAlerts", enableOffTrackAlerts);
     }
     (:settingsView)
     function toggleOffTrackWrongDirection() as Void {
-        offTrackWrongDirection = toggleSimple("offTrackWrongDirection", !offTrackWrongDirection);
+        offTrackWrongDirection = !offTrackWrongDirection;
+        setValue("offTrackWrongDirection", offTrackWrongDirection);
     }
     (:settingsView)
     function toggleDrawCheverons() as Void {
-        drawCheverons = toggleSimple("drawCheverons", !drawCheverons);
+        drawCheverons = !drawCheverons;
+        setValue("drawCheverons", drawCheverons);
     }
     (:settingsView)
     function toggleRoutesEnabled() as Void {
-        routesEnabled = toggleSimple("routesEnabled", !routesEnabled);
+        routesEnabled = !routesEnabled;
+        setValue("routesEnabled", routesEnabled);
     }
 
     function nextMode() as Void {
