@@ -155,6 +155,10 @@
                 <listEntry value="26">@Strings.cartoVoyager</listEntry>
                 <listEntry value="27">@Strings.cartoDarkMatter</listEntry>
                 <listEntry value="28">@Strings.cartoDarkLightAll</listEntry>
+                <listEntry value="29">@Strings.mapyBasic</listEntry>
+                <listEntry value="30">@Strings.mapyOutdoor</listEntry>
+                <listEntry value="31">@Strings.mapyWinter</listEntry>
+                <listEntry value="32">@Strings.mapyAerial</listEntry>
             </settingConfig>
         </setting>
         <setting propertyKey="@Properties.tileUrl" title="@Strings.tileUrlTitle" prompt="@Strings.tileUrlPrompt">

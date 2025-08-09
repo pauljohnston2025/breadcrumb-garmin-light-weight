@@ -52,12 +52,13 @@ enum /*RenderMode*/ {
 }
 
 enum /*AttributionType*/ {
-    ATTRIBUTION_GOOGLE,
-    ATTRIBUTION_OPENTOPOMAP,
+    /*ATTRIBUTION_GOOGLE,*/
+    ATTRIBUTION_OPENTOPOMAP = 1,
     ATTRIBUTION_ESRI,
     ATTRIBUTION_OPENSTREETMAP,
     ATTRIBUTION_STADIA,
     ATTRIBUTION_CARTO,
+    ATTRIBUTION_MAPY,
 }
 
 enum /*UrlPrefix*/ {
@@ -65,12 +66,13 @@ enum /*UrlPrefix*/ {
     URL_PREFIX_ESRI,
     URL_PREFIX_STADIA,
     URL_PREFIX_CARTO,
+    URL_PREFIX_MAPY,
 }
 
 enum /*AuthTokenType*/ {
     AUTH_TOKEN_TYPE_NONE,
     AUTH_TOKEN_TYPE_STADIA,
-    AUTH_TOKEN_TYPE_CARTO,
+    AUTH_TOKEN_TYPE_MAPY,
 }
 
 const COMPANION_APP_TILE_URL = "http://127.0.0.1:8080";
@@ -110,6 +112,8 @@ function getUrlPrefix(prefix as Number) as String {
         return WatchUi.loadResource(Rez.Strings.stadiaPrefix) as String;
     } else if (prefix == URL_PREFIX_CARTO) {
         return WatchUi.loadResource(Rez.Strings.cartoPrefix) as String;
+    } else if (prefix == URL_PREFIX_MAPY) {
+        return WatchUi.loadResource(Rez.Strings.mapyPrefix) as String;
     }
 
     return "";
@@ -122,6 +126,8 @@ function getAuthTokenSuffix(type as Number) as String {
             return "";
         case AUTH_TOKEN_TYPE_STADIA:
             return "?api_key={authToken}";
+        case AUTH_TOKEN_TYPE_MAPY:
+            return "?apiKey={authToken}";
     }
 
     return "";
@@ -208,6 +214,15 @@ function getTileServerInfo(id as Number) as TileServerInfo? {
             return new TileServerInfo(ATTRIBUTION_CARTO, URL_PREFIX_CARTO, AUTH_TOKEN_TYPE_NONE, Rez.Strings.cartoDarkMatterTemplate, 0, 20); // Carto - Dark Matter
         case 28:
             return new TileServerInfo(ATTRIBUTION_CARTO, URL_PREFIX_CARTO, AUTH_TOKEN_TYPE_NONE, Rez.Strings.cartoLightAllTemplate, 0, 20); // Carto - Light All
+        case 29:
+            // Mapy
+            return new TileServerInfo(ATTRIBUTION_MAPY, URL_PREFIX_MAPY, AUTH_TOKEN_TYPE_MAPY, Rez.Strings.mapyBasicTemplate, 0, 19); // Mapy - Basic
+        case 30:
+            return new TileServerInfo(ATTRIBUTION_MAPY, URL_PREFIX_MAPY, AUTH_TOKEN_TYPE_MAPY, Rez.Strings.mapyOutdoorTemplate, 0, 19); // Mapy - Outdoor
+        case 31:
+            return new TileServerInfo(ATTRIBUTION_MAPY, URL_PREFIX_MAPY, AUTH_TOKEN_TYPE_MAPY, Rez.Strings.mapyWinterTemplate, 0, 19); // Mapy - Winter
+        case 32:
+            return new TileServerInfo(ATTRIBUTION_MAPY, URL_PREFIX_MAPY, AUTH_TOKEN_TYPE_MAPY, Rez.Strings.mapyAerialTemplate, 0, 13); // Mapy - Aerial
     }
     return null;
 }
@@ -648,10 +663,6 @@ class Settings {
 
         if (tileServerInfo.attributionType != attributionImageType) {
             switch (tileServerInfo.attributionType) {
-                case ATTRIBUTION_GOOGLE:
-                    attributionImage =
-                        WatchUi.loadResource(Rez.Drawables.GoogleAttribution) as BitmapResource;
-                    break;
                 case ATTRIBUTION_OPENTOPOMAP:
                     attributionImage =
                         WatchUi.loadResource(Rez.Drawables.OpenTopMapAttribution) as BitmapResource;
@@ -672,6 +683,10 @@ class Settings {
                 case ATTRIBUTION_CARTO:
                     attributionImage =
                         WatchUi.loadResource(Rez.Drawables.CartoAttribution) as BitmapResource;
+                    break;
+                case ATTRIBUTION_MAPY:
+                    attributionImage =
+                        WatchUi.loadResource(Rez.Drawables.MapyAttribution) as BitmapResource;
                     break;
             }
         }

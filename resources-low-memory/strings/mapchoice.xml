@@ -1,16 +1,5 @@
 <strings>
-    <string id="attribution">Attribution</string>
-    <string id="openTopoMapAttribution">OpenTopoMap</string>
-    <string id="googleAttribution">Google</string>
-    <string id="esriAttribution">Powered by Esri</string>
-    <string id="openStreetmapAttribution">OpenStreetMap</string>
-    <string id="stadiaAttribution">Stadia Maps</string>
-    <string id="openmaptilesAttribution">OpenMapTiles</string>
-    <string id="cartoAttribution">CARTO</string>
-
     <string id="esriPrefix">https://server.arcgisonline.com/arcgis/rest/services/</string>
-    <string id="stadiaPrefix">https://tiles.stadiamaps.com/tiles/</string>
-    <string id="cartoPrefix">https://a.basemaps.cartocdn.com/rastertiles/</string>
 
     <string id="openTopoMapUrlTemplate">https://a.tile.opentopomap.org/{z}/{x}/{y}.png</string>
     <string id="esriWorldImageryTemplate">World_Imagery/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>

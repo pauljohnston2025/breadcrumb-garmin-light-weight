@@ -1,16 +1,17 @@
 <strings>
     <string id="attribution">Attribution</string>
     <string id="openTopoMapAttribution">OpenTopoMap</string>
-    <string id="googleAttribution">Google</string>
     <string id="esriAttribution">Powered by Esri</string>
     <string id="openStreetmapAttribution">OpenStreetMap</string>
     <string id="stadiaAttribution">Stadia Maps</string>
     <string id="openmaptilesAttribution">OpenMapTiles</string>
     <string id="cartoAttribution">CARTO</string>
+    <string id="mapyAttribution">MAPY</string>
 
     <string id="esriPrefix">https://server.arcgisonline.com/arcgis/rest/services/</string>
     <string id="stadiaPrefix">https://tiles.stadiamaps.com/tiles/</string>
     <string id="cartoPrefix">https://a.basemaps.cartocdn.com/rastertiles/</string>
+    <string id="mapyPrefix">https://api.mapy.com/v1/maptiles/</string>
 
     <string id="openTopoMapUrlTemplate">https://a.tile.opentopomap.org/{z}/{x}/{y}.png</string>
     <string id="esriWorldImageryTemplate">World_Imagery/MapServer/tile/{z}/{y}/{x}?blankTile=false</string>
@@ -39,6 +40,10 @@
     <string id="cartoVoyagerTemplate">voyager/{z}/{x}/{y}.png</string>
     <string id="cartoDarkMatterTemplate">dark_all/{z}/{x}/{y}.png</string>
     <string id="cartoLightAllTemplate">light_all/{z}/{x}/{y}.png</string>
+    <string id="mapyBasicTemplate">basic/256/{z}/{x}/{y}</string>
+    <string id="mapyOutdoorTemplate">outdoor/256/{z}/{x}/{y}</string>
+    <string id="mapyWinterTemplate">winter/256/{z}/{x}/{y}</string>
+    <string id="mapyAerialTemplate">aerial/256/{z}/{x}/{y}</string>
 
 
     <string id="enableMaps1">Enable maps. This breaks on some devices. Are you sure?</string>
@@ -53,5 +58,34 @@
     <string id="clearRoutes1">Clearing all routes, are you sure?</string>
     <string id="clearRoutes2">Confirm route clear</string>
     <string id="clearRoutes3">Clearing all routes, LAST CHANCE!!!</string>
+
+    <string id="companionApp">Companion App</string>
+    <string id="esriWorldTransportation">Esri - World Transportation</string>
+    <string id="esriWorldDarkGrayBase">Esri - World Dark Gray Base</string>
+    <string id="esriWorldHillshade">Esri - World Hillshade</string>
+    <string id="esriWorldHillshadeDark">Esri - World Hillshade Dark</string>
+    <string id="esriWorldLightGrayBase">Esri - World Light Gray Base</string>
+    <string id="esriUSATopoMaps">Esri - USA Topo Maps</string>
+    <string id="esriWorldOceanBase">Esri - World Ocean Base</string>
+    <string id="esriWorldShadedRelief">Esri - World Shaded Relief</string>
+    <string id="esriNatGeoWorldMap">Esri - NatGeo World Map</string>
+    <string id="esriWorldNavigationCharts">Esri - World Navigation Charts</string>
+    <string id="esriWorldPhysicalMap">Esri - World Physical Map</string>
+    <string id="openStreetMapcyclosm">OpenStreetMap - Cyclosm</string>
+    <string id="stadiaAlidadeSmooth">Stadia - Alidade Smooth (auth required)</string>
+    <string id="stadiaAlidadeSmoothDark">Stadia - Alidade Smooth Dark (auth required)</string>
+    <string id="stadiaOutdoors">Stadia - Outdoors (auth required)</string>
+    <string id="stadiaStamenToner">Stadia - Stamen Toner (auth required)</string>
+    <string id="stadiaStamenTonerLite">Stadia - Stamen Toner Lite (auth required)</string>
+    <string id="stadiaStamenTerrain">Stadia - Stamen Terrain (auth required)</string>
+    <string id="stadiaStamenWatercolor">Stadia - Stamen Watercolor (auth required)</string>
+    <string id="stadiaOSMBright">Stadia - OSM Bright (auth required)</string>
+    <string id="cartoVoyager">Carto - Voyager</string>
+    <string id="cartoDarkMatter">Carto - Dark Matter</string>
+    <string id="cartoDarkLightAll">Carto - Light All</string>
+    <string id="mapyBasic">Mapy - Basic (auth required)</string>
+    <string id="mapyOutdoor">Mapy - Outdoor (auth required)</string>
+    <string id="mapyWinter">Mapy - Winter (auth required)</string>
+    <string id="mapyAerial">Mapy - Aerial (auth required)</string>
     
 </strings>

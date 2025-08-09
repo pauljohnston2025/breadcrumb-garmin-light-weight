@@ -28,6 +28,10 @@
     <menu-item id="settingsMapChoiceCartoVoyager" label="@Strings.cartoVoyager"/>
     <menu-item id="settingsMapChoiceCartoDarkMatter" label="@Strings.cartoDarkMatter"/>
     <menu-item id="settingsMapChoiceCartoDarkLightAll" label="@Strings.cartoDarkLightAll"/>
+    <menu-item id="settingsMapChoiceMapyBasic" label="@Strings.mapyBasic"/>
+    <menu-item id="settingsMapChoiceMapyOutdoor" label="@Strings.mapyOutdoor"/>
+    <menu-item id="settingsMapChoiceMapyWinter" label="@Strings.mapyWinter"/>
+    <menu-item id="settingsMapChoiceMapyAerial" label="@Strings.mapyAerial"/>
 </menu2>
 
 

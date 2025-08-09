@@ -494,6 +494,18 @@ class SettingsTileServer extends Rez.Menus.SettingsTileServer {
             case 28:
                 mapChoiceString = Rez.Strings.cartoDarkLightAll;
                 break;
+            case 29:
+                mapChoiceString = Rez.Strings.mapyBasic;
+                break;
+            case 30:
+                mapChoiceString = Rez.Strings.mapyOutdoor;
+                break;
+            case 31:
+                mapChoiceString = Rez.Strings.mapyWinter;
+                break;
+            case 32:
+                mapChoiceString = Rez.Strings.mapyAerial;
+                break;
         }
         safeSetSubLabel(me, :settingsMapChoice, mapChoiceString);
         safeSetSubLabel(me, :settingsTileUrl, settings.tileUrl);
@@ -1208,6 +1220,18 @@ class SettingsMapChoiceDelegate extends WatchUi.Menu2InputDelegate {
             case :settingsMapChoiceCartoDarkLightAll:
                 settings.setMapChoice(28);
                 break;
+            case :settingsMapChoiceMapyBasic:
+                settings.setMapChoice(29);
+                break;
+            case :settingsMapChoiceMapyOutdoor:
+                settings.setMapChoice(30);
+                break;
+            case :settingsMapChoiceMapyWinter:
+                settings.setMapChoice(31);
+                break;
+            case :settingsMapChoiceMapyAerial:
+                settings.setMapChoice(32);
+                break;
         }
 
         parent.rerender();
@@ -1272,6 +1296,9 @@ class SettingsMapAttributionDelegate extends WatchUi.Menu2InputDelegate {
                 break;
             case :settingsMapAttributionCarto:
                 Communications.openWebPage("https://carto.com/attributions/", {}, {});
+                break;
+            case :settingsMapAttributionMapy:
+                Communications.openWebPage("https://mapy.com/", {}, {});
                 break;
         }
 

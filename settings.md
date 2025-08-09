@@ -323,7 +323,8 @@ Light All: https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png
 ### Auth Token
 
 The tile url can also include an auth token, that will be filled out from the Auth Token property eg. `?api_key={authToken}`. This is required for some map choices.  
-For details on creating an account and auth token for stadia map choices please see https://docs.stadiamaps.com/
+For details on creating an account and auth token for stadia map choices please see https://docs.stadiamaps.com/  
+For details on creating an account and auth token for mapy map choices please see https://developer.mapy.com/rest-api-mapy-cz/api-key/
 
 ### Tile Size
 
