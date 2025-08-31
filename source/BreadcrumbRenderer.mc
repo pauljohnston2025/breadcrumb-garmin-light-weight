@@ -407,6 +407,36 @@ class BreadcrumbRenderer {
             dc.fillCircle(x, y, 5);
         }
     }
+    
+    function renderTrackDirectionPointsUnrotated(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType
+    ) as Void {
+        var centerPosition = _cachedValues.centerPosition; // local lookup faster
+        var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
+        var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
+        var distance = _cachedValues.currentScale * settings.directionDistanceM; // local lookup faster
+
+        if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
+            // its very cofusing seeing the routes disappear when scrolling
+            // and it makes sense to want to sroll around the route too
+            return;
+        }
+
+        dc.setColor(colour, Graphics.COLOR_BLACK);
+        dc.setPenWidth(2);
+
+        var size = breadcrumb.directions.size();
+        var coordinatesRaw = breadcrumb.directions;
+
+        for (var i = 0; i < size; ++i) {
+            var x = rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i][0] - centerPosition.x);
+            var y = rotateAroundScreenYOffsetFactoredIn - (coordinatesRaw[i][1] - centerPosition.y);
+
+            dc.drawCircle(x, y, distance);
+        }
+    }
 
     const CHEVRON_SPREAD_RADIANS = 0.75;
     const CHEVRON_ARM_LENGTH = 15;
@@ -758,7 +788,7 @@ class BreadcrumbRenderer {
 
         var size = breadcrumb.coordinates.size();
         var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
-        for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
+        for (var i = 0; i < size; i += ARRAY_POINT_SIZE) {
             var nextX = coordinatesRaw[i];
             var nextY = coordinatesRaw[i + 1];
 
@@ -774,6 +804,56 @@ class BreadcrumbRenderer {
                 (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
 
             dc.fillCircle(x, y, 5);
+        }
+    }
+    
+    (:noUnbufferedRotations)
+    function renderTrackDirectionPoints(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType
+    ) as Void {}
+
+    (:unbufferedRotations)
+    function renderTrackDirectionPoints(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType
+    ) as Void {
+        var centerPosition = _cachedValues.centerPosition; // local lookup faster
+        var rotateCos = _cachedValues.rotateCos; // local lookup faster
+        var rotateSin = _cachedValues.rotateSin; // local lookup faster
+        var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
+        var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
+        var distance = _cachedValues.currentScale * settings.directionDistanceM; // local lookup faster
+
+        if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
+            // its very cofusing seeing the routes disappear when scrolling
+            // and it makes sense to want to sroll around the route too
+            return;
+        }
+
+        dc.setColor(colour, Graphics.COLOR_BLACK);
+        dc.setPenWidth(2);
+
+        var size = breadcrumb.directions.size();
+        var coordinatesRaw = breadcrumb.directions;
+        for (var i = 0; i < size; ++i) {
+            var nextX = coordinatesRaw[i][0];
+            var nextY = coordinatesRaw[i][1];
+
+            var nextXScaledAtCenter = nextX - centerPosition.x;
+            var nextYScaledAtCenter = nextY - centerPosition.y;
+
+            var x =
+                rotateAroundScreenXOffsetFactoredIn +
+                rotateCos * nextXScaledAtCenter -
+                rotateSin * nextYScaledAtCenter;
+            var y =
+                rotateAroundScreenYOffsetFactoredIn -
+                (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
+
+            dc.drawCircle(x, y, distance);
         }
     }
 

@@ -75,6 +75,9 @@ class BreadcrumbTrack {
     var storageIndex as Number = 0;
     var name as String;
     var coordinates as PointArray = new PointArray(); // SCALED (note: altitude is currently unscaled)
+    // todo check size of this, think array<array> will be bad for memory, and it should just be Array<Float> wher Array[0] = X1 Array[1] = Y1 etc. similar to the coordinates array
+    var directions as Array<[Float, Float, Float]> = [];
+    var lastDirectionIndex as Number = -1;
     var seenStartupPoints as Number = 0;
     var possibleBadPointsAdded as Number = 0;
     var inRestartMode as Boolean = true;
@@ -99,6 +102,9 @@ class BreadcrumbTrack {
         // distanceTotal  // we can't reverse the track, (the only one tracking distance total)
 
         coordinates.reversePoints();
+        // todo make the angle also reverse
+        directions = directions.reverse(); // take the memory hit of array doubling for now
+        lastDirectionIndex = -1;
         lastClosePoint = null; // we want to recalculate off track, since the cheveron direction will change
         writeToDisk(ROUTE_KEY); // write ourselves back to storage in reverse, so next time we load (on app restart) it is correct
     }
@@ -111,6 +117,11 @@ class BreadcrumbTrack {
         distanceTotal = distanceTotal * scaleFactor;
         boundingBoxCenter.rescaleInPlace(scaleFactor);
         coordinates.rescale(scaleFactor);
+        for (var i = 0; i < directions.size(); ++i) {
+            directions[i][0] = directions[i][0] * scaleFactor;
+            directions[i][1] = directions[i][1] * scaleFactor;
+            directions[i][2] = directions[i][2] * scaleFactor;
+        }
         if (lastClosePoint != null) {
             lastClosePoint.rescaleInPlace(scaleFactor);
         }
@@ -118,10 +129,15 @@ class BreadcrumbTrack {
         maxDistanceMScaled = maxDistanceMScaled * scaleFactor;
     }
 
-    function handleRouteV2(routeData as Array<Float>, cachedValues as CachedValues) as Boolean {
+    function handleRouteV2(
+        routeData as Array<Float>,
+        directions as Array<[Float, Float, Float]>,
+        cachedValues as CachedValues
+    ) as Boolean {
         // trust the app completely
         coordinates._internalArrayBuffer = routeData;
         coordinates._size = routeData.size();
+        me.directions = directions;
         // we could optimise this firther if the app rpovides us with biunding box, center max/min elevation
         // but it makes it really hard to add any more cached data to the route, that the companion app then has to send
         // by making these rectangular coordinates, we skip a huge amount of math converting them from lat/long
@@ -149,6 +165,7 @@ class BreadcrumbTrack {
                 key + "coords",
                 coordinates._internalArrayBuffer as Array<PropertyValueType>
             );
+            Storage.setValue(key + "directions", directions as Array<PropertyValueType>);
             Storage.setValue(key + "coordsSize", coordinates._size);
             Storage.setValue(key + "distanceTotal", distanceTotal);
             Storage.setValue(key + "elevationMin", elevationMin);
@@ -170,6 +187,7 @@ class BreadcrumbTrack {
         Storage.deleteValue(key + "bb");
         Storage.deleteValue(key + "bbc");
         Storage.deleteValue(key + "coords");
+        Storage.deleteValue(key + "directions");
         Storage.deleteValue(key + "coordsSize");
         Storage.deleteValue(key + "distanceTotal");
         Storage.deleteValue(key + "elevationMin");
@@ -197,6 +215,11 @@ class BreadcrumbTrack {
             var coordsSize = Storage.getValue(key + "coordsSize");
             if (coordsSize == null) {
                 return null;
+            }
+
+            var directions = Storage.getValue(key + "directions");
+            if (directions == null) {
+                directions = []; // back compat
             }
 
             var distanceTotal = Storage.getValue(key + "distanceTotal");
@@ -236,6 +259,7 @@ class BreadcrumbTrack {
             );
             track.coordinates._internalArrayBuffer = coords as Array<Float>;
             track.coordinates._size = coordsSize as Number;
+            track.directions = directions as Array<[Float, Float, Float]>;
             track.distanceTotal = distanceTotal as Float;
             track.elevationMin = elevationMin as Float;
             track.elevationMax = elevationMax as Float;
@@ -472,6 +496,55 @@ class BreadcrumbTrack {
         var yDist = pointP.y - closestY;
         var closestSegmentDistance = Math.sqrt(xDist * xDist + yDist * yDist);
         return [closestSegmentDistance, closestX, closestY];
+    }
+
+    // checkpoint should already be scaled, as should distanceCheck
+    function checkDirections(checkPoint as RectangularPoint, distanceCheck as Float) as Float? {
+        // improvements to make, 2 overlapping circles for directions (2 close together) will mean we do not report the second one until we have moved far enough away from the first
+        // need to cehck all points
+        // but then this will result in 'turn at first direction', 'turn at second direction' again and again, since it will see first as 'not hit'
+        // so we need to keep around that a direction has been hit, possibly index 3
+        // then time it out or something incase the user moves back through the area?
+        // we also need to ensure that directions at the end of the route do not overlap with the curent route.
+        // ie. an out and back route should not hit the last directions until they have moved out of the area, so might need an index of the coordinate that it's for? 
+        // but the coordinate are sliced down to 400ish points, directions need to be their own thing, they cannot move to the nearest point.
+        // so maybe a float index? or even the closest one
+        // in order to do this 'off track' alerts must be running, so that we know where we are along the route
+        // when the users position moves forwards we can optimise, and only look for directions ahead of that (no past directions)
+        // This would help solve the issue of wrong direction causeing werid direction alerts
+
+        var oldLastDirectionIndex = lastDirectionIndex;
+        // The user could skip a direction, or go in an opposite direction
+        // if they are going the wrong gway we should probably give them a different direction alert, but they will get "wrong direction" if they have those alerts enabled
+        if (oldLastDirectionIndex >= 0) {
+            // its very likely the user is moving forwards long the path, so check those points first
+            for (var i = oldLastDirectionIndex; i < directions.size(); ++i) {
+                var point = directions[i];
+                var distancePx = distance(point[0], point[1], checkPoint.x, checkPoint.y);
+                if (distancePx < distanceCheck) {
+                    if (oldLastDirectionIndex == i) {
+                        // do not alert on the same direction index twice
+                        // its really likely this is hit multiple times as a user moves through a direction marker area
+                        return null;
+                    }
+
+                    lastDirectionIndex = i;
+                    return directions[i][2];
+                }
+            }
+        }
+
+        var stopAt = maxN(oldLastDirectionIndex, directions.size());
+        for (var i = 0; i < stopAt; ++i) {
+            var point = directions[i];
+            var distancePx = distance(point[0], point[1], checkPoint.x, checkPoint.y);
+            if (distancePx < distanceCheck) {
+                lastDirectionIndex = i;
+                return directions[i][2];
+            }
+        }
+
+        return null;
     }
 
     // checkpoint should already be scaled, as should distanceCheck

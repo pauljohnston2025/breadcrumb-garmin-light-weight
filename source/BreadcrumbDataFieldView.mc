@@ -110,6 +110,39 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
     }
 
+    function showMyDirectionAlert(direction as Float) as Void {
+        var text = "you need to turn soon: "  + direction.format("%.1f");
+        try {
+            // logD("trying to trigger alert");
+            if (settings.alertType == ALERT_TYPE_ALERT) {
+                // allerts are really annoying bevcause users have to remember to enable them
+                // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
+                // this is why we default to toasts, the virration will still occur, and maybe should be a seperate setting?
+                showAlert(new OffTrackAlert(text));
+            } else {
+                WatchUi.showToast(text, {});
+            }
+
+            if (Attention has :backlight) {
+                // turn the screen on so we can see the alert, it does not resond to us gesturing to see the alert (think gesture controls are suppressed during vibration)
+                Attention.backlight(true);
+            }
+
+            if (Attention has :vibrate) {
+                var vibeData = [
+                    new Attention.VibeProfile(100, 500),
+                    new Attention.VibeProfile(0, 150),
+                    new Attention.VibeProfile(100, 500),
+                    new Attention.VibeProfile(0, 150),
+                    new Attention.VibeProfile(100, 500),
+                ];
+                Attention.vibrate(vibeData);
+            }
+        } catch (e) {
+            System.println("failed to show alert: " + e.getErrorMessage());
+        }
+    }
+    
     function showMyAlert(epoch as Number, text as String) as Void {
         lastOffTrackAlertNotified = epoch; // if showAlert fails, we will still have vibrated and turned the screen on
 
@@ -224,30 +257,54 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 // its pretty good atm though, only recalculates once every few seconds, and only
                 // if a point is added
                 _cachedValues.updateScaleCenterAndMap();
+                var epoch = Time.now().value();
+                if (epoch - settings.offTrackCheckIntervalS < lastOffTrackAlertChecked) {
+                    return;
+                }
+
+                // Do not check again for this long, prevents the expensive off track calculation running constantly whilst we are on track.
+                lastOffTrackAlertChecked = epoch;
+
                 var lastPoint = _breadcrumbContext.track.lastPoint();
-                if (
-                    lastPoint != null &&
-                    (settings.enableOffTrackAlerts ||
+                if (lastPoint != null) {
+                    if (
+                        settings.enableOffTrackAlerts ||
                         settings.drawLineToClosestPoint ||
                         settings.offTrackWrongDirection ||
-                        settings.drawCheverons)
-                ) {
-                    handleOffTrackAlerts(lastPoint);
+                        settings.drawCheverons
+                    ) {
+                        handleOffTrackAlerts(epoch, lastPoint);
+                    }
+
+                    if (settings.directionDistanceM >= 0) {
+                        handleDirections(lastPoint);
+                    }
                 }
             }
         }
     }
 
     // new point is already pre scaled
-    function handleOffTrackAlerts(newPoint as RectangularPoint) as Void {
-        var epoch = Time.now().value();
-        if (epoch - settings.offTrackCheckIntervalS < lastOffTrackAlertChecked) {
-            return;
+    function handleDirections(newPoint as RectangularPoint) as Void {
+        for (var i = 0; i < _breadcrumbContext.routes.size(); ++i) {
+            var route = _breadcrumbContext.routes[i];
+            if (!settings.routeEnabled(route.storageIndex)) {
+                continue;
+            }
+            var turnAngle = route.checkDirections(
+                newPoint,
+                settings.directionDistanceM * _cachedValues.currentScale
+            );
+
+            if (turnAngle != null) {
+                showMyDirectionAlert(turnAngle);
+                return;
+            }
         }
+    }
 
-        // Do not check again for this long, prevents the expensive off track calculation running constantly whilst we are on track.
-        lastOffTrackAlertChecked = epoch;
-
+    // new point is already pre scaled
+    function handleOffTrackAlerts(epoch as Number, newPoint as RectangularPoint) as Void {
         var atLeastOneEnabled = false;
         for (var i = 0; i < _breadcrumbContext.routes.size(); ++i) {
             var route = _breadcrumbContext.routes[i];
@@ -574,6 +631,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             if (settings.drawCheverons) {
                 renderer.renderTrackCheverons(dc, route, routeColour);
             }
+            if (settings.directionDistanceM >= 0) {
+                renderer.renderTrackDirectionPoints(dc, route, Graphics.COLOR_PURPLE);
+            }
         }
         renderer.renderTrack(dc, track, settings.trackColour, false);
         if (settings.showPoints) {
@@ -605,6 +665,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             }
             if (settings.drawCheverons) {
                 renderer.renderTrackCheveronsUnrotated(dc, route, routeColour);
+            }
+            if (settings.directionDistanceM >= 0) {
+                renderer.renderTrackDirectionPointsUnrotated(dc, route, Graphics.COLOR_PURPLE);
             }
         }
         renderer.renderTrackUnrotated(dc, track, settings.trackColour, false);
