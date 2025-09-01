@@ -506,16 +506,35 @@ class BreadcrumbTrack {
             var lastCoordonatesIndexF = oldLastClosePointIndex.toFloat();
             // we know where we are on the track, only look at directions that are ahead of here
             // this allows us to revisit the start of the track, or when we return to the track after being off track we can resume looking for directions
+            var ALLOWED_COORDINATE_PERIMETER = 5;
+            var stillNearTheLastDirectionPoint = false;
             if (oldLastDirectionIndex >= 0 && oldLastDirectionIndex < directions.size()) {
-                var lastDirectionCoordinateIndexF = directions[oldLastDirectionIndex][3];
-                var difference = lastDirectionCoordinateIndexF - oldLastClosePointIndex;
+                var oldDirectionPoint = directions[oldLastDirectionIndex];
+                var oldLastDirectionPointDistance = distance(
+                    oldDirectionPoint[0],
+                    oldDirectionPoint[1],
+                    checkPoint.x,
+                    checkPoint.y
+                );
+                stillNearTheLastDirectionPoint = oldLastDirectionPointDistance < distanceCheck;
+                var lastDirectionCoordinateIndexF = oldDirectionPoint[3];
+                var indexDifference = lastDirectionCoordinateIndexF - oldLastClosePointIndex;
+                // this allows us to go back to the start of the track, and get alerts again for the same directions
+                // it also allows us to be moving between 2 points in the routescoordinates, and the directions should never go backwards
                 if (
-                    difference > 0 // our route positions in the past, snap to current
+                    (indexDifference > 0 && indexDifference < 1) || // we are between 2 points, use the latest direction point as the coordinates index
+                    // we are still within distance to the direction point, use it so we do not trigger the alert again
+                    stillNearTheLastDirectionPoint
                 ) {
                     lastCoordonatesIndexF = lastDirectionCoordinateIndexF;
                 }
             }
 
+            // This alorithm becomes longer and longer as the route goes on, as we check all possible directions until we are too far in the future
+            // we should probably only check from a few coordinates in the past, but we have no way of knowing coordinate index to direction index
+            // eg. The first direction could be half way through the coordinate list
+            // direction arrays are meant to be fairly small, so not a huge issue for now, and it does fast forward so it's only a few ops per direction
+            // we may need to store a bucketed list or something if this leads to wattchdog errors
             var stopAt = directions.size();
             for (var i = 0; i < stopAt; ++i) {
                 var point = directions[i];
@@ -527,9 +546,12 @@ class BreadcrumbTrack {
 
                 // only allow the directions around our location to be checked
                 // we do not want a track that loops back through the same intersection triggerring the direction for the end of the route if we are only part way through
-                if (coordinatesIndexF - lastCoordonatesIndexF > 5) {
+                if (coordinatesIndexF - lastCoordonatesIndexF > ALLOWED_COORDINATE_PERIMETER) {
                     // note: if they do not have off track alerts enabled this will not work very well, as they will need to progress through all direction points sequentially
                     // if off track alerts is on, we will know roughly where we are on the track and we can check the directions around it
+                    if (!stillNearTheLastDirectionPoint) {
+                        lastDirectionIndex = -1; // reset the direction index once we move away from the direction, this is so we can revisit the direction again if we go past it again
+                    }
                     return null;
                 }
 
@@ -540,6 +562,9 @@ class BreadcrumbTrack {
                 }
             }
 
+            if (!stillNearTheLastDirectionPoint) {
+                lastDirectionIndex = -1; // reset the direction index once we move away from the direction, this is so we can revisit the direction again if we go past it again
+            }
             return null;
         }
 
