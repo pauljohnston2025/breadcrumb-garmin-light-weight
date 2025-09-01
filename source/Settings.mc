@@ -480,6 +480,7 @@ class Settings {
     var includeDebugPageInOnScreenUi as Boolean = false;
     var drawHitboxes as Boolean = false; // not exposed yet
     var showDirectionPoints as Boolean = true;
+    var showDirectionPointText as Boolean = true;
 
     (:lowMemory)
     function routeMax() as Number {

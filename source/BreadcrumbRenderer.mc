@@ -445,14 +445,19 @@ class BreadcrumbRenderer {
             var y = rotateAroundScreenYOffsetFactoredIn - (coordinatesRaw[i][1] - centerPosition.y);
 
             dc.drawCircle(x, y, distance);
-            // if the route comes back through the saem interection directions often overlap each other so this can be confusing 
-            dc.drawText(
-                x,
-                y,
-                Graphics.FONT_XTINY,
-                "" + coordinatesRaw[i][3].format("%.1f") + "\n" + coordinatesRaw[i][2].format("%.1f"),
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-            );
+            // if the route comes back through the saem interection directions often overlap each other so this can be confusing
+            if (settings.showDirectionPointText) {
+                dc.drawText(
+                    x,
+                    y,
+                    Graphics.FONT_XTINY,
+                    "" +
+                        coordinatesRaw[i][3].format("%.1f") +
+                        "\n" +
+                        coordinatesRaw[i][2].format("%.1f"),
+                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+                );
+            }
         }
     }
 
@@ -884,14 +889,19 @@ class BreadcrumbRenderer {
                 (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
 
             dc.drawCircle(x, y, distance);
-            // if the route comes back through the saem interection directions often overlap each other so this can be confusing 
-            dc.drawText(
-                x,
-                y,
-                Graphics.FONT_XTINY,
-                "" + coordinatesRaw[i][3].format("%.1f") + "\n" + coordinatesRaw[i][2].format("%.1f"),
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-            );
+            // if the route comes back through the saem interection directions often overlap each other so this can be confusing
+            if (settings.showDirectionPointText) {
+                dc.drawText(
+                    x,
+                    y,
+                    Graphics.FONT_XTINY,
+                    "" +
+                        coordinatesRaw[i][3].format("%.1f") +
+                        "\n" +
+                        coordinatesRaw[i][2].format("%.1f"),
+                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+                );
+            }
         }
     }
 

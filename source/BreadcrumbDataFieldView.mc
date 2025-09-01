@@ -631,7 +631,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             if (settings.drawCheverons) {
                 renderer.renderTrackCheverons(dc, route, routeColour);
             }
-            if (settings.directionDistanceM >= 0) {
+            if (settings.showDirectionPoints || settings.showDirectionPointText) {
                 renderer.renderTrackDirectionPoints(dc, route, Graphics.COLOR_PURPLE);
             }
         }
@@ -666,7 +666,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             if (settings.drawCheverons) {
                 renderer.renderTrackCheveronsUnrotated(dc, route, routeColour);
             }
-            if (settings.directionDistanceM >= 0) {
+            if (settings.showDirectionPoints || settings.showDirectionPointText) {
                 renderer.renderTrackDirectionPointsUnrotated(dc, route, Graphics.COLOR_PURPLE);
             }
         }

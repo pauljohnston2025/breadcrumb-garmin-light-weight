@@ -498,61 +498,67 @@ class BreadcrumbTrack {
         return [closestSegmentDistance, closestX, closestY];
     }
 
-    function getLastCoordinateIndexForDirections() as Float {
+    // checkpoint should already be scaled, as should distanceCheck
+    function checkDirections(checkPoint as RectangularPoint, distanceCheck as Float) as Float? {
         var oldLastDirectionIndex = lastDirectionIndex;
         var oldLastClosePointIndex = lastClosePointIndex;
         if (oldLastClosePointIndex != null) {
+            var lastCoordonatesIndexF = oldLastClosePointIndex.toFloat();
             // we know where we are on the track, only look at directions that are ahead of here
-            // this allows us to revisit the start of the track, or when we return to the track after being off track we can resume looking for
+            // this allows us to revisit the start of the track, or when we return to the track after being off track we can resume looking for directions
             if (oldLastDirectionIndex >= 0 && oldLastDirectionIndex < directions.size()) {
-                var lastIndexF = directions[oldLastDirectionIndex][3];
-                if (lastIndexF - oldLastClosePointIndex < 1) {
-                    // edge case until we reach the next point we need to use oldLastDirectionIndex, since we could have 3 turns in a row between 2 of our truncated route points
-                    return lastIndexF;
+                var lastDirectionCoordinateIndexF = directions[oldLastDirectionIndex][3];
+                var difference = lastDirectionCoordinateIndexF - oldLastClosePointIndex;
+                if (
+                    difference > 0 // our route positions in the past, snap to current
+                ) {
+                    lastCoordonatesIndexF = lastDirectionCoordinateIndexF;
                 }
             }
 
-            return oldLastClosePointIndex.toFloat();
+            var stopAt = directions.size();
+            for (var i = 0; i < stopAt; ++i) {
+                var point = directions[i];
+                var coordinatesIndexF = point[3];
+                if (coordinatesIndexF <= lastCoordonatesIndexF) {
+                    // skip any of the directions in the past
+                    continue;
+                }
+
+                // only allow the directions around our location to be checked
+                // we do not want a track that loops back through the same intersection triggerring the direction for the end of the route if we are only part way through
+                if (coordinatesIndexF - lastCoordonatesIndexF > 5) {
+                    // note: if they do not have off track alerts enabled this will not work very well, as they will need to progress through all direction points sequentially
+                    // if off track alerts is on, we will know roughly where we are on the track and we can check the directions around it
+                    return null;
+                }
+
+                var distancePx = distance(point[0], point[1], checkPoint.x, checkPoint.y);
+                if (distancePx < distanceCheck) {
+                    lastDirectionIndex = i;
+                    return directions[i][2];
+                }
+            }
+
+            return null;
         }
 
         // we do not know where we are on the track, either off track alerts are not enabled, or we are off track
-        // in this case, only search from the last direction we gave forwards
+        // in this case, only search from the last direction we got forwards
         // this prevents going back to previous directions, eg. 2 directions in sequence
-        if (oldLastDirectionIndex >= 0 && oldLastDirectionIndex < directions.size()) {
-            return directions[oldLastDirectionIndex][3];
+        var startAt = oldLastDirectionIndex < 0 ? 0 : oldLastDirectionIndex;
+        if (startAt >= directions.size() - 1) {
+            return null; // we are already at the end, no more directions
         }
 
-        return -1f;
-    }
+        var toCheck = startAt + 1; // only check the next point
+        var point = directions[toCheck];
 
-    // checkpoint should already be scaled, as should distanceCheck
-    function checkDirections(checkPoint as RectangularPoint, distanceCheck as Float) as Float? {
-        var lastCoordonatesIndexF = getLastCoordinateIndexForDirections();
-
-        var stopAt = directions.size();
-        for (var i = 0; i < stopAt; ++i) {
-            var point = directions[i];
-            var coordinatesIndexF = point[3];
-            if (coordinatesIndexF <= lastCoordonatesIndexF) {
-                // skip any of the directions in the past
-                continue;
-            }
-
-            // only allow the directions around our location to be checked
-            // we do not want a track that loops back through the same intersection triggerring the direction for the end of the route if we are only part way through
-            if (coordinatesIndexF - lastCoordonatesIndexF > 5) {
-                // note: if they do not have off track alerts enabled this will not work very well, as they will need to progress through all direction points sequentially
-                // if off track alerts is on, we will know roughly where we are on the track and we can check the directions around it
-                return null;
-            }
-
-            var distancePx = distance(point[0], point[1], checkPoint.x, checkPoint.y);
-            if (distancePx < distanceCheck) {
-                lastDirectionIndex = i;
-                return directions[i][2];
-            }
+        var distancePx = distance(point[0], point[1], checkPoint.x, checkPoint.y);
+        if (distancePx < distanceCheck) {
+            lastDirectionIndex = toCheck;
+            return point[2];
         }
-
         return null;
     }
 
