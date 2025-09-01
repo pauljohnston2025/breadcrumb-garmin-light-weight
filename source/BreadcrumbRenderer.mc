@@ -192,7 +192,9 @@ class BreadcrumbRenderer {
         var lastPointUnrotatedX = lastPoint.x - centerPosition.x;
         var lastPointUnrotatedY = lastPoint.y - centerPosition.y;
         var lastPointRotatedX =
-            rotateAroundScreenXOffsetFactoredIn + rotateCos * lastPointUnrotatedX - rotateSin * lastPointUnrotatedY;
+            rotateAroundScreenXOffsetFactoredIn +
+            rotateCos * lastPointUnrotatedX -
+            rotateSin * lastPointUnrotatedY;
         var lastPointRotatedY =
             rotateAroundScreenYOffsetFactoredIn -
             (rotateSin * lastPointUnrotatedX + rotateCos * lastPointUnrotatedY);
@@ -233,11 +235,15 @@ class BreadcrumbRenderer {
         var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
         var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
 
-        var lastPointUnrotatedX = rotateAroundScreenXOffsetFactoredIn + (lastPoint.x - centerPosition.x);
-        var lastPointUnrotatedY = rotateAroundScreenYOffsetFactoredIn - (lastPoint.y - centerPosition.y);
+        var lastPointUnrotatedX =
+            rotateAroundScreenXOffsetFactoredIn + (lastPoint.x - centerPosition.x);
+        var lastPointUnrotatedY =
+            rotateAroundScreenYOffsetFactoredIn - (lastPoint.y - centerPosition.y);
 
-        var offTrackPointUnrotatedX = rotateAroundScreenXOffsetFactoredIn + (offTrackPoint.x - centerPosition.x);
-        var offTrackPointUnrotatedY = rotateAroundScreenYOffsetFactoredIn - (offTrackPoint.y - centerPosition.y);
+        var offTrackPointUnrotatedX =
+            rotateAroundScreenXOffsetFactoredIn + (offTrackPoint.x - centerPosition.x);
+        var offTrackPointUnrotatedY =
+            rotateAroundScreenYOffsetFactoredIn - (offTrackPoint.y - centerPosition.y);
 
         dc.setPenWidth(4);
         dc.setColor(colour, Graphics.COLOR_BLACK);
@@ -367,8 +373,11 @@ class BreadcrumbRenderer {
             var lastY = firstY;
 
             for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
-                var nextX = rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
-                var nextY = rotateAroundScreenYOffsetFactoredIn - (coordinatesRaw[i + 1] - centerPosition.y);
+                var nextX =
+                    rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
+                var nextY =
+                    rotateAroundScreenYOffsetFactoredIn -
+                    (coordinatesRaw[i + 1] - centerPosition.y);
 
                 dc.drawLine(lastX, lastY, nextX, nextY);
 
@@ -402,12 +411,13 @@ class BreadcrumbRenderer {
 
         for (var i = 0; i < size; i += ARRAY_POINT_SIZE) {
             var x = rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
-            var y = rotateAroundScreenYOffsetFactoredIn - (coordinatesRaw[i + 1] - centerPosition.y);
+            var y =
+                rotateAroundScreenYOffsetFactoredIn - (coordinatesRaw[i + 1] - centerPosition.y);
 
             dc.fillCircle(x, y, 5);
         }
     }
-    
+
     function renderTrackDirectionPointsUnrotated(
         dc as Dc,
         breadcrumb as BreadcrumbTrack,
@@ -424,7 +434,7 @@ class BreadcrumbRenderer {
             return;
         }
 
-        dc.setColor(colour, Graphics.COLOR_BLACK);
+        dc.setColor(colour, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
 
         var size = breadcrumb.directions.size();
@@ -435,6 +445,14 @@ class BreadcrumbRenderer {
             var y = rotateAroundScreenYOffsetFactoredIn - (coordinatesRaw[i][1] - centerPosition.y);
 
             dc.drawCircle(x, y, distance);
+            // if the route comes back through the saem interection directions often overlap each other so this can be confusing 
+            dc.drawText(
+                x,
+                y,
+                Graphics.FONT_XTINY,
+                "" + coordinatesRaw[i][3].format("%.1f") + "\n" + coordinatesRaw[i][2].format("%.1f"),
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            );
         }
     }
 
@@ -584,17 +602,24 @@ class BreadcrumbRenderer {
         var nextClosePointIndexRaw = lastClosePointIndex * ARRAY_POINT_SIZE + ARRAY_POINT_SIZE;
         if (nextClosePointIndexRaw < size - ARRAY_POINT_SIZE) {
             var lastX =
-                rotateAroundScreenXOffsetFactoredIn + coordinatesRaw[nextClosePointIndexRaw] - centerPosition.x;
+                rotateAroundScreenXOffsetFactoredIn +
+                coordinatesRaw[nextClosePointIndexRaw] -
+                centerPosition.x;
             var lastY =
-                rotateAroundScreenYOffsetFactoredIn - coordinatesRaw[nextClosePointIndexRaw + 1] - centerPosition.y;
+                rotateAroundScreenYOffsetFactoredIn -
+                coordinatesRaw[nextClosePointIndexRaw + 1] -
+                centerPosition.y;
 
             for (
                 var i = nextClosePointIndexRaw + ARRAY_POINT_SIZE;
                 i < size && i <= nextClosePointIndexRaw + CHEVRON_POINTS * ARRAY_POINT_SIZE;
                 i += ARRAY_POINT_SIZE
             ) {
-                var nextX = rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
-                var nextY = rotateAroundScreenYOffsetFactoredIn - (coordinatesRaw[i + 1] - centerPosition.y);
+                var nextX =
+                    rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
+                var nextY =
+                    rotateAroundScreenYOffsetFactoredIn -
+                    (coordinatesRaw[i + 1] - centerPosition.y);
 
                 drawCheveron(dc, lastX, lastY, nextX, nextY);
 
@@ -628,8 +653,13 @@ class BreadcrumbRenderer {
         var xScaledAtCenter = breadcrumb.boundingBoxCenter.x - centerPosition.x;
         var yScaledAtCenter = breadcrumb.boundingBoxCenter.y - centerPosition.y;
 
-        var x = rotateAroundScreenXOffsetFactoredIn + rotateCos * xScaledAtCenter - rotateSin * yScaledAtCenter;
-        var y = rotateAroundScreenYOffsetFactoredIn - (rotateSin * xScaledAtCenter + rotateCos * yScaledAtCenter);
+        var x =
+            rotateAroundScreenXOffsetFactoredIn +
+            rotateCos * xScaledAtCenter -
+            rotateSin * yScaledAtCenter;
+        var y =
+            rotateAroundScreenYOffsetFactoredIn -
+            (rotateSin * xScaledAtCenter + rotateCos * yScaledAtCenter);
         dc.drawText(
             x,
             y,
@@ -806,7 +836,7 @@ class BreadcrumbRenderer {
             dc.fillCircle(x, y, 5);
         }
     }
-    
+
     (:noUnbufferedRotations)
     function renderTrackDirectionPoints(
         dc as Dc,
@@ -833,7 +863,7 @@ class BreadcrumbRenderer {
             return;
         }
 
-        dc.setColor(colour, Graphics.COLOR_BLACK);
+        dc.setColor(colour, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
 
         var size = breadcrumb.directions.size();
@@ -854,6 +884,14 @@ class BreadcrumbRenderer {
                 (rotateSin * nextXScaledAtCenter + rotateCos * nextYScaledAtCenter);
 
             dc.drawCircle(x, y, distance);
+            // if the route comes back through the saem interection directions often overlap each other so this can be confusing 
+            dc.drawText(
+                x,
+                y,
+                Graphics.FONT_XTINY,
+                "" + coordinatesRaw[i][3].format("%.1f") + "\n" + coordinatesRaw[i][2].format("%.1f"),
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            );
         }
     }
 

@@ -76,7 +76,8 @@ class BreadcrumbTrack {
     var name as String;
     var coordinates as PointArray = new PointArray(); // SCALED (note: altitude is currently unscaled)
     // todo check size of this, think array<array> will be bad for memory, and it should just be Array<Float> wher Array[0] = X1 Array[1] = Y1 etc. similar to the coordinates array
-    var directions as Array<[Float, Float, Float]> = [];
+    // [xLatRect, YLatRect, angleToTurnDegrees, coordinatesIndex]
+    var directions as Array<[Float, Float, Float, Float]> = [];
     var lastDirectionIndex as Number = -1;
     var seenStartupPoints as Number = 0;
     var possibleBadPointsAdded as Number = 0;
@@ -120,7 +121,6 @@ class BreadcrumbTrack {
         for (var i = 0; i < directions.size(); ++i) {
             directions[i][0] = directions[i][0] * scaleFactor;
             directions[i][1] = directions[i][1] * scaleFactor;
-            directions[i][2] = directions[i][2] * scaleFactor;
         }
         if (lastClosePoint != null) {
             lastClosePoint.rescaleInPlace(scaleFactor);
@@ -131,7 +131,7 @@ class BreadcrumbTrack {
 
     function handleRouteV2(
         routeData as Array<Float>,
-        directions as Array<[Float, Float, Float]>,
+        directions as Array<[Float, Float, Float, Float]>,
         cachedValues as CachedValues
     ) as Boolean {
         // trust the app completely
@@ -259,7 +259,7 @@ class BreadcrumbTrack {
             );
             track.coordinates._internalArrayBuffer = coords as Array<Float>;
             track.coordinates._size = coordsSize as Number;
-            track.directions = directions as Array<[Float, Float, Float]>;
+            track.directions = directions as Array<[Float, Float, Float, Float]>;
             track.distanceTotal = distanceTotal as Float;
             track.elevationMin = elevationMin as Float;
             track.elevationMax = elevationMax as Float;
@@ -498,45 +498,54 @@ class BreadcrumbTrack {
         return [closestSegmentDistance, closestX, closestY];
     }
 
-    // checkpoint should already be scaled, as should distanceCheck
-    function checkDirections(checkPoint as RectangularPoint, distanceCheck as Float) as Float? {
-        // improvements to make, 2 overlapping circles for directions (2 close together) will mean we do not report the second one until we have moved far enough away from the first
-        // need to cehck all points
-        // but then this will result in 'turn at first direction', 'turn at second direction' again and again, since it will see first as 'not hit'
-        // so we need to keep around that a direction has been hit, possibly index 3
-        // then time it out or something incase the user moves back through the area?
-        // we also need to ensure that directions at the end of the route do not overlap with the curent route.
-        // ie. an out and back route should not hit the last directions until they have moved out of the area, so might need an index of the coordinate that it's for? 
-        // but the coordinate are sliced down to 400ish points, directions need to be their own thing, they cannot move to the nearest point.
-        // so maybe a float index? or even the closest one
-        // in order to do this 'off track' alerts must be running, so that we know where we are along the route
-        // when the users position moves forwards we can optimise, and only look for directions ahead of that (no past directions)
-        // This would help solve the issue of wrong direction causeing werid direction alerts
-
+    function getLastCoordinateIndexForDirections() as Float {
         var oldLastDirectionIndex = lastDirectionIndex;
-        // The user could skip a direction, or go in an opposite direction
-        // if they are going the wrong gway we should probably give them a different direction alert, but they will get "wrong direction" if they have those alerts enabled
-        if (oldLastDirectionIndex >= 0) {
-            // its very likely the user is moving forwards long the path, so check those points first
-            for (var i = oldLastDirectionIndex; i < directions.size(); ++i) {
-                var point = directions[i];
-                var distancePx = distance(point[0], point[1], checkPoint.x, checkPoint.y);
-                if (distancePx < distanceCheck) {
-                    if (oldLastDirectionIndex == i) {
-                        // do not alert on the same direction index twice
-                        // its really likely this is hit multiple times as a user moves through a direction marker area
-                        return null;
-                    }
-
-                    lastDirectionIndex = i;
-                    return directions[i][2];
+        var oldLastClosePointIndex = lastClosePointIndex;
+        if (oldLastClosePointIndex != null) {
+            // we know where we are on the track, only look at directions that are ahead of here
+            // this allows us to revisit the start of the track, or when we return to the track after being off track we can resume looking for
+            if (oldLastDirectionIndex >= 0 && oldLastDirectionIndex < directions.size()) {
+                var lastIndexF = directions[oldLastDirectionIndex][3];
+                if (lastIndexF - oldLastClosePointIndex < 1) {
+                    // edge case until we reach the next point we need to use oldLastDirectionIndex, since we could have 3 turns in a row between 2 of our truncated route points
+                    return lastIndexF;
                 }
             }
+
+            return oldLastClosePointIndex.toFloat();
         }
 
-        var stopAt = maxN(oldLastDirectionIndex, directions.size());
+        // we do not know where we are on the track, either off track alerts are not enabled, or we are off track
+        // in this case, only search from the last direction we gave forwards
+        // this prevents going back to previous directions, eg. 2 directions in sequence
+        if (oldLastDirectionIndex >= 0 && oldLastDirectionIndex < directions.size()) {
+            return directions[oldLastDirectionIndex][3];
+        }
+
+        return -1f;
+    }
+
+    // checkpoint should already be scaled, as should distanceCheck
+    function checkDirections(checkPoint as RectangularPoint, distanceCheck as Float) as Float? {
+        var lastCoordonatesIndexF = getLastCoordinateIndexForDirections();
+
+        var stopAt = directions.size();
         for (var i = 0; i < stopAt; ++i) {
             var point = directions[i];
+            var coordinatesIndexF = point[3];
+            if (coordinatesIndexF <= lastCoordonatesIndexF) {
+                // skip any of the directions in the past
+                continue;
+            }
+
+            // only allow the directions around our location to be checked
+            // we do not want a track that loops back through the same intersection triggerring the direction for the end of the route if we are only part way through
+            if (coordinatesIndexF - lastCoordonatesIndexF > 5) {
+                // note: if they do not have off track alerts enabled this will not work very well, as they will need to progress through all direction points sequentially
+                // if off track alerts is on, we will know roughly where we are on the track and we can check the directions around it
+                return null;
+            }
+
             var distancePx = distance(point[0], point[1], checkPoint.x, checkPoint.y);
             if (distancePx < distanceCheck) {
                 lastDirectionIndex = i;

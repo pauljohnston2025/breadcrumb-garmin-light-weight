@@ -111,7 +111,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     }
 
     function showMyDirectionAlert(direction as Float) as Void {
-        var text = "you need to turn soon: "  + direction.format("%.1f");
+        var text = "you need to turn soon: " + direction.format("%.1f");
         try {
             // logD("trying to trigger alert");
             if (settings.alertType == ALERT_TYPE_ALERT) {
@@ -142,7 +142,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             System.println("failed to show alert: " + e.getErrorMessage());
         }
     }
-    
+
     function showMyAlert(epoch as Number, text as String) as Void {
         lastOffTrackAlertNotified = epoch; // if showAlert fails, we will still have vibrated and turned the screen on
 
@@ -873,15 +873,32 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "hits: " + _breadcrumbContext.tileCache._hits,
+            "cache hits: " +
+                _breadcrumbContext.tileCache._hits.toFloat() /
+                    (_breadcrumbContext.tileCache._hits + _breadcrumbContext.tileCache._misses),
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
+        var needsComma = false;
+        var directionIndexesStr = "";
+        for (var i = 0; i < _breadcrumbContext.routes.size(); ++i) {
+            var route = _breadcrumbContext.routes[i];
+            if (!settings.routeEnabled(route.storageIndex)) {
+                continue;
+            }
+
+            if (needsComma) {
+                directionIndexesStr += ", ";
+            }
+
+            needsComma = true;
+            directionIndexesStr += route.lastDirectionIndex;
+        }
         dc.drawText(
             x,
             y,
             Graphics.FONT_XTINY,
-            "misses: " + _breadcrumbContext.tileCache._misses,
+            "directions index: " + directionIndexesStr,
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
