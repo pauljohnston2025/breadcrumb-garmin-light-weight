@@ -27,6 +27,32 @@ class OffTrackAlert extends WatchUi.DataFieldAlert {
     }
 }
 
+class DirectionAlert extends WatchUi.DataFieldAlert {
+    var direction as Float;
+    var distanceM as Float;
+
+    function initialize(direction as Float, distanceM as Float) {
+        WatchUi.DataFieldAlert.initialize();
+        self.direction = direction;
+        self.distanceM = distanceM;
+    }
+
+    function onUpdate(dc as Dc) as Void {
+        var halfHeight = dc.getHeight() / 2;
+        // todo make this a line that shows the direction as an array, and correct angle relative to current path
+        var dirText = direction <= 180 ? "Right" : "Left";
+        var text = dirText + " Turn\nIn " + distanceM.format("%.1f") + "m";
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(
+            halfHeight,
+            halfHeight,
+            Graphics.FONT_SYSTEM_MEDIUM,
+            text,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+        );
+    }
+}
+
 // note to get this to work on the simulator need to modify simulator.json and
 // add isTouchable this is already on edgo devices with touch, but not the
 // venu2s, even though I tested and it worked on the actual device
@@ -110,16 +136,29 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
     }
 
-    function showMyDirectionAlert(direction as Float) as Void {
-        var text = "you need to turn soon: " + direction.format("%.1f");
+    function showMyDirectionAlert(direction as Float, distancePx as Float) as Void {
+        var distanceM = distancePx;
+        if (_cachedValues.currentScale != 0f) {
+            distanceM = distancePx / _cachedValues.currentScale;
+        }
         try {
             // logD("trying to trigger alert");
             if (settings.alertType == ALERT_TYPE_ALERT) {
                 // allerts are really annoying bevcause users have to remember to enable them
                 // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
                 // this is why we default to toasts, the virration will still occur, and maybe should be a seperate setting?
-                showAlert(new OffTrackAlert(text));
+                showAlert(new DirectionAlert(direction, distanceM));
             } else {
+                var dirText = direction <= 180 ? "Right" : "Left";
+                // var toSubtract = direction <= 180 ? 0 : 180;
+                // var text =
+                //     dirText +
+                //     " Turn\nIn " +
+                //     distanceM.format("%.1f") +
+                //     "m\n" +
+                //     (direction - toSubtract).format("%.1f") +
+                //     "°";
+                var text = dirText + " Turn\nIn " + distanceM.format("%.1f") + "m";
                 WatchUi.showToast(text, {});
             }
 
@@ -291,13 +330,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             if (!settings.routeEnabled(route.storageIndex)) {
                 continue;
             }
-            var turnAngle = route.checkDirections(
+            var res = route.checkDirections(
                 newPoint,
                 settings.directionDistanceM * _cachedValues.currentScale
             );
 
-            if (turnAngle != null) {
-                showMyDirectionAlert(turnAngle);
+            if (res != null) {
+                showMyDirectionAlert(res[0], res[1]);
                 return;
             }
         }
@@ -631,7 +670,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             if (settings.drawCheverons) {
                 renderer.renderTrackCheverons(dc, route, routeColour);
             }
-            if (settings.showDirectionPoints || settings.showDirectionPointText) {
+            if (settings.showDirectionPoints || settings.showDirectionPointTextUnderIndex > 0) {
                 renderer.renderTrackDirectionPoints(dc, route, Graphics.COLOR_PURPLE);
             }
         }
@@ -666,7 +705,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             if (settings.drawCheverons) {
                 renderer.renderTrackCheveronsUnrotated(dc, route, routeColour);
             }
-            if (settings.showDirectionPoints || settings.showDirectionPointText) {
+            if (settings.showDirectionPoints || settings.showDirectionPointTextUnderIndex > 0) {
                 renderer.renderTrackDirectionPointsUnrotated(dc, route, Graphics.COLOR_PURPLE);
             }
         }
@@ -807,15 +846,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "lastAlertCheck: " + (epoch - lastOffTrackAlertChecked) + "s",
-            Graphics.TEXT_JUSTIFY_CENTER
-        );
-        y += spacing;
-        dc.drawText(
-            x,
-            y,
-            Graphics.FONT_XTINY,
-            "lastAlert: " + (epoch - lastOffTrackAlertNotified) + "s",
+            "lastAlert: " +
+                (epoch - lastOffTrackAlertNotified) +
+                "s check: " +
+                (epoch - lastOffTrackAlertChecked) +
+                "s",
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -830,7 +865,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
             distToLastStr = distMeters.format("%.0f") + "m";
         }
-
         dc.drawText(
             x,
             y,
@@ -841,6 +875,47 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 (offTrackInfo.onTrack ? "Y" : "N") +
                 " dist: " +
                 distToLastStr,
+            Graphics.TEXT_JUSTIFY_CENTER
+        );
+        var needsComma = false;
+        var directionIndexesStr = "";
+        var coordsIndexesStr = "";
+        var routesPtsStr = "";
+        for (var i = 0; i < _breadcrumbContext.routes.size(); ++i) {
+            var route = _breadcrumbContext.routes[i];
+            if (!settings.routeEnabled(route.storageIndex)) {
+                continue;
+            }
+
+            if (needsComma) {
+                directionIndexesStr += ", ";
+                coordsIndexesStr += ", ";
+                routesPtsStr += ", ";
+            }
+
+            needsComma = true;
+            var dirCoordindexStr =
+                route.lastDirectionIndex < 0 || route.lastDirectionIndex > route.directions.size()
+                    ? "na"
+                    : route.directions[route.lastDirectionIndex][3].format("%.1f");
+            directionIndexesStr += +route.lastDirectionIndex + "(" + dirCoordindexStr + ")";
+            coordsIndexesStr += route.lastClosePointIndex;
+            routesPtsStr += route.coordinates.pointSize();
+        }
+        y += spacing;
+        dc.drawText(
+            x,
+            y,
+            Graphics.FONT_XTINY,
+            "route pts: " + routesPtsStr,
+            Graphics.TEXT_JUSTIFY_CENTER
+        );
+        y += spacing;
+        dc.drawText(
+            x,
+            y,
+            Graphics.FONT_XTINY,
+            "di: " + directionIndexesStr + " ci: " + coordsIndexesStr,
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -857,7 +932,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
-        // could do as a ratio for a single field
         dc.drawText(
             x,
             y,
@@ -869,38 +943,16 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
-        dc.drawText(
-            x,
-            y,
-            Graphics.FONT_XTINY,
-            "cache hits: " +
-                _breadcrumbContext.tileCache._hits.toFloat() /
-                    (_breadcrumbContext.tileCache._hits + _breadcrumbContext.tileCache._misses),
-            Graphics.TEXT_JUSTIFY_CENTER
-        );
-        y += spacing;
-        var needsComma = false;
-        var directionIndexesStr = "";
-        for (var i = 0; i < _breadcrumbContext.routes.size(); ++i) {
-            var route = _breadcrumbContext.routes[i];
-            if (!settings.routeEnabled(route.storageIndex)) {
-                continue;
-            }
-
-            if (needsComma) {
-                directionIndexesStr += ", ";
-            }
-
-            needsComma = true;
-            directionIndexesStr += route.lastDirectionIndex;
+        var hits = _breadcrumbContext.tileCache._hits.toFloat();
+        var misses = _breadcrumbContext.tileCache._misses;
+        var total = hits + misses;
+        var percentage = 0;
+        if (total > 0) {
+            // do not divide by 0 my good friends
+            percentage = (hits * 100) / total;
         }
-        dc.drawText(
-            x,
-            y,
-            Graphics.FONT_XTINY,
-            "directions index: " + directionIndexesStr,
-            Graphics.TEXT_JUSTIFY_CENTER
-        );
+        var cacheHits = "cache hits: " + percentage.format("%.1f") + "%";
+        dc.drawText(x, y, Graphics.FONT_XTINY, cacheHits, Graphics.TEXT_JUSTIFY_CENTER);
         y += spacing;
         dc.drawText(
             x,

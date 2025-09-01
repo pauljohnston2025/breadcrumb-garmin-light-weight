@@ -499,7 +499,8 @@ class BreadcrumbTrack {
     }
 
     // checkpoint should already be scaled, as should distanceCheck
-    function checkDirections(checkPoint as RectangularPoint, distanceCheck as Float) as Float? {
+    // returns [turnAngleDeg, distancePx] or null if no direction within range
+    function checkDirections(checkPoint as RectangularPoint, distanceCheck as Float) as [Float, Float]? {
         var oldLastDirectionIndex = lastDirectionIndex;
         var oldLastClosePointIndex = lastClosePointIndex;
         if (oldLastClosePointIndex != null) {
@@ -558,7 +559,7 @@ class BreadcrumbTrack {
                 var distancePx = distance(point[0], point[1], checkPoint.x, checkPoint.y);
                 if (distancePx < distanceCheck) {
                     lastDirectionIndex = i;
-                    return directions[i][2];
+                    return [directions[i][2], distancePx];
                 }
             }
 
@@ -582,7 +583,7 @@ class BreadcrumbTrack {
         var distancePx = distance(point[0], point[1], checkPoint.x, checkPoint.y);
         if (distancePx < distanceCheck) {
             lastDirectionIndex = toCheck;
-            return point[2];
+            return [point[2], distancePx];
         }
         return null;
     }

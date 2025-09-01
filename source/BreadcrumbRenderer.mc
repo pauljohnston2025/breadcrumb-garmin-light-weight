@@ -415,6 +415,15 @@ class BreadcrumbRenderer {
                 rotateAroundScreenYOffsetFactoredIn - (coordinatesRaw[i + 1] - centerPosition.y);
 
             dc.fillCircle(x, y, 5);
+            // if ((i / ARRAY_POINT_SIZE) < 20 && breadcrumb.storageIndex >=0) {
+            //     dc.drawText(
+            //         x,
+            //         y,
+            //         Graphics.FONT_XTINY,
+            //         "" + i / ARRAY_POINT_SIZE,
+            //         Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            //     );
+            // }
         }
     }
 
@@ -441,20 +450,18 @@ class BreadcrumbRenderer {
         var coordinatesRaw = breadcrumb.directions;
 
         for (var i = 0; i < size; ++i) {
-            var x = rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i][0] - centerPosition.x);
-            var y = rotateAroundScreenYOffsetFactoredIn - (coordinatesRaw[i][1] - centerPosition.y);
+            var directionPoint = coordinatesRaw[i];
+            var x = rotateAroundScreenXOffsetFactoredIn + (directionPoint[0] - centerPosition.x);
+            var y = rotateAroundScreenYOffsetFactoredIn - (directionPoint[1] - centerPosition.y);
 
             dc.drawCircle(x, y, distance);
             // if the route comes back through the saem interection directions often overlap each other so this can be confusing
-            if (settings.showDirectionPointText) {
+            if (i < settings.showDirectionPointTextUnderIndex) {
                 dc.drawText(
                     x,
                     y,
                     Graphics.FONT_XTINY,
-                    "" +
-                        coordinatesRaw[i][3].format("%.1f") +
-                        "\n" +
-                        coordinatesRaw[i][2].format("%.1f"),
+                    "" + directionPoint[3].format("%.1f") + "\n" + directionPoint[2].format("%.1f"),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
                 );
             }
@@ -874,8 +881,9 @@ class BreadcrumbRenderer {
         var size = breadcrumb.directions.size();
         var coordinatesRaw = breadcrumb.directions;
         for (var i = 0; i < size; ++i) {
-            var nextX = coordinatesRaw[i][0];
-            var nextY = coordinatesRaw[i][1];
+            var directionPoint = coordinatesRaw[i];
+            var nextX = directionPoint[0];
+            var nextY = directionPoint[1];
 
             var nextXScaledAtCenter = nextX - centerPosition.x;
             var nextYScaledAtCenter = nextY - centerPosition.y;
@@ -890,15 +898,12 @@ class BreadcrumbRenderer {
 
             dc.drawCircle(x, y, distance);
             // if the route comes back through the saem interection directions often overlap each other so this can be confusing
-            if (settings.showDirectionPointText) {
+            if (i < settings.showDirectionPointTextUnderIndex) {
                 dc.drawText(
                     x,
                     y,
                     Graphics.FONT_XTINY,
-                    "" +
-                        coordinatesRaw[i][3].format("%.1f") +
-                        "\n" +
-                        coordinatesRaw[i][2].format("%.1f"),
+                    "" + directionPoint[3].format("%.1f") + "\n" + directionPoint[2].format("%.1f"),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
                 );
             }
