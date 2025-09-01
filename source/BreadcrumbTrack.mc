@@ -500,7 +500,10 @@ class BreadcrumbTrack {
 
     // checkpoint should already be scaled, as should distanceCheck
     // returns [turnAngleDeg, distancePx] or null if no direction within range
-    function checkDirections(checkPoint as RectangularPoint, distanceCheck as Float) as [Float, Float]? {
+    function checkDirections(
+        checkPoint as RectangularPoint,
+        distanceCheck as Float
+    ) as [Float, Float]? {
         var oldLastDirectionIndex = lastDirectionIndex;
         var oldLastClosePointIndex = lastClosePointIndex;
         if (oldLastClosePointIndex != null) {
@@ -523,7 +526,7 @@ class BreadcrumbTrack {
                 // this allows us to go back to the start of the track, and get alerts again for the same directions
                 // it also allows us to be moving between 2 points in the routescoordinates, and the directions should never go backwards
                 if (
-                    (indexDifference > 0 && indexDifference < 1) || // we are between 2 points, use the latest direction point as the coordinates index
+                    (indexDifference > 0f && indexDifference < 1f) || // we are between 2 points, use the latest direction point as the coordinates index
                     // we are still within distance to the direction point, use it so we do not trigger the alert again
                     stillNearTheLastDirectionPoint
                 ) {
@@ -535,7 +538,7 @@ class BreadcrumbTrack {
             // we should probably only check from a few coordinates in the past, but we have no way of knowing coordinate index to direction index
             // eg. The first direction could be half way through the coordinate list
             // direction arrays are meant to be fairly small, so not a huge issue for now, and it does fast forward so it's only a few ops per direction
-            // we may need to store a bucketed list or something if this leads to wattchdog errors
+            // we may need to store a bucketed list or something if this leads to watchdog errors
             var stopAt = directions.size();
             for (var i = 0; i < stopAt; ++i) {
                 var point = directions[i];
@@ -551,6 +554,9 @@ class BreadcrumbTrack {
                     // note: if they do not have off track alerts enabled this will not work very well, as they will need to progress through all direction points sequentially
                     // if off track alerts is on, we will know roughly where we are on the track and we can check the directions around it
                     if (!stillNearTheLastDirectionPoint) {
+                        // todo: only reset this when the user moves back to the start of the route. eg. on `wrong direction` alerts
+                        // this will allow us to start this array scan from lastDirectionIndex
+                        // though we still ned to support a full scan, since the user can jump forwards from the start to end - this must not trip the watchdog
                         lastDirectionIndex = -1; // reset the direction index once we move away from the direction, this is so we can revisit the direction again if we go past it again
                     }
                     return null;
@@ -564,6 +570,9 @@ class BreadcrumbTrack {
             }
 
             if (!stillNearTheLastDirectionPoint) {
+                // todo: only reset this when the user moves back to the start of the route. eg. on `wrong direction` alerts
+                // this will allow us to start this array scan from lastDirectionIndex
+                // though we still ned to support a full scan, since the user can jump forwards from the start to end - this must not trip the watchdog
                 lastDirectionIndex = -1; // reset the direction index once we move away from the direction, this is so we can revisit the direction again if we go past it again
             }
             return null;
@@ -577,6 +586,12 @@ class BreadcrumbTrack {
             return null; // we are already at the end, no more directions
         }
 
+        // we could search the whole array, but that would lead to issues when the route doubles back on itself
+        // eg. a route that goes out and back through the same intersection if we search the whole array we would find the direction near the end of the coordinates, which would be incorrect since we are only starting the route
+        // The below approach though does not handle any points skipped, if a user deviates from the planned route it will not correctly resume directions from where they re-enterred the route
+        // we could allow '5 points skipped' or something, but it could be on a route that only has a few points
+        // perhaps we just need to scan the whole array every time when we are off track? that could lead to watchdog errors though
+        // would be more robust to just not care about lastDirectionIndex and just search for any directions that we are close to. would allow rejoining track, on the off change that we are still within range of the last point we could skip over it (plus some buffer for out and back).
         var toCheck = startAt + 1; // only check the next point
         var point = directions[toCheck];
 

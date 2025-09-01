@@ -40,7 +40,7 @@ class DirectionAlert extends WatchUi.DataFieldAlert {
     function onUpdate(dc as Dc) as Void {
         var halfHeight = dc.getHeight() / 2;
         // todo make this a line that shows the direction as an array, and correct angle relative to current path
-        var dirText = direction <= 180 ? "Right" : "Left";
+        var dirText = direction >= 0 ? "Right" : "Left";
         var text = dirText + " Turn\nIn " + distanceM.format("%.1f") + "m";
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
@@ -149,14 +149,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 // this is why we default to toasts, the virration will still occur, and maybe should be a seperate setting?
                 showAlert(new DirectionAlert(direction, distanceM));
             } else {
-                var dirText = direction <= 180 ? "Right" : "Left";
-                // var toSubtract = direction <= 180 ? 0 : 180;
+                var dirText = direction >= 0 ? "Right" : "Left";
                 // var text =
                 //     dirText +
                 //     " Turn\nIn " +
                 //     distanceM.format("%.1f") +
                 //     "m\n" +
-                //     (direction - toSubtract).format("%.1f") +
+                //     abs(direction).format("%.1f") +
                 //     "°";
                 var text = dirText + " Turn\nIn " + distanceM.format("%.1f") + "m";
                 WatchUi.showToast(text, {});
