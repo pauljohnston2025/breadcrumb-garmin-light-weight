@@ -75,9 +75,7 @@ class BreadcrumbTrack {
     var storageIndex as Number = 0;
     var name as String;
     var coordinates as PointArray = new PointArray(); // SCALED (note: altitude is currently unscaled)
-    // todo check size of this, think array<array> will be bad for memory, and it should just be Array<Float> wher Array[0] = X1 Array[1] = Y1 etc. similar to the coordinates array
-    // [xLatRect, YLatRect, angleToTurnDegrees, coordinatesIndex]
-    var directions as Array<[Float, Float, Float, Float]> = [];
+    var directions as DirectionPointArray = new DirectionPointArray();
     var lastDirectionIndex as Number = -1;
     var seenStartupPoints as Number = 0;
     var possibleBadPointsAdded as Number = 0;
@@ -103,8 +101,7 @@ class BreadcrumbTrack {
         // distanceTotal  // we can't reverse the track, (the only one tracking distance total)
 
         coordinates.reversePoints();
-        // todo make the angle also reverse
-        directions = directions.reverse(); // take the memory hit of array doubling for now
+        directions.reversePoints();
         lastDirectionIndex = -1;
         lastClosePoint = null; // we want to recalculate off track, since the cheveron direction will change
         writeToDisk(ROUTE_KEY); // write ourselves back to storage in reverse, so next time we load (on app restart) it is correct
@@ -118,10 +115,7 @@ class BreadcrumbTrack {
         distanceTotal = distanceTotal * scaleFactor;
         boundingBoxCenter.rescaleInPlace(scaleFactor);
         coordinates.rescale(scaleFactor);
-        for (var i = 0; i < directions.size(); ++i) {
-            directions[i][0] = directions[i][0] * scaleFactor;
-            directions[i][1] = directions[i][1] * scaleFactor;
-        }
+        directions.rescale(scaleFactor);
         if (lastClosePoint != null) {
             lastClosePoint.rescaleInPlace(scaleFactor);
         }
@@ -131,13 +125,13 @@ class BreadcrumbTrack {
 
     function handleRouteV2(
         routeData as Array<Float>,
-        directions as Array<[Float, Float, Float, Float]>,
+        directions as Array<Float>,
         cachedValues as CachedValues
     ) as Boolean {
         // trust the app completely
         coordinates._internalArrayBuffer = routeData;
         coordinates._size = routeData.size();
-        me.directions = directions;
+        me.directions._internalArrayBuffer = directions;
         // we could optimise this firther if the app rpovides us with biunding box, center max/min elevation
         // but it makes it really hard to add any more cached data to the route, that the companion app then has to send
         // by making these rectangular coordinates, we skip a huge amount of math converting them from lat/long
@@ -165,8 +159,11 @@ class BreadcrumbTrack {
                 key + "coords",
                 coordinates._internalArrayBuffer as Array<PropertyValueType>
             );
-            Storage.setValue(key + "directions", directions as Array<PropertyValueType>);
             Storage.setValue(key + "coordsSize", coordinates._size);
+            Storage.setValue(
+                key + "directions",
+                directions._internalArrayBuffer as Array<PropertyValueType>
+            );
             Storage.setValue(key + "distanceTotal", distanceTotal);
             Storage.setValue(key + "elevationMin", elevationMin);
             Storage.setValue(key + "elevationMax", elevationMax);
@@ -187,8 +184,8 @@ class BreadcrumbTrack {
         Storage.deleteValue(key + "bb");
         Storage.deleteValue(key + "bbc");
         Storage.deleteValue(key + "coords");
-        Storage.deleteValue(key + "directions");
         Storage.deleteValue(key + "coordsSize");
+        Storage.deleteValue(key + "directions");
         Storage.deleteValue(key + "distanceTotal");
         Storage.deleteValue(key + "elevationMin");
         Storage.deleteValue(key + "elevationMax");
@@ -259,7 +256,7 @@ class BreadcrumbTrack {
             );
             track.coordinates._internalArrayBuffer = coords as Array<Float>;
             track.coordinates._size = coordsSize as Number;
-            track.directions = directions as Array<[Float, Float, Float, Float]>;
+            track.directions._internalArrayBuffer = directions as Array<Float>;
             track.distanceTotal = distanceTotal as Float;
             track.elevationMin = elevationMin as Float;
             track.elevationMax = elevationMax as Float;
@@ -504,6 +501,7 @@ class BreadcrumbTrack {
         checkPoint as RectangularPoint,
         distanceCheck as Float
     ) as [Float, Float]? {
+        var directionsRaw = directions._internalArrayBuffer; // raw dog access means we can do the calcs much faster
         var ALLOWED_COORDINATE_PERIMETER = 5;
         var oldLastDirectionIndex = lastDirectionIndex;
         var oldLastClosePointIndex = lastClosePointIndex;
@@ -513,17 +511,17 @@ class BreadcrumbTrack {
             // this allows us to revisit the start of the track, or when we return to the track after being off track we can resume looking for directions
             var stillNearTheLastDirectionPoint = false;
             var startAt = 0;
-            if (oldLastDirectionIndex >= 0 && oldLastDirectionIndex < directions.size()) {
+            if (oldLastDirectionIndex >= 0 && oldLastDirectionIndex < directions.pointSize()) {
                 startAt = oldLastDirectionIndex;
-                var oldDirectionPoint = directions[oldLastDirectionIndex];
+                var oldLastDirectionIndexStart = oldLastDirectionIndex * DIRECTION_ARRAY_POINT_SIZE;
                 var oldLastDirectionPointDistance = distance(
-                    oldDirectionPoint[0],
-                    oldDirectionPoint[1],
+                    directionsRaw[oldLastDirectionIndexStart],
+                    directionsRaw[oldLastDirectionIndexStart + 1],
                     checkPoint.x,
                     checkPoint.y
                 );
                 stillNearTheLastDirectionPoint = oldLastDirectionPointDistance < distanceCheck;
-                var lastDirectionCoordinateIndexF = oldDirectionPoint[3];
+                var lastDirectionCoordinateIndexF = directionsRaw[oldLastDirectionIndexStart + 3];
                 var indexDifference = lastDirectionCoordinateIndexF - oldLastClosePointIndex;
                 // this allows us to go back to the start of the track, and get alerts again for the same directions
                 // it also allows us to be moving between 2 points in the routescoordinates, and the directions should never go backwards
@@ -541,10 +539,13 @@ class BreadcrumbTrack {
             // eg. The first direction could be half way through the coordinate list
             // direction arrays are meant to be fairly small, so not a huge issue for now, and it does fast forward so it's only a few ops per direction
             // we may need to store a bucketed list or something if this leads to watchdog errors
-            var stopAt = directions.size();
-            for (var i = startAt; i < stopAt; ++i) {
-                var point = directions[i];
-                var coordinatesIndexF = point[3];
+            var stopAt = directionsRaw.size();
+            for (
+                var i = startAt * DIRECTION_ARRAY_POINT_SIZE;
+                i < stopAt;
+                i += DIRECTION_ARRAY_POINT_SIZE
+            ) {
+                var coordinatesIndexF = directionsRaw[i + 3];
                 if (coordinatesIndexF <= lastCoordonatesIndexF) {
                     // skip any of the directions in the past
                     continue;
@@ -556,10 +557,15 @@ class BreadcrumbTrack {
                     return null;
                 }
 
-                var distancePx = distance(point[0], point[1], checkPoint.x, checkPoint.y);
+                var distancePx = distance(
+                    directionsRaw[i],
+                    directionsRaw[i + 1],
+                    checkPoint.x,
+                    checkPoint.y
+                );
                 if (distancePx < distanceCheck) {
-                    lastDirectionIndex = i;
-                    return [directions[i][2], distancePx];
+                    lastDirectionIndex = i / DIRECTION_ARRAY_POINT_SIZE;
+                    return [directionsRaw[i + 2], distancePx];
                 }
             }
 
@@ -571,24 +577,27 @@ class BreadcrumbTrack {
         var lastCoordonatesIndexF = -1f;
         var stillNearTheLastDirectionPoint = false;
         var startAt = 0;
-        if (oldLastDirectionIndex >= 0 && oldLastDirectionIndex < directions.size()) {
+        if (oldLastDirectionIndex >= 0 && oldLastDirectionIndex < directions.pointSize()) {
+            var oldLastDirectionIndexStart = oldLastDirectionIndex * DIRECTION_ARRAY_POINT_SIZE;
             startAt = oldLastDirectionIndex;
-            var oldDirectionPoint = directions[oldLastDirectionIndex];
             var oldLastDirectionPointDistance = distance(
-                oldDirectionPoint[0],
-                oldDirectionPoint[1],
+                directionsRaw[oldLastDirectionIndexStart],
+                directionsRaw[oldLastDirectionIndexStart + 1],
                 checkPoint.x,
                 checkPoint.y
             );
             stillNearTheLastDirectionPoint = oldLastDirectionPointDistance < distanceCheck;
-            lastCoordonatesIndexF = oldDirectionPoint[3];
+            lastCoordonatesIndexF = directionsRaw[oldLastDirectionIndexStart + 3];
         }
 
-        var stopAt = directions.size();
-        for (var i = startAt; i < stopAt; ++i) {
+        var stopAt = directionsRaw.size();
+        for (
+            var i = startAt * DIRECTION_ARRAY_POINT_SIZE;
+            i < stopAt;
+            i += DIRECTION_ARRAY_POINT_SIZE
+        ) {
             // any points ahead of us are valid, since we have no idea where we are on the route, but don't allow points to go backwards
-            var point = directions[i];
-            var coordinatesIndexF = point[3];
+            var coordinatesIndexF = directionsRaw[i + 3];
             if (coordinatesIndexF <= lastCoordonatesIndexF) {
                 // skip any of the directions in the past, this should not really ever happen since we start at the index, but protect ourselves from ourselves
                 continue;
@@ -607,10 +616,15 @@ class BreadcrumbTrack {
                 return null;
             }
 
-            var distancePx = distance(point[0], point[1], checkPoint.x, checkPoint.y);
+            var distancePx = distance(
+                directionsRaw[i],
+                directionsRaw[i + 1],
+                checkPoint.x,
+                checkPoint.y
+            );
             if (distancePx < distanceCheck) {
-                lastDirectionIndex = i;
-                return [point[2], distancePx];
+                lastDirectionIndex = i / DIRECTION_ARRAY_POINT_SIZE;
+                return [directionsRaw[i + 2], distancePx];
             }
         }
 

@@ -99,7 +99,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     function getSettingsView() as [Views] or [Views, InputDelegates] or Null {
         return [new $.Rez.Menus.SettingsMapAttribution(), new $.SettingsMapAttributionDelegate()];
     }
-        
+
     (:settingsView)
     function getSettingsView() as [Views] or [Views, InputDelegates] or Null {
         var settings = new $.SettingsMain();
@@ -134,12 +134,14 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
                 var name = rawData[0] as String;
                 var routeData = rawData[1] as Array<Float>;
-                var directions = [] as Array<[Float, Float, Float, Float]>; // back compat empty array
-                if (rawData.size() > 2)
-                {
-                    directions = rawData[2] as Array<[Float, Float, Float, Float]>;
+                var directions = [] as Array<Float>; // back compat empty array
+                if (rawData.size() > 2) {
+                    directions = rawData[2] as Array<Float>;
                 }
-                if (routeData.size() % ARRAY_POINT_SIZE == 0) {
+                if (
+                    routeData.size() % ARRAY_POINT_SIZE == 0 &&
+                    directions.size() % DIRECTION_ARRAY_POINT_SIZE == 0
+                ) {
                     var route = _breadcrumbContext.newRoute(name);
                     if (route == null) {
                         logE("Failed to add route");

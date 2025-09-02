@@ -6,6 +6,7 @@ import Toybox.Application;
 import Toybox.System;
 
 const ARRAY_POINT_SIZE = 3;
+const DIRECTION_ARRAY_POINT_SIZE = 4;
 
 // cached values
 // we should probbaly do this per latitude to get an estimate and just use a lookup table
@@ -234,5 +235,71 @@ class PointArray {
 
     function clear() as Void {
         resize(0);
+    }
+}
+
+// a flat array for memory perf Array<Float> where Array[0] = X1 Array[1] = Y1 etc. similar to the coordinates array
+// [xLatRect, YLatRect, angleToTurnDegrees (-180 to 180), coordinatesIndex]
+class DirectionPointArray {
+    var _internalArrayBuffer as Array<Float> = [];
+
+    function rescale(scaleFactor as Float) as Void {
+        // unsafe to call with nulls or 0, checks should be made in parent
+        // size is guaranteed to be a multiple of ARRAY_POINT_SIZE
+        for (var i = 0; i < _internalArrayBuffer.size(); i += DIRECTION_ARRAY_POINT_SIZE) {
+            _internalArrayBuffer[i] = _internalArrayBuffer[i] * scaleFactor;
+            _internalArrayBuffer[i + 1] = _internalArrayBuffer[i + 1] * scaleFactor;
+        }
+    }
+
+    function reversePoints() as Void {
+        var pointsCount = pointSize();
+        if (pointsCount <= 1) {
+            return;
+        }
+
+        for (
+            var leftIndex = -1, rightIndex = size() - DIRECTION_ARRAY_POINT_SIZE;
+            leftIndex < rightIndex;
+            rightIndex -= DIRECTION_ARRAY_POINT_SIZE /*left increment done in loop*/
+        ) {
+            // hard code instead of for loop to hopefully optimise better
+            var rightIndex0 = rightIndex;
+            var rightIndex1 = rightIndex + 1;
+            var rightIndex2 = rightIndex + 2;
+            var rightIndex3 = rightIndex + 3;
+            ++leftIndex;
+            var temp = _internalArrayBuffer[leftIndex];
+            _internalArrayBuffer[leftIndex] = _internalArrayBuffer[rightIndex0];
+            _internalArrayBuffer[rightIndex0] = temp;
+
+            ++leftIndex;
+            temp = _internalArrayBuffer[leftIndex];
+            _internalArrayBuffer[leftIndex] = _internalArrayBuffer[rightIndex1];
+            _internalArrayBuffer[rightIndex1] = temp;
+
+            ++leftIndex;
+            temp = _internalArrayBuffer[leftIndex];
+            // this is the direction we need to turn, it also needs to be reversed
+            _internalArrayBuffer[leftIndex] = -_internalArrayBuffer[rightIndex2];
+            _internalArrayBuffer[rightIndex2] = temp;
+            
+            ++leftIndex;
+            temp = _internalArrayBuffer[leftIndex];
+            _internalArrayBuffer[leftIndex] = _internalArrayBuffer[rightIndex3];
+            _internalArrayBuffer[rightIndex3] = temp;
+        }
+
+        logD("reversePoints occurred");
+    }
+
+    // the raw size
+    function size() as Number {
+        return _internalArrayBuffer.size();
+    }
+
+    // the number of points
+    function pointSize() as Number {
+        return size() / DIRECTION_ARRAY_POINT_SIZE;
     }
 }

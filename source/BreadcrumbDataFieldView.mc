@@ -39,7 +39,8 @@ class DirectionAlert extends WatchUi.DataFieldAlert {
 
     // Overrides the onUpdate function to draw a graphical turn indicator
     function onUpdate(dc as Dc) as Void {
-        // this is very pretty, but runs out of memory when trying to create it :(
+        // this is very pretty, but runs out of memory when trying to create it on the sim :(
+        // however on  real physical device it seems to work fine
 
         // --- 1. Setup Drawing Variables ---
         // Get the center of the screen
@@ -51,7 +52,6 @@ class DirectionAlert extends WatchUi.DataFieldAlert {
 
         // Set the color for the drawing
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-        // dc.clear();
         // Set the line width to make it more visible
         dc.setPenWidth(3);
 
@@ -927,6 +927,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var directionIndexesStr = "";
         var coordsIndexesStr = "";
         var routesPtsStr = "";
+        var dirPtsStr = "";
         for (var i = 0; i < _breadcrumbContext.routes.size(); ++i) {
             var route = _breadcrumbContext.routes[i];
             if (!settings.routeEnabled(route.storageIndex)) {
@@ -937,23 +938,28 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 directionIndexesStr += ", ";
                 coordsIndexesStr += ", ";
                 routesPtsStr += ", ";
+                dirPtsStr += ", ";
             }
 
             needsComma = true;
             var dirCoordindexStr =
-                route.lastDirectionIndex < 0 || route.lastDirectionIndex > route.directions.size()
+                route.lastDirectionIndex < 0 ||
+                route.lastDirectionIndex > route.directions.pointSize()
                     ? "na"
-                    : route.directions[route.lastDirectionIndex][3].format("%.1f");
+                    : route.directions._internalArrayBuffer[
+                          route.lastDirectionIndex * DIRECTION_ARRAY_POINT_SIZE + 3
+                      ].format("%.1f");
             directionIndexesStr += +route.lastDirectionIndex + "(" + dirCoordindexStr + ")";
             coordsIndexesStr += route.lastClosePointIndex;
             routesPtsStr += route.coordinates.pointSize();
+            dirPtsStr += route.directions.pointSize();
         }
         y += spacing;
         dc.drawText(
             x,
             y,
             Graphics.FONT_XTINY,
-            "route pts: " + routesPtsStr,
+            "route pts: " + routesPtsStr + " dir: " + dirPtsStr,
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
@@ -961,7 +967,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "di: " + directionIndexesStr + " ci: " + coordsIndexesStr,
+            "ci: " + coordsIndexesStr + " di: " + directionIndexesStr,
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
