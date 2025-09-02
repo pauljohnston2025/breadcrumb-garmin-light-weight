@@ -502,7 +502,8 @@ class BreadcrumbTrack {
         distanceCheck as Float
     ) as [Float, Float]? {
         var directionsRaw = directions._internalArrayBuffer; // raw dog access means we can do the calcs much faster
-        var ALLOWED_COORDINATE_PERIMETER = 5;
+        // longer routes with more points allow more look ahead (up to some percentage of the route)
+        var allowedCoordinatePerimiter = maxN(5, (coordinates.pointSize()/20).toNumber());
         var oldLastDirectionIndex = lastDirectionIndex;
         var oldLastClosePointIndex = lastClosePointIndex;
         if (oldLastClosePointIndex != null) {
@@ -553,7 +554,7 @@ class BreadcrumbTrack {
 
                 // only allow the directions around our location to be checked
                 // we do not want a track that loops back through the same intersection triggerring the direction for the end of the route if we are only part way through
-                if (coordinatesIndexF - lastCoordonatesIndexF > ALLOWED_COORDINATE_PERIMETER) {
+                if (coordinatesIndexF - lastCoordonatesIndexF > allowedCoordinatePerimiter) {
                     return null;
                 }
 
@@ -605,7 +606,7 @@ class BreadcrumbTrack {
 
             if (
                 stillNearTheLastDirectionPoint &&
-                coordinatesIndexF - lastCoordonatesIndexF > ALLOWED_COORDINATE_PERIMETER
+                coordinatesIndexF - lastCoordonatesIndexF > allowedCoordinatePerimiter
             ) {
                 // prevent any overlap of points further on in the route that go through the same intersection
                 // we probably need to include a bit of padding here, since the overlap could be slightly miss-aligned
