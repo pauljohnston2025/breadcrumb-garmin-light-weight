@@ -504,15 +504,17 @@ class BreadcrumbTrack {
         checkPoint as RectangularPoint,
         distanceCheck as Float
     ) as [Float, Float]? {
+        var ALLOWED_COORDINATE_PERIMETER = 5;
         var oldLastDirectionIndex = lastDirectionIndex;
         var oldLastClosePointIndex = lastClosePointIndex;
         if (oldLastClosePointIndex != null) {
             var lastCoordonatesIndexF = oldLastClosePointIndex.toFloat();
             // we know where we are on the track, only look at directions that are ahead of here
             // this allows us to revisit the start of the track, or when we return to the track after being off track we can resume looking for directions
-            var ALLOWED_COORDINATE_PERIMETER = 5;
             var stillNearTheLastDirectionPoint = false;
+            var startAt = 0;
             if (oldLastDirectionIndex >= 0 && oldLastDirectionIndex < directions.size()) {
+                startAt = oldLastDirectionIndex;
                 var oldDirectionPoint = directions[oldLastDirectionIndex];
                 var oldLastDirectionPointDistance = distance(
                     oldDirectionPoint[0],
@@ -540,7 +542,7 @@ class BreadcrumbTrack {
             // direction arrays are meant to be fairly small, so not a huge issue for now, and it does fast forward so it's only a few ops per direction
             // we may need to store a bucketed list or something if this leads to watchdog errors
             var stopAt = directions.size();
-            for (var i = 0; i < stopAt; ++i) {
+            for (var i = startAt; i < stopAt; ++i) {
                 var point = directions[i];
                 var coordinatesIndexF = point[3];
                 if (coordinatesIndexF <= lastCoordonatesIndexF) {
@@ -551,14 +553,6 @@ class BreadcrumbTrack {
                 // only allow the directions around our location to be checked
                 // we do not want a track that loops back through the same intersection triggerring the direction for the end of the route if we are only part way through
                 if (coordinatesIndexF - lastCoordonatesIndexF > ALLOWED_COORDINATE_PERIMETER) {
-                    // note: if they do not have off track alerts enabled this will not work very well, as they will need to progress through all direction points sequentially
-                    // if off track alerts is on, we will know roughly where we are on the track and we can check the directions around it
-                    if (!stillNearTheLastDirectionPoint) {
-                        // todo: only reset this when the user moves back to the start of the route. eg. on `wrong direction` alerts
-                        // this will allow us to start this array scan from lastDirectionIndex
-                        // though we still ned to support a full scan, since the user can jump forwards from the start to end - this must not trip the watchdog
-                        lastDirectionIndex = -1; // reset the direction index once we move away from the direction, this is so we can revisit the direction again if we go past it again
-                    }
                     return null;
                 }
 
@@ -569,36 +563,61 @@ class BreadcrumbTrack {
                 }
             }
 
-            if (!stillNearTheLastDirectionPoint) {
-                // todo: only reset this when the user moves back to the start of the route. eg. on `wrong direction` alerts
-                // this will allow us to start this array scan from lastDirectionIndex
-                // though we still ned to support a full scan, since the user can jump forwards from the start to end - this must not trip the watchdog
-                lastDirectionIndex = -1; // reset the direction index once we move away from the direction, this is so we can revisit the direction again if we go past it again
-            }
             return null;
         }
-
         // we do not know where we are on the track, either off track alerts are not enabled, or we are off track
-        // in this case, only search from the last direction we got forwards
-        // this prevents going back to previous directions, eg. 2 directions in sequence
-        var startAt = oldLastDirectionIndex < 0 ? 0 : oldLastDirectionIndex;
-        if (startAt >= directions.size() - 1) {
-            return null; // we are already at the end, no more directions
+        // in this case, we want to search all directions, since we could rejoin the track at any point
+
+        var lastCoordonatesIndexF = -1f;
+        var stillNearTheLastDirectionPoint = false;
+        var startAt = 0;
+        if (oldLastDirectionIndex >= 0 && oldLastDirectionIndex < directions.size()) {
+            startAt = oldLastDirectionIndex;
+            var oldDirectionPoint = directions[oldLastDirectionIndex];
+            var oldLastDirectionPointDistance = distance(
+                oldDirectionPoint[0],
+                oldDirectionPoint[1],
+                checkPoint.x,
+                checkPoint.y
+            );
+            stillNearTheLastDirectionPoint = oldLastDirectionPointDistance < distanceCheck;
+            lastCoordonatesIndexF = oldDirectionPoint[3];
         }
 
-        // we could search the whole array, but that would lead to issues when the route doubles back on itself
-        // eg. a route that goes out and back through the same intersection if we search the whole array we would find the direction near the end of the coordinates, which would be incorrect since we are only starting the route
-        // The below approach though does not handle any points skipped, if a user deviates from the planned route it will not correctly resume directions from where they re-enterred the route
-        // we could allow '5 points skipped' or something, but it could be on a route that only has a few points
-        // perhaps we just need to scan the whole array every time when we are off track? that could lead to watchdog errors though
-        // would be more robust to just not care about lastDirectionIndex and just search for any directions that we are close to. would allow rejoining track, on the off change that we are still within range of the last point we could skip over it (plus some buffer for out and back).
-        var toCheck = startAt + 1; // only check the next point
-        var point = directions[toCheck];
+        var stopAt = directions.size();
+        for (var i = startAt; i < stopAt; ++i) {
+            // any points ahead of us are valid, since we have no idea where we are on the route, but don't allow points to go backwards
+            var point = directions[i];
+            var coordinatesIndexF = point[3];
+            if (coordinatesIndexF <= lastCoordonatesIndexF) {
+                // skip any of the directions in the past, this should not really ever happen since we start at the index, but protect ourselves from ourselves
+                continue;
+            }
 
-        var distancePx = distance(point[0], point[1], checkPoint.x, checkPoint.y);
-        if (distancePx < distanceCheck) {
-            lastDirectionIndex = toCheck;
-            return [point[2], distancePx];
+            if (
+                stillNearTheLastDirectionPoint &&
+                coordinatesIndexF - lastCoordonatesIndexF > ALLOWED_COORDINATE_PERIMETER
+            ) {
+                // prevent any overlap of points further on in the route that go through the same intersection
+                // we probably need to include a bit of padding here, since the overlap could be slightly miss-aligned
+                // This is done in the loop to allow quick turns in succession to be alerted, but not the directions at the end of the route thats in the same intersection.
+                // eg. a left turn follwed by a right turn
+                // we use the direction alert to know roughly where we are on the route
+                // whilst we are within the circle of the last direction only consider the next X points
+                return null;
+            }
+
+            var distancePx = distance(point[0], point[1], checkPoint.x, checkPoint.y);
+            if (distancePx < distanceCheck) {
+                lastDirectionIndex = i;
+                return [point[2], distancePx];
+            }
+        }
+
+        if (!stillNearTheLastDirectionPoint) {
+            // consider all directions again, we have moved outside the perimeter of the last direction
+            // this is so we can rejoin at the start
+            lastDirectionIndex = -1;
         }
         return null;
     }
@@ -692,13 +711,14 @@ class BreadcrumbTrack {
                     distToSegmentAndSegPoint[2],
                     0f
                 );
-                return new OffTrackInfo(
-                    true,
-                    lastClosePoint,
+                var wrongDirection =
                     oldLastClosePointIndex != null &&
-                        lastClosePointIndex != null &&
-                        oldLastClosePointIndex > lastClosePointIndex
-                );
+                    lastClosePointIndex != null &&
+                    oldLastClosePointIndex > lastClosePointIndex;
+                if (wrongDirection) {
+                    lastDirectionIndex = -1; // reset the direction index once we go back, this is so we can revisit the direction again if we go past it again
+                }
+                return new OffTrackInfo(true, lastClosePoint, wrongDirection);
             }
 
             if (distToSegmentAndSegPoint[0] < lastClosestDist) {

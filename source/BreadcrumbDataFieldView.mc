@@ -28,7 +28,7 @@ class OffTrackAlert extends WatchUi.DataFieldAlert {
 }
 
 class DirectionAlert extends WatchUi.DataFieldAlert {
-    var direction as Float;
+    var direction as Float; // -180 to +180 deg
     var distanceM as Float;
 
     function initialize(direction as Float, distanceM as Float) {
@@ -37,18 +37,65 @@ class DirectionAlert extends WatchUi.DataFieldAlert {
         self.distanceM = distanceM;
     }
 
+    // Overrides the onUpdate function to draw a graphical turn indicator
     function onUpdate(dc as Dc) as Void {
-        var halfHeight = dc.getHeight() / 2;
-        // todo make this a line that shows the direction as an array, and correct angle relative to current path
-        var dirText = direction >= 0 ? "Right" : "Left";
-        var text = dirText + " Turn\nIn " + distanceM.format("%.1f") + "m";
+        // this is very pretty, but runs out of memory when trying to create it :(
+
+        // --- 1. Setup Drawing Variables ---
+        // Get the center of the screen
+        var centerX = dc.getWidth() / 2;
+        var centerY = dc.getHeight() / 2;
+
+        // Define the length of the lines for the turn indicator
+        var lineLength = 30;
+
+        // Set the color for the drawing
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+        // dc.clear();
+        // Set the line width to make it more visible
+        dc.setPenWidth(3);
+
+        // --- 2. Draw the "Current Path" Line ---
+        // This is a straight vertical line leading to the turn point (the center)
+        dc.drawLine(centerX, centerY + lineLength, centerX, centerY);
+
+        // --- 3. Calculate and Draw the "Turn" Line ---
+        // Convert the incoming direction from degrees to radians for the math functions
+        var angleRad = Math.toRadians(self.direction);
+
+        // Calculate the end point of the turn line using sine and cosine.
+        // We subtract from 'y' because in many screen coordinate systems,
+        // the 'y' value increases as you go down the screen.
+        var endX = centerX + lineLength * Math.sin(angleRad);
+        var endY = centerY - lineLength * Math.cos(angleRad);
+
+        dc.drawLine(centerX, centerY, endX, endY);
+
+        // --- 4. Draw an Arrowhead on the Turn Line ---
+        // This makes the direction of the turn clearer
+        var arrowLength = 10; // Length of the arrowhead barbs
+        var arrowAngle = Math.toRadians(30); // Angle of the barbs relative to the line
+
+        // Calculate the coordinates for the two barbs of the arrowhead
+        var arrowX1 = endX - arrowLength * Math.sin(angleRad - arrowAngle);
+        var arrowY1 = endY + arrowLength * Math.cos(angleRad - arrowAngle);
+        var arrowX2 = endX - arrowLength * Math.sin(angleRad + arrowAngle);
+        var arrowY2 = endY + arrowLength * Math.cos(angleRad + arrowAngle);
+
+        // Draw the two arrowhead lines
+        dc.drawLine(endX, endY, arrowX1, arrowY1);
+        dc.drawLine(endX, endY, arrowX2, arrowY2);
+
+        // --- 5. Display the Distance Text ---
+        // Keep the distance text, as it's still very useful information.
+        // We'll place it neatly below the line drawing.
+        var text = distanceM.format("%.1f") + "m";
         dc.drawText(
-            halfHeight,
-            halfHeight,
+            centerX,
+            centerY + lineLength + 10, // Position text below the drawing
             Graphics.FONT_SYSTEM_MEDIUM,
             text,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            Graphics.TEXT_JUSTIFY_CENTER
         );
     }
 }
@@ -150,14 +197,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 showAlert(new DirectionAlert(direction, distanceM));
             } else {
                 var dirText = direction >= 0 ? "Right" : "Left";
-                // var text =
-                //     dirText +
-                //     " Turn\nIn " +
-                //     distanceM.format("%.1f") +
-                //     "m\n" +
-                //     abs(direction).format("%.1f") +
-                //     "°";
-                var text = dirText + " Turn\nIn " + distanceM.format("%.1f") + "m";
+                var text =
+                    dirText +
+                    " Turn In " +
+                    distanceM.format("%.1f") +
+                    "m " +
+                    abs(direction).format("%.1f") +
+                    "°";
+                // var text = dirText + " Turn In " + distanceM.format("%.1f") + "m";
                 WatchUi.showToast(text, {});
             }
 
