@@ -410,9 +410,11 @@ class BreadcrumbRenderer {
         var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
 
         for (var i = 0; i < size; i += ARRAY_POINT_SIZE) {
-            var x = rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
+            var nextX = coordinatesRaw[i];
+            var nextY = coordinatesRaw[i + 1];
+            var x = rotateAroundScreenXOffsetFactoredIn + (nextX - centerPosition.x);
             var y =
-                rotateAroundScreenYOffsetFactoredIn - (coordinatesRaw[i + 1] - centerPosition.y);
+                rotateAroundScreenYOffsetFactoredIn - (nextY - centerPosition.y);
 
             dc.fillCircle(x, y, 5);
             // if ((i / ARRAY_POINT_SIZE) < 20 && breadcrumb.storageIndex >=0) {
@@ -450,21 +452,39 @@ class BreadcrumbRenderer {
         var coordinatesRaw = breadcrumb.directions._internalArrayBuffer;
 
         for (var i = 0; i < size; i += DIRECTION_ARRAY_POINT_SIZE) {
-            var x = rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
-            var y =
-                rotateAroundScreenYOffsetFactoredIn - (coordinatesRaw[i + 1] - centerPosition.y);
+            var pixelX =
+                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
+            var pixelY =
+                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i + 4,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
+            var x = rotateAroundScreenXOffsetFactoredIn + (pixelX - centerPosition.x);
+            var y = rotateAroundScreenYOffsetFactoredIn - (pixelY - centerPosition.y);
 
             dc.drawCircle(x, y, distance);
             // if the route comes back through the saem interection directions often overlap each other so this can be confusing
             if (i / DIRECTION_ARRAY_POINT_SIZE < settings.showDirectionPointTextUnderIndex) {
+                var index =
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => i + 9,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float;
+                var directionDeg =
+                    (
+                        coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_SINT8, {
+                            :offset => i + 8,
+                            :endianness => Lang.ENDIAN_BIG,
+                        }) as Number
+                    ) * 2;
                 dc.drawText(
                     x,
                     y,
                     Graphics.FONT_XTINY,
-                    "" +
-                        coordinatesRaw[i + 3].format("%.1f") +
-                        "\n" +
-                        coordinatesRaw[i + 2].format("%.1f"),
+                    "" + index.format("%.1f") + "\n" + directionDeg,
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
                 );
             }
@@ -885,8 +905,16 @@ class BreadcrumbRenderer {
         var coordinatesRaw = breadcrumb.directions._internalArrayBuffer;
 
         for (var i = 0; i < size; i += DIRECTION_ARRAY_POINT_SIZE) {
-            var nextX = coordinatesRaw[i];
-            var nextY = coordinatesRaw[i + 1];
+            var nextX =
+                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
+            var nextY =
+                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i + 4,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
 
             var nextXScaledAtCenter = nextX - centerPosition.x;
             var nextYScaledAtCenter = nextY - centerPosition.y;
@@ -902,14 +930,23 @@ class BreadcrumbRenderer {
             dc.drawCircle(x, y, distance);
             // if the route comes back through the saem interection directions often overlap each other so this can be confusing
             if (i / DIRECTION_ARRAY_POINT_SIZE < settings.showDirectionPointTextUnderIndex) {
+                var index =
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => i + 9,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float;
+                var directionDeg =
+                    (
+                        coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_SINT8, {
+                            :offset => i + 8,
+                            :endianness => Lang.ENDIAN_BIG,
+                        }) as Number
+                    ) * 2;
                 dc.drawText(
                     x,
                     y,
                     Graphics.FONT_XTINY,
-                    "" +
-                        coordinatesRaw[i + 3].format("%.1f") +
-                        "\n" +
-                        coordinatesRaw[i + 2].format("%.1f"),
+                    "" + index.format("%.1f") + "\n" + directionDeg,
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
                 );
             }

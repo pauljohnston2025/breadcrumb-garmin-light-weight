@@ -6,7 +6,7 @@ import Toybox.Application;
 import Toybox.System;
 
 const ARRAY_POINT_SIZE = 3;
-const DIRECTION_ARRAY_POINT_SIZE = 4;
+const DIRECTION_ARRAY_POINT_SIZE = 13;
 
 // cached values
 // we should probbaly do this per latitude to get an estimate and just use a lookup table
@@ -242,18 +242,34 @@ class PointArray {
 // [xLatRect, YLatRect, angleToTurnDegrees (-180 to 180), coordinatesIndex]
 class DirectionPointArray {
     // the array type has an extra byte overhead per item stored (5 bytes per item)
-    // we could possibly pack this much tighter if we used a bytearray, but the access would become much more complex
+    // so we pack this much tighter by using a bytearray, but the access becomes much more complex
     // bytearray.decodeNumber(NUMBER_FORMAT_FLOAT)
     // bytearray.decodeNumber(NUMBER_FORMAT_SINT8) // we could store the angle as an int8 -90 to 90 representing -180 to 180 (2 deg per value)
-    // I think all the bytearray.decodeNumber calls will trip the watchdog, plus we must do alot more math to find the location
-    var _internalArrayBuffer as Array<Float> = [];
+    // I think all the bytearray.decodeNumber could trip the watchdog
+    var _internalArrayBuffer as ByteArray = new [0]b;
 
     function rescale(scaleFactor as Float) as Void {
         // unsafe to call with nulls or 0, checks should be made in parent
         // size is guaranteed to be a multiple of ARRAY_POINT_SIZE
         for (var i = 0; i < _internalArrayBuffer.size(); i += DIRECTION_ARRAY_POINT_SIZE) {
-            _internalArrayBuffer[i] = _internalArrayBuffer[i] * scaleFactor;
-            _internalArrayBuffer[i + 1] = _internalArrayBuffer[i + 1] * scaleFactor;
+            var oldX =
+                _internalArrayBuffer.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
+            _internalArrayBuffer.encodeNumber(oldX * scaleFactor, Lang.NUMBER_FORMAT_FLOAT, {
+                :offset => i,
+                :endianness => Lang.ENDIAN_BIG,
+            });
+            var oldY =
+                _internalArrayBuffer.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i + 4,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
+            _internalArrayBuffer.encodeNumber(oldY * scaleFactor, Lang.NUMBER_FORMAT_FLOAT, {
+                :offset => i + 4,
+                :endianness => Lang.ENDIAN_BIG,
+            });
         }
     }
 
@@ -264,35 +280,104 @@ class DirectionPointArray {
         }
 
         for (
-            var leftIndex = -1, rightIndex = size() - DIRECTION_ARRAY_POINT_SIZE;
+            var leftIndex = -4, rightIndex = size() - DIRECTION_ARRAY_POINT_SIZE;
             leftIndex < rightIndex;
             rightIndex -= DIRECTION_ARRAY_POINT_SIZE /*left increment done in loop*/
         ) {
             // hard code instead of for loop to hopefully optimise better
+            // we should probaly optimise the 4 in a row byte swap too, though i do not think we have a memcpy or anything similar
             var rightIndex0 = rightIndex;
-            var rightIndex1 = rightIndex + 1;
-            var rightIndex2 = rightIndex + 2;
-            var rightIndex3 = rightIndex + 3;
-            ++leftIndex;
-            var temp = _internalArrayBuffer[leftIndex];
-            _internalArrayBuffer[leftIndex] = _internalArrayBuffer[rightIndex0];
-            _internalArrayBuffer[rightIndex0] = temp;
+            var rightIndex1 = rightIndex + 4;
+            var rightIndex2 = rightIndex + 8;
+            var rightIndex3 = rightIndex + 9;
+            leftIndex += 4;
+            var temp =
+                _internalArrayBuffer.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => leftIndex,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
+            _internalArrayBuffer.encodeNumber(
+                _internalArrayBuffer.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => rightIndex0,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float,
+                Lang.NUMBER_FORMAT_FLOAT,
+                {
+                    :offset => leftIndex,
+                    :endianness => Lang.ENDIAN_BIG,
+                }
+            );
+            _internalArrayBuffer.encodeNumber(temp, Lang.NUMBER_FORMAT_FLOAT, {
+                :offset => rightIndex0,
+                :endianness => Lang.ENDIAN_BIG,
+            });
 
-            ++leftIndex;
-            temp = _internalArrayBuffer[leftIndex];
-            _internalArrayBuffer[leftIndex] = _internalArrayBuffer[rightIndex1];
-            _internalArrayBuffer[rightIndex1] = temp;
+            leftIndex += 4;
+            temp =
+                _internalArrayBuffer.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => leftIndex,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
+            _internalArrayBuffer.encodeNumber(
+                _internalArrayBuffer.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => rightIndex1,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float,
+                Lang.NUMBER_FORMAT_FLOAT,
+                {
+                    :offset => leftIndex,
+                    :endianness => Lang.ENDIAN_BIG,
+                }
+            );
+            _internalArrayBuffer.encodeNumber(temp, Lang.NUMBER_FORMAT_FLOAT, {
+                :offset => rightIndex1,
+                :endianness => Lang.ENDIAN_BIG,
+            });
 
-            ++leftIndex;
-            temp = _internalArrayBuffer[leftIndex];
+            leftIndex += 4;
+            temp =
+                _internalArrayBuffer.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => leftIndex,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
             // this is the direction we need to turn, it also needs to be reversed
-            _internalArrayBuffer[leftIndex] = -_internalArrayBuffer[rightIndex2];
-            _internalArrayBuffer[rightIndex2] = temp;
-            
-            ++leftIndex;
-            temp = _internalArrayBuffer[leftIndex];
-            _internalArrayBuffer[leftIndex] = _internalArrayBuffer[rightIndex3];
-            _internalArrayBuffer[rightIndex3] = temp;
+            _internalArrayBuffer.encodeNumber(
+                -_internalArrayBuffer.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => rightIndex2,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float,
+                Lang.NUMBER_FORMAT_FLOAT,
+                {
+                    :offset => leftIndex,
+                    :endianness => Lang.ENDIAN_BIG,
+                }
+            );
+            _internalArrayBuffer.encodeNumber(-temp, Lang.NUMBER_FORMAT_FLOAT, {
+                :offset => rightIndex2,
+                :endianness => Lang.ENDIAN_BIG,
+            });
+
+            leftIndex += 1;
+            temp =
+                _internalArrayBuffer.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => leftIndex,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
+            _internalArrayBuffer.encodeNumber(
+                _internalArrayBuffer.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => rightIndex3,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float,
+                Lang.NUMBER_FORMAT_FLOAT,
+                {
+                    :offset => leftIndex,
+                    :endianness => Lang.ENDIAN_BIG,
+                }
+            );
+            _internalArrayBuffer.encodeNumber(temp, Lang.NUMBER_FORMAT_FLOAT, {
+                :offset => rightIndex3,
+                :endianness => Lang.ENDIAN_BIG,
+            });
         }
 
         logD("reversePoints occurred");

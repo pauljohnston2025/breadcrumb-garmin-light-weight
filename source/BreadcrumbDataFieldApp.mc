@@ -134,9 +134,13 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
                 var name = rawData[0] as String;
                 var routeData = rawData[1] as Array<Float>;
-                var directions = [] as Array<Float>; // back compat empty array
+                var directions = new [0]b as ByteArray; // back compat empty array
                 if (rawData.size() > 2) {
-                    directions = rawData[2] as Array<Float>;
+                    directions =
+                        StringUtil.convertEncodedString(rawData[2] as String, {
+                            :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
+                            :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
+                        }) as ByteArray;
                 }
                 if (
                     routeData.size() % ARRAY_POINT_SIZE == 0 &&
