@@ -252,6 +252,7 @@ class DirectionPointArray {
     // this allows 3 large routes to fit into memory, but as suspected the overhead triggers the watchdog
     // turns out I forgot to build in release mode, and debug build was causing memory limits and watchdog errors
     // so all the new code added is likely causing the OOM, and relase build seems to work ok with 3 large routes if maps are disabled (to limit OOM)
+    // and even better, I had a large (300 tiles) offline storage cache active at the time. 3 large roues are working fine with directions and offline storage cache set to 10 tiles
     var _internalArrayBuffer as ByteArray = new [0]b;
 
     function rescale(scaleFactor as Float) as Void {
