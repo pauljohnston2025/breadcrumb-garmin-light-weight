@@ -281,13 +281,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             // store rotations and speed every time
             var rescaleOccurred = _cachedValues.onActivityInfo(info);
             if (rescaleOccurred) {
-                // rescaling is an expensive operatioj, f we have multiple large routes rescale and then try and recalculate off track alerts (or anything else expensive)
+                // rescaling is an expensive operation, if we have multiple large routes rescale and then try and recalculate off track alerts (or anything else expensive)
                 // we could hit watchdog errors. Best to not attempt anything else.
                 logD("rescale occurred");
                 return;
             }
             // this is here due to stack overflow bug when requests trigger the next request
-            // only try 3 times, do not want to schedule heps if they complete immeditely, could hit watchdog
+            // only try 3 times, do not want to schedule heps if they complete immediately, could hit watchdog
             for (var i = 0; i < 3; ++i) {
                 if (!_breadcrumbContext.webRequestHandler.startNextIfWeCan()) {
                     break;
@@ -303,7 +303,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             // or we have to do multiple seeds if pending web requests is low
             // needs to be before _computeCounter for when we load tiles from storage (we can only load 1 tile per second)
             if (_breadcrumbContext.mapRenderer.seedTiles()) {
-                // we loadeed a tile from storage, which could be a significantly costly task,
+                // we loaded a tile from storage, which could be a significantly costly task,
                 // do not trip the watchdog, be safe and return
                 // if tile cacheSize is not large enough, this could result in no tracking, since all tiles could potentially be pulled from storage
                 // but black squares will appear on the screen, alerting the user that something is wrong
@@ -942,13 +942,18 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             }
 
             needsComma = true;
-            var dirCoordindexStr =
+            var dirCoordindexStr = "na";
+            if (
                 route.lastDirectionIndex < 0 ||
                 route.lastDirectionIndex > route.directions.pointSize()
-                    ? "na"
-                    : route.directions._internalArrayBuffer[
-                          route.lastDirectionIndex * DIRECTION_ARRAY_POINT_SIZE + 3
-                      ].format("%.1f");
+            ) {
+                dirCoordindexStr = (
+                    route.directions._internalArrayBuffer.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => route.lastDirectionIndex * DIRECTION_ARRAY_POINT_SIZE + 9,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float
+                ).format("%.1f");
+            }
             directionIndexesStr += +route.lastDirectionIndex + "(" + dirCoordindexStr + ")";
             coordsIndexesStr += route.lastClosePointIndex;
             routesPtsStr += route.coordinates.pointSize();
