@@ -241,6 +241,11 @@ class PointArray {
 // a flat array for memory perf Array<Float> where Array[0] = X1 Array[1] = Y1 etc. similar to the coordinates array
 // [xLatRect, YLatRect, angleToTurnDegrees (-180 to 180), coordinatesIndex]
 class DirectionPointArray {
+    // the array type has an extra byte overhead per item stored (5 bytes per item)
+    // we could possibly pack this much tighter if we used a bytearray, but the access would become much more complex
+    // bytearray.decodeNumber(NUMBER_FORMAT_FLOAT)
+    // bytearray.decodeNumber(NUMBER_FORMAT_SINT8) // we could store the angle as an int8 -90 to 90 representing -180 to 180 (2 deg per value)
+    // I think all the bytearray.decodeNumber calls will trip the watchdog, plus we must do alot more math to find the location
     var _internalArrayBuffer as Array<Float> = [];
 
     function rescale(scaleFactor as Float) as Void {

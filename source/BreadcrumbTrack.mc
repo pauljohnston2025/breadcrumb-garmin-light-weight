@@ -503,7 +503,7 @@ class BreadcrumbTrack {
     ) as [Float, Float]? {
         var directionsRaw = directions._internalArrayBuffer; // raw dog access means we can do the calcs much faster
         // longer routes with more points allow more look ahead (up to some percentage of the route)
-        var allowedCoordinatePerimiter = maxN(5, (coordinates.pointSize()/20).toNumber());
+        var allowedCoordinatePerimiter = maxN(5, (coordinates.pointSize() / 20).toNumber());
         var oldLastDirectionIndex = lastDirectionIndex;
         var oldLastClosePointIndex = lastClosePointIndex;
         if (oldLastClosePointIndex != null) {
