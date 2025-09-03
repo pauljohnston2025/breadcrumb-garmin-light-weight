@@ -246,6 +246,10 @@ class DirectionPointArray {
     // bytearray.decodeNumber(NUMBER_FORMAT_FLOAT)
     // bytearray.decodeNumber(NUMBER_FORMAT_SINT8) // we could store the angle as an int8 -90 to 90 representing -180 to 180 (2 deg per value)
     // I think all the bytearray.decodeNumber could trip the watchdog
+    // for 95 pointSize() itmes in the array it is 
+    // - 1263 bytes when using ByteArray (just 28 extra bytes overhead of the raw bytes needed)
+    // - 1935 bytes when using array<float> (5 bytes per item) note this does not go down it we get createive and use <float, float, char, float> the 'char' type still takes up 5 actual bytes
+    // this allows 3 large routes to fit into memory, but as suspected the overhead triggers the watchdog
     var _internalArrayBuffer as ByteArray = new [0]b;
 
     function rescale(scaleFactor as Float) as Void {
