@@ -125,12 +125,12 @@ class BreadcrumbTrack {
     }
 
     function handleRouteV2(
-        routeData as Array<Float>,
+        routeData as ByteArray,
         directions as ByteArray,
         cachedValues as CachedValues
     ) as Boolean {
         // trust the app completely
-        coordinates._internalArrayBuffer = routeData;
+        coordinates._internalArrayBufferBytes = routeData;
         coordinates._size = routeData.size();
         me.directions._internalArrayBuffer = directions;
         // we could optimise this firther if the app rpovides us with biunding box, center max/min elevation
@@ -158,7 +158,10 @@ class BreadcrumbTrack {
             ]);
             Storage.setValue(
                 key + "coords",
-                coordinates._internalArrayBuffer as Array<PropertyValueType>
+                StringUtil.convertEncodedString(coordinates._internalArrayBufferBytes, {
+                    :fromRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
+                    :toRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
+                }) as String
             );
             Storage.setValue(key + "coordsSize", coordinates._size);
             Storage.setValue(
@@ -209,7 +212,7 @@ class BreadcrumbTrack {
                 return null;
             }
             var coords = Storage.getValue(key + "coords");
-            if (coords == null) {
+            if (coords == null || !(coords instanceof String)) {
                 return null;
             }
 
@@ -258,7 +261,11 @@ class BreadcrumbTrack {
                 bbc[1] as Float,
                 bbc[2] as Float
             );
-            track.coordinates._internalArrayBuffer = coords as Array<Float>;
+            track.coordinates._internalArrayBufferBytes =
+                StringUtil.convertEncodedString(coords as String, {
+                    :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
+                    :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
+                }) as ByteArray;
             track.coordinates._size = coordsSize as Number;
             track.directions._internalArrayBuffer =
                 StringUtil.convertEncodedString(directions as String, {
@@ -595,10 +602,12 @@ class BreadcrumbTrack {
                 if (distancePx < distanceCheck) {
                     lastDirectionIndex = i / DIRECTION_ARRAY_POINT_SIZE;
                     return [
-                        directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_SINT8, {
-                            :offset => i + 8,
-                            :endianness => Lang.ENDIAN_BIG,
-                        }) as Float * 2,
+                        (
+                            directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_SINT8, {
+                                :offset => i + 8,
+                                :endianness => Lang.ENDIAN_BIG,
+                            }) as Float
+                        ) * 2,
                         distancePx,
                     ];
                 }
@@ -676,10 +685,12 @@ class BreadcrumbTrack {
             if (distancePx < distanceCheck) {
                 lastDirectionIndex = i / DIRECTION_ARRAY_POINT_SIZE;
                 return [
-                    directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_SINT8, {
-                        :offset => i + 8,
-                        :endianness => Lang.ENDIAN_BIG,
-                    }) as Float * 2,
+                    (
+                        directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_SINT8, {
+                            :offset => i + 8,
+                            :endianness => Lang.ENDIAN_BIG,
+                        }) as Float
+                    ) * 2,
                     distancePx,
                 ];
             }
@@ -708,7 +719,7 @@ class BreadcrumbTrack {
         }
 
         var endSecondScanAtRaw = sizeRaw;
-        var coordinatesRaw = coordinates._internalArrayBuffer; // raw dog access means we can do the calcs much faster (and do not need to create a point with altitude)
+        var coordinatesRaw = coordinates._internalArrayBufferBytes; // raw dog access means we can do the calcs much faster (and do not need to create a point with altitude)
         var oldLastClosePointIndex = lastClosePointIndex;
         if (lastClosePointIndex != null) {
             var lastClosePointRawStart = lastClosePointIndex * ARRAY_POINT_SIZE;
@@ -720,15 +731,31 @@ class BreadcrumbTrack {
             // if we were the second to last point the for loop will never run
             if (lastClosePointRawStart <= sizeRaw - 2 * ARRAY_POINT_SIZE) {
                 endSecondScanAtRaw = lastClosePointRawStart + ARRAY_POINT_SIZE; // the second scan needs to include endSecondScanAtRaw, or we would skip a point in the overlap
-                var lastPointX = coordinatesRaw[lastClosePointRawStart];
-                var lastPointY = coordinatesRaw[lastClosePointRawStart + 1];
+                var lastPointX =
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => lastClosePointRawStart,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float;
+                var lastPointY =
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => lastClosePointRawStart + 4,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float;
                 for (
                     var i = lastClosePointRawStart + ARRAY_POINT_SIZE;
                     i < sizeRaw;
                     i += ARRAY_POINT_SIZE
                 ) {
-                    var nextX = coordinatesRaw[i];
-                    var nextY = coordinatesRaw[i + 1];
+                    var nextX =
+                        coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                            :offset => i,
+                            :endianness => Lang.ENDIAN_BIG,
+                        }) as Float;
+                    var nextY =
+                        coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                            :offset => i + 4,
+                            :endianness => Lang.ENDIAN_BIG,
+                        }) as Float;
 
                     var distToSegmentAndSegPoint = calculateDistancePointToSegment(
                         checkPoint,
@@ -756,8 +783,16 @@ class BreadcrumbTrack {
         }
 
         // System.println("lastClosePointIndex: " + lastClosePointIndex);
-        var lastPointX = coordinatesRaw[0];
-        var lastPointY = coordinatesRaw[1];
+        var lastPointX =
+            coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                :offset => 0,
+                :endianness => Lang.ENDIAN_BIG,
+            }) as Float;
+        var lastPointY =
+            coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                :offset => 4,
+                :endianness => Lang.ENDIAN_BIG,
+            }) as Float;
         // The below for loop only runs when we are off track, or when the user is navigating the track in the reverse direction
         // so we need to check which point is closest, rather than grabbing the last point we left the track.
         // Because that could default to a random spot on the track, or the start of the track that is further away.
@@ -765,8 +800,16 @@ class BreadcrumbTrack {
         var lastClosestY = lastPointY;
         var lastClosestDist = FLOAT_MAX;
         for (var i = ARRAY_POINT_SIZE; i < endSecondScanAtRaw; i += ARRAY_POINT_SIZE) {
-            var nextX = coordinatesRaw[i];
-            var nextY = coordinatesRaw[i + 1];
+            var nextX =
+                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
+            var nextY =
+                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i + 4,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
 
             var distToSegmentAndSegPoint = calculateDistancePointToSegment(
                 checkPoint,

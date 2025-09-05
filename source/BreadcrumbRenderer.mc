@@ -360,13 +360,25 @@ class BreadcrumbRenderer {
         dc.setPenWidth(4);
 
         var size = breadcrumb.coordinates.size();
-        var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
+        var coordinatesRaw = breadcrumb.coordinates._internalArrayBufferBytes;
 
         // note: size is using the overload of points array (the reduced pointarray size)
         // but we draw from the raw points
         if (size >= ARRAY_POINT_SIZE * 2) {
-            var firstXScaledAtCenter = coordinatesRaw[0] - centerPosition.x;
-            var firstYScaledAtCenter = coordinatesRaw[1] - centerPosition.y;
+            var firstXScaledAtCenter =
+                (
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => 0,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float
+                ) - centerPosition.x;
+            var firstYScaledAtCenter =
+                (
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => 4,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float
+                ) - centerPosition.y;
             var firstX = rotateAroundScreenXOffsetFactoredIn + firstXScaledAtCenter;
             var firstY = rotateAroundScreenYOffsetFactoredIn - firstYScaledAtCenter;
             var lastX = firstX;
@@ -374,10 +386,23 @@ class BreadcrumbRenderer {
 
             for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
                 var nextX =
-                    rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
+                    rotateAroundScreenXOffsetFactoredIn +
+                    ((
+                        coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                            :offset => i,
+                            :endianness => Lang.ENDIAN_BIG,
+                        }) as Float
+                    ) -
+                        centerPosition.x);
                 var nextY =
                     rotateAroundScreenYOffsetFactoredIn -
-                    (coordinatesRaw[i + 1] - centerPosition.y);
+                    ((
+                        coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                            :offset => i + 4,
+                            :endianness => Lang.ENDIAN_BIG,
+                        }) as Float
+                    ) -
+                        centerPosition.y);
 
                 dc.drawLine(lastX, lastY, nextX, nextY);
 
@@ -407,14 +432,21 @@ class BreadcrumbRenderer {
         dc.setColor(colour, Graphics.COLOR_BLACK);
 
         var size = breadcrumb.coordinates.size();
-        var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
+        var coordinatesRaw = breadcrumb.coordinates._internalArrayBufferBytes;
 
         for (var i = 0; i < size; i += ARRAY_POINT_SIZE) {
-            var nextX = coordinatesRaw[i];
-            var nextY = coordinatesRaw[i + 1];
+            var nextX =
+                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
+            var nextY =
+                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i + 4,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
             var x = rotateAroundScreenXOffsetFactoredIn + (nextX - centerPosition.x);
-            var y =
-                rotateAroundScreenYOffsetFactoredIn - (nextY - centerPosition.y);
+            var y = rotateAroundScreenYOffsetFactoredIn - (nextY - centerPosition.y);
 
             dc.fillCircle(x, y, 5);
             // if ((i / ARRAY_POINT_SIZE) < 20 && breadcrumb.storageIndex >=0) {
@@ -554,13 +586,24 @@ class BreadcrumbRenderer {
         dc.setPenWidth(4);
 
         var size = breadcrumb.coordinates.size();
-        var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
+        var coordinatesRaw = breadcrumb.coordinates._internalArrayBufferBytes;
 
         var nextClosePointIndexRaw = lastClosePointIndex * ARRAY_POINT_SIZE + ARRAY_POINT_SIZE;
         if (nextClosePointIndexRaw < size - ARRAY_POINT_SIZE) {
-            var firstXScaledAtCenter = coordinatesRaw[nextClosePointIndexRaw] - centerPosition.x;
+            var firstXScaledAtCenter =
+                (
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => nextClosePointIndexRaw,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float
+                ) - centerPosition.x;
             var firstYScaledAtCenter =
-                coordinatesRaw[nextClosePointIndexRaw + 1] - centerPosition.y;
+                (
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => nextClosePointIndexRaw + 4,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float
+                ) - centerPosition.y;
             var firstXRotated =
                 rotateAroundScreenXOffsetFactoredIn +
                 rotateCos * firstXScaledAtCenter -
@@ -576,8 +619,16 @@ class BreadcrumbRenderer {
                 i < size && i <= nextClosePointIndexRaw + CHEVRON_POINTS * ARRAY_POINT_SIZE;
                 i += ARRAY_POINT_SIZE
             ) {
-                var nextX = coordinatesRaw[i];
-                var nextY = coordinatesRaw[i + 1];
+                var nextX =
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => i,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float;
+                var nextY =
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => i + 4,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float;
 
                 var nextXScaledAtCenter = nextX - centerPosition.x;
                 var nextYScaledAtCenter = nextY - centerPosition.y;
@@ -632,17 +683,27 @@ class BreadcrumbRenderer {
         dc.setPenWidth(4);
 
         var size = breadcrumb.coordinates.size();
-        var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
+        var coordinatesRaw = breadcrumb.coordinates._internalArrayBufferBytes;
 
         var nextClosePointIndexRaw = lastClosePointIndex * ARRAY_POINT_SIZE + ARRAY_POINT_SIZE;
         if (nextClosePointIndexRaw < size - ARRAY_POINT_SIZE) {
             var lastX =
                 rotateAroundScreenXOffsetFactoredIn +
-                coordinatesRaw[nextClosePointIndexRaw] -
+                (
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => nextClosePointIndexRaw,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float
+                ) -
                 centerPosition.x;
             var lastY =
                 rotateAroundScreenYOffsetFactoredIn -
-                coordinatesRaw[nextClosePointIndexRaw + 1] -
+                (
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => nextClosePointIndexRaw + 4,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float
+                ) -
                 centerPosition.y;
 
             for (
@@ -651,10 +712,23 @@ class BreadcrumbRenderer {
                 i += ARRAY_POINT_SIZE
             ) {
                 var nextX =
-                    rotateAroundScreenXOffsetFactoredIn + (coordinatesRaw[i] - centerPosition.x);
+                    rotateAroundScreenXOffsetFactoredIn +
+                    ((
+                        coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                            :offset => i,
+                            :endianness => Lang.ENDIAN_BIG,
+                        }) as Float
+                    ) -
+                        centerPosition.x);
                 var nextY =
                     rotateAroundScreenYOffsetFactoredIn -
-                    (coordinatesRaw[i + 1] - centerPosition.y);
+                    ((
+                        coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                            :offset => i + 4,
+                            :endianness => Lang.ENDIAN_BIG,
+                        }) as Float
+                    ) -
+                        centerPosition.y);
 
                 drawCheveron(dc, lastX, lastY, nextX, nextY);
 
@@ -775,13 +849,25 @@ class BreadcrumbRenderer {
         dc.setPenWidth(4);
 
         var size = breadcrumb.coordinates.size();
-        var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
+        var coordinatesRaw = breadcrumb.coordinates._internalArrayBufferBytes;
 
         // note: size is using the overload of points array (the reduced pointarray size)
         // but we draw from the raw points
         if (size >= ARRAY_POINT_SIZE * 2) {
-            var firstXScaledAtCenter = coordinatesRaw[0] - centerPosition.x;
-            var firstYScaledAtCenter = coordinatesRaw[1] - centerPosition.y;
+            var firstXScaledAtCenter =
+                (
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => 0,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float
+                ) - centerPosition.x;
+            var firstYScaledAtCenter =
+                (
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => 4,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float
+                ) - centerPosition.y;
             var firstXRotated =
                 rotateAroundScreenXOffsetFactoredIn +
                 rotateCos * firstXScaledAtCenter -
@@ -793,8 +879,16 @@ class BreadcrumbRenderer {
             var lastYRotated = firstYRotated;
 
             for (var i = ARRAY_POINT_SIZE; i < size; i += ARRAY_POINT_SIZE) {
-                var nextX = coordinatesRaw[i];
-                var nextY = coordinatesRaw[i + 1];
+                var nextX =
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => i,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float;
+                var nextY =
+                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                        :offset => i + 4,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Float;
 
                 var nextXScaledAtCenter = nextX - centerPosition.x;
                 var nextYScaledAtCenter = nextY - centerPosition.y;
@@ -852,10 +946,18 @@ class BreadcrumbRenderer {
         dc.setColor(colour, Graphics.COLOR_BLACK);
 
         var size = breadcrumb.coordinates.size();
-        var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
+        var coordinatesRaw = breadcrumb.coordinates._internalArrayBufferBytes;
         for (var i = 0; i < size; i += ARRAY_POINT_SIZE) {
-            var nextX = coordinatesRaw[i];
-            var nextY = coordinatesRaw[i + 1];
+            var nextX =
+                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
+            var nextY =
+                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i + 4,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
 
             var nextXScaledAtCenter = nextX - centerPosition.x;
             var nextYScaledAtCenter = nextY - centerPosition.y;
@@ -2107,16 +2209,40 @@ class BreadcrumbRenderer {
         dc.setColor(colour, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
 
-        var coordinatesRaw = track.coordinates._internalArrayBuffer;
-        var prevPointX = coordinatesRaw[0];
-        var prevPointY = coordinatesRaw[1];
-        var prevPointAlt = coordinatesRaw[2];
+        var coordinatesRaw = track.coordinates._internalArrayBufferBytes;
+        var prevPointX =
+            coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                :offset => 0,
+                :endianness => Lang.ENDIAN_BIG,
+            }) as Float;
+        var prevPointY =
+            coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                :offset => 4,
+                :endianness => Lang.ENDIAN_BIG,
+            }) as Float;
+        var prevPointAlt =
+            coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                :offset => 8,
+                :endianness => Lang.ENDIAN_BIG,
+            }) as Float;
         var prevChartX = xElevationStart;
         var prevChartY = yHalfPhysical + (startAt - prevPointAlt) * vScale;
         for (var i = ARRAY_POINT_SIZE; i < sizeRaw; i += ARRAY_POINT_SIZE) {
-            var currPointX = coordinatesRaw[i];
-            var currPointY = coordinatesRaw[i + 1];
-            var currPointAlt = coordinatesRaw[i + 2];
+            var currPointX =
+                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
+            var currPointY =
+                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i + 4,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
+            var currPointAlt =
+                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => i + 8,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
 
             var xDistance = distance(prevPointX, prevPointY, currPointX, currPointY);
             var yDistance = prevPointAlt - currPointAlt;

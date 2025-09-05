@@ -16,8 +16,9 @@ enum /* Protocol */ {
     PROTOCOL_REQUEST_SETTINGS = 4,
     PROTOCOL_SAVE_SETTINGS = 5,
     PROTOCOL_COMPANION_APP_TILE_SERVER_CHANGED = 6, // generally because a new url has been selected on the companion app
-    PROTOCOL_ROUTE_DATA2 = 7, // an optimised form of PROTOCOL_ROUTE_DATA, so we do not trip the watchdog
+    // PROTOCOL_ROUTE_DATA2 = 7, // an optimised form of PROTOCOL_ROUTE_DATA, so we do not trip the watchdog deprecated in favour of 3, back compat too hard (old array takes too many instructions to convert to nw bytearray) - MUST UPDATE
     PROTOCOL_CACHE_CURRENT_AREA = 8,
+    PROTOCOL_ROUTE_DATA3 = 9, // an optimised form of PROTOCOL_ROUTE_DATA2 packed as base64string and results in a bytearray
 }
 
 enum /* ProtocolSend */ {
@@ -117,31 +118,28 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             var type = data[0] as Number;
             var rawData = data.slice(1, null);
 
-            if (type == PROTOCOL_ROUTE_DATA2) {
-                logT("Parsing route data 2");
+            if (type == PROTOCOL_ROUTE_DATA3) {
+                logT("Parsing route data 3");
                 // protocol:
                 //  name
-                //  [x, y, z]...  // latitude <float> and longitude <float> in rectangular coordinates - pre calculated by the app, altitude <float> too
-                if (rawData.size() < 2) {
-                    System.println(
-                        "Failed to parse route 2 data, bad length: " +
-                            rawData.size() +
-                            " remainder: " +
-                            (rawData.size() % 3)
-                    );
+                //  [x, y, z]...  // latitude <float> and longitude <float> in rectangular coordinates, altitude <float> - pre calculated by the app base64encoded
+                //  [x, y, angle, index] // direction data - pre calculated base64encoded
+                if (rawData.size() < 3) {
+                    logE("Failed to parse route 3 data, bad length: " + rawData.size());
                     return;
                 }
 
                 var name = rawData[0] as String;
-                var routeData = rawData[1] as Array<Float>;
-                var directions = new [0]b as ByteArray; // back compat empty array
-                if (rawData.size() > 2) {
-                    directions =
-                        StringUtil.convertEncodedString(rawData[2] as String, {
-                            :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
-                            :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
-                        }) as ByteArray;
-                }
+                var routeData =
+                    StringUtil.convertEncodedString(rawData[1] as String, {
+                        :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
+                        :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
+                    }) as ByteArray;
+                var directions =
+                    StringUtil.convertEncodedString(rawData[2] as String, {
+                        :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
+                        :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
+                    }) as ByteArray;
                 if (
                     routeData.size() % ARRAY_POINT_SIZE == 0 &&
                     directions.size() % DIRECTION_ARRAY_POINT_SIZE == 0
