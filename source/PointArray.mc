@@ -87,6 +87,31 @@ class RectangularPoint {
 // ie. bigArray = bigArray.slice(0, 100) will result in bigArray + 100 extra items untill big array is garbage collected
 // this class allows us to just reduce bigArray to 100 elements in one go
 class PointArray {
+    // some stats on using byte array over array<float, float, float>
+    // before changes (using array<float, float, float>)
+    // Application Code: 100702
+    // Application Data: 26192
+    // route size:
+    //  total: 6575
+    //  coordinates._internalArrayBuffer: 5745
+    //  directions // NA not sent on v2 payload (111 bytes of just the object)
+    //
+    // after changes (_internalArrayBufferBytes as ByteArray)
+    // Application Code: 102427
+    // Application Data: 26227
+    // route size:
+    //  total: 6677
+    //  coordinates._internalArrayBufferBytes: 4599
+    //  directions: 1263
+
+    // note: the same route wiht no directions is a total of 5309 (1200 bytes saved, but we are now able to use them for direction storage)
+    //
+    // so we use ~100 bytes more per route/track (but the directions are included) - negligable (net 0 gain)
+    // code size goes up by quite a bit though, 1725 bytes of extra code for a saveing of 1200 per route (assuming we have at least 1 route active and the current track this is a net saving of 675 bytes)
+    // for users that do not have routes, this is actually a negative, but thats not our normal use case
+    // for users trying to have 3 large route, this is a very good thing (saves 3075 bytes)
+    // but don't forget, we have added directions support, so we actually have used more memory overall (1700bytes code space), but gained a new feature.
+
     // consider statically allocating the full size stright away (prevents remallocs in the underlying cpp code)
     var _internalArrayBufferBytes as ByteArray = []b;
     var _size as Number = 0;
