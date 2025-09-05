@@ -637,7 +637,11 @@ class BreadcrumbTrack {
                 checkPoint.y
             );
             stillNearTheLastDirectionPoint = oldLastDirectionPointDistance < distanceCheck;
-            lastCoordonatesIndexF = directionsRaw[oldLastDirectionIndexStart + 3];
+            lastCoordonatesIndexF =
+                directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
+                    :offset => oldLastDirectionIndexStart + 9,
+                    :endianness => Lang.ENDIAN_BIG,
+                }) as Float;
         }
 
         var stopAt = directionsRaw.size();

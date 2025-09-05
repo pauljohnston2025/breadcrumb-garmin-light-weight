@@ -944,8 +944,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             needsComma = true;
             var dirCoordindexStr = "na";
             if (
-                route.lastDirectionIndex < 0 ||
-                route.lastDirectionIndex > route.directions.pointSize()
+                route.lastDirectionIndex > 0 &&
+                route.lastDirectionIndex < route.directions.pointSize()
             ) {
                 dirCoordindexStr = (
                     route.directions._internalArrayBuffer.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
