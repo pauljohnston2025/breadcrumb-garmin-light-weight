@@ -362,7 +362,7 @@ class CachedValues {
 
     /** returns true if a rescale occurred */
     function onActivityInfo(activityInfo as Activity.Info) as Boolean {
-        // System.println(
+        // logT(
         //     "store heading, current speed etc. so we can know how to render the "
         //     + "map");
         // garmin might already do this for us? the docs say
@@ -668,7 +668,7 @@ class CachedValues {
     }
 
     function recalculateAll() as Void {
-        System.println("recalculating all cached values from settings/routes change");
+        logT("recalculating all cached values from settings/routes change");
         smallTilesPerScaledTile = Math.ceil(
             _settings.scaledTileSize / _settings.tileSize.toFloat()
         ).toNumber();
@@ -848,14 +848,14 @@ class CachedValues {
             setScale(scaleToSet);
         }
         fixedPosition = getScreenCenter();
-        // System.println("new fixed pos: " + fixedPosition);
+        // logT("new fixed pos: " + fixedPosition);
     }
 
     function getScreenCenter() as RectangularPoint {
         var divisor = currentScale;
         if (divisor == 0f) {
             // we should always have a current scale at this point, since we manually set scale (or we are caching map tiles)
-            System.println("Warning: current scale was somehow not set");
+            logE("Warning: current scale was somehow not set");
             divisor = 1f;
         }
 
@@ -1092,7 +1092,7 @@ class CachedValues {
             var divisor = currentScale;
             if (divisor == 0f) {
                 // we should always have a current scale at this point, since we manually set scale (or we are caching map tiles)
-                System.println("Warning: current scale was somehow not set");
+                logE("Warning: current scale was somehow not set");
                 divisor = 1f;
             }
 

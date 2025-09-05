@@ -93,7 +93,7 @@ class BreadcrumbContext {
                 }
             }
             if (oldestOrFirstDisabledRoute == null) {
-                System.println(
+                logE(
                     "not possible (routes should be at least 1): " + settings.routeMax()
                 );
                 return null;
@@ -108,10 +108,9 @@ class BreadcrumbContext {
             return route;
         }
 
-        // todo get an available id, there may be gaps in our routes
         var nextId = nextAvailableRouteId();
         if (nextId == null) {
-            System.println("failed to get route");
+            logE("failed to get route");
             // should never happen, we remove the oldest above if we are full, so just overwrite the first route
             nextId = 0;
         }

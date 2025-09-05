@@ -105,12 +105,12 @@ class WebRequestHandleWrapper {
             if (responseCode == 200 && data != null) {
                 webHandler._successCount++;
             } else {
-                // System.println("got web error: " + responseCode);
+                // logET("got web error: " + responseCode);
                 webHandler._errorCount++;
             }
             webHandler._lastResult = responseCode == 200 && data == null ? null : responseCode;
         } catch (e) {
-            System.println("failed to handle web request: " + e.getErrorMessage());
+            logE("failed to handle web request: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
         } finally {
             // got some stack overflows, as handle can be called inline if it knows it will fail (eg. BLE_CONNECTION_UNAVAILABLE)
@@ -152,7 +152,7 @@ class ConnectionListenerWrapper extends Communications.ConnectionListener {
         try {
             handler.onComplete();
         } catch (e) {
-            System.println("failed onComplete: " + e.getErrorMessage());
+            logE("failed onComplete: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
         } finally {
             decOutstanding();
@@ -163,7 +163,7 @@ class ConnectionListenerWrapper extends Communications.ConnectionListener {
         try {
             handler.onError();
         } catch (e) {
-            System.println("failed onError: " + e.getErrorMessage());
+            logE("failed onError: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
         } finally {
             decOutstanding();
@@ -307,11 +307,11 @@ class WebRequestHandler {
         }
         outstandingHashes.add(jsonOrImageReq.hash);
 
-        // System.println("url: " + jsonOrImageReq.url);
-        // System.println("params: "  + jsonOrImageReq.params);
+        // logT("url: " + jsonOrImageReq.url);
+        // logT("params: "  + jsonOrImageReq.params);
 
         if (jsonOrImageReq instanceof ImageRequest) {
-            // System.println("sending image request");
+            // logT("sending image request");
             var callback =
                 (
                     new WebRequestHandleWrapper(me, jsonOrImageReq.handler, jsonOrImageReq.hash)
@@ -369,7 +369,7 @@ class WebRequestHandler {
             return;
         }
 
-        // System.println("sending json request");
+        // logT("sending json request");
         var callback =
             (new WebRequestHandleWrapper(me, jsonOrImageReq.handler, jsonOrImageReq.hash)).method(
                 :handle

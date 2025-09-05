@@ -224,7 +224,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 Attention.vibrate(vibeData);
             }
         } catch (e) {
-            System.println("failed to show alert: " + e.getErrorMessage());
+            logE("failed to show alert: " + e.getErrorMessage());
         }
     }
 
@@ -258,7 +258,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 Attention.vibrate(vibeData);
             }
         } catch (e) {
-            System.println("failed to show alert: " + e.getErrorMessage());
+            logE("failed to show alert: " + e.getErrorMessage());
         }
     }
 
@@ -325,7 +325,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             disableMapsFailureCount != 0 &&
             _breadcrumbContext.webRequestHandler._errorCount > disableMapsFailureCount
         ) {
-            System.println("disabling maps, too many errors");
+            logE("disabling maps, too many errors");
             settings.setMapEnabled(false);
         }
 

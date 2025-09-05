@@ -231,7 +231,7 @@ class NumberPickerView extends WatchUi.View {
 
     function onUpdate(dc as Dc) as Void {
         picker.onUpdate(dc);
-        // System.println("onUpdate");
+        // logT("onUpdate");
         // Some exampls have the line below, do not do that, screen goes black (though it does work in the examples, guess just not when lanunched from menu?)
         // View.onUpdate(dc);
     }
@@ -247,7 +247,7 @@ class NumberPickerDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onTap(evt as WatchUi.ClickEvent) as Boolean {
-        // System.println("got number picker tap (x,y): (" + evt.getCoordinates()[0] + "," +
+        // logT("got number picker tap (x,y): (" + evt.getCoordinates()[0] + "," +
         //                evt.getCoordinates()[1] + ")");
 
         var coords = evt.getCoordinates();
@@ -263,7 +263,7 @@ class NumberPickerDelegate extends WatchUi.BehaviorDelegate {
 
     function onKey(keyEvent as WatchUi.KeyEvent) {
         var key = keyEvent.getKey();
-        // System.println("got number picker key event: " + key);  // e.g. KEY_MENU = 7
+        // logT("got number picker key event: " + key);  // e.g. KEY_MENU = 7
         if (key == WatchUi.KEY_ENTER) {
             picker.confirm();
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
@@ -274,7 +274,7 @@ class NumberPickerDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onBack() {
-        // System.println("got back");
+        // logT("got back");
         picker.removeLast();
         return true;
     }

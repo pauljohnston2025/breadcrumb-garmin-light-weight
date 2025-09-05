@@ -534,7 +534,7 @@ class Settings {
     }
 
     function setFixedPosition(lat as Float?, long as Float?, clearRequests as Boolean) as Void {
-        // System.println("moving to: " + lat + " " + long);
+        // logT("moving to: " + lat + " " + long);
         // be very careful about putting null into properties, it breaks everything
         if (lat == null || !(lat instanceof Float)) {
             lat = 0f;
@@ -562,7 +562,7 @@ class Settings {
         // we should have a lat and a long at this point
         // updateCachedValues(); already called by the above sets
         // var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y);
-        // System.println("round trip conversion result: " + latlong);
+        // logT("round trip conversion result: " + latlong);
         if (clearRequests) {
             clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
         }
@@ -573,7 +573,7 @@ class Settings {
         long as Float?,
         clearRequests as Boolean
     ) as Void {
-        // System.println("moving to: " + lat + " " + long);
+        // logT("moving to: " + lat + " " + long);
         // be very careful about putting null into properties, it breaks everything
         if (lat == null || !(lat instanceof Float)) {
             lat = 0f;
@@ -601,7 +601,7 @@ class Settings {
         // we should have a lat and a long at this point
         // updateCachedValues(); already called by the above sets
         // var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y);
-        // System.println("round trip conversion result: " + latlong);
+        // logT("round trip conversion result: " + latlong);
         if (clearRequests) {
             clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
         }
@@ -1584,7 +1584,7 @@ class Settings {
     }
 
     function nextMode() as Void {
-        // System.println("mode cycled");
+        // logT("mode cycled");
         // could just add one and check if over MODE_MAX?
         mode++;
         if (mode >= MODE_MAX) {
@@ -1671,7 +1671,7 @@ class Settings {
         try {
             return parseColourRaw(key, Application.Properties.getValue(key), defaultValue);
         } catch (e) {
-            System.println("Error parsing float: " + key);
+            logE("Error parsing float: " + key);
         }
         return defaultValue;
     }
@@ -1710,7 +1710,7 @@ class Settings {
 
             return parseNumberRaw(key, colourString, defaultValue);
         } catch (e) {
-            System.println("Error parsing colour: " + key + " " + colourString);
+            logE("Error parsing colour: " + key + " " + colourString);
         }
         return defaultValue;
     }
@@ -1719,7 +1719,7 @@ class Settings {
         try {
             return parseNumberRaw(key, Application.Properties.getValue(key), defaultValue);
         } catch (e) {
-            System.println("Error parsing float: " + key);
+            logE("Error parsing float: " + key);
         }
         return defaultValue;
     }
@@ -1751,7 +1751,7 @@ class Settings {
 
             return defaultValue;
         } catch (e) {
-            System.println("Error parsing number: " + key + " " + value);
+            logE("Error parsing number: " + key + " " + value);
         }
         return defaultValue;
     }
@@ -1760,7 +1760,7 @@ class Settings {
         try {
             return parseBoolRaw(key, Application.Properties.getValue(key), defaultValue);
         } catch (e) {
-            System.println("Error parsing bool: " + key);
+            logE("Error parsing bool: " + key);
         }
         return defaultValue;
     }
@@ -1791,7 +1791,7 @@ class Settings {
 
             return value;
         } catch (e) {
-            System.println("Error parsing bool: " + key + " " + value);
+            logE("Error parsing bool: " + key + " " + value);
         }
         return defaultValue;
     }
@@ -1800,7 +1800,7 @@ class Settings {
         try {
             return parseFloatRaw(key, Application.Properties.getValue(key), defaultValue);
         } catch (e) {
-            System.println("Error parsing float: " + key);
+            logE("Error parsing float: " + key);
         }
         return defaultValue;
     }
@@ -1832,7 +1832,7 @@ class Settings {
 
             return defaultValue;
         } catch (e) {
-            System.println("Error parsing float: " + key + " " + value);
+            logE("Error parsing float: " + key + " " + value);
         }
         return defaultValue;
     }
@@ -1841,7 +1841,7 @@ class Settings {
         try {
             return parseStringRaw(key, Application.Properties.getValue(key), defaultValue);
         } catch (e) {
-            System.println("Error parsing string: " + key);
+            logE("Error parsing string: " + key);
         }
         return defaultValue;
     }
@@ -1862,7 +1862,7 @@ class Settings {
 
             return defaultValue;
         } catch (e) {
-            System.println("Error parsing string: " + key + " " + value);
+            logE("Error parsing string: " + key + " " + value);
         }
         return defaultValue;
     }
@@ -1871,7 +1871,7 @@ class Settings {
         try {
             return parseOptionalFloatRaw(key, Application.Properties.getValue(key), defaultValue);
         } catch (e) {
-            System.println("Error parsing optional float: " + key);
+            logE("Error parsing optional float: " + key);
         }
         return defaultValue;
     }
@@ -1890,7 +1890,7 @@ class Settings {
             // (duck typing means at runtime the null passes through fine)
             return parseFloatRaw(key, value, defaultValue as Float);
         } catch (e) {
-            System.println("Error parsing optional float: " + key);
+            logE("Error parsing optional float: " + key);
         }
         return defaultValue;
     }
@@ -1939,13 +1939,13 @@ class Settings {
 
             return result;
         } catch (e) {
-            System.println("Error parsing array: " + key + " " + value);
+            logE("Error parsing array: " + key + " " + value);
         }
         return defaultValue;
     }
 
     function resetDefaults() as Void {
-        System.println("Resetting settings to default values");
+        logT("Resetting settings to default values");
         // clear the flag first thing in case of crash we do not want to try clearing over and over
         setValue("resetDefaults", false);
 
@@ -2131,7 +2131,7 @@ class Settings {
         }
         tileLayerMax = parseNumber("tileLayerMax", tileLayerMax);
         tileLayerMin = parseNumber("tileLayerMin", tileLayerMin);
-        // System.println("tileSize: " + tileSize);
+        // logT("tileSize: " + tileSize);
         if (tileSize < 2) {
             tileSize = 2;
         } else if (tileSize > 256) {
@@ -2222,7 +2222,7 @@ class Settings {
             ],
             routes
         );
-        System.println("parsed routes: " + routes);
+        logT("parsed routes: " + routes);
         disableMapsFailureCount = parseNumber("disableMapsFailureCount", disableMapsFailureCount);
         offTrackAlertsDistanceM = parseNumber("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
         offTrackAlertsMaxReportIntervalS = parseNumber(
@@ -2254,7 +2254,7 @@ class Settings {
             getApp()._breadcrumbContext.cachedValues.returnToUser();
         }
 
-        System.println("loadSettings: Loading all settings");
+        logT("loadSettings: Loading all settings");
         loadSettingsPart1();
         loadSettingsPart2();
 
@@ -2285,7 +2285,7 @@ class Settings {
     }
 
     function onSettingsChanged() as Void {
-        System.println("onSettingsChanged: Setting Changed, loading");
+        logT("onSettingsChanged: Setting Changed, loading");
         var oldRoutes = routes;
         var oldRouteMax = _routeMax;
         var oldMapChoice = mapChoice;

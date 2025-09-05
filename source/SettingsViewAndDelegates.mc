@@ -64,7 +64,7 @@ class SettingsStringPicker extends TextPickerDelegate {
     }
 
     function onTextEntered(text as Lang.String) as Lang.Boolean {
-        System.println("onTextEntered: " + text);
+        logT("onTextEntered: " + text);
 
         callback.invoke(text);
         var parentL = parent;
@@ -77,7 +77,7 @@ class SettingsStringPicker extends TextPickerDelegate {
     }
 
     function onCancel() as Boolean {
-        System.println("canceled");
+        logT("canceled");
         return true;
     }
 }
@@ -930,32 +930,6 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(dialog, new ResetSettingsDelegate(), WatchUi.SLIDE_IMMEDIATE);
         }
     }
-
-    function onBack() as Void {
-        System.println("onBack");
-        Menu2InputDelegate.onBack();
-    }
-    function onDone() as Void {
-        System.println("onDone");
-    }
-    function onFooter() as Void {
-        System.println("onFooter");
-    }
-    function onNextPage() as Lang.Boolean {
-        System.println("onNextPage");
-        return true;
-    }
-    function onPreviousPage() as Lang.Boolean {
-        System.println("onPreviousPage");
-        return true;
-    }
-    function onTitle() as Void {
-        System.println("onTitle");
-    }
-    function onWrap(key as WatchUi.Key) as Lang.Boolean {
-        System.println("onWrap");
-        return true;
-    }
 }
 
 (:settingsView)
@@ -1093,32 +1067,6 @@ class SettingsModeDelegate extends WatchUi.Menu2InputDelegate {
 
         parent.rerender();
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-    }
-
-    function onBack() as Void {
-        System.println("onBack from mode menu");
-        Menu2InputDelegate.onBack();
-    }
-    function onDone() as Void {
-        System.println("onDone  from mode menu");
-    }
-    function onFooter() as Void {
-        System.println("onFooter  from mode menu");
-    }
-    function onNextPage() as Lang.Boolean {
-        System.println("onNextPage  from mode menu");
-        return false;
-    }
-    function onPreviousPage() as Lang.Boolean {
-        System.println("onPreviousPage  from mode menu");
-        return false;
-    }
-    function onTitle() as Void {
-        System.println("onTitle  from mode menu");
-    }
-    function onWrap(key as WatchUi.Key) as Lang.Boolean {
-        System.println("onWrap  from mode menu");
-        return false;
     }
 }
 

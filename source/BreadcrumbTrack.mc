@@ -782,7 +782,7 @@ class BreadcrumbTrack {
             lastClosePointIndex = null; // we have to search the start of the range now
         }
 
-        // System.println("lastClosePointIndex: " + lastClosePointIndex);
+        // logT("lastClosePointIndex: " + lastClosePointIndex);
         var lastPointX =
             coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
                 :offset => 0,

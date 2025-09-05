@@ -188,7 +188,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
 
         if (responseCode != 200) {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
-            System.println("failed with: " + responseCode);
+            logE("failed with: " + responseCode);
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                 _tileCache._storageTileCache.addErroredTile(_tileKey, responseCode);
             }
@@ -210,7 +210,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var cachedValues = getApp()._breadcrumbContext.cachedValues;
 
         if (!(data instanceof Dictionary)) {
-            System.println("wrong data type, not dict: " + data);
+            logE("wrong data type, not dict: " + data);
             if (addToCache) {
                 if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                     _tileCache._storageTileCache.addWrongDataTile(_tileKey);
@@ -236,10 +236,10 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             return;
         }
 
-        // System.print("data: " + data);
+        // logT("data: " + data);
         var mapTile = data["data"];
         if (!(mapTile instanceof String)) {
-            System.println("wrong data type, not string");
+            logE("wrong data type, not string");
             _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "WD", false);
             return;
         }
@@ -247,7 +247,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var type = data.get("type");
         if (type == null || !(type instanceof Number)) {
             // back compat
-            System.println("bad type for type: falling back: " + type);
+            logE("bad type for type: falling back: " + type);
             handle64ColourDataString(mapTile);
             return;
         }
@@ -267,10 +267,10 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
     }
 
     function handle64ColourDataString(mapTile as String) as Void {
-        // System.println("got tile string of length: " + mapTile.length());
+        // logT("got tile string of length: " + mapTile.length());
         var bitmap = _tileCache.tileDataToBitmap64ColourString(mapTile.toCharArray());
         if (bitmap == null) {
-            System.println("failed to parse bitmap");
+            logE("failed to parse bitmap");
             _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP", false);
             return;
         }
@@ -285,10 +285,10 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
                 :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
                 :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
             }) as ByteArray;
-        // System.println("got tile string of length: " + mapTile.length());
+        // logT("got tile string of length: " + mapTile.length());
         var bitmap = _tileCache.tileDataToBitmapFullColour(mapTileBytes);
         if (bitmap == null) {
-            System.println("failed to parse bitmap");
+            logE("failed to parse bitmap");
             _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP", false);
             return;
         }
@@ -298,10 +298,10 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
     }
 
     function handleBlackAndWhiteDataString(mapTile as String) as Void {
-        // System.println("got tile string of length: " + mapTile.length());
+        // logT("got tile string of length: " + mapTile.length());
         var bitmap = _tileCache.tileDataToBitmapBlackAndWhite(mapTile.toCharArray());
         if (bitmap == null) {
-            System.println("failed to parse bitmap");
+            logE("failed to parse bitmap");
             _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP", false);
             return;
         }
@@ -374,7 +374,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 
         if (responseCode != 200) {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
-            System.println("failed with: " + responseCode);
+            logE("failed with: " + responseCode);
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                 _tileCache._storageTileCache.addErroredTile(_fullSizeTile, responseCode);
             }
@@ -400,7 +400,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             (!(data instanceof WatchUi.BitmapResource) &&
                 !(data instanceof Graphics.BitmapReference))
         ) {
-            System.println("wrong data type not image");
+            logE("wrong data type not image");
             if (addToCache) {
                 if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                     _tileCache._storageTileCache.addWrongDataTile(_tileKey);
@@ -420,7 +420,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         }
 
         if (data == null || !(data instanceof WatchUi.BitmapResource)) {
-            System.println("data bitmap was null or not a bitmap");
+            logE("data bitmap was null or not a bitmap");
             if (addToCache) {
                 if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                     _tileCache._storageTileCache.addWrongDataTile(_tileKey);
@@ -481,8 +481,8 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         // ++$.globalExceptionCounter;
         // incNativeColourFormatErrorIfMessageMatches(message);
         //         }
-        //         // System.println("scaled up to: " + upscaledBitmap.getWidth() + " " + upscaledBitmap.getHeight());
-        //         // System.println("from: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
+        //         // logT("scaled up to: " + upscaledBitmap.getWidth() + " " + upscaledBitmap.getHeight());
+        //         // logT("from: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
         //         sourceBitmap = upscaledBitmap; // resume what we were doing as if it was always the larger bitmap
         //     }
 
@@ -490,10 +490,10 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         //     var croppedSectionDc = croppedSection.getDc();
         //     var xOffset = _tileKey.x % cachedValues.smallTilesPerScaledTile;
         //     var yOffset = _tileKey.y % cachedValues.smallTilesPerScaledTile;
-        //     // System.println("tile: " + _tileKey);
-        //     // System.println("croppedSection: " + croppedSection.getWidth() + " " + croppedSection.getHeight());
-        //     // System.println("source: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
-        //     // System.println("drawing from: " + xOffset * settings.tileSize + " " + yOffset * settings.tileSize);
+        //     // logT("tile: " + _tileKey);
+        //     // logT("croppedSection: " + croppedSection.getWidth() + " " + croppedSection.getHeight());
+        //     // logT("source: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
+        //     // logT("drawing from: " + xOffset * settings.tileSize + " " + yOffset * settings.tileSize);
         //     croppedSectionDc.drawBitmap(
         //         -xOffset * settings.tileSize,
         //         -yOffset * settings.tileSize,
@@ -580,16 +580,16 @@ class StorageTileCache {
         // Storage.setValue(newKey, { "test" => "value2" });
         // var val2 = Storage.getValue(newKey);
         // if (val2 instanceof Dictionary) {
-        //     System.println("val was dict");
+        //     logT("val was dict");
         //     val2["test"] = "val2mod";
         //     val2["test2"] = "val2test"; // new keys should be created
         // }
         // var val3 = Storage.getValue(newKey);
 
-        // System.println("val1: " + val1);
-        // System.println("val2: " + val2);
-        // System.println("val3: " + val3);
-        // System.println("val3 test bad dict key access: " + (val3 as Dictionary)["badkey"]);
+        // logT("val1: " + val1);
+        // logT("val2: " + val2);
+        // logT("val3: " + val3);
+        // logT("val3 test bad dict key access: " + (val3 as Dictionary)["badkey"]);
 
         _settings = settings;
         var tiles = Storage.getValue(TILES_KEY);
@@ -860,7 +860,7 @@ class StorageTileCache {
         if (oldestKey != null) {
             deleteByMetaData(oldestKey);
             _tilesInStorage.remove(oldestKey);
-            System.println("Evicted tile " + oldestKey + " from storage cache");
+            logT("Evicted tile " + oldestKey + " from storage cache");
         }
 
         Storage.setValue(TILES_KEY, _tilesInStorage as Array<PropertyValueType>);
@@ -1015,7 +1015,7 @@ class TileCache {
         ];
 
         if (_palette.size() != 64) {
-            System.println("colour pallet has only: " + _palette.size() + "elements");
+            logE("colour pallet has only: " + _palette.size() + "elements");
         }
 
         // loadPersistedTiles();
@@ -1063,7 +1063,7 @@ class TileCache {
 
     // reurns true if seed should stop and wait for next calculate (to prevent watchdog errors)
     private function startSeedTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
-        // System.println("starting load tile: " + x + " " + y + " " + z);
+        // logT("starting load tile: " + x + " " + y + " " + z);
 
         if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
             return seedImageTile(tileKey, onlySeedStorage);
@@ -1279,14 +1279,14 @@ class TileCache {
     function getTile(tileKey as TileKey) as Tile? {
         var tile = _internalCache[tileKey] as Tile?;
         if (tile != null) {
-            // System.println("cache hit: " + x  + " " + y + " " + z);
+            // logT("cache hit: " + x  + " " + y + " " + z);
             _hits++;
             tile.markUsed();
             return tile;
         }
 
-        // System.println("cache miss: " + x  + " " + y + " " + z);
-        // System.println("have tiles: " + _internalCache.keys());
+        // logT("cache miss: " + x  + " " + y + " " + z);
+        // logT("have tiles: " + _internalCache.keys());
         _misses++;
         return null;
     }
@@ -1320,7 +1320,7 @@ class TileCache {
 
         if (oldestKey != null) {
             _internalCache.remove(oldestKey);
-            // System.println("Evicted tile " + oldestKey + " from internal cache");
+            // logT("Evicted tile " + oldestKey + " from internal cache");
         }
     }
 
@@ -1330,7 +1330,7 @@ class TileCache {
     }
     (:companionTiles)
     function tileDataToBitmap64ColourString(charArr as Array<Char>?) as Graphics.BufferedBitmap? {
-        // System.println("tile data " + arr);
+        // logT("tile data " + arr);
         var tileSize = _settings.tileSize;
         var requiredSize = tileSize * tileSize;
         // got a heap of
@@ -1361,22 +1361,22 @@ class TileCache {
             // not sure which is better, we are at our memory limits regardless, so
             // optimisation level seems to effect it (think it must garbage collect faster or inline things where it can)
             // slow optimisations are always good for relase, but make debugging harder when variables are optimised away (which is why i was running no optimisations).
-            System.println("got a bad type somehow? 64colour: " + charArr);
+            logE("got a bad type somehow? 64colour: " + charArr);
             return null;
         }
 
         if (charArr.size() < requiredSize) {
-            System.println("tile length too short 64colour: " + charArr.size());
+            logE("tile length too short 64colour: " + charArr.size());
             return null;
         }
 
         if (charArr.size() != requiredSize) {
             // we could load tile partially, but that would require checking each itteration of the for loop,
             // want to avoid any extra work for perf
-            System.println("bad tile length 64colour: " + charArr.size() + " best effort load");
+            logE("bad tile length 64colour: " + charArr.size() + " best effort load");
         }
 
-        // System.println("processing tile data, first colour is: " + arr[0]);
+        // logT("processing tile data, first colour is: " + arr[0]);
 
         // todo check if setting the pallet actually reduces memory
         var localBitmap = newBitmap(tileSize, tileSize);
@@ -1401,7 +1401,7 @@ class TileCache {
     }
     (:companionTiles)
     function tileDataToBitmapBlackAndWhite(charArr as Array<Char>?) as Graphics.BufferedBitmap? {
-        // System.println("tile data " + arr);
+        // logT("tile data " + arr);
         var tileSize = _settings.tileSize;
         var requiredSize = Math.ceil((tileSize * tileSize) / 6f).toNumber(); // 6 bits of colour per byte
         if (!(charArr instanceof Array)) {
@@ -1415,22 +1415,22 @@ class TileCache {
             // not sure which is better, we are at our memory limits regardless, so
             // optimisation level seems to effect it (think it must garbage collect faster or inline things where it can)
             // slow optimisations are always good for relase, but make debugging harder when variables are optimised away (which is why i was running no optimisations).
-            System.println("got a bad type somehow? b&w: " + charArr);
+            logE("got a bad type somehow? b&w: " + charArr);
             return null;
         }
 
         if (charArr.size() < requiredSize) {
-            System.println("tile length too short b&w: " + charArr.size());
+            logT("tile length too short b&w: " + charArr.size());
             return null;
         }
 
         if (charArr.size() != requiredSize) {
             // we could load tile partially, but that would require checking each itteration of the for loop,
             // want to avoid any extra work for perf
-            System.println("bad tile length b&w: " + charArr.size() + " best effort load");
+            logE("bad tile length b&w: " + charArr.size() + " best effort load");
         }
 
-        // System.println("processing tile data, first colour is: " + arr[0]);
+        // logT("processing tile data, first colour is: " + arr[0]);
 
         // todo check if setting the pallet actually reduces memory
         var localBitmap = newBitmap(tileSize, tileSize);
@@ -1465,7 +1465,7 @@ class TileCache {
     }
     (:companionTiles)
     function tileDataToBitmapFullColour(mapTileBytes as ByteArray?) as Graphics.BufferedBitmap? {
-        // System.println("tile data " + arr);
+        // logT("tile data " + arr);
         var tileSize = _settings.tileSize;
         var requiredSize = tileSize * tileSize * 3;
 
@@ -1480,26 +1480,26 @@ class TileCache {
             // not sure which is better, we are at our memory limits regardless, so
             // optimisation level seems to effect it (think it must garbage collect faster or inline things where it can)
             // slow optimisations are always good for relase, but make debugging harder when variables are optimised away (which is why i was running no optimisations).
-            System.println("got a bad full colour type somehow?: " + mapTileBytes);
+            logE("got a bad full colour type somehow?: " + mapTileBytes);
             return null;
         }
 
         if (mapTileBytes.size() < requiredSize) {
-            System.println("tile length too short full colour: " + mapTileBytes.size());
+            logE("tile length too short full colour: " + mapTileBytes.size());
             return null;
         }
 
         if (mapTileBytes.size() != requiredSize) {
             // we could load tile partially, but that would require checking each itteration of the for loop,
             // want to avoid any extra work for perf
-            System.println(
+            logE(
                 "bad tile length full colour: " + mapTileBytes.size() + " best effort load"
             );
         }
 
         mapTileBytes.add(0x00); // add a byte to the end so the last 24bit colour we parse still has 32 bits of data
 
-        // System.println("processing tile data, first colour is: " + arr[0]);
+        // logT("processing tile data, first colour is: " + arr[0]);
 
         // todo check if setting the pallet actually reduces memory
         var localBitmap = newBitmap(tileSize, tileSize);

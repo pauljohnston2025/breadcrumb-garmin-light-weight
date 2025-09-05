@@ -74,24 +74,37 @@ function newBitmap(width as Number, height as Number) as Graphics.BufferedBitmap
 
     var bitmap = Graphics.createBufferedBitmap(options).get();
     if (!(bitmap instanceof BufferedBitmap)) {
-        System.println("Could not allocate buffered bitmap");
+        logE("Could not allocate buffered bitmap");
         throw new BitmapCreateError();
     }
 
     return bitmap;
 }
 
+(:debug)
 function logLevel(lvl as String, message as String) as Void {
     System.println("" + Time.now().value() + " " + lvl + " " + message);
 }
 
+(:release)
+function logLevel(lvl as String, message as String) as Void {
+}
+
+(:debug)
 function logE(message as String) as Void {
     logLevel("E", message);
 }
 
+(:release)
+function logE(message as String) as Void {}
+
+(:debug)
 function logD(message as String) as Void {
     logLevel("D", message);
 }
+
+(:release)
+function logD(message as String) as Void {}
 
 (:debug)
 function logT(message as String) as Void {

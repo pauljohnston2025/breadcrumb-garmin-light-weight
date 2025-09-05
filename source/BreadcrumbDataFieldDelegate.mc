@@ -13,7 +13,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
 
     // see BreadcrumbDataFieldView if touch stops working
     function onTap(evt as WatchUi.ClickEvent) as Boolean {
-        // System.println("got tap (x,y): (" + evt.getCoordinates()[0] + "," +
+        // logT("got tap (x,y): (" + evt.getCoordinates()[0] + "," +
         //                evt.getCoordinates()[1] + ")");
 
         var coords = evt.getCoordinates();

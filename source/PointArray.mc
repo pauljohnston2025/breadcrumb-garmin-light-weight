@@ -74,7 +74,7 @@ class RectangularPoint {
         var lat = Math.atan(Math.pow(Math.E, (y / _lonConversion) * _pi180)) / _pi360 - 90;
 
         if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-            // System.println("Invalid lat/lon values: " + lat + " " + lon);
+            // logE("Invalid lat/lon values: " + lat + " " + lon);
             return null;
         }
 

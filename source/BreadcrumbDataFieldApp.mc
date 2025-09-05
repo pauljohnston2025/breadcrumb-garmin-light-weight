@@ -31,11 +31,11 @@ class CommStatus extends Communications.ConnectionListener {
         Communications.ConnectionListener.initialize();
     }
     function onComplete() {
-        System.println("App start message sent");
+        logT("App start message sent");
     }
 
     function onError() {
-        System.println("App start message fail");
+        logT("App start message fail");
     }
 }
 
@@ -44,11 +44,11 @@ class SettingsSent extends Communications.ConnectionListener {
         Communications.ConnectionListener.initialize();
     }
     function onComplete() {
-        System.println("Settings sent");
+        logT("Settings sent");
     }
 
     function onError() {
-        System.println("Settings send failed");
+        logT("Settings send failed");
     }
 }
 
@@ -79,7 +79,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     // onStart() is called on application start up
     function onStart(state as Dictionary?) as Void {
         if (Communications has :registerForPhoneAppMessages) {
-            System.println("registering for phone messages");
+            logT("registering for phone messages");
             Communications.registerForPhoneAppMessages(method(:onPhone));
         }
     }
@@ -107,11 +107,16 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         return [settings, new $.SettingsMainDelegate(settings)];
     }
 
+    function mustUpdate() as Void {
+        WatchUi.showToast(Rez.Strings.mustUpdate, {});
+    }
+
     function onPhone(msg as Communications.PhoneAppMessage) as Void {
         try {
             var data = msg.data as Array?;
             if (data == null || !(data instanceof Array) || data.size() < 1) {
                 logE("Bad message: " + data);
+                mustUpdate();
                 return;
             }
 
@@ -125,7 +130,8 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 //  [x, y, z]...  // latitude <float> and longitude <float> in rectangular coordinates, altitude <float> - pre calculated by the app base64encoded
                 //  [x, y, angle, index] // direction data - pre calculated base64encoded
                 if (rawData.size() < 3) {
-                    logE("Failed to parse route 3 data, bad length: " + rawData.size());
+                    logT("Failed to parse route 3 data, bad length: " + rawData.size());
+                    mustUpdate();
                     return;
                 }
 
@@ -167,9 +173,10 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                         " remainder: " +
                         (rawData.size() % 3)
                 );
+                mustUpdate();
                 return;
             } else if (type == PROTOCOL_REQUEST_LOCATION_LOAD) {
-                logT("parsing req location: " + rawData);
+                // logT("parsing req location: " + rawData);
                 if (rawData.size() < 2) {
                     logE("Failed to parse request load tile, bad length: " + rawData.size());
                     return;
@@ -195,7 +202,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             } else if (type == PROTOCOL_REQUEST_SETTINGS) {
                 logT("got send settings req: " + rawData);
                 var settings = _breadcrumbContext.settings.asDict();
-                // logD("sending settings"+ settings);
+                // logT("sending settings"+ settings);
                 _breadcrumbContext.webRequestHandler.transmit(
                     [PROTOCOL_SEND_SETTINGS, settings],
                     {},
@@ -217,7 +224,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 // use to just be PROTOCOL_DROP_TILE_CACHE
                 logT("got tile cache changed req: " + rawData);
                 if (_breadcrumbContext.settings.mapChoice != 1) {
-                    logE("not using the companion app tile server as map choice");
+                    logT("not using the companion app tile server as map choice");
                     return;
                 }
                 // this is not perfect, some web requests could be about to complete and add a tile to the cache
@@ -247,8 +254,10 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             }
 
             logE("Unknown message type: " + type);
+            mustUpdate();
         } catch (e) {
             logE("failed onPhone: " + e.getErrorMessage());
+            mustUpdate();
             ++$.globalExceptionCounter;
         }
     }
