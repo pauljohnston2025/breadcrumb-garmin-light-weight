@@ -19,7 +19,7 @@ class BreadcrumbContext {
         cachedValues = new CachedValues(settings);
 
         routes = [];
-        track = new BreadcrumbTrack(-1, "");
+        track = new BreadcrumbTrack(TRACK_ID, "", settings.maxTrackPoints);
         breadcrumbRenderer = new BreadcrumbRenderer(settings, cachedValues);
 
         webRequestHandler = new WebRequestHandler(settings);
@@ -100,7 +100,7 @@ class BreadcrumbContext {
             }
             routes.remove(oldestOrFirstDisabledRoute);
             var routeId = oldestOrFirstDisabledRoute.storageIndex;
-            var route = new BreadcrumbTrack(routeId, name);
+            var route = new BreadcrumbTrack(routeId, name, 0);
             routes.add(route);
             settings.ensureRouteId(routeId);
             settings.setRouteName(routeId, route.name);
@@ -114,7 +114,7 @@ class BreadcrumbContext {
             // should never happen, we remove the oldest above if we are full, so just overwrite the first route
             nextId = 0;
         }
-        var route = new BreadcrumbTrack(nextId, name);
+        var route = new BreadcrumbTrack(nextId, name, 0);
         routes.add(route);
         settings.ensureRouteId(nextId);
         settings.setRouteName(nextId, route.name);

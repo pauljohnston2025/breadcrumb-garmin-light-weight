@@ -7,7 +7,7 @@ import Toybox.Application;
 using Toybox.Time;
 using Toybox.Time.Gregorian;
 
-const MAX_POINTS = 400; // companion app was limited to 400 a while ago and I saw no real negative
+const TRACK_ID = -1;
 const MIN_DISTANCE_M = 5; // meters
 const RESTART_STABILITY_POINT_COUNT = 10; // number of points in a row that need to be within RESTART_STABILITY_DISTANCE_M to be onsisiddered a valid course
 //note: RESTART_STABILITY_POINT_COUNT should be set based on DELAY_COMPUTE_COUNT
@@ -75,7 +75,7 @@ class BreadcrumbTrack {
     // storageIndex is the id of the route (-1 is the in progress track)
     var storageIndex as Number = 0;
     var name as String;
-    var coordinates as PointArray = new PointArray(); // SCALED (note: altitude is currently unscaled)
+    var coordinates as PointArray = new PointArray(0); // SCALED (note: altitude is currently unscaled)
     var directions as DirectionPointArray = new DirectionPointArray();
     var lastDirectionIndex as Number = -1;
     var seenStartupPoints as Number = 0;
@@ -91,10 +91,11 @@ class BreadcrumbTrack {
     var elevationMax as Float = FLOAT_MIN; // UNSCALED
     var _neverStarted as Boolean;
 
-    function initialize(routeIndex as Number, name as String) {
+    function initialize(routeIndex as Number, name as String, initalPointCount as Number) {
         _neverStarted = true;
         createdAt = Time.now().value();
         storageIndex = routeIndex;
+        coordinates = new PointArray(initalPointCount);
         self.name = name;
     }
 
@@ -251,7 +252,7 @@ class BreadcrumbTrack {
                 return null;
             }
 
-            var track = new BreadcrumbTrack(storageIndex, name);
+            var track = new BreadcrumbTrack(storageIndex, name, 0);
             track.boundingBox = bb as [Float, Float, Float, Float];
             if (track.boundingBox.size() != 4) {
                 return null;
@@ -321,7 +322,8 @@ class BreadcrumbTrack {
         distanceTotal += distance;
         coordinates.add(newPoint);
         updateBoundingBox(newPoint);
-        if (coordinates.restrictPoints(MAX_POINTS)) {
+        // todo have a local ref to settings
+        if (coordinates.restrictPoints(getApp()._breadcrumbContext.settings.maxTrackPoints)) {
             // a resize occured, calculate important data again
             updatePointDataFromAllPoints();
             return true;

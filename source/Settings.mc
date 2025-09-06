@@ -469,7 +469,8 @@ class Settings {
     var tileCachePadding as Number = 0;
     var httpErrorTileTTLS as Number = 60;
     var errorTileTTLS as Number = 20; // other errors are from garmin ble connection issues, retry faster by default
-    var directionDistanceM as Number = 60; // -1 disables the check, could switch to using a boolean?
+    var directionDistanceM as Number = 60; // -1 disables the check, could switch to using a boolean? TODO ADD SUPPORT
+    var maxTrackPoints as Number = 400; // TODO ADD SUPPORT
 
     // bunch of debug settings
     var showPoints as Boolean = false;
@@ -479,8 +480,8 @@ class Settings {
     var tileErrorColour as Number = Graphics.COLOR_BLACK;
     var includeDebugPageInOnScreenUi as Boolean = false;
     var drawHitboxes as Boolean = false; // not exposed yet
-    var showDirectionPoints as Boolean = true;
-    var showDirectionPointTextUnderIndex as Number = 10;
+    var showDirectionPoints as Boolean = true; // TODO ADD SUPPORT
+    var showDirectionPointTextUnderIndex as Number = 10; // TODO ADD SUPPORT
 
     (:lowMemory)
     function routeMax() as Number {

@@ -449,7 +449,7 @@ class BreadcrumbRenderer {
             var y = rotateAroundScreenYOffsetFactoredIn - (nextY - centerPosition.y);
 
             dc.fillCircle(x, y, 5);
-            // if ((i / ARRAY_POINT_SIZE) < 20 && breadcrumb.storageIndex >=0) {
+            // if ((i / ARRAY_POINT_SIZE) < 20 && breadcrumb.storageIndex != TRACK_ID) {
             //     dc.drawText(
             //         x,
             //         y,

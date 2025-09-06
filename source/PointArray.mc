@@ -112,6 +112,11 @@ class PointArray {
     // for users trying to have 3 large route, this is a very good thing (saves 3075 bytes)
     // but don't forget, we have added directions support, so we actually have used more memory overall (1700bytes code space), but gained a new feature.
 
+    // but now i think we get watchdog errors, before it was memory errors though :(
+    // we get watchdog errors on 3 large routes ~400 points nand thats without a track
+    // watchdog erros were in the rescale method, a relatively simple algorithm but now it has to do `x.encodeNumber(x.decodeNumber() * scale)` instead of just `x[i] = x[i] * scale`;
+    // buts its also rescaling all the directions, so maybe its just the fact that we are at 400coords + 100 directions per route.
+
     // consider statically allocating the full size stright away (prevents remallocs in the underlying cpp code)
     var _internalArrayBufferBytes as ByteArray = []b;
     var _size as Number = 0;
@@ -121,6 +126,11 @@ class PointArray {
     // {
     //   return _internalArrayBuffer[i];
     // }
+
+    function initialize(initalPointCount as Number) {
+        _internalArrayBufferBytes = new [initalPointCount * ARRAY_POINT_SIZE]b;
+        _size = 0;
+    }
 
     function rescale(scaleFactor as Float) as Void {
         // unsafe to call with nulls or 0, checks should be made in parent
