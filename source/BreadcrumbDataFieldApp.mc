@@ -16,9 +16,8 @@ enum /* Protocol */ {
     PROTOCOL_REQUEST_SETTINGS = 4,
     PROTOCOL_SAVE_SETTINGS = 5,
     PROTOCOL_COMPANION_APP_TILE_SERVER_CHANGED = 6, // generally because a new url has been selected on the companion app
-    // PROTOCOL_ROUTE_DATA2 = 7, // an optimised form of PROTOCOL_ROUTE_DATA, so we do not trip the watchdog deprecated in favour of 3, back compat too hard (old array takes too many instructions to convert to nw bytearray) - MUST UPDATE
+    PROTOCOL_ROUTE_DATA2 = 7, // an optimised form of PROTOCOL_ROUTE_DATA, so we do not trip the watchdog
     PROTOCOL_CACHE_CURRENT_AREA = 8,
-    PROTOCOL_ROUTE_DATA3 = 9, // an optimised form of PROTOCOL_ROUTE_DATA2 packed as base64string and results in a bytearray
 }
 
 enum /* ProtocolSend */ {
@@ -123,29 +122,24 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             var type = data[0] as Number;
             var rawData = data.slice(1, null);
 
-            if (type == PROTOCOL_ROUTE_DATA3) {
-                logT("Parsing route data 3");
+            if (type == PROTOCOL_ROUTE_DATA2) {
+                logT("Parsing route data 2");
                 // protocol:
                 //  name
-                //  [x, y, z]...  // latitude <float> and longitude <float> in rectangular coordinates, altitude <float> - pre calculated by the app base64encoded
-                //  [x, y, angle, index] // direction data - pre calculated base64encoded
-                if (rawData.size() < 3) {
-                    logT("Failed to parse route 3 data, bad length: " + rawData.size());
+                //  [x, y, z]...  // latitude <float> and longitude <float> in rectangular coordinates, altitude <float> - pre calculated by the app
+                //  [x, y, angle, index] // direction data - pre calculated all floats
+                if (rawData.size() < 2) {
+                    logT("Failed to parse route 2 data, bad length: " + rawData.size());
                     mustUpdate();
                     return;
                 }
 
                 var name = rawData[0] as String;
-                var routeData =
-                    StringUtil.convertEncodedString(rawData[1] as String, {
-                        :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
-                        :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
-                    }) as ByteArray;
-                var directions =
-                    StringUtil.convertEncodedString(rawData[2] as String, {
-                        :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
-                        :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
-                    }) as ByteArray;
+                var routeData = rawData[1] as Array<Float>;
+                var directions = [] as Array<Float>; // back compat empty array
+                if (rawData.size() > 2) {
+                    directions = rawData[2] as Array<Float>;
+                }
                 if (
                     routeData.size() % ARRAY_POINT_SIZE == 0 &&
                     directions.size() % DIRECTION_ARRAY_POINT_SIZE == 0
@@ -153,6 +147,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                     var route = _breadcrumbContext.newRoute(name);
                     if (route == null) {
                         logE("Failed to add route");
+                        mustUpdate();
                         return;
                     }
                     var routeWrote = route.handleRouteV2(
@@ -229,7 +224,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 }
                 // this is not perfect, some web requests could be about to complete and add a tile to the cache
                 // maybe we should go into a backoff period? or just allow manual purge from phone app for if something goes wrong
-                // currently tiles have no expiery
+                // currently tiles have no expiry
                 _breadcrumbContext.tileCache._storageTileCache.clearValues();
                 _breadcrumbContext.settings.clearTileCache();
                 _breadcrumbContext.settings.clearPendingWebRequests();

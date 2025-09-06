@@ -146,8 +146,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         // logE("screen height: " + System.getDeviceSettings().screenHeight.toFloat());
         try {
             // call parent so screen can be setup correctly or the screen can be slightly offset left/right/up/down.
-            // Usually on a pyhsical devices I see an offset to the right and down (leaving a black bar on the left and top), the venu3s simulator shows this.
-            // The venu3 simulator is offwset left and down, instead of right and down.
+            // Usually on a physical devices I see an offset to the right and down (leaving a black bar on the left and top), the venu3s simulator shows this.
+            // The venu3 simulator is offset left and down, instead of right and down.
             // Sometimes there is no offset though, very confusing.
             // see code at the top of onUpdate, even just calling clear() with a colour does not remove the black bar offsets.
             View.onLayout(dc);
@@ -942,19 +942,17 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             }
 
             needsComma = true;
-            var dirCoordindexStr = "na";
+            var dirCoordIndexStr = "na";
             if (
                 route.lastDirectionIndex > 0 &&
                 route.lastDirectionIndex < route.directions.pointSize()
             ) {
-                dirCoordindexStr = (
-                    route.directions._internalArrayBuffer.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                        :offset => route.lastDirectionIndex * DIRECTION_ARRAY_POINT_SIZE + 9,
-                        :endianness => Lang.ENDIAN_BIG,
-                    }) as Float
-                ).format("%.1f");
+                dirCoordIndexStr =
+                    route.directions._internalArrayBuffer[
+                        route.lastDirectionIndex * DIRECTION_ARRAY_POINT_SIZE + 3
+                    ].format("%.1f");
             }
-            directionIndexesStr += +route.lastDirectionIndex + "(" + dirCoordindexStr + ")";
+            directionIndexesStr += +route.lastDirectionIndex + "(" + dirCoordIndexStr + ")";
             coordsIndexesStr += route.lastClosePointIndex;
             routesPtsStr += route.coordinates.pointSize();
             dirPtsStr += route.directions.pointSize();

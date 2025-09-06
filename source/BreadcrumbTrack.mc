@@ -126,15 +126,15 @@ class BreadcrumbTrack {
     }
 
     function handleRouteV2(
-        routeData as ByteArray,
-        directions as ByteArray,
+        routeData as Array<Float>,
+        directions as Array<Float>,
         cachedValues as CachedValues
     ) as Boolean {
         // trust the app completely
-        coordinates._internalArrayBufferBytes = routeData;
+        coordinates._internalArrayBuffer = routeData;
         coordinates._size = routeData.size();
         me.directions._internalArrayBuffer = directions;
-        // we could optimise this firther if the app rpovides us with biunding box, center max/min elevation
+        // we could optimise this further if the app provides us with binding box, center max/min elevation
         // but it makes it really hard to add any more cached data to the route, that the companion app then has to send
         // by making these rectangular coordinates, we skip a huge amount of math converting them from lat/long
         updatePointDataFromAllPoints();
@@ -159,18 +159,12 @@ class BreadcrumbTrack {
             ]);
             Storage.setValue(
                 key + "coords",
-                StringUtil.convertEncodedString(coordinates._internalArrayBufferBytes, {
-                    :fromRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
-                    :toRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
-                }) as String
+                coordinates._internalArrayBuffer as Array<PropertyValueType>
             );
             Storage.setValue(key + "coordsSize", coordinates._size);
             Storage.setValue(
                 key + "directions",
-                StringUtil.convertEncodedString(directions._internalArrayBuffer, {
-                    :fromRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
-                    :toRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
-                }) as String
+                directions._internalArrayBuffer as Array<PropertyValueType>
             );
             Storage.setValue(key + "distanceTotal", distanceTotal);
             Storage.setValue(key + "elevationMin", elevationMin);
@@ -213,7 +207,7 @@ class BreadcrumbTrack {
                 return null;
             }
             var coords = Storage.getValue(key + "coords");
-            if (coords == null || !(coords instanceof String)) {
+            if (coords == null) {
                 return null;
             }
 
@@ -224,7 +218,7 @@ class BreadcrumbTrack {
 
             var directions = Storage.getValue(key + "directions");
             if (directions == null) {
-                directions = ""; // back compat
+                directions = []; // back compat
             }
 
             var distanceTotal = Storage.getValue(key + "distanceTotal");
@@ -262,17 +256,9 @@ class BreadcrumbTrack {
                 bbc[1] as Float,
                 bbc[2] as Float
             );
-            track.coordinates._internalArrayBufferBytes =
-                StringUtil.convertEncodedString(coords as String, {
-                    :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
-                    :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
-                }) as ByteArray;
+            track.coordinates._internalArrayBuffer = coords as Array<Float>;
             track.coordinates._size = coordsSize as Number;
-            track.directions._internalArrayBuffer =
-                StringUtil.convertEncodedString(directions as String, {
-                    :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
-                    :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
-                }) as ByteArray;
+            track.directions._internalArrayBuffer = directions as Array<Float>;
             track.distanceTotal = distanceTotal as Float;
             track.elevationMin = elevationMin as Float;
             track.elevationMax = elevationMax as Float;
@@ -533,23 +519,14 @@ class BreadcrumbTrack {
                 startAt = oldLastDirectionIndex;
                 var oldLastDirectionIndexStart = oldLastDirectionIndex * DIRECTION_ARRAY_POINT_SIZE;
                 var oldLastDirectionPointDistance = distance(
-                    directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                        :offset => oldLastDirectionIndexStart,
-                        :endianness => Lang.ENDIAN_BIG,
-                    }) as Float,
-                    directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                        :offset => oldLastDirectionIndexStart + 4,
-                        :endianness => Lang.ENDIAN_BIG,
-                    }) as Float,
+                    directionsRaw[oldLastDirectionIndexStart],
+                    directionsRaw[oldLastDirectionIndexStart + 1],
                     checkPoint.x,
                     checkPoint.y
                 );
                 stillNearTheLastDirectionPoint = oldLastDirectionPointDistance < distanceCheck;
-                var lastDirectionCoordinateIndexF =
-                    directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                        :offset => oldLastDirectionIndexStart + 9,
-                        :endianness => Lang.ENDIAN_BIG,
-                    }) as Float;
+                var lastDirectionCoordinateIndexF = directionsRaw[oldLastDirectionIndexStart + 3];
+
                 var indexDifference = lastDirectionCoordinateIndexF - oldLastClosePointIndex;
                 // this allows us to go back to the start of the track, and get alerts again for the same directions
                 // it also allows us to be moving between 2 points in the routescoordinates, and the directions should never go backwards
@@ -573,11 +550,7 @@ class BreadcrumbTrack {
                 i < stopAt;
                 i += DIRECTION_ARRAY_POINT_SIZE
             ) {
-                var coordinatesIndexF =
-                    directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                        :offset => i + 9,
-                        :endianness => Lang.ENDIAN_BIG,
-                    }) as Float;
+                var coordinatesIndexF = directionsRaw[i + 3];
                 if (coordinatesIndexF <= lastCoordonatesIndexF) {
                     // skip any of the directions in the past
                     continue;
@@ -590,28 +563,14 @@ class BreadcrumbTrack {
                 }
 
                 var distancePx = distance(
-                    directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                        :offset => i,
-                        :endianness => Lang.ENDIAN_BIG,
-                    }) as Float,
-                    directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                        :offset => i + 4,
-                        :endianness => Lang.ENDIAN_BIG,
-                    }) as Float,
+                    directionsRaw[i],
+                    directionsRaw[i + 1],
                     checkPoint.x,
                     checkPoint.y
                 );
                 if (distancePx < distanceCheck) {
                     lastDirectionIndex = i / DIRECTION_ARRAY_POINT_SIZE;
-                    return [
-                        (
-                            directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_SINT8, {
-                                :offset => i + 8,
-                                :endianness => Lang.ENDIAN_BIG,
-                            }) as Float
-                        ) * 2,
-                        distancePx,
-                    ];
+                    return [directionsRaw[i + 2], distancePx];
                 }
             }
 
@@ -627,23 +586,13 @@ class BreadcrumbTrack {
             var oldLastDirectionIndexStart = oldLastDirectionIndex * DIRECTION_ARRAY_POINT_SIZE;
             startAt = oldLastDirectionIndex;
             var oldLastDirectionPointDistance = distance(
-                directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                    :offset => oldLastDirectionIndexStart,
-                    :endianness => Lang.ENDIAN_BIG,
-                }) as Float,
-                directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                    :offset => oldLastDirectionIndexStart + 4,
-                    :endianness => Lang.ENDIAN_BIG,
-                }) as Float,
+                directionsRaw[oldLastDirectionIndexStart],
+                directionsRaw[oldLastDirectionIndexStart + 1],
                 checkPoint.x,
                 checkPoint.y
             );
             stillNearTheLastDirectionPoint = oldLastDirectionPointDistance < distanceCheck;
-            lastCoordonatesIndexF =
-                directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                    :offset => oldLastDirectionIndexStart + 9,
-                    :endianness => Lang.ENDIAN_BIG,
-                }) as Float;
+            lastCoordonatesIndexF = directionsRaw[oldLastDirectionIndexStart + 3];
         }
 
         var stopAt = directionsRaw.size();
@@ -653,11 +602,7 @@ class BreadcrumbTrack {
             i += DIRECTION_ARRAY_POINT_SIZE
         ) {
             // any points ahead of us are valid, since we have no idea where we are on the route, but don't allow points to go backwards
-            var coordinatesIndexF =
-                directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                    :offset => i + 9,
-                    :endianness => Lang.ENDIAN_BIG,
-                }) as Float;
+            var coordinatesIndexF = directionsRaw[i + 3];
             if (coordinatesIndexF <= lastCoordonatesIndexF) {
                 // skip any of the directions in the past, this should not really ever happen since we start at the index, but protect ourselves from ourselves
                 continue;
@@ -670,35 +615,21 @@ class BreadcrumbTrack {
                 // prevent any overlap of points further on in the route that go through the same intersection
                 // we probably need to include a bit of padding here, since the overlap could be slightly miss-aligned
                 // This is done in the loop to allow quick turns in succession to be alerted, but not the directions at the end of the route thats in the same intersection.
-                // eg. a left turn follwed by a right turn
+                // eg. a left turn followed by a right turn
                 // we use the direction alert to know roughly where we are on the route
                 // whilst we are within the circle of the last direction only consider the next X points
                 return null;
             }
 
             var distancePx = distance(
-                directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                    :offset => i,
-                    :endianness => Lang.ENDIAN_BIG,
-                }) as Float,
-                directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                    :offset => i + 4,
-                    :endianness => Lang.ENDIAN_BIG,
-                }) as Float,
+                directionsRaw[i],
+                directionsRaw[i + 1],
                 checkPoint.x,
                 checkPoint.y
             );
             if (distancePx < distanceCheck) {
                 lastDirectionIndex = i / DIRECTION_ARRAY_POINT_SIZE;
-                return [
-                    (
-                        directionsRaw.decodeNumber(Lang.NUMBER_FORMAT_SINT8, {
-                            :offset => i + 8,
-                            :endianness => Lang.ENDIAN_BIG,
-                        }) as Float
-                    ) * 2,
-                    distancePx,
-                ];
+                return [directionsRaw[i + 2], distancePx];
             }
         }
 
@@ -725,7 +656,7 @@ class BreadcrumbTrack {
         }
 
         var endSecondScanAtRaw = sizeRaw;
-        var coordinatesRaw = coordinates._internalArrayBufferBytes; // raw dog access means we can do the calcs much faster (and do not need to create a point with altitude)
+        var coordinatesRaw = coordinates._internalArrayBuffer; // raw dog access means we can do the calcs much faster (and do not need to create a point with altitude)
         var oldLastClosePointIndex = lastClosePointIndex;
         if (lastClosePointIndex != null) {
             var lastClosePointRawStart = lastClosePointIndex * ARRAY_POINT_SIZE;
@@ -737,31 +668,15 @@ class BreadcrumbTrack {
             // if we were the second to last point the for loop will never run
             if (lastClosePointRawStart <= sizeRaw - 2 * ARRAY_POINT_SIZE) {
                 endSecondScanAtRaw = lastClosePointRawStart + ARRAY_POINT_SIZE; // the second scan needs to include endSecondScanAtRaw, or we would skip a point in the overlap
-                var lastPointX =
-                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                        :offset => lastClosePointRawStart,
-                        :endianness => Lang.ENDIAN_BIG,
-                    }) as Float;
-                var lastPointY =
-                    coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                        :offset => lastClosePointRawStart + 4,
-                        :endianness => Lang.ENDIAN_BIG,
-                    }) as Float;
+                var lastPointX = coordinatesRaw[lastClosePointRawStart];
+                var lastPointY = coordinatesRaw[lastClosePointRawStart + 1];
                 for (
                     var i = lastClosePointRawStart + ARRAY_POINT_SIZE;
                     i < sizeRaw;
                     i += ARRAY_POINT_SIZE
                 ) {
-                    var nextX =
-                        coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                            :offset => i,
-                            :endianness => Lang.ENDIAN_BIG,
-                        }) as Float;
-                    var nextY =
-                        coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                            :offset => i + 4,
-                            :endianness => Lang.ENDIAN_BIG,
-                        }) as Float;
+                    var nextX = coordinatesRaw[i];
+                    var nextY = coordinatesRaw[i + 1];
 
                     var distToSegmentAndSegPoint = calculateDistancePointToSegment(
                         checkPoint,
@@ -788,17 +703,9 @@ class BreadcrumbTrack {
             lastClosePointIndex = null; // we have to search the start of the range now
         }
 
-        // logT("lastClosePointIndex: " + lastClosePointIndex);
-        var lastPointX =
-            coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                :offset => 0,
-                :endianness => Lang.ENDIAN_BIG,
-            }) as Float;
-        var lastPointY =
-            coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                :offset => 4,
-                :endianness => Lang.ENDIAN_BIG,
-            }) as Float;
+        // System.println("lastClosePointIndex: " + lastClosePointIndex);
+        var lastPointX = coordinatesRaw[0];
+        var lastPointY = coordinatesRaw[1];
         // The below for loop only runs when we are off track, or when the user is navigating the track in the reverse direction
         // so we need to check which point is closest, rather than grabbing the last point we left the track.
         // Because that could default to a random spot on the track, or the start of the track that is further away.
@@ -806,16 +713,8 @@ class BreadcrumbTrack {
         var lastClosestY = lastPointY;
         var lastClosestDist = FLOAT_MAX;
         for (var i = ARRAY_POINT_SIZE; i < endSecondScanAtRaw; i += ARRAY_POINT_SIZE) {
-            var nextX =
-                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                    :offset => i,
-                    :endianness => Lang.ENDIAN_BIG,
-                }) as Float;
-            var nextY =
-                coordinatesRaw.decodeNumber(Lang.NUMBER_FORMAT_FLOAT, {
-                    :offset => i + 4,
-                    :endianness => Lang.ENDIAN_BIG,
-                }) as Float;
+            var nextX = coordinatesRaw[i];
+            var nextY = coordinatesRaw[i + 1];
 
             var distToSegmentAndSegPoint = calculateDistancePointToSegment(
                 checkPoint,
