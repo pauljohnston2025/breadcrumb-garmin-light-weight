@@ -264,9 +264,9 @@ class PointArray {
         }
 
         for (
-            var leftIndex = -4, rightIndex = size() - DIRECTION_ARRAY_POINT_SIZE;
+            var leftIndex = -4, rightIndex = size() - ARRAY_POINT_SIZE;
             leftIndex < rightIndex;
-            rightIndex -= DIRECTION_ARRAY_POINT_SIZE /*left increment done in loop*/
+            rightIndex -= ARRAY_POINT_SIZE /*left increment done in loop*/
         ) {
             // hard code instead of for loop to hopefully optimise better
             // we should probaly optimise the 4 in a row byte swap too, though i do not think we have a memcpy or anything similar
