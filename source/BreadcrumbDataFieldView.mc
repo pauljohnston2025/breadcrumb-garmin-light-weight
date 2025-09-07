@@ -1006,7 +1006,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             // do not divide by 0 my good friends
             percentage = (hits * 100) / total;
         }
-        var cacheHits = "cache hits: " + percentage.format("%.1f") + "%";
+        var cacheHits = "cacheHits: " + percentage.format("%.1f") + "%";
         dc.drawText(x, y, Graphics.FONT_XTINY, cacheHits, Graphics.TEXT_JUSTIFY_CENTER);
         y += spacing;
         dc.drawText(

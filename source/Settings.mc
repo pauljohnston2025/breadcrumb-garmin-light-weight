@@ -495,7 +495,10 @@ class Settings {
 
     function setMode(_mode as Number) as Void {
         mode = _mode;
-        setValue("mode", mode);
+        // directly set mode, its only for what is displayed, which takes effect ont he next onUpdate
+        // we do not want to call view.onSettingsChanged because it clears timestamps when going to the debug page. 
+        // The setValue method on this class calls the view changed method, so do not call it.
+        Application.Properties.setValue("mode", mode);
     }
 
     (:settingsView)
