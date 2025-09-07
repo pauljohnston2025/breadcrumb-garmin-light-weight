@@ -1213,6 +1213,7 @@ class BreadcrumbRenderer {
             );
 
             // top bottom left right
+            dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
             dc.drawLine(0, hitboxSize, physicalScreenWidth, hitboxSize);
             dc.drawLine(
                 0,

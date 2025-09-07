@@ -290,11 +290,7 @@ class SettingsMain extends Rez.Menus.SettingsMain {
             settings.centerUserOffsetY.format("%.2f")
         );
         safeSetToggle(me, :settingsMainDisplayLatLong, settings.displayLatLong);
-        safeSetSubLabel(
-            me,
-            :settingsMainMaxTrackPoints,
-            settings.maxTrackPoints.toString()
-        );
+        safeSetSubLabel(me, :settingsMainMaxTrackPoints, settings.maxTrackPoints.toString());
     }
 }
 
@@ -579,41 +575,46 @@ class SettingsAlerts extends Rez.Menus.SettingsAlerts {
 
     function rerender() as Void {
         var settings = getApp()._breadcrumbContext.settings;
-        safeSetToggle(me, :settingsAlertsDrawLineToClosestPoint, settings.drawLineToClosestPoint);
-        safeSetToggle(me, :settingsAlertsEnabled, settings.enableOffTrackAlerts);
-        safeSetToggle(me, :settingsAlertsOffTrackWrongDirection, settings.offTrackWrongDirection);
-        safeSetToggle(me, :settingsAlertsDrawCheverons, settings.drawCheverons);
-        safeSetSubLabel(
-            me,
-            :settingsAlertsOffTrackDistanceM,
-            settings.offTrackAlertsDistanceM.toString()
-        );
-        safeSetSubLabel(
-            me,
-            :settingsAlertsOffTrackCheckIntervalS,
-            settings.offTrackCheckIntervalS.toString()
-        );
+        alertsCommon(me, settings);
         safeSetSubLabel(
             me,
             :settingsAlertsOffTrackAlertsMaxReportIntervalS,
             settings.offTrackAlertsMaxReportIntervalS.toString()
         );
-        safeSetSubLabel(
-            me,
-            :settingsAlertsDirectionDistanceM,
-            settings.directionDistanceM.toString()
-        );
-        var alertTypeString = "";
-        switch (settings.alertType) {
-            case ALERT_TYPE_TOAST:
-                alertTypeString = Rez.Strings.alertTypeToast;
-                break;
-            case ALERT_TYPE_ALERT:
-                alertTypeString = Rez.Strings.alertTypeAlert;
-                break;
-        }
-        safeSetSubLabel(me, :settingsAlertsAlertType, alertTypeString);
     }
+}
+
+(:settingsView)
+function alertsCommon(menu as WatchUi.Menu2, settings as Settings) as Void {
+    safeSetSubLabel(
+        menu,
+        :settingsAlertsOffTrackDistanceM,
+        settings.offTrackAlertsDistanceM.toString()
+    );
+    safeSetSubLabel(
+        menu,
+        :settingsAlertsOffTrackCheckIntervalS,
+        settings.offTrackCheckIntervalS.toString()
+    );
+    safeSetToggle(menu, :settingsAlertsDrawLineToClosestPoint, settings.drawLineToClosestPoint);
+    safeSetToggle(menu, :settingsAlertsDrawCheverons, settings.drawCheverons);
+    safeSetToggle(menu, :settingsAlertsOffTrackWrongDirection, settings.offTrackWrongDirection);
+    safeSetToggle(menu, :settingsAlertsEnabled, settings.enableOffTrackAlerts);
+    safeSetSubLabel(
+        menu,
+        :settingsAlertsDirectionDistanceM,
+        settings.directionDistanceM.toString()
+    );
+    var alertTypeString = "";
+    switch (settings.alertType) {
+        case ALERT_TYPE_TOAST:
+            alertTypeString = Rez.Strings.alertTypeToast;
+            break;
+        case ALERT_TYPE_ALERT:
+            alertTypeString = Rez.Strings.alertTypeAlert;
+            break;
+    }
+    safeSetSubLabel(menu, :settingsAlertsAlertType, alertTypeString);
 }
 
 (:settingsView)
@@ -625,20 +626,7 @@ class SettingsAlertsDisabled extends Rez.Menus.SettingsAlertsDisabled {
 
     function rerender() as Void {
         var settings = getApp()._breadcrumbContext.settings;
-        safeSetToggle(me, :settingsAlertsDrawLineToClosestPoint, settings.drawLineToClosestPoint);
-        safeSetSubLabel(
-            me,
-            :settingsAlertsOffTrackDistanceM,
-            settings.offTrackAlertsDistanceM.toString()
-        );
-        safeSetSubLabel(
-            me,
-            :settingsAlertsOffTrackCheckIntervalS,
-            settings.offTrackCheckIntervalS.toString()
-        );
-        safeSetToggle(me, :settingsAlertsEnabled, settings.enableOffTrackAlerts);
-        safeSetToggle(me, :settingsAlertsOffTrackWrongDirection, settings.offTrackWrongDirection);
-        safeSetToggle(me, :settingsAlertsDrawCheverons, settings.drawCheverons);
+        alertsCommon(me, settings);
     }
 }
 
@@ -890,7 +878,7 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
         } else if (itemId == :settingsMainDisplayLatLong) {
             settings.toggleDisplayLatLong();
             view.rerender();
-        }  else if (itemId == :settingsMainMaxTrackPoints) {
+        } else if (itemId == :settingsMainMaxTrackPoints) {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setMaxTrackPoints),
@@ -1325,8 +1313,8 @@ class SettingsElevationModeDelegate extends WatchUi.Menu2InputDelegate {
 
 (:settingsView)
 class SettingsAlertTypeDelegate extends WatchUi.Menu2InputDelegate {
-    var parent as SettingsAlerts;
-    function initialize(parent as SettingsAlerts) {
+    var parent as SettingsAlerts or SettingsAlertsDisabled;
+    function initialize(parent as SettingsAlerts or SettingsAlertsDisabled) {
         WatchUi.Menu2InputDelegate.initialize();
         me.parent = parent;
     }
@@ -1790,6 +1778,79 @@ class SettingsMapDisabledDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
+function checkAlertViewDisplay(
+    oldView as SettingsAlerts or SettingsAlertsDisabled,
+    settings as Settings
+) as Void {
+    if (
+        oldView instanceof SettingsAlerts &&
+        !settings.offTrackWrongDirection && !settings.enableOffTrackAlerts
+    ) {
+        var view = new SettingsAlertsDisabled();
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        WatchUi.pushView(view, new $.SettingsAlertsDisabledDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+    } else if (
+        oldView instanceof SettingsAlertsDisabled &&
+        (settings.offTrackWrongDirection || settings.enableOffTrackAlerts)
+    ) {
+        var view = new SettingsAlerts();
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        WatchUi.pushView(view, new $.SettingsAlertsDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+    } else {
+        oldView.rerender();
+    }
+}
+
+function onSelectAlertCommon(
+    itemId as Object?,
+    settings as Settings,
+    view as SettingsAlerts or SettingsAlertsDisabled
+) as Void {
+    if (itemId == :settingsAlertsDrawLineToClosestPoint) {
+        settings.toggleDrawLineToClosestPoint();
+        view.rerender();
+    } else if (itemId == :settingsAlertsEnabled) {
+        settings.toggleEnableOffTrackAlerts();
+        checkAlertViewDisplay(view, settings);
+    } else if (itemId == :settingsAlertsOffTrackWrongDirection) {
+        settings.toggleOffTrackWrongDirection();
+        checkAlertViewDisplay(view, settings);
+    } else if (itemId == :settingsAlertsDrawCheverons) {
+        settings.toggleDrawCheverons();
+        view.rerender();
+    } else if (itemId == :settingsAlertsOffTrackDistanceM) {
+        startPicker(
+            new SettingsNumberPicker(
+                settings.method(:setOffTrackAlertsDistanceM),
+                settings.offTrackAlertsDistanceM
+            ),
+            view
+        );
+    } else if (itemId == :settingsAlertsDirectionDistanceM) {
+        startPicker(
+            new SettingsNumberPicker(
+                settings.method(:setDirectionDistanceM),
+                settings.directionDistanceM
+            ),
+            view
+        );
+    } else if (itemId == :settingsAlertsOffTrackCheckIntervalS) {
+        startPicker(
+            new SettingsNumberPicker(
+                settings.method(:setOffTrackCheckIntervalS),
+                settings.offTrackCheckIntervalS
+            ),
+            view
+        );
+    } else if (itemId == :settingsAlertsAlertType) {
+        WatchUi.pushView(
+            new $.Rez.Menus.SettingsAlertType(),
+            new $.SettingsAlertTypeDelegate(view),
+            WatchUi.SLIDE_IMMEDIATE
+        );
+    }
+}
+
 (:settingsView)
 class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
     var view as SettingsAlerts;
@@ -1800,55 +1861,8 @@ class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
     public function onSelect(item as WatchUi.MenuItem) as Void {
         var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
-        if (itemId == :settingsAlertsDrawLineToClosestPoint) {
-            settings.toggleDrawLineToClosestPoint();
-            view.rerender();
-        } else if (itemId == :settingsAlertsEnabled) {
-            settings.toggleEnableOffTrackAlerts();
-            if (!settings.offTrackWrongDirection && !settings.enableOffTrackAlerts) {
-                var view = new SettingsAlertsDisabled();
-                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-                WatchUi.pushView(
-                    view,
-                    new $.SettingsAlertsDisabledDelegate(view),
-                    WatchUi.SLIDE_IMMEDIATE
-                );
-            } else {
-                view.rerender();
-            }
-        } else if (itemId == :settingsAlertsOffTrackWrongDirection) {
-            settings.toggleOffTrackWrongDirection();
-            if (!settings.offTrackWrongDirection && !settings.enableOffTrackAlerts) {
-                var view = new SettingsAlertsDisabled();
-                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-                WatchUi.pushView(
-                    view,
-                    new $.SettingsAlertsDisabledDelegate(view),
-                    WatchUi.SLIDE_IMMEDIATE
-                );
-            } else {
-                view.rerender();
-            }
-        } else if (itemId == :settingsAlertsDrawCheverons) {
-            settings.toggleDrawCheverons();
-            view.rerender();
-        } else if (itemId == :settingsAlertsOffTrackDistanceM) {
-            startPicker(
-                new SettingsNumberPicker(
-                    settings.method(:setOffTrackAlertsDistanceM),
-                    settings.offTrackAlertsDistanceM
-                ),
-                view
-            );
-        } else if (itemId == :settingsAlertsDirectionDistanceM) {
-            startPicker(
-                new SettingsNumberPicker(
-                    settings.method(:setDirectionDistanceM),
-                    settings.directionDistanceM
-                ),
-                view
-            );
-        } else if (itemId == :settingsAlertsOffTrackAlertsMaxReportIntervalS) {
+
+        if (itemId == :settingsAlertsOffTrackAlertsMaxReportIntervalS) {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setOffTrackAlertsMaxReportIntervalS),
@@ -1856,21 +1870,10 @@ class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
                 ),
                 view
             );
-        } else if (itemId == :settingsAlertsOffTrackCheckIntervalS) {
-            startPicker(
-                new SettingsNumberPicker(
-                    settings.method(:setOffTrackCheckIntervalS),
-                    settings.offTrackCheckIntervalS
-                ),
-                view
-            );
-        } else if (itemId == :settingsAlertsAlertType) {
-            WatchUi.pushView(
-                new $.Rez.Menus.SettingsAlertType(),
-                new $.SettingsAlertTypeDelegate(view),
-                WatchUi.SLIDE_IMMEDIATE
-            );
+            return;
         }
+
+        onSelectAlertCommon(itemId, settings, view);
     }
 }
 
@@ -1884,47 +1887,7 @@ class SettingsAlertsDisabledDelegate extends WatchUi.Menu2InputDelegate {
     public function onSelect(item as WatchUi.MenuItem) as Void {
         var settings = getApp()._breadcrumbContext.settings;
         var itemId = item.getId();
-        if (itemId == :settingsAlertsDrawLineToClosestPoint) {
-            settings.toggleDrawLineToClosestPoint();
-            view.rerender();
-        } else if (itemId == :settingsAlertsEnabled) {
-            settings.toggleEnableOffTrackAlerts();
-            if (settings.offTrackWrongDirection || settings.enableOffTrackAlerts) {
-                var view = new SettingsAlerts();
-                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-                WatchUi.pushView(view, new $.SettingsAlertsDelegate(view), WatchUi.SLIDE_IMMEDIATE);
-            } else {
-                view.rerender();
-            }
-        } else if (itemId == :settingsAlertsOffTrackWrongDirection) {
-            settings.toggleOffTrackWrongDirection();
-            if (settings.offTrackWrongDirection || settings.enableOffTrackAlerts) {
-                var view = new SettingsAlerts();
-                WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-                WatchUi.pushView(view, new $.SettingsAlertsDelegate(view), WatchUi.SLIDE_IMMEDIATE);
-            } else {
-                view.rerender();
-            }
-        } else if (itemId == :settingsAlertsDrawCheverons) {
-            settings.toggleDrawCheverons();
-            view.rerender();
-        } else if (itemId == :settingsAlertsOffTrackDistanceM) {
-            startPicker(
-                new SettingsNumberPicker(
-                    settings.method(:setOffTrackAlertsDistanceM),
-                    settings.offTrackAlertsDistanceM
-                ),
-                view
-            );
-        } else if (itemId == :settingsAlertsOffTrackCheckIntervalS) {
-            startPicker(
-                new SettingsNumberPicker(
-                    settings.method(:setOffTrackCheckIntervalS),
-                    settings.offTrackCheckIntervalS
-                ),
-                view
-            );
-        }
+        onSelectAlertCommon(itemId, settings, view);
     }
 }
 

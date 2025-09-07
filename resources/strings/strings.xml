@@ -145,7 +145,7 @@
     <string id="maxTrackPointsTitle">Max Track Points</string>
     <string id="drawHitBoxesTitle">Draw Hit Boxes</string>
     <string id="showDirectionPointsTitle">Show Turn Points</string>
-    <string id="showDirectionPointTextUnderIndexTitle">Show Direction Point Text Under Index</string>
+    <string id="showDirectionPointTextUnderIndexTitle">Show Turn Point Text Under Index</string>
 
 
     <string id="enableMaps1">Enable maps. This breaks on some devices. Are you sure?</string>

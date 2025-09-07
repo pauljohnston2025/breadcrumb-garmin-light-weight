@@ -480,7 +480,7 @@ class Settings {
     var tileErrorColour as Number = Graphics.COLOR_BLACK;
     var includeDebugPageInOnScreenUi as Boolean = false;
     var drawHitBoxes as Boolean = false;
-    var showDirectionPoints as Boolean = true;
+    var showDirectionPoints as Boolean = false;
     var showDirectionPointTextUnderIndex as Number = 0;
 
     (:lowMemory)
