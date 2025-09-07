@@ -124,9 +124,10 @@ class PointArray {
     // With memory optimised method I can only get at max 1150-1200 (1200 was rare and think it crashed) points across all routes/track before I start getting watchdog errors
     // With the high memory low cpu method the memory becomes the limiting factor
     // I can achieve 1443 points with the _internalArrayBuffer as Array<Float> which is enough for 3 full routes with directions, but don't forget about the track
-    // So we should be able to do nearly 300 coordinates and 100 directions and have 3 routes, and a track 400*3 * 300 = 1500 points (though I think 100 directions is quite high)
+    // note: This seems to be the real limit, as this gets watchdog errors at this point (off track calculations are huge)
+    // So we should be able to do nearly 250 coordinates and 100 directions and have 3 routes, and a track 400*3 * 300 = 1500 points (though I think 100 directions is quite high)
     // This is only for worst case when we have 3 routes loaded (general use case is one route and 1 track) so it will easily fit 400coords per track and  route and 100 directions = 900 points
-    // users could also get creative and send some of the routes without directions (swimming leg of triathalon)
+    // users could also get creative and send some of the routes without directions (swimming leg of triathlon)
     
 
     // (_internalArrayBuffer as as Array<Float>, same for directions (they are now reverted) ~400 coordinates ~100 directions
@@ -204,7 +205,7 @@ class PointArray {
     }
 
     function restrictPoints(maPoints as Number) as Boolean {
-        // make sure we only have an acceptancbe amount of points
+        // make sure we only have an acceptable amount of points
         // current process is to cull every second point
         // this means near the end of the track, we will have lots of close points
         // the start of the track will start getting more and more granular every

@@ -1184,7 +1184,7 @@ class BreadcrumbRenderer {
         var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
         var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
 
-        if (settings.drawHitboxes) {
+        if (settings.drawHitBoxes) {
             dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
             dc.setPenWidth(1);
             dc.drawRectangle(

@@ -469,8 +469,8 @@ class Settings {
     var tileCachePadding as Number = 0;
     var httpErrorTileTTLS as Number = 60;
     var errorTileTTLS as Number = 20; // other errors are from garmin ble connection issues, retry faster by default
-    var directionDistanceM as Number = 60; // -1 disables the check, could switch to using a boolean? TODO ADD SUPPORT
-    var maxTrackPoints as Number = 400; // TODO ADD SUPPORT
+    var directionDistanceM as Number = -1; // -1 disables the check, 60 seems to be a good value
+    var maxTrackPoints as Number = 400;
 
     // bunch of debug settings
     var showPoints as Boolean = false;
@@ -479,9 +479,9 @@ class Settings {
     var showErrorTileMessages as Boolean = false;
     var tileErrorColour as Number = Graphics.COLOR_BLACK;
     var includeDebugPageInOnScreenUi as Boolean = false;
-    var drawHitboxes as Boolean = false; // not exposed yet
-    var showDirectionPoints as Boolean = true; // TODO ADD SUPPORT
-    var showDirectionPointTextUnderIndex as Number = 10; // TODO ADD SUPPORT
+    var drawHitBoxes as Boolean = false;
+    var showDirectionPoints as Boolean = true;
+    var showDirectionPointTextUnderIndex as Number = 0;
 
     (:lowMemory)
     function routeMax() as Number {
@@ -946,6 +946,32 @@ class Settings {
         setValue("httpErrorTileTTLS", httpErrorTileTTLS);
         tileServerPropChanged();
     }
+    
+    (:settingsView)
+    function setDirectionDistanceM(value as Number) as Void {
+        directionDistanceM = value;
+        setValue("directionDistanceM", directionDistanceM);
+    }
+    
+    (:settingsView)
+    function setMaxTrackPoints(value as Number) as Void {
+        var oldmaxTrackPoints = maxTrackPoints;
+        maxTrackPoints = value;
+        if (oldmaxTrackPoints > maxTrackPoints) {
+            maxTrackPointsReduced();
+        }
+        setValue("maxTrackPoints", maxTrackPoints);
+    }
+
+    function maxTrackPointsReduced() as Void {
+        getApp()._breadcrumbContext.track.coordinates.restrictPoints(maxTrackPoints);
+    }
+    
+    (:settingsView)
+    function setShowDirectionPointTextUnderIndex(value as Number) as Void {
+        showDirectionPointTextUnderIndex = value;
+        setValue("showDirectionPointTextUnderIndex", showDirectionPointTextUnderIndex);
+    }
 
     (:settingsView)
     function setErrorTileTTLS(value as Number) as Void {
@@ -1108,7 +1134,7 @@ class Settings {
         clearPendingWebRequests();
         getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // do not remove our cached tiles, we only reduced the caches size, so they are still valid
     }
-
+    
     (:settingsView)
     function setStorageTileCacheSize(value as Number) as Void {
         setStorageTileCacheSizeWithoutSideEffect(value);
@@ -1231,6 +1257,18 @@ class Settings {
     function setIncludeDebugPageInOnScreenUi(value as Boolean) as Void {
         includeDebugPageInOnScreenUi = value;
         setValue("includeDebugPageInOnScreenUi", includeDebugPageInOnScreenUi);
+    }
+    
+    (:settingsView)
+    function setDrawHitBoxes(value as Boolean) as Void {
+        drawHitBoxes = value;
+        setValue("drawHitBoxes", drawHitBoxes);
+    }
+    
+    (:settingsView)
+    function setShowDirectionPoints(value as Boolean) as Void {
+        showDirectionPoints = value;
+        setValue("showDirectionPoints", showDirectionPoints);
     }
 
     (:settingsView)
@@ -1547,6 +1585,16 @@ class Settings {
     function toggleIncludeDebugPageInOnScreenUi() as Void {
         includeDebugPageInOnScreenUi = !includeDebugPageInOnScreenUi;
         setValue( "includeDebugPageInOnScreenUi", includeDebugPageInOnScreenUi);
+    }
+    (:settingsView)
+    function toggleDrawHitBoxes() as Void {
+        drawHitBoxes = !drawHitBoxes;
+        setValue( "drawHitBoxes", drawHitBoxes);
+    }
+    (:settingsView)
+    function toggleShowDirectionPoints() as Void {
+        showDirectionPoints = !showDirectionPoints;
+        setValue( "showDirectionPoints", showDirectionPoints);
     }
     (:settingsView)
     function toggleDisplayLatLong() as Void {
@@ -1954,6 +2002,9 @@ class Settings {
         var defaultSettings = new Settings();
         tileSize = defaultSettings.tileSize;
         httpErrorTileTTLS = defaultSettings.httpErrorTileTTLS;
+        directionDistanceM = defaultSettings.directionDistanceM;
+        maxTrackPoints = defaultSettings.maxTrackPoints;
+        showDirectionPointTextUnderIndex = defaultSettings.showDirectionPointTextUnderIndex;
         errorTileTTLS = defaultSettings.errorTileTTLS;
         fullTileSize = defaultSettings.fullTileSize;
         scaledTileSize = defaultSettings.scaledTileSize;
@@ -1979,6 +2030,8 @@ class Settings {
         showTileBorders = defaultSettings.showTileBorders;
         showErrorTileMessages = defaultSettings.showErrorTileMessages;
         includeDebugPageInOnScreenUi = defaultSettings.includeDebugPageInOnScreenUi;
+        drawHitBoxes = defaultSettings.drawHitBoxes;
+        showDirectionPoints = defaultSettings.showDirectionPoints;
         displayLatLong = defaultSettings.displayLatLong;
         _scaleRestrictedToTileLayers = defaultSettings.scaleRestrictedToTileLayers();
         trackColour = defaultSettings.trackColour;
@@ -2036,6 +2089,9 @@ class Settings {
         return {
             "tileSize" => tileSize,
             "httpErrorTileTTLS" => httpErrorTileTTLS,
+            "directionDistanceM" => directionDistanceM,
+            "maxTrackPoints" => maxTrackPoints,
+            "showDirectionPointTextUnderIndex" => showDirectionPointTextUnderIndex,
             "errorTileTTLS" => errorTileTTLS,
             "fullTileSize" => fullTileSize,
             "scaledTileSize" => scaledTileSize,
@@ -2061,6 +2117,8 @@ class Settings {
             "showTileBorders" => showTileBorders,
             "showErrorTileMessages" => showErrorTileMessages,
             "includeDebugPageInOnScreenUi" => includeDebugPageInOnScreenUi,
+            "drawHitBoxes" => drawHitBoxes,
+            "showDirectionPoints" => showDirectionPoints,
             "displayLatLong" => displayLatLong,
             "scaleRestrictedToTileLayers" => scaleRestrictedToTileLayers(),
             "trackColour" => trackColour.format("%X"),
@@ -2117,6 +2175,9 @@ class Settings {
 
     function loadSettingsPart1() as Void {
         httpErrorTileTTLS = parseNumber("httpErrorTileTTLS", httpErrorTileTTLS);
+        directionDistanceM = parseNumber("directionDistanceM", directionDistanceM);
+        maxTrackPoints = parseNumber("maxTrackPoints", maxTrackPoints);
+        showDirectionPointTextUnderIndex = parseNumber("showDirectionPointTextUnderIndex", showDirectionPointTextUnderIndex);
         errorTileTTLS = parseNumber("errorTileTTLS", errorTileTTLS);
         fullTileSize = parseNumber("fullTileSize", fullTileSize);
         useDrawBitmap = parseBool("useDrawBitmap", useDrawBitmap);
@@ -2174,6 +2235,14 @@ class Settings {
         includeDebugPageInOnScreenUi = parseBool(
             "includeDebugPageInOnScreenUi",
             includeDebugPageInOnScreenUi
+        );
+        drawHitBoxes = parseBool(
+            "drawHitBoxes",
+            drawHitBoxes
+        );
+        showDirectionPoints = parseBool(
+            "showDirectionPoints",
+            showDirectionPoints
         );
         displayLatLong = parseBool("displayLatLong", displayLatLong);
         _scaleRestrictedToTileLayers = parseBool(
@@ -2293,6 +2362,7 @@ class Settings {
         var oldTileUrl = tileUrl;
         var oldTileSize = tileSize;
         var oldHttpErrorTileTTLS = httpErrorTileTTLS;
+        var oldMaxTrackPoints = maxTrackPoints;
         var oldErrorTileTTLS = errorTileTTLS;
         var oldFullTileSize = fullTileSize;
         var oldScaledTileSize = scaledTileSize;
@@ -2359,6 +2429,10 @@ class Settings {
 
         if (oldTileCacheSize > tileCacheSize) {
             tileCacheSizeReduced();
+        }
+        
+        if (oldMaxTrackPoints > maxTrackPoints) {
+            maxTrackPointsReduced();
         }
 
         if (oldMapEnabled != mapEnabled) {

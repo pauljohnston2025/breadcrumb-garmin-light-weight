@@ -45,6 +45,10 @@
     <setting propertyKey="@Properties.displayLatLong" title="@Strings.displayLatLongTitle">
         <settingConfig type="boolean"/>
     </setting>
+
+    <setting propertyKey="@Properties.maxTrackPoints" title="@Strings.maxTrackPointsTitle">
+        <settingConfig type="numeric" min="1"/>
+    </setting>
     
     <group id="zoomAtPace" title="@Strings.zoomAtPaceTitle">
         <setting propertyKey="@Properties.zoomAtPaceMode" title="@Strings.zoomAtPaceModeTitle">
@@ -181,6 +185,9 @@
         <setting propertyKey="@Properties.enableOffTrackAlerts" title="@Strings.enableOffTrackAlertsTitle">
             <settingConfig type="boolean"/>
         </setting>
+        <setting propertyKey="@Properties.directionDistanceM" title="@Strings.directionDistanceMTitle"  prompt="@Strings.directionDistanceMPrompt">
+            <settingConfig type="numeric" min="-1"/>
+        </setting>
         <setting propertyKey="@Properties.offTrackAlertsMaxReportIntervalS" title="@Strings.offTrackAlertsMaxReportIntervalSTitle">
             <settingConfig type="numeric" min="0"/>
         </setting>
@@ -277,6 +284,18 @@
 
         <setting propertyKey="@Properties.includeDebugPageInOnScreenUi" title="@Strings.includeDebugPageInOnScreenUiTitle">
             <settingConfig type="boolean"/>
+        </setting>
+
+        <setting propertyKey="@Properties.drawHitBoxes" title="@Strings.drawHitBoxesTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+        
+        <setting propertyKey="@Properties.showDirectionPoints" title="@Strings.showDirectionPointsTitle">
+            <settingConfig type="boolean"/>
+        </setting>
+
+        <setting propertyKey="@Properties.showDirectionPointTextUnderIndex" title="@Strings.showDirectionPointTextUnderIndexTitle">
+            <settingConfig type="numeric" min="0"/>
         </setting>
     </group>
 

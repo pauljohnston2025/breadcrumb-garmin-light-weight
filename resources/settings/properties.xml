@@ -64,6 +64,12 @@
 	<property id="centerUserOffsetY" type="float">0.5</property>
 	<property id="mapMoveScreenSize" type="float">0.3</property>
 
+	<property id="directionDistanceM" type="number">-1</property>
+	<property id="maxTrackPoints" type="number">400</property>
+	<property id="drawHitBoxes" type="boolean">false</property>
+	<property id="showDirectionPoints" type="boolean">false</property>
+	<property id="showDirectionPointTextUnderIndex" type="number">0</property>
+
 
 	<property id="routes" type="array"></property>
     <!-- https://forums.garmin.com/developer/connect-iq/i/bug-reports/bug-boolean-properties-with-default-value-true-can-t-be-changed-in-simulator -->

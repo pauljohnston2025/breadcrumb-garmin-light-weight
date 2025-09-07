@@ -52,7 +52,11 @@ Debug - A debug screen that may be removed in future releases. Shows the current
 
 ### Display Lat/Long
 
-Determines if the curent latitude and longitide are displayed on the watch screen.
+Determines if the current latitude and longitude are displayed on the watch screen.
+
+### Max Track Points
+
+The maximum number of coordinates to store for the current track the user is moving along. Each coordinate point contains a latitude, longitude and altitude. A smaller number should be used to conserve memory and cpu. Larger numbers results in a smoother track line drawn on screen.   
 
 ---
 
@@ -427,7 +431,7 @@ The number of meters to cache tiles around the routes path when using [Storage S
 
 ---
 
-# Off Track Alerts
+# Alerts
 
 Calculating off track alerts (either Draw Line To Closest Point, or Off Track Alerts) is a computationally heavy task. This means if there are multiple large routes the watch can error out with a watchdog error if our code executes too long. I have tested with up to 3 large routes on my venu2s, and it seems to handle it. Only enabled routes are taken into consideration. For multiple enabled routes, you are considered on-track if you are on at least one of the tracks. See the [Routes](#routes) section for use cases of multiple routes, eg. triathlons.
 
@@ -453,7 +457,13 @@ Trigger an alert when you leave a route by `Off Track Distance`.
 
 ### Wrong Direction Alerts
 
-Trigger an alert when you navigate the track in the wrong direction. Note: this can take up to twice as long as [Off Track Check Interval](#off-track-check-interval) to detect travel in the wrong direction.  
+Trigger an alert when you navigate the track in the wrong direction. Note: this can take up to twice as long as [Off Track Check Interval](#off-track-check-interval) to detect travel in the wrong direction.
+
+### Turn Alerts Distance (m)
+
+Enabled turn-by-turn navigation (requires directions to be sent from the companion app).  
+The number correlate the the distance away from the turn the alert will fire, larger distances should be used for faster paced activities to ensure the alert is triggered before we reach the turn.  
+Set to -1 to disable turn alerts.
 
 ### Off Track Alerts Max Report Interval
 
@@ -558,6 +568,19 @@ The colour to show in the background of errored tiles.
 ### Include Debug Page In On Screen Ui
 
 Include the debug page when navigating between pages in the on screen ui.
+
+### Draw Hit Boxes
+
+Show the hit-boxes for onscreen ui touches.
+
+### Show Turn Points
+
+Draws a circle around all of the turns that are in a route. The circle corresponds to [Turn Alert Distance (m)](#turn-alerts-distance-m).
+
+### Show Turn Point Text Under Index
+
+Display information about the turns on the route (angle of turn, index of tun in coordinates), only for the first 'Show Turn Point Text Under Index' turns on the route.   
+
 
 ---
 

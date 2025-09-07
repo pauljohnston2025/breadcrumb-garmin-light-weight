@@ -155,7 +155,7 @@ class FloatPicker extends NumberPicker {
 class IntPicker extends NumberPicker {
     var defaultVal as Number;
     function initialize(defaultVal as Number) {
-        NumberPicker.initialize("0123456789", 10);
+        NumberPicker.initialize("-0123456789", 10);
         me.defaultVal = defaultVal;
     }
 

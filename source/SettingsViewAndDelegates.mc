@@ -290,6 +290,11 @@ class SettingsMain extends Rez.Menus.SettingsMain {
             settings.centerUserOffsetY.format("%.2f")
         );
         safeSetToggle(me, :settingsMainDisplayLatLong, settings.displayLatLong);
+        safeSetSubLabel(
+            me,
+            :settingsMainMaxTrackPoints,
+            settings.maxTrackPoints.toString()
+        );
     }
 }
 
@@ -593,6 +598,11 @@ class SettingsAlerts extends Rez.Menus.SettingsAlerts {
             :settingsAlertsOffTrackAlertsMaxReportIntervalS,
             settings.offTrackAlertsMaxReportIntervalS.toString()
         );
+        safeSetSubLabel(
+            me,
+            :settingsAlertsDirectionDistanceM,
+            settings.directionDistanceM.toString()
+        );
         var alertTypeString = "";
         switch (settings.alertType) {
             case ALERT_TYPE_TOAST:
@@ -672,6 +682,13 @@ class SettingsDebug extends Rez.Menus.SettingsDebug {
             me,
             :settingsDebugIncludeDebugPageInOnScreenUi,
             settings.includeDebugPageInOnScreenUi
+        );
+        safeSetToggle(me, :settingsDebugDrawHitBoxes, settings.drawHitBoxes);
+        safeSetToggle(me, :settingsDebugShowDirectionPoints, settings.showDirectionPoints);
+        safeSetSubLabel(
+            me,
+            :settingsDebugShowDirectionPointTextUnderIndex,
+            settings.showDirectionPointTextUnderIndex.toString()
         );
     }
 }
@@ -873,6 +890,14 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
         } else if (itemId == :settingsMainDisplayLatLong) {
             settings.toggleDisplayLatLong();
             view.rerender();
+        }  else if (itemId == :settingsMainMaxTrackPoints) {
+            startPicker(
+                new SettingsNumberPicker(
+                    settings.method(:setMaxTrackPoints),
+                    settings.maxTrackPoints
+                ),
+                view
+            );
         } else if (itemId == :settingsMainZoomAtPace) {
             var view = new $.SettingsZoomAtPace();
             WatchUi.pushView(view, new $.SettingsZoomAtPaceDelegate(view), WatchUi.SLIDE_IMMEDIATE);
@@ -1815,6 +1840,14 @@ class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
                 ),
                 view
             );
+        } else if (itemId == :settingsAlertsDirectionDistanceM) {
+            startPicker(
+                new SettingsNumberPicker(
+                    settings.method(:setDirectionDistanceM),
+                    settings.directionDistanceM
+                ),
+                view
+            );
         } else if (itemId == :settingsAlertsOffTrackAlertsMaxReportIntervalS) {
             startPicker(
                 new SettingsNumberPicker(
@@ -2015,6 +2048,20 @@ class SettingsDebugDelegate extends WatchUi.Menu2InputDelegate {
         } else if (itemId == :settingsDebugIncludeDebugPageInOnScreenUi) {
             settings.toggleIncludeDebugPageInOnScreenUi();
             view.rerender();
+        } else if (itemId == :settingsDebugDrawHitBoxes) {
+            settings.toggleDrawHitBoxes();
+            view.rerender();
+        } else if (itemId == :settingsDebugShowDirectionPoints) {
+            settings.toggleShowDirectionPoints();
+            view.rerender();
+        } else if (itemId == :settingsDebugShowDirectionPointTextUnderIndex) {
+            startPicker(
+                new SettingsNumberPicker(
+                    settings.method(:setShowDirectionPointTextUnderIndex),
+                    settings.showDirectionPointTextUnderIndex
+                ),
+                view
+            );
         }
     }
 }
