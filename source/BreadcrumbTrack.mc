@@ -103,7 +103,7 @@ class BreadcrumbTrack {
         // distanceTotal  // we can't reverse the track, (the only one tracking distance total)
 
         coordinates.reversePoints();
-        directions.reversePoints();
+        directions.reversePoints(coordinates.pointSize());
         lastDirectionIndex = -1;
         lastClosePointIndex = null;
         lastClosePoint = null; // we want to recalculate off track, since the cheveron direction will change
@@ -125,7 +125,7 @@ class BreadcrumbTrack {
         distanceTotal = distanceTotal * scaleFactor;
         boundingBoxCenter.rescaleInPlace(scaleFactor);
         coordinates.rescale(scaleFactor);
-        directions.rescale(scaleFactor);
+        // directions.rescale(scaleFactor); no need to rescale they are just an angle and index into coordinates
         if (lastClosePoint != null) {
             lastClosePoint.rescaleInPlace(scaleFactor);
         }
@@ -135,7 +135,7 @@ class BreadcrumbTrack {
 
     function handleRouteV2(
         routeData as Array<Float>,
-        directions as Array<Float>,
+        directions as Array<Number>,
         cachedValues as CachedValues
     ) as Boolean {
         // trust the app completely
@@ -266,7 +266,7 @@ class BreadcrumbTrack {
             );
             track.coordinates._internalArrayBuffer = coords as Array<Float>;
             track.coordinates._size = coordsSize as Number;
-            track.directions._internalArrayBuffer = directions as Array<Float>;
+            track.directions._internalArrayBuffer = directions as Array<Number>;
             track.distanceTotal = distanceTotal as Float;
             track.elevationMin = elevationMin as Float;
             track.elevationMax = elevationMax as Float;
@@ -511,114 +511,51 @@ class BreadcrumbTrack {
     function checkDirections(
         checkPoint as RectangularPoint,
         distanceCheck as Float
-    ) as [Float, Float]? {
+    ) as [Number, Float]? {
         var directionsRaw = directions._internalArrayBuffer; // raw dog access means we can do the calcs much faster
+        var coordinatesRaw = coordinates._internalArrayBuffer; // raw dog access means we can do the calcs much faster
         // longer routes with more points allow more look ahead (up to some percentage of the route)
-        var allowedCoordinatePerimiter = maxN(5, (coordinates.pointSize() / 20).toNumber());
+        var allowedCoordinatePerimeter = maxN(5, (coordinates.pointSize() / 20).toNumber());
         var oldLastDirectionIndex = lastDirectionIndex;
         var oldLastClosePointIndex = lastClosePointIndex;
-        if (oldLastClosePointIndex != null) {
-            var lastCoordonatesIndexF = oldLastClosePointIndex.toFloat();
-            // we know where we are on the track, only look at directions that are ahead of here
-            // this allows us to revisit the start of the track, or when we return to the track after being off track we can resume looking for directions
-            var stillNearTheLastDirectionPoint = false;
-            var startAt = 0;
-            if (oldLastDirectionIndex >= 0 && oldLastDirectionIndex < directions.pointSize()) {
-                startAt = oldLastDirectionIndex;
-                var oldLastDirectionIndexStart = oldLastDirectionIndex * DIRECTION_ARRAY_POINT_SIZE;
-                var oldLastDirectionPointDistance = distance(
-                    directionsRaw[oldLastDirectionIndexStart],
-                    directionsRaw[oldLastDirectionIndexStart + 1],
-                    checkPoint.x,
-                    checkPoint.y
-                );
-                stillNearTheLastDirectionPoint = oldLastDirectionPointDistance < distanceCheck;
-                var lastDirectionCoordinateIndexF = directionsRaw[oldLastDirectionIndexStart + 3];
-
-                var indexDifference = lastDirectionCoordinateIndexF - oldLastClosePointIndex;
-                // this allows us to go back to the start of the track, and get alerts again for the same directions
-                // it also allows us to be moving between 2 points in the routescoordinates, and the directions should never go backwards
-                if (
-                    (indexDifference > 0f && indexDifference < 1f) || // we are between 2 points, use the latest direction point as the coordinates index
-                    // we are still within distance to the direction point, use it so we do not trigger the alert again
-                    stillNearTheLastDirectionPoint
-                ) {
-                    lastCoordonatesIndexF = lastDirectionCoordinateIndexF;
-                }
-            }
-
-            // This alorithm becomes longer and longer as the route goes on, as we check all possible directions until we are too far in the future
-            // we should probably only check from a few coordinates in the past, but we have no way of knowing coordinate index to direction index
-            // eg. The first direction could be half way through the coordinate list
-            // direction arrays are meant to be fairly small, so not a huge issue for now, and it does fast forward so it's only a few ops per direction
-            // we may need to store a bucketed list or something if this leads to watchdog errors
-            var stopAt = directionsRaw.size();
-            for (
-                var i = startAt * DIRECTION_ARRAY_POINT_SIZE;
-                i < stopAt;
-                i += DIRECTION_ARRAY_POINT_SIZE
-            ) {
-                var coordinatesIndexF = directionsRaw[i + 3];
-                if (coordinatesIndexF <= lastCoordonatesIndexF) {
-                    // skip any of the directions in the past
-                    continue;
-                }
-
-                // only allow the directions around our location to be checked
-                // we do not want a track that loops back through the same intersection triggerring the direction for the end of the route if we are only part way through
-                if (coordinatesIndexF - lastCoordonatesIndexF > allowedCoordinatePerimiter) {
-                    return null;
-                }
-
-                var distancePx = distance(
-                    directionsRaw[i],
-                    directionsRaw[i + 1],
-                    checkPoint.x,
-                    checkPoint.y
-                );
-                if (distancePx < distanceCheck) {
-                    lastDirectionIndex = i / DIRECTION_ARRAY_POINT_SIZE;
-                    return [directionsRaw[i + 2], distancePx];
-                }
-            }
-
-            return null;
-        }
-        // we do not know where we are on the track, either off track alerts are not enabled, or we are off track
-        // in this case, we want to search all directions, since we could rejoin the track at any point
-
-        var lastCoordonatesIndexF = -1f;
         var stillNearTheLastDirectionPoint = false;
         var startAt = 0;
+        var oldCoordinatesIndex = -1;
         if (oldLastDirectionIndex >= 0 && oldLastDirectionIndex < directions.pointSize()) {
-            var oldLastDirectionIndexStart = oldLastDirectionIndex * DIRECTION_ARRAY_POINT_SIZE;
             startAt = oldLastDirectionIndex;
+            var oldLastDirectionIndexStart = oldLastDirectionIndex;
+            var oldCoordinatesIndexTemp = directionsRaw[oldLastDirectionIndexStart] & 0xffff;
             var oldLastDirectionPointDistance = distance(
-                directionsRaw[oldLastDirectionIndexStart],
-                directionsRaw[oldLastDirectionIndexStart + 1],
+                coordinatesRaw[oldCoordinatesIndexTemp * ARRAY_POINT_SIZE],
+                coordinatesRaw[oldCoordinatesIndexTemp * ARRAY_POINT_SIZE + 1],
                 checkPoint.x,
                 checkPoint.y
             );
             stillNearTheLastDirectionPoint = oldLastDirectionPointDistance < distanceCheck;
-            lastCoordonatesIndexF = directionsRaw[oldLastDirectionIndexStart + 3];
+            if (stillNearTheLastDirectionPoint) {
+                // only use it if we are still close, otherwise we will get locked to this coordinate when we move forwards if we do not know our current position on the track
+                oldCoordinatesIndex = oldCoordinatesIndexTemp;
+            }
+        }
+        if (oldLastClosePointIndex != null && oldLastClosePointIndex > oldCoordinatesIndex) {
+            // we are further along the track already, look for directions from here
+            oldCoordinatesIndex = oldLastClosePointIndex;
         }
 
+        // we do not know where we are on the track, either off track alerts are not enabled, or we are off track
+        // in this case, we want to search all directions, since we could rejoin the track at any point
         var stopAt = directionsRaw.size();
-        for (
-            var i = startAt * DIRECTION_ARRAY_POINT_SIZE;
-            i < stopAt;
-            i += DIRECTION_ARRAY_POINT_SIZE
-        ) {
+        for (var i = startAt; i < stopAt; ++i) {
             // any points ahead of us are valid, since we have no idea where we are on the route, but don't allow points to go backwards
-            var coordinatesIndexF = directionsRaw[i + 3];
-            if (coordinatesIndexF <= lastCoordonatesIndexF) {
+            var coordinatesIndex = directionsRaw[i] & 0xffff;
+            if (coordinatesIndex <= oldCoordinatesIndex) {
                 // skip any of the directions in the past, this should not really ever happen since we start at the index, but protect ourselves from ourselves
                 continue;
             }
 
             if (
-                stillNearTheLastDirectionPoint &&
-                coordinatesIndexF - lastCoordonatesIndexF > allowedCoordinatePerimiter
+                oldCoordinatesIndex > 0 &&
+                coordinatesIndex - oldCoordinatesIndex > allowedCoordinatePerimeter
             ) {
                 // prevent any overlap of points further on in the route that go through the same intersection
                 // we probably need to include a bit of padding here, since the overlap could be slightly miss-aligned
@@ -630,14 +567,16 @@ class BreadcrumbTrack {
             }
 
             var distancePx = distance(
-                directionsRaw[i],
-                directionsRaw[i + 1],
+                coordinatesRaw[coordinatesIndex * ARRAY_POINT_SIZE],
+                coordinatesRaw[coordinatesIndex * ARRAY_POINT_SIZE + 1],
                 checkPoint.x,
                 checkPoint.y
             );
             if (distancePx < distanceCheck) {
-                lastDirectionIndex = i / DIRECTION_ARRAY_POINT_SIZE;
-                return [directionsRaw[i + 2], distancePx];
+                lastDirectionIndex = i;
+                // inline for perf, no function call overhead but unreadable :(
+                var angle = ((directionsRaw[i] & 0xffff0000) >> 16) - 180;
+                return [angle, distancePx];
             }
         }
 

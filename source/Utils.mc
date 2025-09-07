@@ -48,6 +48,14 @@ function abs(val as Float) as Float {
     return val;
 }
 
+function absN(val as Number) as Number {
+    if (val < 0) {
+        return -val;
+    }
+
+    return val;
+}
+
 // from https://forums.garmin.com/developer/connect-iq/f/discussion/338071/testing-for-nan/1777041#1777041
 function isnan(a as Float) as Boolean {
     return a != a;

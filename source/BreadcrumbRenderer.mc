@@ -448,24 +448,26 @@ class BreadcrumbRenderer {
         dc.setPenWidth(2);
 
         var size = breadcrumb.directions.size();
-        var coordinatesRaw = breadcrumb.directions._internalArrayBuffer;
+        var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
+        var directionsRaw = breadcrumb.directions._internalArrayBuffer;
 
-        for (var i = 0; i < size; i += DIRECTION_ARRAY_POINT_SIZE) {
-            var pixelX = coordinatesRaw[i];
-            var pixelY = coordinatesRaw[i + 1];
+        for (var i = 0; i < size; ++i) {
+            var directionRaw = directionsRaw[i];
+            var coordsIndex = directionRaw & 0xFFFF;
+            var pixelX = coordinatesRaw[coordsIndex * ARRAY_POINT_SIZE];
+            var pixelY = coordinatesRaw[coordsIndex * ARRAY_POINT_SIZE + 1];
             var x = rotateAroundScreenXOffsetFactoredIn + (pixelX - centerPosition.x);
             var y = rotateAroundScreenYOffsetFactoredIn - (pixelY - centerPosition.y);
 
             dc.drawCircle(x, y, distance);
             // if the route comes back through the same intersection directions often overlap each other so this can be confusing
-            if (i / DIRECTION_ARRAY_POINT_SIZE < settings.showDirectionPointTextUnderIndex) {
-                var index = coordinatesRaw[i + 3];
-                var directionDeg = coordinatesRaw[i + 2];
+            if (i < settings.showDirectionPointTextUnderIndex) {
+                var angle = ((directionRaw & 0xffff0000) >> 16) - 180;
                 dc.drawText(
                     x,
                     y,
                     Graphics.FONT_XTINY,
-                    "" + index.format("%.1f") + "\n" + directionDeg.format("%.1f"),
+                    "" + coordsIndex + "\n" + angle,
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
                 );
             }
@@ -883,12 +885,15 @@ class BreadcrumbRenderer {
         dc.setPenWidth(2);
 
         var size = breadcrumb.directions.size();
-        var coordinatesRaw = breadcrumb.directions._internalArrayBuffer;
+        var coordinatesRaw = breadcrumb.coordinates._internalArrayBuffer;
+        var directionsRaw = breadcrumb.directions._internalArrayBuffer;
 
-        for (var i = 0; i < size; i += DIRECTION_ARRAY_POINT_SIZE) {
-            var nextX = coordinatesRaw[i];
-            var nextY = coordinatesRaw[i + 1];
-
+        for (var i = 0; i < size; ++i) {
+            var directionRaw = directionsRaw[i];
+            var coordsIndex = directionRaw & 0xFFFF;
+            var nextX = coordinatesRaw[coordsIndex * ARRAY_POINT_SIZE];
+            var nextY = coordinatesRaw[coordsIndex * ARRAY_POINT_SIZE + 1];
+            
             var nextXScaledAtCenter = nextX - centerPosition.x;
             var nextYScaledAtCenter = nextY - centerPosition.y;
 
@@ -902,14 +907,13 @@ class BreadcrumbRenderer {
 
             dc.drawCircle(x, y, distance);
             // if the route comes back through the same intersection directions often overlap each other so this can be confusing
-            if (i / DIRECTION_ARRAY_POINT_SIZE < settings.showDirectionPointTextUnderIndex) {
-                var index = coordinatesRaw[i + 3];
-                var directionDeg = coordinatesRaw[i + 2];
+            if (i < settings.showDirectionPointTextUnderIndex) {
+                var angle = ((directionRaw & 0xffff0000) >> 16) - 180;
                 dc.drawText(
                     x,
                     y,
                     Graphics.FONT_XTINY,
-                    "" + index.format("%.1f") + "\n" + directionDeg.format("%.1f"),
+                    "" + coordsIndex + "\n" + angle,
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
                 );
             }

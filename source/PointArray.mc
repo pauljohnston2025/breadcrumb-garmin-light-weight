@@ -6,7 +6,6 @@ import Toybox.Application;
 import Toybox.System;
 
 const ARRAY_POINT_SIZE = 3;
-const DIRECTION_ARRAY_POINT_SIZE = 4;
 
 // cached values
 // we should probbaly do this per latitude to get an estimate and just use a lookup table
@@ -303,65 +302,35 @@ class PointArray {
 // a flat array for memory perf Array<Float> where Array[0] = X1 Array[1] = Y1 etc. similar to the coordinates array
 // [xLatRect, YLatRect, angleToTurnDegrees (-180 to 180), coordinatesIndex]
 class DirectionPointArray {
-    // the array type has an extra byte overhead per item stored (5 bytes per item)
-    // so we pack this much tighter by using a bytearray, but the access becomes much more complex
-    // bytearray.decodeNumber(NUMBER_FORMAT_FLOAT)
-    // bytearray.decodeNumber(NUMBER_FORMAT_SINT8) // we could store the angle as an int8 -90 to 90 representing -180 to 180 (2 deg per value)
-    // I think all the bytearray.decodeNumber could trip the watchdog
-    // for 95 pointSize() items in the array it is
-    // - 1263 bytes when using ByteArray (just 28 extra bytes overhead of the raw bytes needed)
-    // - 1935 bytes when using array<float> (5 bytes per item) note this does not go down it we get creative and use <float, float, char, float> the 'char' type still takes up 5 actual bytes
-    // this allows 3 large routes to fit into memory, but as suspected the overhead triggers the watchdog
-    // turns out I forgot to build in release mode, and debug build was causing memory limits and watchdog errors
-    // so all the new code added is likely causing the OOM, and release build seems to work ok with 3 large routes if maps are disabled (to limit OOM)
-    // and even better, I had a large (300 tiles) offline storage cache active at the time. 3 large roues are working fine with directions and offline storage cache set to 10 tiles
-    var _internalArrayBuffer as Array<Float> = new [0] as Array<Float>;
+    // we pack the turn angle direction and the index into a single number to save memory space, index is the only variabl frequently access, so its stored in the lower 16 bits
+    // ie. 
+    // index = _internalArrayBuffer[i] & 0x0000FFFF
+    // angleDeg (-180 to 180) = ((_internalArrayBuffer[i] & 0xFFFF0000) >> 16) - 180
+    var _internalArrayBuffer as Array<Number> = new [0] as Array<Number>;
 
-    function rescale(scaleFactor as Float) as Void {
-        // unsafe to call with nulls or 0, checks should be made in parent
-        // size is guaranteed to be a multiple of ARRAY_POINT_SIZE
-        for (var i = 0; i < size(); i += DIRECTION_ARRAY_POINT_SIZE) {
-            _internalArrayBuffer[i] = _internalArrayBuffer[i] * scaleFactor;
-            _internalArrayBuffer[i + 1] = _internalArrayBuffer[i + 1] * scaleFactor;
-        }
-    }
-
-    function reversePoints() as Void {
+    function reversePoints(coordinatesPointSize as Number) as Void {
         var pointsCount = pointSize();
         if (pointsCount <= 1) {
             return;
         }
 
         for (
-            var leftIndex = -1, rightIndex = size() - DIRECTION_ARRAY_POINT_SIZE;
+            var leftIndex = -1, rightIndex = size() - 1;
             leftIndex < rightIndex;
-            rightIndex -= DIRECTION_ARRAY_POINT_SIZE /*left increment done in loop*/
+            --rightIndex /*left increment done in loop*/
         ) {
             // hard code instead of for loop to hopefully optimise better
             var rightIndex0 = rightIndex;
-            var rightIndex1 = rightIndex + 1;
-            var rightIndex2 = rightIndex + 2;
-            var rightIndex3 = rightIndex + 3;
             ++leftIndex;
-            var temp = _internalArrayBuffer[leftIndex];
-            _internalArrayBuffer[leftIndex] = _internalArrayBuffer[rightIndex0];
-            _internalArrayBuffer[rightIndex0] = temp;
-
-            ++leftIndex;
-            temp = _internalArrayBuffer[leftIndex];
-            _internalArrayBuffer[leftIndex] = _internalArrayBuffer[rightIndex1];
-            _internalArrayBuffer[rightIndex1] = temp;
-
-            ++leftIndex;
-            temp = _internalArrayBuffer[leftIndex];
-            // this is the direction we need to turn, it also needs to be reversed
-            _internalArrayBuffer[leftIndex] = -_internalArrayBuffer[rightIndex2];
-            _internalArrayBuffer[rightIndex2] = -temp;
-
-            ++leftIndex;
-            temp = _internalArrayBuffer[leftIndex];
-            _internalArrayBuffer[leftIndex] = _internalArrayBuffer[rightIndex3];
-            _internalArrayBuffer[rightIndex3] = temp;
+            // the angle must be flipped, and the index now starts from the opposite end of the array
+            var left = _internalArrayBuffer[leftIndex];
+            var leftCoordIndex = left & 0x0000FFFF;
+            var leftAngle = (left & 0xFFFF0000) >> 16 - 180;
+            var right = _internalArrayBuffer[rightIndex0];
+            var rightCoordIndex = right & 0x0000FFFF;
+            var rightAngle = (right & 0xFFFF0000) >> 16 - 180;
+            _internalArrayBuffer[leftIndex] = ((-rightAngle + 180) << 16) | (coordinatesPointSize - 1 - rightCoordIndex);
+            _internalArrayBuffer[rightIndex0] = ((-leftAngle + 180) << 16) | (coordinatesPointSize - 1 - leftCoordIndex);
         }
 
         logD("reverseDirectionPoints occurred");
@@ -374,6 +343,6 @@ class DirectionPointArray {
 
     // the number of points
     function pointSize() as Number {
-        return size() / DIRECTION_ARRAY_POINT_SIZE;
+        return size();
     }
 }

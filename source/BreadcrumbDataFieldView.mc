@@ -28,10 +28,10 @@ class OffTrackAlert extends WatchUi.DataFieldAlert {
 }
 
 class DirectionAlert extends WatchUi.DataFieldAlert {
-    var direction as Float; // -180 to +180 deg
+    var direction as Number; // -180 to +180 deg
     var distanceM as Float;
 
-    function initialize(direction as Float, distanceM as Float) {
+    function initialize(direction as Number, distanceM as Float) {
         WatchUi.DataFieldAlert.initialize();
         self.direction = direction;
         self.distanceM = distanceM;
@@ -183,7 +183,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
     }
 
-    function showMyDirectionAlert(direction as Float, distancePx as Float) as Void {
+    function showMyDirectionAlert(
+        direction as Number /*-180 to 180*/,
+        distancePx as Float
+    ) as Void {
         var distanceM = distancePx;
         if (_cachedValues.currentScale != 0f) {
             distanceM = distancePx / _cachedValues.currentScale;
@@ -202,14 +205,14 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     " Turn In " +
                     distanceM.format("%.1f") +
                     "m " +
-                    abs(direction).format("%.1f") +
+                    absN(direction).format("%.1f") +
                     "°";
                 // var text = dirText + " Turn In " + distanceM.format("%.1f") + "m";
                 WatchUi.showToast(text, {});
             }
 
             if (Attention has :backlight) {
-                // turn the screen on so we can see the alert, it does not resond to us gesturing to see the alert (think gesture controls are suppressed during vibration)
+                // turn the screen on so we can see the alert, it does not respond to us gesturing to see the alert (think gesture controls are suppressed during vibration)
                 Attention.backlight(true);
             }
 
@@ -287,7 +290,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 return;
             }
             // this is here due to stack overflow bug when requests trigger the next request
-            // only try 3 times, do not want to schedule heps if they complete immediately, could hit watchdog
+            // only try 3 times, do not want to schedule heaps if they complete immediately, could hit watchdog
+            // this should be minimal work, it only starts the web request, it should never complete straight away with data
             for (var i = 0; i < 3; ++i) {
                 if (!_breadcrumbContext.webRequestHandler.startNextIfWeCan()) {
                     break;
@@ -948,9 +952,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 route.lastDirectionIndex < route.directions.pointSize()
             ) {
                 dirCoordIndexStr =
-                    route.directions._internalArrayBuffer[
-                        route.lastDirectionIndex * DIRECTION_ARRAY_POINT_SIZE + 3
-                    ].format("%.1f");
+                    route.directions._internalArrayBuffer[route.lastDirectionIndex] & 0xffff;
             }
             directionIndexesStr += +route.lastDirectionIndex + "(" + dirCoordIndexStr + ")";
             coordsIndexesStr += route.lastClosePointIndex;

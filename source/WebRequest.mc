@@ -262,9 +262,9 @@ class WebRequestHandler {
         // kept getting errors with
         // Error: System Error
         // Details: failed inside handle_image_callback
-        // only happened on real rdevice when using makeImageRequest, and having tiles put into storage.
+        // only happened on real device when using makeImageRequest, and having tiles put into storage.
         // Not sure if its an issue with storage thats propagating to the image handler
-        // (eg. maye its larger than 32Kb and that makes a system error rather than a storage exception)
+        // (eg. maybe its larger than 32Kb and that makes a system error rather than a storage exception)
         // trying to reduce parallel requests to 1 at a time to see if that helps
         if (_outstandingCount < 3) {
             // we could get real crazy and start some tile requests through makeWebRequest
@@ -285,7 +285,7 @@ class WebRequestHandler {
     function start() as Void {
         ++_outstandingCount;
         if (pendingTransmit.size() != 0) {
-            // prioritize the  transmits ofver tile/web loads
+            // prioritize the  transmits over tile/web loads
             var transmitEntry = pendingTransmit[0];
             pendingTransmit.remove(transmitEntry);
             Communications.transmit(
