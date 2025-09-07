@@ -218,8 +218,9 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
             } else if (type == PROTOCOL_COMPANION_APP_TILE_SERVER_CHANGED) {
                 // use to just be PROTOCOL_DROP_TILE_CACHE
                 logT("got tile cache changed req: " + rawData);
-                if (_breadcrumbContext.settings.mapChoice != 1) {
-                    logT("not using the companion app tile server as map choice");
+                // they could be using a custom tile server that points to the companion app and has a custom max/min tile layer, we need to clear the cache in this case but not update the tile server settings
+                if (!_breadcrumbContext.settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
+                    logT("not using the companion app tile server");
                     return;
                 }
                 // this is not perfect, some web requests could be about to complete and add a tile to the cache
@@ -230,8 +231,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 _breadcrumbContext.settings.clearPendingWebRequests();
 
                 if (rawData.size() >= 2) {
-                    // also sets the scale, since user has providedd how many meters they want to see
-                    // note this ignores the 'restrict to tile layers' functionality
+                    // also sets the max/min tile layers
                     _breadcrumbContext.settings.companionChangedToMaxMin(
                         rawData[0] as Number,
                         rawData[1] as Number

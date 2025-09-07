@@ -105,8 +105,16 @@ class BreadcrumbTrack {
         coordinates.reversePoints();
         directions.reversePoints();
         lastDirectionIndex = -1;
+        lastClosePointIndex = null;
         lastClosePoint = null; // we want to recalculate off track, since the cheveron direction will change
         writeToDisk(ROUTE_KEY); // write ourselves back to storage in reverse, so next time we load (on app restart) it is correct
+    }
+
+    function settingsChanged() as Void {
+        // we might have enabled/disabled searching for directions or offtrack
+        lastDirectionIndex = -1;
+        lastClosePoint = null;
+        lastClosePointIndex = null;
     }
 
     function rescale(scaleFactor as Float) as Void {

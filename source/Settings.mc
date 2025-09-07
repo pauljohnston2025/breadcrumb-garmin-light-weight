@@ -619,6 +619,7 @@ class Settings {
     function setValueSideEffect() as Void {
         updateCachedValues();
         updateViewSettings();
+        updateRouteSettings();
     }
 
     function setZoomAtPaceMode(_zoomAtPaceMode as Number) as Void {
@@ -1694,6 +1695,19 @@ class Settings {
     function updateViewSettings() as Void {
         getApp()._view.onSettingsChanged();
     }
+    
+    function updateRouteSettings() as Void {
+        var contextRoutes = getApp()._breadcrumbContext.routes;
+        for (var i = 0; i < contextRoutes.size(); ++i) {
+            var route = contextRoutes[i];
+            // we do not care if its curently disabled, nuke the data anyway
+            // if (!routeEnabled(route.storageIndex)) {
+            //     continue;
+            // }
+            // todo only call this if setting sthat effect it changed, taking nuclear approach for now
+            route.settingsChanged();
+        }
+    }
 
     function updateCachedValues() as Void {
         getApp()._breadcrumbContext.cachedValues.recalculateAll();
@@ -2446,8 +2460,7 @@ class Settings {
             updateMapChoiceChange(mapChoice);
         }
 
-        updateCachedValues();
-        updateViewSettings();
+        setValueSideEffect();
     }
 }
 
