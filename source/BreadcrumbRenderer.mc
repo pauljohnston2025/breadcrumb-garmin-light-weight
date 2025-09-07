@@ -453,7 +453,7 @@ class BreadcrumbRenderer {
 
         for (var i = 0; i < size; ++i) {
             var directionRaw = directionsRaw[i];
-            var coordsIndex = directionRaw & 0xFFFF;
+            var coordsIndex = directionRaw & 0xffff;
             var pixelX = coordinatesRaw[coordsIndex * ARRAY_POINT_SIZE];
             var pixelY = coordinatesRaw[coordsIndex * ARRAY_POINT_SIZE + 1];
             var x = rotateAroundScreenXOffsetFactoredIn + (pixelX - centerPosition.x);
@@ -876,8 +876,8 @@ class BreadcrumbRenderer {
         var distance = _cachedValues.currentScale * settings.directionDistanceM; // local lookup faster
 
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
-            // its very cofusing seeing the routes disappear when scrolling
-            // and it makes sense to want to sroll around the route too
+            // its very confusing seeing the routes disappear when scrolling
+            // and it makes sense to want to scroll around the route too
             return;
         }
 
@@ -890,10 +890,10 @@ class BreadcrumbRenderer {
 
         for (var i = 0; i < size; ++i) {
             var directionRaw = directionsRaw[i];
-            var coordsIndex = directionRaw & 0xFFFF;
+            var coordsIndex = directionRaw & 0xffff;
             var nextX = coordinatesRaw[coordsIndex * ARRAY_POINT_SIZE];
             var nextY = coordinatesRaw[coordsIndex * ARRAY_POINT_SIZE + 1];
-            
+
             var nextXScaledAtCenter = nextX - centerPosition.x;
             var nextYScaledAtCenter = nextY - centerPosition.y;
 

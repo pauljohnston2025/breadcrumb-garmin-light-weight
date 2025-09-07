@@ -465,6 +465,8 @@ Enabled turn-by-turn navigation (requires directions to be sent from the compani
 The number correlate the the distance away from the turn the alert will fire, larger distances should be used for faster paced activities to ensure the alert is triggered before we reach the turn.  
 Set to -1 to disable turn alerts.
 
+Note: If your are off track the direction shown in the turn alert may be incorrect, this is because the direction is precomputed assuming you are on track, this is for performance reasons to avoid tripping the watchdog.
+
 Ensure to enable [Turn Point Limit](https://github.com/pauljohnston2025/breadcrumb-mobile/blob/master/manual.md#routes) in the companion app in order to send the directions to the watch to enable turn-by-turn navigation. 
 
 ### Off Track Alerts Max Report Interval

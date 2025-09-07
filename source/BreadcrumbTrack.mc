@@ -112,6 +112,8 @@ class BreadcrumbTrack {
 
     function settingsChanged() as Void {
         // we might have enabled/disabled searching for directions or offtrack
+        // This is mainly because the turn by turn direction alerts need to know where we are on track, or fall back to using the directions themselves.
+        // If we turn off 'off track' alerts calculation the turn by turn directions will think we are always at that location and will not progress.
         lastDirectionIndex = -1;
         lastClosePoint = null;
         lastClosePointIndex = null;
@@ -576,6 +578,10 @@ class BreadcrumbTrack {
                 lastDirectionIndex = i;
                 // inline for perf, no function call overhead but unreadable :(
                 var angle = ((directionsRaw[i] & 0xffff0000) >> 16) - 180;
+                // by the time we get here we have parsed all the off track calculations and direction checks
+                // if this takes some time (seconds) the distance we get could be off, as the user has traveled closer to the intersection
+                // consider getting the raw location and calculating the distance to it right this second.
+                // var info = getActivityInfo();
                 return [angle, distancePx];
             }
         }

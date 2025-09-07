@@ -39,21 +39,22 @@ class DirectionAlert extends WatchUi.DataFieldAlert {
 
     // Overrides the onUpdate function to draw a graphical turn indicator
     function onUpdate(dc as Dc) as Void {
-        // this is very pretty, but runs out of memory when trying to create it on the sim :(
-        // however on  real physical device it seems to work fine
+        // This is very pretty, but runs out of memory when trying to create it on the sim :(
+        // However on a real physical device it seems to work fine (though maybe thats where my random crashes are coming from)
 
         // --- 1. Setup Drawing Variables ---
         // Get the center of the screen
+        var arrowVOffset = 30;
         var centerX = dc.getWidth() / 2;
-        var centerY = dc.getHeight() / 2;
+        var centerY = dc.getHeight() / 2 - arrowVOffset;
 
         // Define the length of the lines for the turn indicator
-        var lineLength = 30;
+        var lineLength = (dc.getHeight() * 0.75) / 2;
 
         // Set the color for the drawing
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
         // Set the line width to make it more visible
-        dc.setPenWidth(3);
+        dc.setPenWidth(12);
 
         // --- 2. Draw the "Current Path" Line ---
         // This is a straight vertical line leading to the turn point (the center)
@@ -73,8 +74,8 @@ class DirectionAlert extends WatchUi.DataFieldAlert {
 
         // --- 4. Draw an Arrowhead on the Turn Line ---
         // This makes the direction of the turn clearer
-        var arrowLength = 10; // Length of the arrowhead barbs
-        var arrowAngle = Math.toRadians(30); // Angle of the barbs relative to the line
+        var arrowLength = 50; // Length of the arrowhead barbs
+        var arrowAngle = Math.toRadians(40); // Angle of the barbs relative to the line
 
         // Calculate the coordinates for the two barbs of the arrowhead
         var arrowX1 = endX - arrowLength * Math.sin(angleRad - arrowAngle);
@@ -192,25 +193,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             distanceM = distancePx / _cachedValues.currentScale;
         }
         try {
-            // logD("trying to trigger alert");
-            if (settings.alertType == ALERT_TYPE_ALERT) {
-                // allerts are really annoying bevcause users have to remember to enable them
-                // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
-                // this is why we default to toasts, the virration will still occur, and maybe should be a seperate setting?
-                showAlert(new DirectionAlert(direction, distanceM));
-            } else {
-                var dirText = direction >= 0 ? "Right" : "Left";
-                var text =
-                    dirText +
-                    " Turn In " +
-                    distanceM.format("%.1f") +
-                    "m " +
-                    absN(direction).format("%.1f") +
-                    "°";
-                // var text = dirText + " Turn In " + distanceM.format("%.1f") + "m";
-                WatchUi.showToast(text, {});
-            }
-
             if (Attention has :backlight) {
                 // turn the screen on so we can see the alert, it does not respond to us gesturing to see the alert (think gesture controls are suppressed during vibration)
                 Attention.backlight(true);
@@ -226,6 +208,21 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 ];
                 Attention.vibrate(vibeData);
             }
+
+            // alert comes after we start the vibrate in case it throws
+            // logD("trying to trigger alert");
+            if (settings.alertType == ALERT_TYPE_ALERT) {
+                // alerts are really annoying because users have to remember to enable them
+                // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
+                // this is why we default to toasts, the vibration will still occur, and maybe should be a separate setting?
+                showAlert(new DirectionAlert(direction, distanceM));
+            } else {
+                var dirText = direction >= 0 ? "Right" : "Left";
+                var text =
+                    dirText + " Turn In " + distanceM.format("%.1f") + "m " + absN(direction) + "°";
+                // var text = dirText + " Turn In " + distanceM.format("%.1f") + "m";
+                WatchUi.showToast(text, {});
+            }
         } catch (e) {
             logE("failed to show alert: " + e.getErrorMessage());
         }
@@ -235,16 +232,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         lastOffTrackAlertNotified = epoch; // if showAlert fails, we will still have vibrated and turned the screen on
 
         try {
-            // logD("trying to trigger alert");
-            if (settings.alertType == ALERT_TYPE_ALERT) {
-                // allerts are really annoying bevcause users have to remember to enable them
-                // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
-                // this is why we default to toasts, the virration will still occur, and maybe should be a seperate setting?
-                showAlert(new OffTrackAlert(text));
-            } else {
-                WatchUi.showToast(text, {});
-            }
-
             if (Attention has :backlight) {
                 // turn the screen on so we can see the alert, it does not resond to us gesturing to see the alert (think gesture controls are suppressed during vibration)
                 Attention.backlight(true);
@@ -259,6 +246,17 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     new Attention.VibeProfile(100, 500),
                 ];
                 Attention.vibrate(vibeData);
+            }
+
+            // alert comes after we start the vibrate in case it throws
+            // logD("trying to trigger alert");
+            if (settings.alertType == ALERT_TYPE_ALERT) {
+                // alerts are really annoying because users have to remember to enable them
+                // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
+                // this is why we default to toasts, the vibration will still occur, and maybe should be a separate setting?
+                showAlert(new OffTrackAlert(text));
+            } else {
+                WatchUi.showToast(text, {});
             }
         } catch (e) {
             logE("failed to show alert: " + e.getErrorMessage());
@@ -359,6 +357,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                     if (
                         settings.enableOffTrackAlerts ||
                         settings.drawLineToClosestPoint ||
+                        settings.drawLineToClosestTrack ||
                         settings.offTrackWrongDirection ||
                         settings.drawCheverons
                     ) {
