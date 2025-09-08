@@ -25,7 +25,6 @@
     <string id="uiColour">UI Colour</string>
     <string id="normalModeColour">Normal Mode Colour</string>
     <string id="displayRouteNamesTitle">Display Route Names</string>
-    <string id="enableRotationTitle">Enable Rotation</string>
     <string id="offTrackAlertsDistanceMTitle">Off Track Distance (m)</string>
     <string id="offTrackAlertsMaxReportIntervalSTitle">Max Report Interval (s)</string>
     <string id="offTrackCheckIntervalSTitle">Max Check Interval (s)</string>
@@ -47,9 +46,6 @@
     <string id="userColour">User Colour</string>
     <string id="maxPendingWebRequests">Max Pending Web Requests</string>
     <string id="scale">Scale (0 for auto)</string>
-    <string id="scaleLabel">Scale</string>
-    <!-- todo add promp based on scale and give relative numbers -->
-    <string id="scalePrompt">0.98 - 100m, 0.1 - 1km</string>
     <string id="metersAroundUser">Meters Around User</string>
     <string id="metersAroundUserPrompt">100</string>
     <string id="zoomAtPaceTitle">Zoom At Pace</string>
@@ -112,7 +108,6 @@
     <string id="cancelCacheDownload">Cancel Cache Download</string>
     <string id="clearCachedTiles">Clear Cached Tiles</string>
 
-    <string id="selectedRoute">Selected route</string>
     <string id="routesTitle">Routes</string>
     <string id="routesTitle2">Routes (read only)</string>
     <string id="routeId">Id</string>

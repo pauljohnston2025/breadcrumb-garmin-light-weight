@@ -6,24 +6,90 @@ import Toybox.Communications;
 import Toybox.Graphics;
 import Toybox.Attention;
 
-class OffTrackAlert extends WatchUi.DataFieldAlert {
-    var message as String;
+typedef Alert as interface {
+    function text() as String;
+    function onUpdate(dc as Dc) as Void;
+    function alert() as WatchUi.DataFieldAlert;
+};
 
-    function initialize(message as String) {
+class OffTrackAlert extends WatchUi.DataFieldAlert {
+    function initialize() {
         WatchUi.DataFieldAlert.initialize();
-        self.message = message;
     }
 
     function onUpdate(dc as Dc) as Void {
-        var halfHeight = dc.getHeight() / 2;
+        var halfWidth = dc.getWidth() * 0.5;
+        var offTrackIcon = WatchUi.loadResource(Rez.Drawables.OffTrackIcon) as WatchUi.BitmapResource;
+        dc.drawBitmap(0, 0, offTrackIcon);
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-            halfHeight,
-            halfHeight,
+            halfWidth,
+            40,
             Graphics.FONT_SYSTEM_MEDIUM,
-            message,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            text(),
+            Graphics.TEXT_JUSTIFY_CENTER
         );
+    }
+
+    function text() as String {
+        return "OFF TRACK";
+    }
+
+    function alert() as WatchUi.DataFieldAlert {
+        return me;
+    }
+}
+
+class WrongDirectionAlert extends WatchUi.DataFieldAlert {
+    function initialize() {
+        WatchUi.DataFieldAlert.initialize();
+    }
+
+    function onUpdate(dc as Dc) as Void {
+        // todo maybe save this as a bitmap to save space? are bitmaps more code-space efficient than the dc calls?
+
+        // --- 1. Setup Drawing Variables ---
+        var centerX = dc.getWidth() / 2;
+        var centerY = dc.getHeight() / 2;
+
+        // Define the dimensions of the sign. Make it large and prominent.
+        var rectWidth = dc.getWidth() * 0.75;
+        var rectHeight = dc.getHeight() / 2;
+        var rectX = centerX - rectWidth / 2;
+        var rectY = centerY - rectHeight / 2;
+        var radius = 10;
+
+        // --- 2. Draw the Red Background Rectangle ---
+        // Set the color to a vibrant red for immediate attention.
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(rectX, rectY, rectWidth, rectHeight, radius);
+
+        // --- 3. Draw the "WRONG WAY" Text ---
+        // Set the color to white for high contrast against the red background.
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        // white outline
+        dc.setPenWidth(4);
+        dc.drawRoundedRectangle(rectX, rectY, rectWidth, rectHeight, radius);
+
+        // To ensure the text fits well on a watch screen, we'll split it into two lines.
+        var text = "WRONG\nWAY";
+
+        // Draw the text centered both horizontally and vertically within the alert space.
+        dc.drawText(
+            centerX,
+            centerY,
+            Graphics.FONT_SYSTEM_LARGE, // Use a large font for readability
+            text,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER // Center align text
+        );
+    }
+
+    function text() as String {
+        return "WRONG DIRECTION";
+    }
+
+    function alert() as WatchUi.DataFieldAlert {
+        return me;
     }
 }
 
@@ -99,10 +165,20 @@ class DirectionAlert extends WatchUi.DataFieldAlert {
             Graphics.TEXT_JUSTIFY_CENTER
         );
     }
+
+    function text() as String {
+        var dirText = direction >= 0 ? "Right" : "Left";
+        return dirText + " Turn In " + distanceM.format("%.1f") + "m " + absN(direction) + "°";
+        // var text = dirText + " Turn In " + distanceM.format("%.1f") + "m";
+    }
+
+    function alert() as WatchUi.DataFieldAlert {
+        return me;
+    }
 }
 
 // note to get this to work on the simulator need to modify simulator.json and
-// add isTouchable this is already on edgo devices with touch, but not the
+// add isTouchable this is already on edge devices with touch, but not the
 // venu2s, even though I tested and it worked on the actual device
 // AppData\Roaming\Garmin\ConnectIQ\Devices\venu2s\simulator.json
 // "datafields": {
@@ -122,7 +198,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     var _lastFullRenderTime as Number = 0;
     var _lastFullRenderScale as Float = 0f;
     var FULL_RENDER_INTERVAL_S as Number = 5;
-    var imageAlert as WatchUi.DataFieldAlert? = null;
+    var imageAlert as Alert? = null;
     var imageAlertShowAt as Number = 0;
 
     // Set the label of the data field here.
@@ -186,24 +262,43 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
     }
 
-    function vibrateAndBackLight() as Void {
-        if (Attention has :backlight) {
-            // turn the screen on so we can see the alert, it does not respond to us gesturing to see the alert (think gesture controls are suppressed during vibration)
-            Attention.backlight(true);
-        }
+    function showMyAlert(alert as Alert) as Void {
+        try {
+            if (Attention has :backlight) {
+                // turn the screen on so we can see the alert, it does not respond to us gesturing to see the alert (think gesture controls are suppressed during vibration)
+                Attention.backlight(true);
+            }
 
-        if (Attention has :vibrate) {
-            var vibeData = [
-                new Attention.VibeProfile(100, 500),
-                new Attention.VibeProfile(0, 150),
-                new Attention.VibeProfile(100, 500),
-                new Attention.VibeProfile(0, 150),
-                new Attention.VibeProfile(100, 500),
-            ];
-            Attention.vibrate(vibeData);
+            if (Attention has :vibrate) {
+                var vibeData = [
+                    new Attention.VibeProfile(100, 500),
+                    new Attention.VibeProfile(0, 150),
+                    new Attention.VibeProfile(100, 500),
+                    new Attention.VibeProfile(0, 150),
+                    new Attention.VibeProfile(100, 500),
+                ];
+                Attention.vibrate(vibeData);
+            }
+
+            // alert comes after we start the vibrate in case it throws
+            // logD("trying to trigger alert");
+            if (settings.alertType == ALERT_TYPE_ALERT) {
+                // alerts are really annoying because users have to remember to enable them
+                // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
+                // this is why we default to toasts, the vibration will still occur, and maybe should be a separate setting?
+                showAlert(alert.alert());
+            } else if (settings.alertType == ALERT_TYPE_IMAGE) {
+                imageAlertShowAt = Time.now().value();
+                imageAlert = alert;
+            } else {
+                WatchUi.showToast(alert.text(), {});
+            }
+        } catch (e) {
+            logE("failed to show alert: " + e.getErrorMessage());
         }
     }
 
+    // todo maybe inline these functions?
     function showMyDirectionAlert(
         direction as Number /*-180 to 180*/,
         distancePx as Float
@@ -212,53 +307,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         if (_cachedValues.currentScale != 0f) {
             distanceM = distancePx / _cachedValues.currentScale;
         }
-        try {
-            vibrateAndBackLight();
-
-            // alert comes after we start the vibrate in case it throws
-            // logD("trying to trigger alert");
-            if (settings.alertType == ALERT_TYPE_ALERT) {
-                // alerts are really annoying because users have to remember to enable them
-                // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
-                // this is why we default to toasts, the vibration will still occur, and maybe should be a separate setting?
-                showAlert(new DirectionAlert(direction, distanceM));
-            } else if (settings.alertType == ALERT_TYPE_IMAGE) {
-                imageAlertShowAt = Time.now().value();
-                imageAlert = new DirectionAlert(direction, distanceM);
-            } else {
-                var dirText = direction >= 0 ? "Right" : "Left";
-                var text =
-                    dirText + " Turn In " + distanceM.format("%.1f") + "m " + absN(direction) + "°";
-                // var text = dirText + " Turn In " + distanceM.format("%.1f") + "m";
-                WatchUi.showToast(text, {});
-            }
-        } catch (e) {
-            logE("failed to show alert: " + e.getErrorMessage());
-        }
+        showMyAlert(new DirectionAlert(direction, distanceM));
     }
 
-    function showMyAlert(epoch as Number, text as String) as Void {
+    function showMyTrackAlert(epoch as Number, alert as Alert) as Void {
         lastOffTrackAlertNotified = epoch; // if showAlert fails, we will still have vibrated and turned the screen on
-
-        try {
-            vibrateAndBackLight();
-
-            // alert comes after we start the vibrate in case it throws
-            // logD("trying to trigger alert");
-            if (settings.alertType == ALERT_TYPE_ALERT) {
-                // alerts are really annoying because users have to remember to enable them
-                // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
-                // this is why we default to toasts, the vibration will still occur, and maybe should be a separate setting?
-                showAlert(new OffTrackAlert(text));
-            } else if (settings.alertType == ALERT_TYPE_IMAGE) {
-                imageAlertShowAt = Time.now().value();
-                imageAlert = new OffTrackAlert(text);
-            } else {
-                WatchUi.showToast(text, {});
-            }
-        } catch (e) {
-            logE("failed to show alert: " + e.getErrorMessage());
-        }
+        showMyAlert(alert);
     }
 
     // see onUpdate explanation for when each is called
@@ -406,7 +460,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             if (routeOffTrackInfo.onTrack) {
                 offTrackInfo = routeOffTrackInfo.clone(); // never store the point we got or rescales could occur twice on the same object
                 if (settings.offTrackWrongDirection && offTrackInfo.wrongDirection) {
-                    showMyAlert(epoch, "WRONG DIRECTION");
+                    showMyTrackAlert(epoch, new WrongDirectionAlert());
                 }
 
                 return;
@@ -438,7 +492,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
 
         if (settings.enableOffTrackAlerts) {
-            showMyAlert(epoch, "OFF TRACK");
+            showMyTrackAlert(epoch, new OffTrackAlert());
         }
     }
 

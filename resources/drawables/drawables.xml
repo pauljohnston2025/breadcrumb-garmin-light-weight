@@ -14,4 +14,5 @@
     <bitmap id="StadiaAttribution" filename="stadia.svg" automaticPalette="false" dithering="none" scaleX="85" scaleY="20" packingFormat="default"/>
     <bitmap id="CartoAttribution" filename="carto.svg" automaticPalette="false" dithering="none" scaleX="55" scaleY="20" packingFormat="default"/>
     <bitmap id="MapyAttribution" filename="mapy.svg" automaticPalette="false" dithering="none" scaleX="43" scaleY="20" packingFormat="default"/>
+    <bitmap id="OffTrackIcon" filename="offTrackIcon.png" automaticPalette="false" dithering="none" scaleX="100%" scaleY="100%" packingFormat="default"/>
 </drawables>
