@@ -33,6 +33,7 @@
     <string id="alertTypeTitle">Alert Type</string>
     <string id="alertTypeToast">Toast (notification)</string>
     <string id="alertTypeAlert">Alerts (requires enable in garmin settings)</string>
+    <string id="alertTypeImage">Image</string>
     <string id="enableOffTrackAlertsTitle">Off Track Alerts</string>
     <string id="offTrackWrongDirectionTitle">Wrong Direction Alerts</string>
     <string id="drawCheveronsTitle">Draw Cheverons</string>

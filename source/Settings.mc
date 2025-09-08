@@ -48,6 +48,7 @@ enum /*RenderMode*/ {
 enum /*RenderMode*/ {
     ALERT_TYPE_TOAST,
     ALERT_TYPE_ALERT,
+    ALERT_TYPE_IMAGE,
     ALERT_TYPE_MAX,
 }
 

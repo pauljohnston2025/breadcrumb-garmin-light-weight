@@ -13,6 +13,11 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
 
     // see BreadcrumbDataFieldView if touch stops working
     function onTap(evt as WatchUi.ClickEvent) as Boolean {
+        if (getApp()._view.imageAlert != null) {
+            // any touch cancels the alert
+            getApp()._view.imageAlert = null;
+            return true;
+        }
         // logT("got tap (x,y): (" + evt.getCoordinates()[0] + "," +
         //                evt.getCoordinates()[1] + ")");
 
@@ -42,11 +47,11 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
         if (renderer.handleStartCacheRoute(x, y)) {
             return true;
         }
-        
+
         if (renderer.handleStartMapEnable(x, y)) {
             return true;
         }
-        
+
         if (renderer.handleStartMapDisable(x, y)) {
             return true;
         }
@@ -60,7 +65,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
         // perhaps put this into new class to handle touch events, and have a
         // renderer for that ui would allow us to switch out ui and handle touched
         // differently also will alow setting the scren height
-        if (inHitbox(x,y,renderer.modeSelectX, renderer.modeSelectY, halfHitboxSize)) {
+        if (inHitbox(x, y, renderer.modeSelectX, renderer.modeSelectY, halfHitboxSize)) {
             // top right
             settings.nextMode();
             return true;
@@ -70,7 +75,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
             return false;
         }
 
-        if (inHitbox(x,y,renderer.returnToUserX, renderer.returnToUserY, halfHitboxSize)) {
+        if (inHitbox(x, y, renderer.returnToUserX, renderer.returnToUserY, halfHitboxSize)) {
             // return to users location
             // bottom left
             // reset scale to user tracking mode (we auto set it when enterring move mode so we do not get weird zooms when we are panning)
@@ -93,7 +98,7 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
         //     // }
 
         //     return false;
-        // } 
+        // }
         // todo update these to use inHitbox ?
         else if (y < hitboxSize) {
             if (settings.mode == MODE_MAP_MOVE) {

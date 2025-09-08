@@ -613,6 +613,9 @@ function alertsCommon(menu as WatchUi.Menu2, settings as Settings) as Void {
         case ALERT_TYPE_ALERT:
             alertTypeString = Rez.Strings.alertTypeAlert;
             break;
+        case ALERT_TYPE_IMAGE:
+            alertTypeString = Rez.Strings.alertTypeImage;
+            break;
     }
     safeSetSubLabel(menu, :settingsAlertsAlertType, alertTypeString);
 }
@@ -1325,6 +1328,8 @@ class SettingsAlertTypeDelegate extends WatchUi.Menu2InputDelegate {
             settings.setAlertType(ALERT_TYPE_TOAST);
         } else if (itemId == :settingsAlertTypeAlert) {
             settings.setAlertType(ALERT_TYPE_ALERT);
+        } else if (itemId == :settingsAlertTypeImage) {
+            settings.setAlertType(ALERT_TYPE_IMAGE);
         }
 
         parent.rerender();

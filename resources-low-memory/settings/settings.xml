@@ -195,6 +195,7 @@
             <settingConfig type="list">
                 <listEntry value="0">@Strings.alertTypeToast</listEntry>
                 <listEntry value="1">@Strings.alertTypeAlert</listEntry>
+                <listEntry value="2">@Strings.alertTypeImage</listEntry>
             </settingConfig>
         </setting>
     </group>

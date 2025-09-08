@@ -122,6 +122,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     var _lastFullRenderTime as Number = 0;
     var _lastFullRenderScale as Float = 0f;
     var FULL_RENDER_INTERVAL_S as Number = 5;
+    var imageAlert as WatchUi.DataFieldAlert? = null;
+    var imageAlertShowAt as Number = 0;
 
     // Set the label of the data field here.
     function initialize(breadcrumbContext as BreadcrumbContext) {
@@ -184,6 +186,24 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
     }
 
+    function vibrateAndBackLight() as Void {
+        if (Attention has :backlight) {
+            // turn the screen on so we can see the alert, it does not respond to us gesturing to see the alert (think gesture controls are suppressed during vibration)
+            Attention.backlight(true);
+        }
+
+        if (Attention has :vibrate) {
+            var vibeData = [
+                new Attention.VibeProfile(100, 500),
+                new Attention.VibeProfile(0, 150),
+                new Attention.VibeProfile(100, 500),
+                new Attention.VibeProfile(0, 150),
+                new Attention.VibeProfile(100, 500),
+            ];
+            Attention.vibrate(vibeData);
+        }
+    }
+
     function showMyDirectionAlert(
         direction as Number /*-180 to 180*/,
         distancePx as Float
@@ -193,21 +213,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             distanceM = distancePx / _cachedValues.currentScale;
         }
         try {
-            if (Attention has :backlight) {
-                // turn the screen on so we can see the alert, it does not respond to us gesturing to see the alert (think gesture controls are suppressed during vibration)
-                Attention.backlight(true);
-            }
-
-            if (Attention has :vibrate) {
-                var vibeData = [
-                    new Attention.VibeProfile(100, 500),
-                    new Attention.VibeProfile(0, 150),
-                    new Attention.VibeProfile(100, 500),
-                    new Attention.VibeProfile(0, 150),
-                    new Attention.VibeProfile(100, 500),
-                ];
-                Attention.vibrate(vibeData);
-            }
+            vibrateAndBackLight();
 
             // alert comes after we start the vibrate in case it throws
             // logD("trying to trigger alert");
@@ -216,6 +222,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
                 // this is why we default to toasts, the vibration will still occur, and maybe should be a separate setting?
                 showAlert(new DirectionAlert(direction, distanceM));
+            } else if (settings.alertType == ALERT_TYPE_IMAGE) {
+                imageAlertShowAt = Time.now().value();
+                imageAlert = new DirectionAlert(direction, distanceM);
             } else {
                 var dirText = direction >= 0 ? "Right" : "Left";
                 var text =
@@ -232,21 +241,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         lastOffTrackAlertNotified = epoch; // if showAlert fails, we will still have vibrated and turned the screen on
 
         try {
-            if (Attention has :backlight) {
-                // turn the screen on so we can see the alert, it does not resond to us gesturing to see the alert (think gesture controls are suppressed during vibration)
-                Attention.backlight(true);
-            }
-
-            if (Attention has :vibrate) {
-                var vibeData = [
-                    new Attention.VibeProfile(100, 500),
-                    new Attention.VibeProfile(0, 150),
-                    new Attention.VibeProfile(100, 500),
-                    new Attention.VibeProfile(0, 150),
-                    new Attention.VibeProfile(100, 500),
-                ];
-                Attention.vibrate(vibeData);
-            }
+            vibrateAndBackLight();
 
             // alert comes after we start the vibrate in case it throws
             // logD("trying to trigger alert");
@@ -255,6 +250,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 // and then some times ive noticed that they do not seem to work, or they are disabled and still lock out the screen
                 // this is why we default to toasts, the vibration will still occur, and maybe should be a separate setting?
                 showAlert(new OffTrackAlert(text));
+            } else if (settings.alertType == ALERT_TYPE_IMAGE) {
+                imageAlertShowAt = Time.now().value();
+                imageAlert = new OffTrackAlert(text);
             } else {
                 WatchUi.showToast(text, {});
             }
@@ -450,6 +448,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         lastOffTrackAlertNotified = 0;
         lastOffTrackAlertChecked = 0;
         offTrackInfo = new OffTrackInfo(true, null, false);
+        imageAlert = null;
+        imageAlertShowAt = 0;
         // render mode could have changed
         updateScratchPadBitmap();
         resetRenderTime();
@@ -511,6 +511,17 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     function actualOnUpdate(dc as Dc) as Void {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
+
+        var imageAlertLocal = imageAlert;
+        if (imageAlertLocal != null) {
+            var epoch = Time.now().value();
+            if (epoch - imageAlertShowAt > 5 /*seconds*/) {
+                imageAlert = null;
+            } else {
+                imageAlertLocal.onUpdate(dc);
+                return;
+            }
+        }
 
         // logD("onUpdate");
         var renderer = _breadcrumbContext.breadcrumbRenderer;
