@@ -95,8 +95,7 @@ function logLevel(lvl as String, message as String) as Void {
 }
 
 (:release)
-function logLevel(lvl as String, message as String) as Void {
-}
+function logLevel(lvl as String, message as String) as Void {}
 
 (:debug)
 function logE(message as String) as Void {
@@ -241,5 +240,16 @@ function inHitbox(
         y < hitboxY + halfHitboxSize &&
         x > hitboxX - halfHitboxSize &&
         x < hitboxX + halfHitboxSize
+    );
+}
+
+function unsupported(dc as Dc, message as String) as Void {
+    dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+    dc.drawText(
+        dc.getWidth() / 2,
+        dc.getHeight() / 2,
+        Graphics.FONT_SYSTEM_XTINY,
+        message + " unsupported",
+        Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
     );
 }

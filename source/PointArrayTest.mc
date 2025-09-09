@@ -1,21 +1,21 @@
 import Toybox.Lang;
 import Toybox.Test;
 
-(:test)
+(:test,:debug)
 function latLon2xyTest(logger as Logger) as Boolean {
     var point = RectangularPoint.latLon2xy(-27.49225, 153.030049, 123.4);
     logger.debug("point = " + point);
     return point.x == 17035226.0 && point.y == -3185107.25 && point.altitude == 123.4;
 }
 
-(:test)
+(:test,:debug)
 function latLon2xyTest2(logger as Logger) as Boolean {
     var point = RectangularPoint.latLon2xy(-26.49225, 153.030049, 123.4);
     logger.debug("point = " + point);
     return point.x == 17035226.0 && point.y == -3060177.5 && point.altitude == 123.4;
 }
 
-(:test)
+(:test,:debug)
 function latLon2xyRoundTrip(logger as Logger) as Boolean {
     var lat = -26.49225;
     var long = 153.030049;

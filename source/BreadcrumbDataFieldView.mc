@@ -841,7 +841,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var pointWeLeftTrack = offTrackInfo.pointWeLeftTrack;
         if (lastPoint != null) {
             // only ever not null if feature enabled
-            if (!offTrackInfo.onTrack && pointWeLeftTrack != null) {
+            if (!offTrackInfo.onTrack && pointWeLeftTrack != null && settings.drawLineToClosestPoint) {
                 // points need to be scaled and rotated :(
                 renderer.renderLineFromLastPointToRoute(
                     dc,
@@ -873,7 +873,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         if (lastPoint != null) {
             // only ever not null if feature enabled
 
-            if (!offTrackInfo.onTrack && pointWeLeftTrack != null) {
+            if (!offTrackInfo.onTrack && pointWeLeftTrack != null && settings.drawLineToClosestPoint) {
                 // points need to be scaled and rotated :(
                 renderer.renderLineFromLastPointToRouteUnrotated(
                     dc,

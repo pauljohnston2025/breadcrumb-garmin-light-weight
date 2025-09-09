@@ -118,6 +118,32 @@ class MapRenderer {
         renderMapUnrotatedInner(dc);
     }
 
+    (:noTileBorders)
+    function drawTileBordersUnrotated(
+        dc as Dc,
+        showTileBorders as Boolean,
+        xPixel as Number,
+        yPixel as Number,
+        tileScalePixelSize as Number
+    ) as Void {
+        unsupported(dc, "tile borders");
+    }
+
+    (:tileBorders)
+    function drawTileBordersUnrotated(
+        dc as Dc,
+        showTileBorders as Boolean,
+        xPixel as Number,
+        yPixel as Number,
+        tileScalePixelSize as Number
+    ) as Void {
+        if (showTileBorders) {
+            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(4);
+            dc.drawRectangle(xPixel, yPixel, tileScalePixelSize, tileScalePixelSize);
+        }
+    }
+
     (:companionTiles,:imageTiles)
     function renderMapUnrotated(dc as Dc) as Void {
         renderMapUnrotatedInner(dc);
@@ -197,11 +223,13 @@ class MapRenderer {
                     );
                 }
 
-                if (_settings.showTileBorders) {
-                    dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-                    dc.setPenWidth(4);
-                    dc.drawRectangle(xPixel, yPixel, tileScalePixelSize, tileScalePixelSize);
-                }
+                drawTileBordersUnrotated(
+                    dc,
+                    _settings.showTileBorders,
+                    xPixel,
+                    yPixel,
+                    tileScalePixelSize
+                );
             }
         }
     }
@@ -368,7 +396,25 @@ class MapRenderer {
         }
     }
 
-    (:unbufferedRotations)
+    (:unbufferedRotations,:noTileBorders)
+    function drawTileBorders(
+        dc as Dc,
+        x as Number,
+        y as Number,
+        tileOffsetX as Number,
+        tileOffsetY as Number,
+        tileScalePixelSize as Number,
+        rotateSinNeg as Decimal,
+        rotateCosNeg as Decimal,
+        bufferedBitmapOffsetX as Float,
+        bufferedBitmapOffsetY as Float,
+        rotateAroundScreenX as Float,
+        rotateAroundScreenY as Float
+    ) as Void {
+        unsupported(dc, "tile borders");
+    }
+
+    (:unbufferedRotations,:tileBorders)
     function drawTileBorders(
         dc as Dc,
         x as Number,

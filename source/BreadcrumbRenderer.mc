@@ -389,6 +389,16 @@ class BreadcrumbRenderer {
         }
     }
 
+    (:noShowPoints)
+    function renderTrackPointsUnrotated(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType
+    ) as Void {
+        unsupported(dc, "show points");
+    }
+
+    (:showPoints)
     function renderTrackPointsUnrotated(
         dc as Dc,
         breadcrumb as BreadcrumbTrack,
@@ -814,7 +824,16 @@ class BreadcrumbRenderer {
         colour as Graphics.ColorType
     ) as Void {}
 
-    (:unbufferedRotations)
+    (:unbufferedRotations,:noShowPoints)
+    function renderTrackPoints(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType
+    ) as Void {
+        unsupported(dc, "show points");
+    }
+
+    (:unbufferedRotations,:showPoints)
     function renderTrackPoints(
         dc as Dc,
         breadcrumb as BreadcrumbTrack,
@@ -1180,6 +1199,66 @@ class BreadcrumbRenderer {
         );
     }
 
+    (:noDrawHitBoxes)
+    function drawHitBoxes(
+        dc as Dc,
+        physicalScreenWidth as Float,
+        physicalScreenHeight as Float
+    ) as Void {
+        unsupported(dc, "draw hit boxes");
+    }
+
+    (:drawHitBoxes)
+    function drawHitBoxes(
+        dc as Dc,
+        physicalScreenWidth as Float,
+        physicalScreenHeight as Float
+    ) as Void {
+        dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(1);
+        dc.drawRectangle(
+            clearRouteX - halfHitboxSize,
+            clearRouteY - halfHitboxSize,
+            hitboxSize,
+            hitboxSize
+        );
+        dc.drawRectangle(
+            modeSelectX - halfHitboxSize,
+            modeSelectY - halfHitboxSize,
+            hitboxSize,
+            hitboxSize
+        );
+        dc.drawRectangle(
+            returnToUserX - halfHitboxSize,
+            returnToUserY - halfHitboxSize,
+            hitboxSize,
+            hitboxSize
+        );
+        dc.drawRectangle(
+            mapEnabledX - halfHitboxSize,
+            mapEnabledY - halfHitboxSize,
+            hitboxSize,
+            hitboxSize
+        );
+
+        // top bottom left right
+        dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
+        dc.drawLine(0, hitboxSize, physicalScreenWidth, hitboxSize);
+        dc.drawLine(
+            0,
+            physicalScreenHeight - hitboxSize,
+            physicalScreenWidth,
+            physicalScreenHeight - hitboxSize
+        );
+        dc.drawLine(hitboxSize, 0, hitboxSize, physicalScreenHeight);
+        dc.drawLine(
+            physicalScreenWidth - hitboxSize,
+            0,
+            physicalScreenWidth - hitboxSize,
+            physicalScreenHeight
+        );
+    }
+
     function renderUi(dc as Dc) as Void {
         var currentScale = _cachedValues.currentScale; // local lookup faster
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
@@ -1189,49 +1268,7 @@ class BreadcrumbRenderer {
         var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
 
         if (settings.drawHitBoxes) {
-            dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
-            dc.setPenWidth(1);
-            dc.drawRectangle(
-                clearRouteX - halfHitboxSize,
-                clearRouteY - halfHitboxSize,
-                hitboxSize,
-                hitboxSize
-            );
-            dc.drawRectangle(
-                modeSelectX - halfHitboxSize,
-                modeSelectY - halfHitboxSize,
-                hitboxSize,
-                hitboxSize
-            );
-            dc.drawRectangle(
-                returnToUserX - halfHitboxSize,
-                returnToUserY - halfHitboxSize,
-                hitboxSize,
-                hitboxSize
-            );
-            dc.drawRectangle(
-                mapEnabledX - halfHitboxSize,
-                mapEnabledY - halfHitboxSize,
-                hitboxSize,
-                hitboxSize
-            );
-
-            // top bottom left right
-            dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
-            dc.drawLine(0, hitboxSize, physicalScreenWidth, hitboxSize);
-            dc.drawLine(
-                0,
-                physicalScreenHeight - hitboxSize,
-                physicalScreenWidth,
-                physicalScreenHeight - hitboxSize
-            );
-            dc.drawLine(hitboxSize, 0, hitboxSize, physicalScreenHeight);
-            dc.drawLine(
-                physicalScreenWidth - hitboxSize,
-                0,
-                physicalScreenWidth - hitboxSize,
-                physicalScreenHeight
-            );
+            drawHitBoxes(dc, physicalScreenWidth, physicalScreenHeight);
         }
 
         dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
