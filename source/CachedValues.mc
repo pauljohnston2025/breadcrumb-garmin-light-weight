@@ -1108,14 +1108,7 @@ class CachedValues {
                 );
             }
 
-            var seedingUpToRoutePointPartialLocal = seedingUpToRoutePointPartial;
-            if (seedingUpToRoutePointPartialLocal == null) {
-                // wtf? we just set it - must be completely broken, pretend we are finished
-                seedingRouteLeftRightValid = false;
-                return null;
-            }
-
-            var nextPoint = seedingUpToRoutePointPartialLocal.next();
+            var nextPoint = (seedingUpToRoutePointPartial as SegmentPointIterator).next();
             if (nextPoint == null) {
                 // we are onto the next route point
                 ++seedingUpToRoutePoint;

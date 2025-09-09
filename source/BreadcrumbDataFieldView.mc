@@ -592,7 +592,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             return;
         }
 
-        // mode should be wtored here, but is needed for renderring the ui
+        // mode should be stored here, but is needed for rendering the ui
         // should structure this way better, but oh well (renderer per mode etc.)
         if (settings.mode == MODE_ELEVATION) {
             renderElevation(dc);
@@ -691,8 +691,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
         ) {
             if (_scratchPadBitmap == null) {
-                // we somehow have not allocated it yet, eg. onLayout could be called but throw beause the bitmap is not available yet
-                // we should probbaly track this and auto matically switch modes
+                // we somehow have not allocated it yet, eg. onLayout could be called but throw because the bitmap is not available yet
+                // we should probably track this and auto magically switch modes
                 updateScratchPadBitmap();
             }
             var scratchPadBitmapLocal = _scratchPadBitmap;
@@ -717,9 +717,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 epoch - _lastFullRenderTime > settings.recalculateIntervalS ||
                 _lastFullRenderScale != _cachedValues.currentScale
             ) {
-                // FULL_RENDER_INTERVAL_S is only to take into accout user moving (which we are also backing off)
+                // FULL_RENDER_INTERVAL_S is only to take into account user moving (which we are also backing off)
                 // if they stop and scale changes we will redraw immediately
-                // if they rotate we will draw rotations stright away
+                // if they rotate we will draw rotations straight away
                 _lastFullRenderTime = epoch;
                 _lastFullRenderScale = _cachedValues.currentScale;
                 var scratchPadBitmapDc = scratchPadBitmapLocal.getDc();
@@ -902,7 +902,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var epoch = Time.now().value();
         dc.setColor(settings.debugColour, Graphics.COLOR_BLACK);
         dc.clear();
-        // its only a debug menu that should probbaly be optimised out in release, hard code to venu2s screen coordinates
+        // its only a debug menu that should probably be optimised out in release, hard code to venu2s screen coordinates
         // it is actually pretty nice info, best guess on string sizes down the screen
         var fieldCount = 13;
         var y = 5;
