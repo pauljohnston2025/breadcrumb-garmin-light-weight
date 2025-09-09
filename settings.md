@@ -527,6 +527,8 @@ Reversed - To reverse the direction of the route.
 
 The watch app has a bunch of debug data to aid in development and help with bug reporting. Most users will not need to touch these settings, but some users may find it useful or like the look of the additional detail it provides. The debug settings and exactly what they control (and how they are displayed) can change at any time, some of them may be moved into other settings sections once they are stable.
 
+Note: Not all debug settings will work on all release builds, a message will be displayed if it has been compiled out and it is enabled.
+
 ### Show Points
 
 Shows points at each latitude/longitude on the routes and track.
