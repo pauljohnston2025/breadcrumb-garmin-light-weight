@@ -1783,6 +1783,7 @@ class SettingsMapDisabledDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
+(:settingsView)
 function checkAlertViewDisplay(
     oldView as SettingsAlerts or SettingsAlertsDisabled,
     settings as Settings
@@ -1806,6 +1807,7 @@ function checkAlertViewDisplay(
     }
 }
 
+(:settingsView)
 function onSelectAlertCommon(
     itemId as Object?,
     settings as Settings,
