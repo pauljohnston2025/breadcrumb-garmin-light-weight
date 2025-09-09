@@ -14,4 +14,6 @@
     <bitmap id="StadiaAttribution" filename="stadia.svg" automaticPalette="false" dithering="none" scaleX="85" scaleY="20" packingFormat="default"/>
     <bitmap id="CartoAttribution" filename="carto.svg" automaticPalette="false" dithering="none" scaleX="55" scaleY="20" packingFormat="default"/>
     <bitmap id="MapyAttribution" filename="mapy.svg" automaticPalette="false" dithering="none" scaleX="43" scaleY="20" packingFormat="default"/>
+     <!-- would be nice to use compressed format, but its not supported on all devices-->
+    <bitmap id="OffTrackIcon" filename="OffTrackIcon.png" automaticPalette="true" dithering="none" scaleX="90%" scaleY="90%" packingFormat="default" compress="true"/>
 </drawables>

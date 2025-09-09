@@ -17,92 +17,14 @@ class OffTrackAlert extends WatchUi.DataFieldAlert {
         WatchUi.DataFieldAlert.initialize();
     }
 
-    //! Draw the alert content on the screen
-    //! @param dc Device Context
     function onUpdate(dc as Dc) as Void {
-        var width = dc.getWidth();
-        var height = dc.getHeight();
-
-        // Set the color and pen width for a bold, clear look
+        var halfWidth = dc.getWidth() * 0.5;
+        var offTrackIcon = WatchUi.loadResource(Rez.Drawables.OffTrackIcon) as WatchUi.BitmapResource;
+        dc.drawBitmap(0, 0, offTrackIcon);
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(4);
-
-        // 1. Draw the Bulldozer Body and Cab
-        // Defines the main chassis and the operator's cab
-        var mainBody = [
-            // Start at bottom-front of chassis
-            [0.18 * width, 0.55 * height], [0.45 * width, 0.55 * height],
-            // Back of cab
-            [0.45 * width, 0.48 * height], [0.55 * width, 0.48 * height],
-            [0.55 * width, 0.30 * height],
-            // Top and front of cab
-            [0.30 * width, 0.30 * height], [0.30 * width, 0.43 * height],
-            // Line under the cab window
-            [0.18 * width, 0.43 * height], [0.18 * width, 0.55 * height]
-        ];
-        // Draw the body using a loop
-        for (var i = 0; i < mainBody.size() - 1; i++) {
-            dc.drawLine(mainBody[i][0], mainBody[i][1], mainBody[i+1][0], mainBody[i+1][1]);
-        }
-
-        // 2. Draw the Bulldozer Blade
-        // A series of lines to create a scoop/blade shape at the front
-        var blade = [
-            [0.18 * width, 0.52 * height], [0.12 * width, 0.52 * height],
-            [0.09 * width, 0.55 * height], [0.07 * width, 0.60 * height],
-            [0.09 * width, 0.64 * height], [0.12 * width, 0.66 * height],
-            [0.18 * width, 0.66 * height]
-        ];
-        for (var i = 0; i < blade.size() - 1; i++) {
-            dc.drawLine(blade[i][0], blade[i][1], blade[i+1][0], blade[i+1][1]);
-        }
-
-        // 3. Draw the Bulldozer Track with Arced Ends
-        var trackTopY = 0.58 * height;
-        var trackBottomY = 0.68 * height;
-        var trackLeftX = 0.20 * width;
-        var trackRightX = 0.54 * width;
-        var trackArcRadius = (trackBottomY - trackTopY) / 2;
-
-        // Draw straight top and bottom parts of the track
-        dc.drawLine(trackLeftX, trackTopY, trackRightX, trackTopY);
-        dc.drawLine(trackLeftX, trackBottomY, trackRightX, trackBottomY);
-        // Draw the rounded ends using arcs
-        dc.drawArc(trackLeftX, trackTopY + trackArcRadius, trackArcRadius, Graphics.ARC_CLOCKWISE, 90, 270);
-        dc.drawArc(trackRightX, trackTopY + trackArcRadius, trackArcRadius, Graphics.ARC_CLOCKWISE, 270, 90);
-
-        // 4. Draw the Wheels with Axles
-        var wheelY = 0.63 * height;
-        var wheelRadius = 0.04 * width;
-        dc.drawCircle(0.28 * width, wheelY, wheelRadius);
-        dc.drawCircle(0.46 * width, wheelY, wheelRadius);
-        // Draw horizontal lines for axles
-        dc.drawLine(0.28 * width - wheelRadius, wheelY, 0.28 * width + wheelRadius, wheelY);
-        dc.drawLine(0.46 * width - wheelRadius, wheelY, 0.46 * width + wheelRadius, wheelY);
-
-        // 5. Draw the Winding Road
-        var road = [
-            [0.25 * width, 0.75 * height], [0.35 * width, 0.83 * height],
-            [0.45 * width, 0.77 * height], [0.55 * width, 0.90 * height],
-            [0.65 * width, 0.85 * height], [0.75 * width, 0.98 * height]
-        ];
-        for (var i = 0; i < road.size() - 1; i++) {
-            dc.drawLine(road[i][0], road[i][1], road[i+1][0], road[i+1][1]);
-        }
-
-        // 6. Draw the Dashes on the Road
-        dc.drawLine(0.40 * width, 0.80 * height, 0.43 * width, 0.85 * height);
-        dc.drawLine(0.58 * width, 0.84 * height, 0.62 * width, 0.90 * height);
-        dc.drawLine(0.70 * width, 0.91 * height, 0.73 * width, 0.96 * height);
-
-        // 7. Draw the 'X' Symbol
-        dc.drawLine(0.70 * width, 0.38 * height, 0.90 * width, 0.55 * height);
-        dc.drawLine(0.90 * width, 0.38 * height, 0.70 * width, 0.55 * height);
-
-        // 8. Draw the "OFF TRACK" text label
         dc.drawText(
-            width * 0.5,
-            height * 0.18,
+            halfWidth,
+            40,
             Graphics.FONT_SYSTEM_MEDIUM,
             text(),
             Graphics.TEXT_JUSTIFY_CENTER
