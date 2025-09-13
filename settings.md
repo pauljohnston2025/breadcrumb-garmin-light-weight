@@ -467,7 +467,11 @@ Set to -1 to disable turn alerts.
 
 Note: If your are off track the direction shown in the turn alert may be incorrect, this is because the direction is precomputed assuming you are on track, this is for performance reasons to avoid tripping the watchdog.
 
-Ensure to enable [Turn Point Limit](https://github.com/pauljohnston2025/breadcrumb-mobile/blob/master/manual.md#routes) in the companion app in order to send the directions to the watch to enable turn-by-turn navigation. 
+Ensure to enable [Turn Point Limit](https://github.com/pauljohnston2025/breadcrumb-mobile/blob/master/manual.md#routes) in the companion app in order to send the directions to the watch to enable turn-by-turn navigation.
+
+Note: The turn-by-turn angle given by the alert is only an indication of the angle to turn only, I hope to improve on the algorithm I use to determine the angle in future releases. It should not be relied upon for perfect accuracy, and you should glance down at the watch to get an accurate indication on which direction to follow on the route.
+
+I strongly suggest enabling off track alerts when using this feature, to ensure better detection of upcoming turns, it will also assist if you happen to take the wrong turn at an intersection. The turn-by-turn is just to make you aware that you should be turning off the current heading soon, to avoid accidentally continuing straight on the path.     
 
 ### Off Track Alerts Max Report Interval
 
