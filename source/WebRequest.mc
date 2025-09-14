@@ -10,7 +10,12 @@ class JsonWebHandler {
     // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
     function handle(
         responseCode as Number,
-        data as Dictionary or String or Iterator or Null
+        data as Dictionary or
+                String or
+                Iterator or
+                WatchUi.BitmapResource or
+                Graphics.BitmapReference or
+                Null
     ) as Void;
 }
 
@@ -18,7 +23,12 @@ class ImageWebHandler {
     // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
     function handle(
         responseCode as Number,
-        data as WatchUi.BitmapResource or Graphics.BitmapReference or Null
+        data as Dictionary or
+                String or
+                Iterator or
+                WatchUi.BitmapResource or
+                Graphics.BitmapReference or
+                Null
     ) as Void;
 }
 
@@ -88,14 +98,14 @@ class WebRequestHandleWrapper {
                 Null
     ) as Void {
         try {
-            handler.handle(responseCode, data as Null); // trust me it's the correct type (as null is to suppress the warning)
+            handler.handle(responseCode, data);
 
             if (
                 responseCode != 200 &&
                 webHandler._settings.tileUrl.equals(COMPANION_APP_TILE_URL) &&
                 !getApp()._breadcrumbContext.settings.storageMapTilesOnly
             ) {
-                // todo only send this on certain errors, and only probbaly only after some limit?
+                // todo only send this on certain errors, and only probably only after some limit?
                 // we could also send a toast, but the transmit allows us to open the app easier on the phone
                 // even though the phone side is a bit of a hack (ConnectIQMessageReceiver cannot parse the data), it's still better than having to manualy open the app.
                 webHandler.transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
@@ -114,7 +124,7 @@ class WebRequestHandleWrapper {
             ++$.globalExceptionCounter;
         } finally {
             // got some stack overflows, as handle can be called inline if it knows it will fail (eg. BLE_CONNECTION_UNAVAILABLE)
-            // also saw alot of NETWORK_REQUEST_TIMED_OUT in the logs, but thnk it was when the BLE_CONNECTION_UNAVAILABLE happened
+            // also saw alot of NETWORK_REQUEST_TIMED_OUT in the logs, but think it was when the BLE_CONNECTION_UNAVAILABLE happened
             // as that was the last log, and it makes sense that it can short circuit
             // so launch the next task in a timer
             // var timer = new Timer.Timer();

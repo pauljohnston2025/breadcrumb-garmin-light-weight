@@ -269,7 +269,12 @@ class TileUpdateHandler extends JsonWebHandler {
 
     function handle(
         responseCode as Number,
-        data as Dictionary or String or Iterator or Null
+        data as Dictionary or
+                String or
+                Iterator or
+                WatchUi.BitmapResource or
+                Graphics.BitmapReference or
+                Null
     ) as Void {
         if (responseCode != 200) {
             logE("failed TUH: " + responseCode);

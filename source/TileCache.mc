@@ -91,7 +91,13 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
 
     function handle(
         responseCode as Number,
-        data as Dictionary or String or Iterator or Null
+        data as
+            Dictionary or
+                String or
+                Iterator or
+                WatchUi.BitmapResource or
+                Graphics.BitmapReference or
+                Null
     ) as Void {}
 }
 
@@ -126,7 +132,13 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
 
     function handle(
         responseCode as Number,
-        data as Dictionary or String or Iterator or Null
+        data as
+            Dictionary or
+                String or
+                Iterator or
+                WatchUi.BitmapResource or
+                Graphics.BitmapReference or
+                Null
     ) as Void {
         // do not store tiles in storage if the tile cache version does not match
         if (_tileCacheVersion != _tileCache._tileCacheVersion) {
@@ -153,7 +165,13 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
     }
 
     function handleSuccessfulTile(
-        data as Dictionary or String or Iterator or Null,
+        data as
+            Dictionary or
+                String or
+                Iterator or
+                WatchUi.BitmapResource or
+                Graphics.BitmapReference or
+                Null,
         addToCache as Boolean
     ) as Void {
         var settings = getApp()._breadcrumbContext.settings;
@@ -312,7 +330,13 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 
     function handle(
         responseCode as Number,
-        data as WatchUi.BitmapResource or Graphics.BitmapReference or Null
+        data as
+            Dictionary or
+                String or
+                Iterator or
+                WatchUi.BitmapResource or
+                Graphics.BitmapReference or
+                Null
     ) as Void {
         // do not store tiles in storage if the tile cache version does not match
         if (_tileCacheVersion != _tileCache._tileCacheVersion) {
@@ -339,7 +363,13 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
     }
 
     function handleSuccessfulTile(
-        data as WatchUi.BitmapResource or Graphics.BitmapReference or Null,
+        data as
+            Dictionary or
+                String or
+                Iterator or
+                WatchUi.BitmapResource or
+                Graphics.BitmapReference or
+                Null,
         addToCache as Boolean
     ) as Void {
         var settings = getApp()._breadcrumbContext.settings;
