@@ -164,7 +164,9 @@ class CachedValues {
     var seedingTilesOnThisLayer as Number = NUMBER_MAX;
     var seedingTilesProgressForThisLayer as Number = 0;
     var seedingMapCacheDistanceM as Float = -1f;
-    var seedingInProgressTiles as Array<TileKey> = [];
+    // todo remove the dictionary for memory perf, but it's only populated during a seed so should not be too bad
+    var seedingInProgressTiles as Dictionary<String, [Number, Number, Number]> =
+        ({}) as Dictionary<String, [Number, Number, Number]>;
     var seedingFirstTileX as Number = 0;
     var seedingFirstTileY as Number = 0;
     var seedingLastTileX as Number = 0;
@@ -923,7 +925,7 @@ class CachedValues {
         seedingUpToRoutePointPartial = null;
         seedingTilesOnThisLayer = NUMBER_MAX;
         seedingTilesProgressForThisLayer = 0;
-        seedingInProgressTiles = [];
+        seedingInProgressTiles = ({}) as Dictionary<String, [Number, Number, Number]>;
     }
 
     (:noStorage)
@@ -994,7 +996,7 @@ class CachedValues {
             seedingUpToRoute = 0;
             seedingUpToRoutePoint = 0;
             seedingUpToRoutePointPartial = null;
-            seedingInProgressTiles = [];
+            seedingInProgressTiles = ({}) as Dictionary<String, [Number, Number, Number]>;
         }
 
         if (seedingInProgressTiles.size() != 0) {
@@ -1014,7 +1016,7 @@ class CachedValues {
 
     // null indicates no more tiles
     (:storage)
-    function nextRoutePointTileKey() as TileKey? {
+    function nextRoutePointTileKey() as [Number, Number, Number]? {
         // DANGEROUS - could trigger watchdog
         var counter = 0;
         while (true) {
@@ -1054,7 +1056,7 @@ class CachedValues {
                     seedingRouteLeftRightValid = false;
                 }
 
-                return new TileKey(x, y, seedingZ);
+                return [x, y, seedingZ];
             }
 
             var routes = getApp()._breadcrumbContext.routes;
@@ -1185,16 +1187,18 @@ class CachedValues {
                 return true;
             }
 
+            var hash = tileKeyHash(nextTileKey[0], nextTileKey[1], nextTileKey[2]);
+
             // only add it if it's not already present
-            if (seedingInProgressTiles.indexOf(nextTileKey) > -1) {
+            if (seedingInProgressTiles.hasKey(hash)) {
                 // logD("already had it");
                 continue;
             }
 
             // logD("adding");
             // we might already have the tile in the storage cache, queue it up anyway so we reach our terminating condition faster
-            seedingInProgressTiles.add(nextTileKey);
-            tileCache.seedTileToStorage(nextTileKey);
+            seedingInProgressTiles[hash] = nextTileKey;
+            tileCache.seedTileToStorage(hash, nextTileKey[0], nextTileKey[1], nextTileKey[2]);
         }
 
         return false; // only the for loop may return that we are completed
@@ -1204,23 +1208,27 @@ class CachedValues {
     function removeFromSeedingInProgressTilesAndSeedThem() as Void {
         var tileCache = getApp()._breadcrumbContext.tileCache;
         var toRemove = [];
+        var keys = seedingInProgressTiles.keys();
         for (var i = 0; i < seedingInProgressTiles.size(); ++i) {
-            var item = seedingInProgressTiles[i];
+            var key = keys[i];
 
-            if (tileCache._storageTileCache.haveTile(item)) {
-                toRemove.add(item);
+            if (tileCache._storageTileCache.haveTile(key)) {
+                toRemove.add(key);
             }
         }
 
         for (var i = 0; i < toRemove.size(); ++i) {
-            var item = toRemove[i];
-            seedingInProgressTiles.remove(item as TileKey);
+            var key = toRemove[i];
+            seedingInProgressTiles.remove(key as String);
         }
 
+        // update our key indexes
+        keys = seedingInProgressTiles.keys();
         for (var i = 0; i < seedingInProgressTiles.size(); ++i) {
-            var item = seedingInProgressTiles[i];
+            var key = keys[i];
+            var item = seedingInProgressTiles[key] as [Number, Number, Number];
             // we better request it again, it might not have reached the web handler before
-            tileCache.seedTileToStorage(item);
+            tileCache.seedTileToStorage(key, item[0], item[1], item[2]);
         }
     }
 
@@ -1269,7 +1277,7 @@ class CachedValues {
         // we also might not even fetch a tile, we need to wait until the previous set have responded
         // the we can move onto fetching the next set of tiles
         // the storage could also be very small, so we need to keep this number small
-        // otherwsie we will
+        // otherwise we will
         // * try and download 10 tile to storage
         // * only fit the last 9 tiles in storage
         // * then we do not have all 10, so we will start again
@@ -1284,8 +1292,7 @@ class CachedValues {
                 x < lastTileX;
                 ++x
             ) {
-                var tileKey = new TileKey(x, y, seedingZ);
-                if (tileCache.seedTileToStorage(tileKey)) {
+                if (tileCache.seedTileToStorage(tileKeyHash(x, y, seedingZ), x, y, seedingZ)) {
                     ++tileStarted;
                 }
 
@@ -1313,8 +1320,8 @@ class CachedValues {
                 x < lastTileX;
                 ++x
             ) {
-                var tileKey = new TileKey(x, y, seedingZ);
-                if (!tileCache._storageTileCache.haveTile(tileKey)) {
+                var tileKeyStr = tileKeyHash(x, y, seedingZ);
+                if (!tileCache._storageTileCache.haveTile(tileKeyStr)) {
                     // we need to seed some more
                     return;
                 }

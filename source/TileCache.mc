@@ -18,85 +18,35 @@ enum /*TileDataType*/ {
     TILE_DATA_TYPE_BLACK_AND_WHITE = 2,
 }
 
-// trying to improve perf of lookups
-// string might be slow to create and compare
-// though string compares are likely done natively
-class TileKey {
-    var x as Number;
-    var y as Number;
-    var z as Number;
+function tileKeyHash(x as Number, y as Number, z as Number) as String {
+    var string = x.toString() + "-" + y + "-" + z;
 
-    function initialize(x as Number, y as Number, z as Number) {
-        self.x = x;
-        self.y = y;
-        self.z = z;
+    // we can base64 encode and get a shorter unique string
+    // toString() contains '-' characters, and base64 does not have hyphens
+    if (string.length() <= 12) {
+        return string;
     }
 
-    function toString() as String {
-        // was getting charArrayToString called which takes 193us per call
-        return x.toString() + "-" + y + "-" + z;
-    }
-
-    function optimisedHashKey() as String {
-        var string = toString();
-
-        // we can base64 encode and get a shorter unique string
-        // toString() contains '-' characters, and base64 does not have hyphens
-        if (string.length() <= 12) {
-            return string;
-        }
-
-        var byteArr = new [9]b;
-        byteArr.encodeNumber(x, Lang.NUMBER_FORMAT_SINT32, {
-            :offset => 0,
-            :endianness => Lang.ENDIAN_BIG,
-        });
-        byteArr.encodeNumber(y, Lang.NUMBER_FORMAT_SINT32, {
-            :offset => 4,
-            :endianness => Lang.ENDIAN_BIG,
-        });
-        byteArr.encodeNumber(z, Lang.NUMBER_FORMAT_UINT8, {
-            :offset => 8,
-            :endianness => Lang.ENDIAN_BIG,
-        });
-        return (
-            StringUtil.convertEncodedString(byteArr, {
-                :fromRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
-                :toRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
-                :encoding => StringUtil.CHAR_ENCODING_UTF8,
-            }) as String
-        );
-    }
-
-    function hashCode() as Number {
-        return x + y + z;
-    }
-
-    function equals(other as Object?) as Boolean {
-        if (!(other instanceof TileKey)) {
-            return false;
-        }
-
-        return x == other.x && y == other.y && z == other.z;
-    }
-
-    // Serialize the Tile object to a Dictionary
-    function serializeToDictionary() as Dictionary {
-        return {
-            "x" => self.x,
-            "y" => self.y,
-            "z" => self.z,
-        };
-    }
-
-    // Deserialize a Tile object from a Dictionary
-    static function deserializeFromDictionary(data as Dictionary) as TileKey? {
-        if (!data.hasKey("x") || !data.hasKey("y") || !data.hasKey("z")) {
-            return null;
-        }
-
-        return new TileKey(data["x"] as Number, data["y"] as Number, data["z"] as Number);
-    }
+    var byteArr = new [9]b;
+    byteArr.encodeNumber(x, Lang.NUMBER_FORMAT_SINT32, {
+        :offset => 0,
+        :endianness => Lang.ENDIAN_BIG,
+    });
+    byteArr.encodeNumber(y, Lang.NUMBER_FORMAT_SINT32, {
+        :offset => 4,
+        :endianness => Lang.ENDIAN_BIG,
+    });
+    byteArr.encodeNumber(z, Lang.NUMBER_FORMAT_UINT8, {
+        :offset => 8,
+        :endianness => Lang.ENDIAN_BIG,
+    });
+    return (
+        StringUtil.convertEncodedString(byteArr, {
+            :fromRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
+            :toRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
+            :encoding => StringUtil.CHAR_ENCODING_UTF8,
+        }) as String
+    );
 }
 
 const NO_EXPIRY = -1;
@@ -132,7 +82,7 @@ class Tile {
 class JsonWebTileRequestHandler extends JsonWebHandler {
     function initialize(
         tileCache as TileCache,
-        tileKey as TileKey,
+        tileKeyStr as String,
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
     ) {
@@ -148,26 +98,26 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
 (:companionTiles)
 class JsonWebTileRequestHandler extends JsonWebHandler {
     var _tileCache as TileCache;
-    var _tileKey as TileKey;
+    var _tileKeyStr as String;
     var _tileCacheVersion as Number;
     var _onlySeedStorage as Boolean;
 
     function initialize(
         tileCache as TileCache,
-        tileKey as TileKey,
+        tileKeyStr as String,
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
     ) {
         JsonWebHandler.initialize();
         _tileCache = tileCache;
-        _tileKey = tileKey;
+        _tileKeyStr = tileKeyStr;
         _tileCacheVersion = tileCacheVersion;
         _onlySeedStorage = onlySeedStorage;
     }
 
     function handleErroredTile(responseCode as Number) as Void {
         _tileCache.addErroredTile(
-            _tileKey,
+            _tileKeyStr,
             _tileCacheVersion,
             responseCode.toString(),
             isHttpResponseCode(responseCode)
@@ -190,7 +140,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
             logE("failed with: " + responseCode);
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-                _tileCache._storageTileCache.addErroredTile(_tileKey, responseCode);
+                _tileCache._storageTileCache.addErroredTile(_tileKeyStr, responseCode);
             }
             if (_onlySeedStorage) {
                 return;
@@ -213,20 +163,20 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             logE("wrong data type, not dict: " + data);
             if (addToCache) {
                 if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-                    _tileCache._storageTileCache.addWrongDataTile(_tileKey);
+                    _tileCache._storageTileCache.addWrongDataTile(_tileKeyStr);
                 }
             }
             if (_onlySeedStorage) {
                 return;
             }
-            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "WD", false);
+            _tileCache.addErroredTile(_tileKeyStr, _tileCacheVersion, "WD", false);
             return;
         }
 
         if (addToCache) {
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                 _tileCache._storageTileCache.addJsonData(
-                    _tileKey,
+                    _tileKeyStr,
                     data as Dictionary<PropertyKeyType, PropertyValueType>
                 );
             }
@@ -240,7 +190,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var mapTile = data["data"];
         if (!(mapTile instanceof String)) {
             logE("wrong data type, not string");
-            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "WD", false);
+            _tileCache.addErroredTile(_tileKeyStr, _tileCacheVersion, "WD", false);
             return;
         }
 
@@ -263,7 +213,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
             return;
         }
 
-        _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "UT", false);
+        _tileCache.addErroredTile(_tileKeyStr, _tileCacheVersion, "UT", false);
     }
 
     function handle64ColourDataString(mapTile as String) as Void {
@@ -271,12 +221,12 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var bitmap = _tileCache.tileDataToBitmap64ColourString(mapTile.toCharArray());
         if (bitmap == null) {
             logE("failed to parse bitmap");
-            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP", false);
+            _tileCache.addErroredTile(_tileKeyStr, _tileCacheVersion, "FP", false);
             return;
         }
 
         var tile = new Tile(bitmap);
-        _tileCache.addTile(_tileKey, _tileCacheVersion, tile);
+        _tileCache.addTile(_tileKeyStr, _tileCacheVersion, tile);
     }
 
     function handleBase64FullColourDataString(mapTile as String) as Void {
@@ -289,12 +239,12 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var bitmap = _tileCache.tileDataToBitmapFullColour(mapTileBytes);
         if (bitmap == null) {
             logE("failed to parse bitmap");
-            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP", false);
+            _tileCache.addErroredTile(_tileKeyStr, _tileCacheVersion, "FP", false);
             return;
         }
 
         var tile = new Tile(bitmap);
-        _tileCache.addTile(_tileKey, _tileCacheVersion, tile);
+        _tileCache.addTile(_tileKeyStr, _tileCacheVersion, tile);
     }
 
     function handleBlackAndWhiteDataString(mapTile as String) as Void {
@@ -302,12 +252,12 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         var bitmap = _tileCache.tileDataToBitmapBlackAndWhite(mapTile.toCharArray());
         if (bitmap == null) {
             logE("failed to parse bitmap");
-            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "FP", false);
+            _tileCache.addErroredTile(_tileKeyStr, _tileCacheVersion, "FP", false);
             return;
         }
 
         var tile = new Tile(bitmap);
-        _tileCache.addTile(_tileKey, _tileCacheVersion, tile);
+        _tileCache.addTile(_tileKeyStr, _tileCacheVersion, tile);
     }
 }
 
@@ -315,8 +265,8 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
 class ImageWebTileRequestHandler extends ImageWebHandler {
     function initialize(
         tileCache as TileCache,
-        tileKey as TileKey,
-        fullSizeTile as TileKey,
+        tileKeyStr as String,
+        fullTileKeyStr as String,
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
     ) {
@@ -331,29 +281,29 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 (:imageTiles)
 class ImageWebTileRequestHandler extends ImageWebHandler {
     var _tileCache as TileCache;
-    var _tileKey as TileKey;
-    var _fullSizeTile as TileKey;
+    var _tileKeyStr as String;
+    var _fullTileKeyStr as String;
     var _tileCacheVersion as Number;
     var _onlySeedStorage as Boolean;
 
     function initialize(
         tileCache as TileCache,
-        tileKey as TileKey,
-        fullSizeTile as TileKey,
+        tileKeyStr as String,
+        fullTileKeyStr as String,
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
     ) {
         ImageWebHandler.initialize();
         _tileCache = tileCache;
-        _tileKey = tileKey;
-        _fullSizeTile = fullSizeTile;
+        _tileKeyStr = tileKeyStr;
+        _fullTileKeyStr = fullTileKeyStr;
         _tileCacheVersion = tileCacheVersion;
         _onlySeedStorage = onlySeedStorage;
     }
 
     function handleErroredTile(responseCode as Number) as Void {
         _tileCache.addErroredTile(
-            _tileKey,
+            _tileKeyStr,
             _tileCacheVersion,
             responseCode.toString(),
             isHttpResponseCode(responseCode)
@@ -376,7 +326,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
             logE("failed with: " + responseCode);
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-                _tileCache._storageTileCache.addErroredTile(_fullSizeTile, responseCode);
+                _tileCache._storageTileCache.addErroredTile(_fullTileKeyStr, responseCode);
             }
             if (_onlySeedStorage) {
                 return;
@@ -403,13 +353,13 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             logE("wrong data type not image");
             if (addToCache) {
                 if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-                    _tileCache._storageTileCache.addWrongDataTile(_tileKey);
+                    _tileCache._storageTileCache.addWrongDataTile(_tileKeyStr);
                 }
             }
             if (_onlySeedStorage) {
                 return;
             }
-            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "WD", false);
+            _tileCache.addErroredTile(_tileKeyStr, _tileCacheVersion, "WD", false);
             return;
         }
 
@@ -423,19 +373,19 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             logE("data bitmap was null or not a bitmap");
             if (addToCache) {
                 if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-                    _tileCache._storageTileCache.addWrongDataTile(_tileKey);
+                    _tileCache._storageTileCache.addWrongDataTile(_tileKeyStr);
                 }
             }
             if (_onlySeedStorage) {
                 return;
             }
-            _tileCache.addErroredTile(_tileKey, _tileCacheVersion, "WD", false);
+            _tileCache.addErroredTile(_tileKeyStr, _tileCacheVersion, "WD", false);
             return;
         }
 
         if (addToCache) {
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
-                _tileCache._storageTileCache.addBitmap(_fullSizeTile, data);
+                _tileCache._storageTileCache.addBitmap(_fullTileKeyStr, data);
             }
         }
 
@@ -488,9 +438,9 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 
         //     var croppedSection = newBitmap(settings.tileSize, settings.tileSize);
         //     var croppedSectionDc = croppedSection.getDc();
-        //     var xOffset = _tileKey.x % cachedValues.smallTilesPerScaledTile;
-        //     var yOffset = _tileKey.y % cachedValues.smallTilesPerScaledTile;
-        //     // logT("tile: " + _tileKey);
+        //     var xOffset = _tileKeyStr.x % cachedValues.smallTilesPerScaledTile;
+        //     var yOffset = _tileKeyStr.y % cachedValues.smallTilesPerScaledTile;
+        //     // logT("tile: " + _tileKeyStr);
         //     // logT("croppedSection: " + croppedSection.getWidth() + " " + croppedSection.getHeight());
         //     // logT("source: " + sourceBitmap.getWidth() + " " + sourceBitmap.getHeight());
         //     // logT("drawing from: " + xOffset * settings.tileSize + " " + yOffset * settings.tileSize);
@@ -504,7 +454,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         // }
 
         var tile = new Tile(data);
-        _tileCache.addTile(_tileKey, _tileCacheVersion, tile);
+        _tileCache.addTile(_tileKeyStr, _tileCacheVersion, tile);
     }
 }
 
@@ -541,19 +491,19 @@ class StorageTileCache {
 
     function initialize(settings as Settings) {}
 
-    function get(tileKey as TileKey) as StorageTileDataType? {
+    function get(tileKeyStr as String) as StorageTileDataType? {
         return null;
     }
-    function haveTile(tileKey as TileKey) as Boolean {
+    function haveTile(tileKeyStr as String) as Boolean {
         return false;
     }
-    function addErroredTile(tileKey as TileKey, responseCode as Number) as Void {}
-    function addWrongDataTile(tileKey as TileKey) as Void {}
+    function addErroredTile(tileKeyStr as String, responseCode as Number) as Void {}
+    function addWrongDataTile(tileKeyStr as String) as Void {}
     function addJsonData(
-        tileKey as TileKey,
+        tileKeyStr as String,
         data as Dictionary<PropertyKeyType, PropertyValueType>
     ) as Void {}
-    function addBitmap(tileKey as TileKey, bitmap as WatchUi.BitmapResource) as Void {}
+    function addBitmap(tileKeyStr as String, bitmap as WatchUi.BitmapResource) as Void {}
     function clearValues() as Void {}
 }
 
@@ -607,9 +557,7 @@ class StorageTileCache {
         return TILES_TILE_PREFIX + tileKeyStr;
     }
 
-    function get(tileKey as TileKey) as StorageTileDataType? {
-        var tileKeyStr = tileKey.optimisedHashKey();
-
+    function get(tileKeyStr as String) as StorageTileDataType? {
         if (_tilesInStorage.indexOf(tileKeyStr) < 0) {
             // we do not have the tile key
             return null;
@@ -666,12 +614,9 @@ class StorageTileCache {
         return null;
     }
 
-    function haveTile(tileKey as TileKey) as Boolean {
+    function haveTile(tileKeyStr as String) as Boolean {
         // need to check for expired tiles
         // we could call get, but that also loads the tile data, and increments the "lastUsed" time
-
-        var tileKeyStr = tileKey.optimisedHashKey();
-
         if (_tilesInStorage.indexOf(tileKeyStr) < 0) {
             // we do not have the tile key
             return false;
@@ -683,7 +628,7 @@ class StorageTileCache {
             logE("bad tile metadata in storage" + tileMeta);
             return false;
         }
-        
+
         var epoch = Time.now().value();
         var expiresAt = tileMeta[2] as Number;
         if (expired(expiresAt, epoch)) {
@@ -694,8 +639,7 @@ class StorageTileCache {
         return true;
     }
 
-    function addErroredTile(tileKey as TileKey, responseCode as Number) as Void {
-        var tileKeyStr = tileKey.optimisedHashKey();
+    function addErroredTile(tileKeyStr as String, responseCode as Number) as Void {
         var epoch = Time.now().value();
         var settings = getApp()._breadcrumbContext.settings;
         var expiresAt =
@@ -706,8 +650,7 @@ class StorageTileCache {
         addMetaData(tileKeyStr, [epoch, STORAGE_TILE_TYPE_ERRORED, expiresAt, responseCode]);
     }
 
-    function addWrongDataTile(tileKey as TileKey) as Void {
-        var tileKeyStr = tileKey.optimisedHashKey();
+    function addWrongDataTile(tileKeyStr as String) as Void {
         var epoch = Time.now().value();
         var settings = getApp()._breadcrumbContext.settings;
         var expiresAt = epoch + settings.errorTileTTLS;
@@ -715,10 +658,9 @@ class StorageTileCache {
     }
 
     function addJsonData(
-        tileKey as TileKey,
+        tileKeyStr as String,
         data as Dictionary<PropertyKeyType, PropertyValueType>
     ) as Void {
-        var tileKeyStr = tileKey.optimisedHashKey();
         if (addMetaData(tileKeyStr, [Time.now().value(), STORAGE_TILE_TYPE_DICT, NO_EXPIRY])) {
             safeAdd(tileKey(tileKeyStr), data);
         }
@@ -743,8 +685,7 @@ class StorageTileCache {
         Storage.deleteValue(tileKey(tileKeyStr));
     }
 
-    function addBitmap(tileKey as TileKey, bitmap as WatchUi.BitmapResource) as Void {
-        var tileKeyStr = tileKey.optimisedHashKey();
+    function addBitmap(tileKeyStr as String, bitmap as WatchUi.BitmapResource) as Void {
         if (
             addMetaData(tileKeyStr, [
                 Time.now().value(),
@@ -1036,61 +977,80 @@ class TileCache {
     }
 
     // loads a tile into the cache
-    // reurns true if seed should stop and wait for next calculate (to prevent watchdog errors)
-    function seedTile(tileKey as TileKey) as Boolean {
-        var tile = _internalCache[tileKey.optimisedHashKey()] as Tile?;
+    // returns true if seed should stop and wait for next calculate (to prevent watchdog errors)
+    function seedTile(x as Number, y as Number, z as Number) as Boolean {
+        var tileKeyStr = tileKeyHash(x, y, z);
+        var tile = _internalCache[tileKeyStr] as Tile?;
         if (tile != null) {
             var epoch = Time.now().value();
             if (!tile.expiredAlready(epoch)) {
                 return false;
             }
         }
-        return startSeedTile(tileKey, false);
+        return startSeedTile(tileKeyStr, x, y, z, false);
     }
 
     // seedTile puts the tile into memory, either by pulling from storage, or by runnung a web request
     // seedTileToStorage only puts the tile into storage
     // returns true if a tile seed was started, flase if we already have the tile
-    function seedTileToStorage(tileKey as TileKey) as Boolean {
-        if (_storageTileCache.haveTile(tileKey)) {
+    function seedTileToStorage(tileKeyStr as String, x as Number, y as Number, z as Number) as Boolean {
+        if (_storageTileCache.haveTile(tileKeyStr)) {
             // we already have the tile (and it is not expired)
             return false;
         }
 
-        startSeedTile(tileKey, true);
+        startSeedTile(tileKeyStr, x, y, z, true);
         return true;
     }
 
     // reurns true if seed should stop and wait for next calculate (to prevent watchdog errors)
-    private function startSeedTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
+    private function startSeedTile(
+        tileKeyStr as String,
+        x as Number,
+        y as Number,
+        z as Number,
+        onlySeedStorage as Boolean
+    ) as Boolean {
         // logT("starting load tile: " + x + " " + y + " " + z);
 
         if (!_settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
-            return seedImageTile(tileKey, onlySeedStorage);
+            return seedImageTile(tileKeyStr, x, y, z, onlySeedStorage);
         }
 
-        return seedCompanionAppTile(tileKey, onlySeedStorage);
+        return seedCompanionAppTile(tileKeyStr, x, y, z, onlySeedStorage);
     }
 
     (:noImageTiles)
-    function seedImageTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
+    function seedImageTile(
+        tileKeyStr as String,
+        x as Number,
+        y as Number,
+        z as Number,
+        onlySeedStorage as Boolean
+    ) as Boolean {
         return false;
     }
     (:imageTiles)
-    function seedImageTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
+    function seedImageTile(
+        tileKeyStr as String,
+        _x as Number,
+        _y as Number,
+        _z as Number,
+        onlySeedStorage as Boolean
+    ) as Boolean {
         // logD("small tile: " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
-        var x = tileKey.x / _cachedValues.smallTilesPerScaledTile;
-        var y = tileKey.y / _cachedValues.smallTilesPerScaledTile;
-        var fullSizeTile = new TileKey(x, y, tileKey.z);
+        var x = _x / _cachedValues.smallTilesPerScaledTile;
+        var y = _y / _cachedValues.smallTilesPerScaledTile;
+        var fullSizeTileStr = tileKeyHash(x, y, _z);
         // logD("fullSizeTile tile: " + fullSizeTile);
         var imageReqHandler = new ImageWebTileRequestHandler(
             me,
-            tileKey,
-            fullSizeTile,
+            tileKeyStr,
+            fullSizeTileStr,
             _tileCacheVersion,
             onlySeedStorage
         );
-        var tileFromStorage = _storageTileCache.get(fullSizeTile);
+        var tileFromStorage = _storageTileCache.get(fullSizeTileStr);
         if (tileFromStorage != null) {
             var responseCode = tileFromStorage[0];
             // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
@@ -1104,12 +1064,12 @@ class TileCache {
         }
         if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
             // we are running in storage only mode, but the tile is not in the cache
-            addErroredTile(tileKey, _tileCacheVersion, "S404", true);
+            addErroredTile(tileKeyStr, _tileCacheVersion, "S404", true);
             return true; // this could be a complicated op if we are getting all these tiles from storage
         }
         _webRequestHandler.add(
             new ImageRequest(
-                "im" + tileKey.optimisedHashKey() + "-" + _tileCacheVersion, // the hash is for the small tile request, not the big one (they will send the same physical request out, but again use 256 tilSize if your using external sources)
+                "im" + tileKeyStr + "-" + _tileCacheVersion, // the hash is for the small tile request, not the big one (they will send the same physical request out, but again use 256 tilSize if your using external sources)
                 stringReplaceFirst(
                     stringReplaceFirst(
                         stringReplaceFirst(
@@ -1118,7 +1078,7 @@ class TileCache {
                             y.toString()
                         ),
                         "{z}",
-                        tileKey.z.toString()
+                        _z.toString()
                     ),
                     "{authToken}",
                     _settings.authToken
@@ -1131,20 +1091,32 @@ class TileCache {
     }
 
     (:noCompanionTiles)
-    function seedCompanionAppTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
+    function seedCompanionAppTile(
+        tileKeyStr as String,
+        _x as Number,
+        _y as Number,
+        _z as Number,
+        onlySeedStorage as Boolean
+    ) as Boolean {
         return false;
     }
 
     (:companionTiles)
-    function seedCompanionAppTile(tileKey as TileKey, onlySeedStorage as Boolean) as Boolean {
+    function seedCompanionAppTile(
+        tileKeyStr as String,
+        _x as Number,
+        _y as Number,
+        _z as Number,
+        onlySeedStorage as Boolean
+    ) as Boolean {
         // logD("small tile (companion): " + tileKey + " scaledTileSize: " + _settings.scaledTileSize + " tileSize: " + _settings.tileSize);
         var jsonWebHandler = new JsonWebTileRequestHandler(
             me,
-            tileKey,
+            tileKeyStr,
             _tileCacheVersion,
             onlySeedStorage
         );
-        var tileFromStorage = _storageTileCache.get(tileKey);
+        var tileFromStorage = _storageTileCache.get(tileKeyStr);
         if (tileFromStorage != null) {
             var responseCode = tileFromStorage[0];
             // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
@@ -1158,17 +1130,17 @@ class TileCache {
         }
         if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
             // we are running in storage only mode, but the tile is not in the cache
-            addErroredTile(tileKey, _tileCacheVersion, "S404", true);
+            addErroredTile(tileKeyStr, _tileCacheVersion, "S404", true);
             return true; // this could be a complicated op if we are getting all these tiles from storage
         }
         _webRequestHandler.add(
             new JsonRequest(
-                "json" + tileKey.optimisedHashKey() + "-" + _tileCacheVersion,
+                "json" + tileKeyStr + "-" + _tileCacheVersion,
                 _settings.tileUrl + "/loadtile",
                 {
-                    "x" => tileKey.x,
-                    "y" => tileKey.y,
-                    "z" => tileKey.z,
+                    "x" => _x,
+                    "y" => _y,
+                    "z" => _z,
                     "scaledTileSize" => _settings.scaledTileSize,
                     "tileSize" => _settings.tileSize,
                 },
@@ -1179,7 +1151,7 @@ class TileCache {
     }
 
     // puts a tile into the cache
-    function addTile(tileKey as TileKey, tileCacheVersion as Number, tile as Tile) as Void {
+    function addTile(tileKeyStr as String, tileCacheVersion as Number, tile as Tile) as Void {
         if (tileCacheVersion != _tileCacheVersion) {
             return;
         }
@@ -1190,11 +1162,11 @@ class TileCache {
             evictLeastRecentlyUsedTile();
         }
 
-        _internalCache[tileKey.optimisedHashKey()] = tile;
+        _internalCache[tileKeyStr] = tile;
     }
 
     function addErroredTile(
-        tileKey as TileKey,
+        tileKeyStr as String,
         tileCacheVersion as Number,
         msg as String,
         isHttpResponseCode as Boolean
@@ -1217,7 +1189,7 @@ class TileCache {
             if (errorBitmap != null) {
                 var tile = new Tile(errorBitmap);
                 tile.setExpiresAt(expiresAt);
-                _internalCache[tileKey.optimisedHashKey()] = tile;
+                _internalCache[tileKeyStr] = tile;
                 return;
             }
         }
@@ -1272,12 +1244,13 @@ class TileCache {
         _errorBitmaps[msg] = bitmap.weak(); // store in our cache for later use
         var tile = new Tile(bitmap);
         tile.setExpiresAt(expiresAt);
-        _internalCache[tileKey.optimisedHashKey()] = tile;
+        _internalCache[tileKeyStr] = tile;
     }
 
     // gets a tile that was stored by seedTile
-    function getTile(tileKey as TileKey) as Tile? {
-        var tile = _internalCache[tileKey.optimisedHashKey()] as Tile?;
+    function getTile(x as Number, y as Number, z as Number) as Tile? {
+        var tileKeyStr = tileKeyHash(x, y, z);
+        var tile = _internalCache[tileKeyStr] as Tile?;
         if (tile != null) {
             // logT("cache hit: " + x  + " " + y + " " + z);
             _hits++;
@@ -1291,8 +1264,8 @@ class TileCache {
         return null;
     }
 
-    function haveTile(tileKey as TileKey) as Boolean {
-        return _internalCache.hasKey(tileKey.optimisedHashKey());
+    function haveTile(tileKeyStr as String) as Boolean {
+        return _internalCache.hasKey(tileKeyStr);
     }
 
     function evictLeastRecentlyUsedTile() as Void {
@@ -1492,9 +1465,7 @@ class TileCache {
         if (mapTileBytes.size() != requiredSize) {
             // we could load tile partially, but that would require checking each itteration of the for loop,
             // want to avoid any extra work for perf
-            logE(
-                "bad tile length full colour: " + mapTileBytes.size() + " best effort load"
-            );
+            logE("bad tile length full colour: " + mapTileBytes.size() + " best effort load");
         }
 
         mapTileBytes.add(0x00); // add a byte to the end so the last 24bit colour we parse still has 32 bits of data

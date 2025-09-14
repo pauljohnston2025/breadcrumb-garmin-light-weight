@@ -55,9 +55,8 @@ class MapRenderer {
                 y < tileCountY + _settings.tileCachePadding;
                 ++y
             ) {
-                var tileKey = new TileKey(firstTileX + x, firstTileY + y, tileZ);
                 // seed it for the next render
-                if (_tileCache.seedTile(tileKey)) {
+                if (_tileCache.seedTile(firstTileX + x, firstTileY + y, tileZ)) {
                     return true; // we pulled from storage, or there is some other reason to stop seeding the tile
                 }
             }
@@ -190,8 +189,7 @@ class MapRenderer {
 
         for (var x = 0; x < tileCountX; ++x) {
             for (var y = 0; y < tileCountY; ++y) {
-                var tileKey = new TileKey(firstTileX + x, firstTileY + y, tileZ);
-                var tileFromCache = _tileCache.getTile(tileKey); // seed it for the next render
+                var tileFromCache = _tileCache.getTile(firstTileX + x, firstTileY + y, tileZ); // seed it for the next render
                 if (tileFromCache == null) {
                     continue;
                 }
@@ -294,8 +292,7 @@ class MapRenderer {
 
         for (var x = 0; x < tileCountX; ++x) {
             for (var y = 0; y < tileCountY; ++y) {
-                var tileKey = new TileKey(firstTileX + x, firstTileY + y, tileZ);
-                var tileFromCache = _tileCache.getTile(tileKey); // seed it for the next render
+                var tileFromCache = _tileCache.getTile(firstTileX + x, firstTileY + y, tileZ); // seed it for the next render
                 if (tileFromCache == null) {
                     continue;
                 }
