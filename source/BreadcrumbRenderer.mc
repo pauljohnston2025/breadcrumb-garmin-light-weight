@@ -26,32 +26,54 @@ class BreadcrumbRenderer {
     var _upArrow as BitmapResource;
     var _downArrow as BitmapResource;
 
-    // units in meters (float/int) to label
+    // units in mm (float/int) to label
     var SCALE_NAMES as Dictionary<Number, String> = {
-        1 => "1m",
-        5 => "5m",
-        10 => "10m",
-        20 => "20m",
-        30 => "30m",
-        40 => "40m",
-        50 => "50m",
-        100 => "100m",
-        250 => "250m",
-        500 => "500m",
-        1000 => "1km",
-        2000 => "2km",
-        3000 => "3km",
-        4000 => "4km",
-        5000 => "5km",
-        10000 => "10km",
-        20000 => "20km",
-        30000 => "30km",
-        40000 => "40km",
-        50000 => "50km",
-        100000 => "100km",
-        500000 => "500km",
-        1000000 => "1000km",
-        10000000 => "10000km",
+        1000 => "1m",
+        5000 => "5m",
+        10000 => "10m",
+        20000 => "20m",
+        30000 => "30m",
+        40000 => "40m",
+        50000 => "50m",
+        100000 => "100m",
+        250000 => "250m",
+        500000 => "500m",
+        1000000 => "1km",
+        2000000 => "2km",
+        3000000 => "3km",
+        4000000 => "4km",
+        5000000 => "5km",
+        10000000 => "10km",
+        20000000 => "20km",
+        30000000 => "30km",
+        40000000 => "40km",
+        50000000 => "50km",
+        100000000 => "100km",
+        500000000 => "500km",
+        1000000000 => "1000km",
+        2000000000 => "2000km",
+    };
+
+    // yep the key of the array is in mm (they will never know, it will be our little secret)
+    var SCALE_NAMES_IMPERIAL as Dictionary<Number, String> = {
+        1524 => "5ft",
+        3048 => "10ft",
+        7620 => "25ft",
+        15240 => "50ft",
+        30480 => "100ft",
+        76200 => "250ft",
+        152400 => "500ft",
+        304800 => "1000ft",
+        804672 => "0.5mi",
+        1609344 => "1mi",
+        3218688 => "2mi",
+        8046720 => "5mi",
+        16093440 => "10mi",
+        32186880 => "20mi",
+        80467200 => "50mi",
+        160934400 => "100mi",
+        804672000 => "500mi",
+        1609344000 => "1000mi",
     };
 
     // we want much smaller elevation changes to be seen
@@ -79,6 +101,23 @@ class BreadcrumbRenderer {
         500000 => "500m",
     };
 
+    // key is in mm
+    var ELEVATION_SCALE_NAMES_IMPERIAL as Dictionary<Number, String> = {
+        25 => "1in",
+        51 => "2in",
+        127 => "5in",
+        254 => "10in",
+        305 => "1ft",
+        1524 => "5ft",
+        3048 => "10ft",
+        6096 => "20ft",
+        15240 => "50ft",
+        30480 => "100ft",
+        76200 => "250ft",
+        152400 => "500ft",
+        304800 => "1000ft",
+    };
+
     // benchmark same track loaded (just render track no activity running) using
     // average time over 1min of benchmark
     // (just route means we always have a heap of points, and a small track does not bring the average down)
@@ -98,30 +137,20 @@ class BreadcrumbRenderer {
         _downArrow = WatchUi.loadResource(Rez.Drawables.DownArrow) as WatchUi.BitmapResource;
     }
 
-    function getScaleSize() as [Float, Number] {
-        return getScaleSizeGeneric(
-            _cachedValues.currentScale,
-            DESIRED_SCALE_PIXEL_WIDTH,
-            SCALE_NAMES,
-            1
-        );
-    }
-
     function getScaleSizeGeneric(
         scale as Float,
         desiredWidth as Float,
-        scaleNames as Dictionary<Number, String>,
-        scaleFactor as Number // for elevation to be in mm rather than m
+        scaleNames as Dictionary<Number, String>
     ) as [Float, Number] {
-        var foundDistanceKey = 10;
-        var foundPixelWidth = 0f;
         // get the closest without going over
         // keys loads them in random order, we want the smallest first
         var keys = scaleNames.keys();
         keys.sort(null);
+        var foundDistanceKey = keys[0];
+        var foundPixelWidth = 0f;
         for (var i = 0; i < keys.size(); ++i) {
             var distanceKey = keys[i] as Number;
-            var testPixelWidth = (distanceKey.toFloat() / scaleFactor) * scale;
+            var testPixelWidth = (distanceKey.toFloat() / 1000) * scale;
             if (testPixelWidth > desiredWidth) {
                 break;
             }
@@ -134,14 +163,19 @@ class BreadcrumbRenderer {
     }
 
     function renderCurrentScale(dc as Dc) as Void {
-        var scaleData = getScaleSize();
+        var scaleNames = settings.distanceImperialUnits ? SCALE_NAMES_IMPERIAL : SCALE_NAMES;
+        var scaleData = getScaleSizeGeneric(
+            _cachedValues.currentScale,
+            DESIRED_SCALE_PIXEL_WIDTH,
+            scaleNames
+        );
         var pixelWidth = scaleData[0];
         var distanceM = scaleData[1];
-        if (pixelWidth == 0) {
+        if (pixelWidth == 0f) {
             return;
         }
 
-        var foundName = SCALE_NAMES[distanceM];
+        var foundName = scaleNames[distanceM];
 
         var y = _cachedValues.physicalScreenHeight - 25;
         dc.setColor(settings.normalModeColour, Graphics.COLOR_TRANSPARENT);
@@ -538,8 +572,8 @@ class BreadcrumbRenderer {
         var rotateSin = _cachedValues.rotateSin; // local lookup faster
 
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
-            // its very cofusing seeing the routes disappear when scrolling
-            // and it makes sense to want to sroll around the route too
+            // its very confusing seeing the routes disappear when scrolling
+            // and it makes sense to want to scroll around the route too
             return;
         }
 
@@ -947,8 +981,8 @@ class BreadcrumbRenderer {
         lastY as Float,
         drawEndMarker as Boolean
     ) as Void {
-        // todo let user confgure these, or render icons instead
-        // could add a start play button and a finnish flag (not finlands flag, the checkered kind)
+        // todo let user configure these, or render icons instead
+        // could add a start play button and a finnish flag (not Finland's flag, the checkered kind)
         var squareSize = 10;
         var squareHalf = squareSize / 2;
         dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_BLACK);
@@ -1514,10 +1548,15 @@ class BreadcrumbRenderer {
             return toInc;
         }
 
-        var scaleData = getScaleSize();
+        var scaleNames = settings.distanceImperialUnits ? SCALE_NAMES_IMPERIAL : SCALE_NAMES;
+        var scaleData = getScaleSizeGeneric(
+            _cachedValues.currentScale,
+            DESIRED_SCALE_PIXEL_WIDTH,
+            scaleNames
+        );
         var iInc = direction;
         var currentDistanceM = scaleData[1];
-        var keys = SCALE_NAMES.keys();
+        var keys = scaleNames.keys();
         keys.sort(null);
         for (var i = 0; i < keys.size(); ++i) {
             var distanceM = keys[i];
@@ -1532,7 +1571,7 @@ class BreadcrumbRenderer {
                 }
 
                 // we want the result to be
-                var nextDistanceM = keys[nextScaleIndex] as Float;
+                var nextDistanceM = keys[nextScaleIndex] / 1000f as Float;
                 // -2 since we need some fudge factor to make sure we are very close to desired length, but not past it
                 var desiredScale = (DESIRED_SCALE_PIXEL_WIDTH - 2) / nextDistanceM;
                 var toInc = desiredScale - scale;
@@ -1870,15 +1909,15 @@ class BreadcrumbRenderer {
         var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
         var physicalScreenHeight = _cachedValues.physicalScreenHeight; // local lookup faster
 
-        var hScaleData = getScaleSizeGeneric(hScalePPM, DESIRED_SCALE_PIXEL_WIDTH, SCALE_NAMES, 1);
+        var hScaleNames = settings.distanceImperialUnits ? SCALE_NAMES_IMPERIAL : SCALE_NAMES;
+        var vScaleNames = settings.elevationImperialUnits
+            ? ELEVATION_SCALE_NAMES_IMPERIAL
+            : ELEVATION_SCALE_NAMES;
+
+        var hScaleData = getScaleSizeGeneric(hScalePPM, DESIRED_SCALE_PIXEL_WIDTH, hScaleNames);
         var hPixelWidth = hScaleData[0];
         var hDistanceM = hScaleData[1];
-        var vScaleData = getScaleSizeGeneric(
-            vScale,
-            DESIRED_ELEV_SCALE_PIXEL_WIDTH,
-            ELEVATION_SCALE_NAMES,
-            1000
-        );
+        var vScaleData = getScaleSizeGeneric(vScale, DESIRED_ELEV_SCALE_PIXEL_WIDTH, vScaleNames);
         var vPixelWidth = vScaleData[0];
         var vDistanceM = vScaleData[1];
         dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
@@ -1909,17 +1948,29 @@ class BreadcrumbRenderer {
             }
         }
 
+        var mToFt = 3.28084f;
+        var elevationUnit = "m";
+        var startAtDisplay = startAt;
+        if (settings.elevationImperialUnits) {
+            elevationUnit = "ft";
+            startAtDisplay = startAt * mToFt;
+        }
+
         dc.drawText(
             0,
             yHalfPhysical - 15,
             Graphics.FONT_XTINY,
-            startAt.format("%.0f"),
+            startAtDisplay.format("%.0f"),
             Graphics.TEXT_JUSTIFY_LEFT
         );
         if (vScale != 0) {
             // prevent division by 0
             var topScaleM = startAt + _halfYElevationHeight / vScale;
-            var topText = topScaleM.format("%.0f") + "m";
+            var topScaleDisplay = topScaleM;
+            if (settings.elevationImperialUnits) {
+                topScaleDisplay = topScaleM * mToFt;
+            }
+            var topText = topScaleDisplay.format("%.0f") + elevationUnit;
             var textDim = dc.getTextDimensions(topText, Graphics.FONT_XTINY);
             dc.drawText(
                 _xElevationStart,
@@ -1929,11 +1980,15 @@ class BreadcrumbRenderer {
                 Graphics.TEXT_JUSTIFY_LEFT
             );
             var bottomScaleM = startAt - _halfYElevationHeight / vScale;
+            var bottomScaleDisplay = bottomScaleM;
+            if (settings.elevationImperialUnits) {
+                bottomScaleDisplay = bottomScaleM * mToFt;
+            }
             dc.drawText(
                 _xElevationStart,
                 yHalfPhysical + _halfYElevationHeight,
                 Graphics.FONT_XTINY,
-                bottomScaleM.format("%.0f") + "m",
+                bottomScaleDisplay.format("%.0f") + elevationUnit,
                 Graphics.TEXT_JUSTIFY_LEFT
             );
         }
@@ -1943,7 +1998,7 @@ class BreadcrumbRenderer {
 
         if (hPixelWidth != 0) {
             // if statement makes sure that we can get a SCALE_NAMES[hDistanceM]
-            var hFoundName = SCALE_NAMES[hDistanceM];
+            var hFoundName = hScaleNames[hDistanceM];
 
             var y = physicalScreenHeight - 20;
             dc.drawLine(
@@ -1963,7 +2018,7 @@ class BreadcrumbRenderer {
 
         if (vPixelWidth != 0) {
             // if statement makes sure that we can get a ELEVATION_SCALE_NAMES[vDistanceM]
-            var vFoundName = ELEVATION_SCALE_NAMES[vDistanceM];
+            var vFoundName = vScaleNames[vDistanceM];
 
             var x = xHalfPhysical + DESIRED_SCALE_PIXEL_WIDTH / 2.0f;
             var y = physicalScreenHeight - 20 - 5 - vPixelWidth / 2.0f;
@@ -1984,11 +2039,21 @@ class BreadcrumbRenderer {
         }
 
         var distanceM = _cachedValues.elapsedDistanceM;
-        var distanceKM = distanceM / 1000f;
-        var distText =
-            distanceKM > 1
-                ? distanceKM.format("%.1f") + "km"
-                : distanceM.toNumber().toString() + "m";
+        var distText;
+        if (settings.elevationImperialUnits) {
+            var distanceMi = distanceM * 0.000621371f;
+            var distanceFt = distanceM * 3.28084f;
+            distText =
+                distanceMi >= 0.1
+                    ? distanceMi.format("%.1f") + "mi"
+                    : distanceFt.toNumber().toString() + "ft";
+        } else {
+            var distanceKM = distanceM / 1000f;
+            distText =
+                distanceKM > 1
+                    ? distanceKM.format("%.1f") + "km"
+                    : distanceM.toNumber().toString() + "m";
+        }
         var text = "dist: " + distText + "\n" + "elev: " + elevationText;
         dc.drawText(xHalfPhysical, 20, Graphics.FONT_XTINY, text, Graphics.TEXT_JUSTIFY_CENTER);
     }

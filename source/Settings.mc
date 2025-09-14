@@ -484,6 +484,11 @@ class Settings {
     var showDirectionPoints as Boolean = false;
     var showDirectionPointTextUnderIndex as Number = 0;
 
+    // these settings can only be modified externally, but we cahe them for faster/easier lookup
+    // https://www.youtube.com/watch?v=LasrD6SZkZk&ab_channel=JaylaB
+    var distanceImperialUnits as Boolean = System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE;
+    var elevationImperialUnits as Boolean = System.getDeviceSettings().elevationUnits == System.UNIT_STATUTE;
+
     (:lowMemory)
     function routeMax() as Number {
         return 1; // can only get 1 route (second route crashed on storage save), we also still need space for the track

@@ -5,6 +5,7 @@ import Toybox.WatchUi;
 import Toybox.Communications;
 import Toybox.Graphics;
 import Toybox.Attention;
+import Toybox.System;
 
 typedef Alert as interface {
     function text() as String;
@@ -19,7 +20,8 @@ class OffTrackAlert extends WatchUi.DataFieldAlert {
 
     function onUpdate(dc as Dc) as Void {
         var halfWidth = dc.getWidth() * 0.5;
-        var offTrackIcon = WatchUi.loadResource(Rez.Drawables.OffTrackIcon) as WatchUi.BitmapResource;
+        var offTrackIcon =
+            WatchUi.loadResource(Rez.Drawables.OffTrackIcon) as WatchUi.BitmapResource;
         dc.drawBitmap(0, 0, offTrackIcon);
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
@@ -96,11 +98,13 @@ class WrongDirectionAlert extends WatchUi.DataFieldAlert {
 class DirectionAlert extends WatchUi.DataFieldAlert {
     var direction as Number; // -180 to +180 deg
     var distanceM as Float;
+    var distanceImperialUnits as Boolean;
 
-    function initialize(direction as Number, distanceM as Float) {
+    function initialize(direction as Number, distanceM as Float, distanceImperialUnits as Boolean) {
         WatchUi.DataFieldAlert.initialize();
         self.direction = direction;
         self.distanceM = distanceM;
+        self.distanceImperialUnits = distanceImperialUnits;
     }
 
     // Overrides the onUpdate function to draw a graphical turn indicator
@@ -156,7 +160,14 @@ class DirectionAlert extends WatchUi.DataFieldAlert {
         // --- 5. Display the Distance Text ---
         // Keep the distance text, as it's still very useful information.
         // We'll place it neatly below the line drawing.
-        var text = distanceM.format("%.1f") + "m";
+        var text = "";
+        if (distanceImperialUnits) {
+            var distanceFt = distanceM * 3.28084;
+            text = distanceFt.format("%.0f") + "ft";
+        } else {
+            text = distanceM.format("%.0f") + "m";
+        }
+
         dc.drawText(
             centerX,
             centerY + lineLength + 10, // Position text below the drawing
@@ -168,8 +179,16 @@ class DirectionAlert extends WatchUi.DataFieldAlert {
 
     function text() as String {
         var dirText = direction >= 0 ? "Right" : "Left";
-        return dirText + " Turn In " + distanceM.format("%.1f") + "m " + absN(direction) + "°";
-        // var text = dirText + " Turn In " + distanceM.format("%.1f") + "m";
+        var distanceText = "";
+
+        if (distanceImperialUnits) {
+            var distanceFt = distanceM * 3.28084;
+            distanceText = distanceFt.format("%.0f") + "ft";
+        } else {
+            distanceText = distanceM.format("%.0f") + "m";
+        }
+
+        return dirText + " Turn In " + distanceText + " " + absN(direction) + "°";
     }
 
     function alert() as WatchUi.DataFieldAlert {
@@ -307,7 +326,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         if (_cachedValues.currentScale != 0f) {
             distanceM = distancePx / _cachedValues.currentScale;
         }
-        showMyAlert(new DirectionAlert(direction, distanceM));
+        showMyAlert(new DirectionAlert(direction, distanceM, settings.distanceImperialUnits));
     }
 
     function showMyTrackAlert(epoch as Number, alert as Alert) as Void {
@@ -841,7 +860,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var pointWeLeftTrack = offTrackInfo.pointWeLeftTrack;
         if (lastPoint != null) {
             // only ever not null if feature enabled
-            if (!offTrackInfo.onTrack && pointWeLeftTrack != null && settings.drawLineToClosestPoint) {
+            if (
+                !offTrackInfo.onTrack &&
+                pointWeLeftTrack != null &&
+                settings.drawLineToClosestPoint
+            ) {
                 // points need to be scaled and rotated :(
                 renderer.renderLineFromLastPointToRoute(
                     dc,
@@ -873,7 +896,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         if (lastPoint != null) {
             // only ever not null if feature enabled
 
-            if (!offTrackInfo.onTrack && pointWeLeftTrack != null && settings.drawLineToClosestPoint) {
+            if (
+                !offTrackInfo.onTrack &&
+                pointWeLeftTrack != null &&
+                settings.drawLineToClosestPoint
+            ) {
                 // points need to be scaled and rotated :(
                 renderer.renderLineFromLastPointToRouteUnrotated(
                     dc,
@@ -977,7 +1004,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 distMeters = distMeters / _cachedValues.currentScale;
             }
 
-            distToLastStr = distMeters.format("%.0f") + "m";
+            if (settings.distanceImperialUnits) {
+                var distanceFt = distMeters * 3.28084;
+                distToLastStr = distanceFt.format("%.0f") + "ft";
+            } else {
+                distToLastStr = distMeters.format("%.0f") + "m";
+            }
         }
         dc.drawText(
             x,
@@ -1127,7 +1159,18 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var hScalePPM = elevationScale[3];
 
         var lastPoint = track.lastPoint();
-        var elevationText = lastPoint == null ? "" : lastPoint.altitude.format("%.0f") + "m";
+        var elevationText = "";
+
+        if (lastPoint == null) {
+            elevationText = "";
+        } else {
+            if (settings.elevationImperialUnits) {
+                var elevationFt = lastPoint.altitude * 3.28084;
+                elevationText = elevationFt.format("%.0f") + "ft";
+            } else {
+                elevationText = lastPoint.altitude.format("%.0f") + "m";
+            }
+        }
 
         renderer.renderElevationChart(
             dc,
@@ -1177,7 +1220,18 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var hScalePPM = elevationScale[3];
 
         var lastPoint = track.lastPoint();
-        var elevationText = lastPoint == null ? "" : lastPoint.altitude.format("%.0f") + "m";
+        var elevationText = "";
+
+        if (lastPoint == null) {
+            elevationText = "";
+        } else {
+            if (settings.elevationImperialUnits) {
+                var elevationFt = lastPoint.altitude * 3.28084;
+                elevationText = elevationFt.format("%.0f") + "ft";
+            } else {
+                elevationText = lastPoint.altitude.format("%.0f") + "m";
+            }
+        }
 
         var elevationStartX = renderer._xElevationStart;
 
