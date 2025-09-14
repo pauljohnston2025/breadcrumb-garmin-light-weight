@@ -798,11 +798,13 @@ class SettingsRoutes extends WatchUi.Menu2 {
                 continue;
             }
             var routeName = settings.routeName(i);
+            var enabledStr = settings.routeEnabled(i) ? "Enabled" : "Disabled";
+            var reversedStr = settings.routeReversed(i) ? "Reversed" : "Forward";
             addItem(
                 // do not be tempted to switch this to a menuitem (IconMenuItem is supported since API 3.0.0, MenuItem only supports icons from API 3.4.0)
                 new IconMenuItem(
                     routeName.equals("") ? "<unlabeled>" : routeName,
-                    settings.routeEnabled(i) ? "Enabled" : "Disabled",
+                    enabledStr + " " + reversedStr,
                     i,
                     new ColourIcon(settings.routeColour(i)),
                     {
