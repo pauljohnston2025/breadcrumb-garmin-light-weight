@@ -904,7 +904,7 @@ class StorageTileCache {
 }
 
 class TileCache {
-    var _internalCache as Dictionary<TileKey, Tile>;
+    var _internalCache as Dictionary<String, Tile>;
     var _webRequestHandler as WebRequestHandler;
     var _palette as Array<Number>;
     var _settings as Settings;
@@ -925,7 +925,7 @@ class TileCache {
         _settings = settings;
         _cachedValues = cachedValues;
         _webRequestHandler = webRequestHandler;
-        _internalCache = ({}) as Dictionary<TileKey, Tile>;
+        _internalCache = ({}) as Dictionary<String, Tile>;
         _storageTileCache = new StorageTileCache(_settings);
 
         // note: these need to match whats in the app
@@ -1030,7 +1030,7 @@ class TileCache {
     }
 
     public function clearValuesWithoutStorage() as Void {
-        _internalCache = ({}) as Dictionary<TileKey, Tile>;
+        _internalCache = ({}) as Dictionary<String, Tile>;
         _errorBitmaps = ({}) as Dictionary<String, WeakReference<Graphics.BufferedBitmap> >;
         _tileCacheVersion++;
     }
@@ -1038,7 +1038,7 @@ class TileCache {
     // loads a tile into the cache
     // reurns true if seed should stop and wait for next calculate (to prevent watchdog errors)
     function seedTile(tileKey as TileKey) as Boolean {
-        var tile = _internalCache[tileKey] as Tile?;
+        var tile = _internalCache[tileKey.optimisedHashKey()] as Tile?;
         if (tile != null) {
             var epoch = Time.now().value();
             if (!tile.expiredAlready(epoch)) {
@@ -1190,7 +1190,7 @@ class TileCache {
             evictLeastRecentlyUsedTile();
         }
 
-        _internalCache[tileKey] = tile;
+        _internalCache[tileKey.optimisedHashKey()] = tile;
     }
 
     function addErroredTile(
@@ -1217,7 +1217,7 @@ class TileCache {
             if (errorBitmap != null) {
                 var tile = new Tile(errorBitmap);
                 tile.setExpiresAt(expiresAt);
-                _internalCache[tileKey] = tile;
+                _internalCache[tileKey.optimisedHashKey()] = tile;
                 return;
             }
         }
@@ -1272,12 +1272,12 @@ class TileCache {
         _errorBitmaps[msg] = bitmap.weak(); // store in our cache for later use
         var tile = new Tile(bitmap);
         tile.setExpiresAt(expiresAt);
-        _internalCache[tileKey] = tile;
+        _internalCache[tileKey.optimisedHashKey()] = tile;
     }
 
     // gets a tile that was stored by seedTile
     function getTile(tileKey as TileKey) as Tile? {
-        var tile = _internalCache[tileKey] as Tile?;
+        var tile = _internalCache[tileKey.optimisedHashKey()] as Tile?;
         if (tile != null) {
             // logT("cache hit: " + x  + " " + y + " " + z);
             _hits++;
@@ -1292,7 +1292,7 @@ class TileCache {
     }
 
     function haveTile(tileKey as TileKey) as Boolean {
-        return _internalCache.hasKey(tileKey);
+        return _internalCache.hasKey(tileKey.optimisedHashKey());
     }
 
     function evictLeastRecentlyUsedTile() as Void {
