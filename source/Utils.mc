@@ -8,6 +8,7 @@ const FLOAT_MIN = -340282346638528859811704183484516925440.0;
 const FLOAT_MAX = 340282346638528859811704183484516925440.0;
 const NUMBER_MAX = 0x7fffffff;
 
+(:inline)
 function maxF(lhs as Float, rhs as Float) as Float {
     if (lhs > rhs) {
         return lhs;
@@ -16,6 +17,7 @@ function maxF(lhs as Float, rhs as Float) as Float {
     return rhs;
 }
 
+(:inline)
 function maxN(lhs as Number, rhs as Number) as Number {
     if (lhs > rhs) {
         return lhs;
@@ -24,6 +26,7 @@ function maxN(lhs as Number, rhs as Number) as Number {
     return rhs;
 }
 
+(:inline)
 function minF(lhs as Float, rhs as Float) as Float {
     if (lhs < rhs) {
         return lhs;
@@ -32,6 +35,7 @@ function minF(lhs as Float, rhs as Float) as Float {
     return rhs;
 }
 
+(:inline)
 function minN(lhs as Number, rhs as Number) as Number {
     if (lhs < rhs) {
         return lhs;
@@ -40,6 +44,7 @@ function minN(lhs as Number, rhs as Number) as Number {
     return rhs;
 }
 
+(:inline)
 function abs(val as Float) as Float {
     if (val < 0) {
         return -val;
@@ -48,6 +53,7 @@ function abs(val as Float) as Float {
     return val;
 }
 
+(:inline)
 function absN(val as Number) as Number {
     if (val < 0) {
         return -val;
@@ -57,6 +63,7 @@ function absN(val as Number) as Number {
 }
 
 // from https://forums.garmin.com/developer/connect-iq/f/discussion/338071/testing-for-nan/1777041#1777041
+(:inline)
 function isnan(a as Float) as Boolean {
     return a != a;
 }
