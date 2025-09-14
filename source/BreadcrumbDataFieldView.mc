@@ -317,18 +317,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         }
     }
 
-    // todo maybe inline these functions?
-    function showMyDirectionAlert(
-        direction as Number /*-180 to 180*/,
-        distancePx as Float
-    ) as Void {
-        var distanceM = distancePx;
-        if (_cachedValues.currentScale != 0f) {
-            distanceM = distancePx / _cachedValues.currentScale;
-        }
-        showMyAlert(new DirectionAlert(direction, distanceM, settings.distanceImperialUnits));
-    }
-
     function showMyTrackAlert(epoch as Number, alert as Alert) as Void {
         lastOffTrackAlertNotified = epoch; // if showAlert fails, we will still have vibrated and turned the screen on
         showMyAlert(alert);
@@ -452,11 +440,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             }
             var res = route.checkDirections(
                 newPoint,
-                settings.directionDistanceM * _cachedValues.currentScale
+                settings.directionDistanceM * _cachedValues.currentScale,
+                _cachedValues
             );
 
             if (res != null) {
-                showMyDirectionAlert(res[0], res[1]);
+                showMyAlert(new DirectionAlert(res[0], res[1], settings.distanceImperialUnits));
                 return;
             }
         }

@@ -512,7 +512,8 @@ class BreadcrumbTrack {
     // returns [turnAngleDeg, distancePx] or null if no direction within range
     function checkDirections(
         checkPoint as RectangularPoint,
-        distanceCheck as Float
+        distanceCheck as Float,
+        cachedValues as CachedValues
     ) as [Number, Float]? {
         var directionsRaw = directions._internalArrayBuffer; // raw dog access means we can do the calcs much faster
         var coordinatesRaw = coordinates._internalArrayBuffer; // raw dog access means we can do the calcs much faster
@@ -580,9 +581,14 @@ class BreadcrumbTrack {
                 var angle = ((directionsRaw[i] & 0xffff0000) >> 16) - 180;
                 // by the time we get here we have parsed all the off track calculations and direction checks
                 // if this takes some time (seconds) the distance we get could be off, as the user has traveled closer to the intersection
-                // consider getting the raw location and calculating the distance to it right this second.
-                // var info = getActivityInfo();
-                return [angle, distancePx];
+                // so we get the users location and calculate it from where they currently are
+                var distanceM = getCurrentDistanceToDirection(
+                    coordinatesRaw[coordinatesIndex * ARRAY_POINT_SIZE],
+                    coordinatesRaw[coordinatesIndex * ARRAY_POINT_SIZE + 1],
+                    distancePx,
+                    cachedValues
+                );
+                return [angle, distanceM];
             }
         }
 
@@ -592,6 +598,33 @@ class BreadcrumbTrack {
             lastDirectionIndex = -1;
         }
         return null;
+    }
+
+    function getCurrentDistanceToDirection(
+        xPx as Float,
+        yPx as Float,
+        distancePx as Float,
+        cachedValues as CachedValues
+    ) as Float {
+        if (cachedValues.currentScale == 0f) {
+            return distancePx;
+        }
+
+        var info = Activity.getActivityInfo();
+        if (info == null) {
+            return distancePx / cachedValues.currentScale;
+        }
+        var currentPoint = pointFromActivityInfo(info);
+        if (currentPoint == null || !currentPoint.valid()) {
+            return distancePx / cachedValues.currentScale;
+        }
+
+        return distance(
+            xPx / cachedValues.currentScale,
+            yPx / cachedValues.currentScale,
+            currentPoint.x,
+            currentPoint.y
+        );
     }
 
     // checkpoint should already be scaled, as should distanceCheck
