@@ -103,6 +103,7 @@ class BreadcrumbContext {
             var route = new BreadcrumbTrack(routeId, name, 0);
             routes.add(route);
             settings.ensureRouteId(routeId);
+            settings.setRouteReversed(routeId, false);
             settings.setRouteName(routeId, route.name);
             settings.setRouteEnabled(routeId, true);
             return route;
@@ -117,6 +118,7 @@ class BreadcrumbContext {
         var route = new BreadcrumbTrack(nextId, name, 0);
         routes.add(route);
         settings.ensureRouteId(nextId);
+        settings.setRouteReversed(nextId, false);
         settings.setRouteName(nextId, route.name);
         settings.setRouteEnabled(nextId, true);
         return route;

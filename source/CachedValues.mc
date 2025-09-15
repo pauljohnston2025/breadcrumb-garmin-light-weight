@@ -1166,7 +1166,7 @@ class CachedValues {
         // factoring in the max distance around the route to cache
 
         // each point is downloaded as a bounding box, there will be overlaps
-        // this is also highly ineffcient, as there might only be one tile for the entire route ayt low zoom levels, but we still try and get the same
+        // this is also highly inefficient, as there might only be one tile for the entire route ayt low zoom levels, but we still try and get the same
         // tile over and over
         removeFromSeedingInProgressTilesAndSeedThem(); // do not call in for loop, we want to break out so we do not get watchdog errors
 
