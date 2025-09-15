@@ -1150,6 +1150,10 @@ class Settings {
         getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // do not remove our cached tiles, we only reduced the caches size, so they are still valid
     }
     
+    function storageTileCacheSizeReduced() as Void {
+        getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues();
+    }
+    
     (:settingsView)
     function setStorageTileCacheSize(value as Number) as Void {
         setStorageTileCacheSizeWithoutSideEffect(value);
@@ -1162,7 +1166,7 @@ class Settings {
 
         if (oldStorageTileCacheSize > storageTileCacheSize) {
             // only nuke storage tile cache if we reduce the number of tiles we can store
-            tileServerPropChanged();
+            storageTileCacheSizeReduced();
         }
     }
 
@@ -2449,10 +2453,14 @@ class Settings {
             oldUseDrawBitmap != useDrawBitmap ||
             oldPackingFormat != packingFormat ||
             oldCacheTilesInStorage != cacheTilesInStorage ||
-            oldStorageTileCacheSize > storageTileCacheSize ||
             !oldAuthToken.equals(authToken)
         ) {
             tileServerPropChanged();
+        }
+
+        if (oldStorageTileCacheSize > storageTileCacheSize)
+        {
+            storageTileCacheSizeReduced();
         }
 
         if (oldTileCacheSize > tileCacheSize) {

@@ -30,6 +30,7 @@ class BreadcrumbContext {
     function setup() as Void {
         settings.loadSettings(); // we want to make sure everything is done later
         cachedValues.setup();
+        tileCache.setup();
 
         // routes loaded from storage will be rescaled on the first calculate in cached values
         // had a bug where routes were stil in storage, but removed from settings, so load everything that is enabled (up to 10 routes)

@@ -520,6 +520,7 @@ class StorageTileCache {
     var _tilesInStorage as Array<String> = [];
 
     function initialize(settings as Settings) {}
+    function setup() as Void {}
 
     function get(tileKeyStr as String) as StorageTileDataType? {
         return null;
@@ -549,7 +550,7 @@ class StorageTileCache {
     function initialize(settings as Settings) {
         var tilesVersion = Storage.getValue(TILES_VERION_KEY);
         if (tilesVersion != null && (tilesVersion as Number) != TILES_STORAGE_VERSION) {
-            Storage.clearValues(); // we have to purge all storage (even our routes, since we have no way of cleanly removing the old storage keys (without having back comapt for each format))
+            Storage.clearValues(); // we have to purge all storage (even our routes, since we have no way of cleanly removing the old storage keys (without having back compat for each format))
         }
         Storage.setValue(TILES_VERION_KEY, TILES_STORAGE_VERSION);
 
@@ -576,6 +577,17 @@ class StorageTileCache {
         if (tiles != null && tiles instanceof Array) {
             // todo validate its an array of strings?
             _tilesInStorage = tiles as Array<String>;
+        }
+    }
+
+    function setup() as Void {
+        if (_settings.storageTileCacheSize < _tilesInStorage.size()) {
+            // purge off the old tiles, we have been reduced
+            // this usually will occur when the storageTileCacheSize setting is increased
+            // then the app crashes due to OOM
+            // The app only flushes changes to settings on successful termination, so next time we boot we have all the saved tiles from storage, but a limit in settings that is much lower
+            // this then stays like this on new tile adds, because we only remove 1 tile when the limit is reached
+            _settings.storageTileCacheSizeReduced();
         }
     }
 
@@ -992,11 +1004,15 @@ class TileCache {
         // loadPersistedTiles();
     }
 
+    function setup() as Void {
+        _storageTileCache.setup();
+    }
+
     public function clearValues() as Void {
         clearValuesWithoutStorage();
         // whenever we purge the tile cache it is usually because the tile server properties have changed, safest to nuke the storage cache too
         // though sme times its when the in memory tile cache size changes
-        // users should not be modifiying the tile settings in any way, otherwise the storage will also be out of date (eg. when tile size or tile url changes)
+        // users should not be modifying the tile settings in any way, otherwise the storage will also be out of date (eg. when tile size or tile url changes)
         _storageTileCache.clearValues();
     }
 
