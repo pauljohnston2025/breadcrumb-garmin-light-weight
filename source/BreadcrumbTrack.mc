@@ -9,11 +9,11 @@ using Toybox.Time.Gregorian;
 
 const TRACK_ID = -1;
 const MIN_DISTANCE_M = 5; // meters
-const RESTART_STABILITY_POINT_COUNT = 10; // number of points in a row that need to be within RESTART_STABILITY_DISTANCE_M to be onsisiddered a valid course
+const RESTART_STABILITY_POINT_COUNT = 10; // number of points in a row that need to be within RESTART_STABILITY_DISTANCE_M to be considered a valid course
 //note: RESTART_STABILITY_POINT_COUNT should be set based on DELAY_COMPUTE_COUNT
-// if DELAY_COMPUTE_COUNT = 5 seconds, 10 points give us startup cheking for 50 seconds, enough time to get a lock
-// max distance allowed to move to be consisdered a stable point (distance from previous point)
-// this needs to be relatively high, since the compute interval could be set quite large, or the user could be  on a motortransport (car, bike, jetski)
+// if DELAY_COMPUTE_COUNT = 5 seconds, 10 points give us startup checking for 50 seconds, enough time to get a lock
+// max distance allowed to move to be considered a stable point (distance from previous point)
+// this needs to be relatively high, since the compute interval could be set quite large, or the user could be  on a motor transport (car, bike, jetski)
 // eg. at 80kmph with a 5 second compute interval (that may not run for 3 attempts, 15 seconds)
 // 80000/60/60*15 = 333.333
 const STABILITY_MAX_DISTANCE_M = 400;
@@ -357,10 +357,21 @@ class BreadcrumbTrack {
     }
 
     function updateBoundingBox(point as RectangularPoint) as Void {
-        boundingBox[0] = minF(boundingBox[0], point.x);
-        boundingBox[1] = minF(boundingBox[1], point.y);
-        boundingBox[2] = maxF(boundingBox[2], point.x);
-        boundingBox[3] = maxF(boundingBox[3], point.y);
+        // tmp vars so we can inline the function and remove it
+        var boundingBox0Tmp = boundingBox[0] as Float;
+        var boundingBox1Tmp = boundingBox[1] as Float;
+        var boundingBox2Tmp = boundingBox[2] as Float;
+        var boundingBox3Tmp = boundingBox[3] as Float;
+
+        boundingBox0Tmp = minF(boundingBox0Tmp, point.x);
+        boundingBox1Tmp = minF(boundingBox1Tmp, point.y);
+        boundingBox2Tmp = maxF(boundingBox2Tmp, point.x);
+        boundingBox3Tmp = maxF(boundingBox3Tmp, point.y);
+
+        boundingBox[0] = boundingBox0Tmp;
+        boundingBox[1] = boundingBox1Tmp;
+        boundingBox[2] = boundingBox2Tmp;
+        boundingBox[3] = boundingBox3Tmp;
 
         elevationMin = minF(elevationMin, point.altitude);
         elevationMax = maxF(elevationMax, point.altitude);

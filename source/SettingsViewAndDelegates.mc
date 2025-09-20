@@ -54,11 +54,11 @@ class SettingsNumberPicker extends IntPicker {
 }
 
 (:settingsView)
-class SettingsStringPicker extends TextPickerDelegate {
-    private var callback as Method;
+class SettingsStringPicker extends MyTextPickerDelegate {
+    private var callback as (Method(value as String) as Void);
     public var parent as Renderable? = null;
-    function initialize(callback as Method, parent as Renderable?, picker as TextPickerView) {
-        TextPickerDelegate.initialize(me.method(:onTextEntered), picker);
+    function initialize(callback as (Method(value as String) as Void), parent as Renderable?, picker as TextPickerView) {
+        MyTextPickerDelegate.initialize(me.method(:onTextEntered), picker);
         self.callback = callback;
         self.parent = parent;
     }
@@ -600,11 +600,7 @@ function alertsCommon(menu as WatchUi.Menu2, settings as Settings) as Void {
     safeSetToggle(menu, :settingsAlertsDrawCheverons, settings.drawCheverons);
     safeSetToggle(menu, :settingsAlertsOffTrackWrongDirection, settings.offTrackWrongDirection);
     safeSetToggle(menu, :settingsAlertsEnabled, settings.enableOffTrackAlerts);
-    safeSetSubLabel(
-        menu,
-        :settingsAlertsTurnAlertTimeS,
-        settings.turnAlertTimeS.toString()
-    );
+    safeSetSubLabel(menu, :settingsAlertsTurnAlertTimeS, settings.turnAlertTimeS.toString());
     safeSetSubLabel(
         menu,
         :settingsAlertsMinTurnAlertDistanceM,
@@ -648,7 +644,11 @@ class SettingsColours extends Rez.Menus.SettingsColours {
     function rerender() as Void {
         var settings = getApp()._breadcrumbContext.settings;
         safeSetIcon(me, :settingsColoursTrackColour, new ColourIcon(settings.trackColour));
-        safeSetIcon(me, :settingsColoursDefaultRouteColour, new ColourIcon(settings.defaultRouteColour));
+        safeSetIcon(
+            me,
+            :settingsColoursDefaultRouteColour,
+            new ColourIcon(settings.defaultRouteColour)
+        );
         safeSetIcon(me, :settingsColoursUserColour, new ColourIcon(settings.userColour));
         safeSetIcon(me, :settingsColoursElevationColour, new ColourIcon(settings.elevationColour));
         safeSetIcon(
@@ -1798,7 +1798,8 @@ function checkAlertViewDisplay(
 ) as Void {
     if (
         oldView instanceof SettingsAlerts &&
-        !settings.offTrackWrongDirection && !settings.enableOffTrackAlerts
+        !settings.offTrackWrongDirection &&
+        !settings.enableOffTrackAlerts
     ) {
         var view = new SettingsAlertsDisabled();
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
@@ -1843,13 +1844,10 @@ function onSelectAlertCommon(
         );
     } else if (itemId == :settingsAlertsTurnAlertTimeS) {
         startPicker(
-            new SettingsNumberPicker(
-                settings.method(:setTurnAlertTimeS),
-                settings.turnAlertTimeS
-            ),
+            new SettingsNumberPicker(settings.method(:setTurnAlertTimeS), settings.turnAlertTimeS),
             view
         );
-    }else if (itemId == :settingsAlertsMinTurnAlertDistanceM) {
+    } else if (itemId == :settingsAlertsMinTurnAlertDistanceM) {
         startPicker(
             new SettingsNumberPicker(
                 settings.method(:setMinTurnAlertDistanceM),
@@ -1968,7 +1966,10 @@ class SettingsColoursDelegate extends WatchUi.Menu2InputDelegate {
             );
         } else if (itemId == :settingsColoursDefaultRouteColour) {
             startPicker(
-                new SettingsColourPicker(settings.method(:setDefaultRouteColour), settings.defaultRouteColour),
+                new SettingsColourPicker(
+                    settings.method(:setDefaultRouteColour),
+                    settings.defaultRouteColour
+                ),
                 view
             );
         } else if (itemId == :settingsColoursElevationColour) {

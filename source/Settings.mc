@@ -972,7 +972,7 @@ class Settings {
         turnAlertTimeS = value;
         setValue("turnAlertTimeS", turnAlertTimeS);
     }
-    
+
     (:settingsView)
     function setMinTurnAlertDistanceM(value as Number) as Void {
         minTurnAlertDistanceM = value;
@@ -1474,7 +1474,7 @@ class Settings {
     }
 
     function routesToSave() as Array<Dictionary<String, PropertyValueType> > {
-        var toSave = [];
+        var toSave = [] as Array<Dictionary<String, PropertyValueType> >;
         for (var i = 0; i < routes.size(); ++i) {
             var entry = routes[i];
             var toAdd = {
@@ -1483,7 +1483,7 @@ class Settings {
                 "enabled" => entry["enabled"] as Boolean,
                 "colour" => (entry["colour"] as Number).format("%X"), // this is why we have to copy it :(
                 "reversed" => entry["reversed"] as Boolean,
-            };
+            } as Dictionary<String, PropertyValueType>;
             toSave.add(toAdd);
         }
         return toSave;
@@ -1496,10 +1496,7 @@ class Settings {
 
     function saveRoutesNoSideEffect() as Void {
         var toSave = routesToSave();
-        Application.Storage.setValue(
-            "routes",
-            toSave as Dictionary<PropertyKeyType, PropertyValueType>
-        );
+        Application.Storage.setValue("routes", toSave);
     }
 
     (:settingsView)
@@ -2010,7 +2007,7 @@ class Settings {
 
             // The dict we get is memory mapped, do not use it directly - need to create a copy so we can change the colour type from string to int
             // If we use it directly the storage value gets overwritten
-            var result = [];
+            var result = [] as Array<Dictionary>;
             for (var i = 0; i < value.size(); ++i) {
                 var entry = value[i];
                 var entryOut = {};
@@ -2135,76 +2132,78 @@ class Settings {
         // eg. nulls are exposed as 0
         // colours are strings
 
-        return {
-            "tileSize" => tileSize,
-            "httpErrorTileTTLS" => httpErrorTileTTLS,
-            "turnAlertTimeS" => turnAlertTimeS,
-            "minTurnAlertDistanceM" => minTurnAlertDistanceM,
-            "maxTrackPoints" => maxTrackPoints,
-            "showDirectionPointTextUnderIndex" => showDirectionPointTextUnderIndex,
-            "errorTileTTLS" => errorTileTTLS,
-            "fullTileSize" => fullTileSize,
-            "scaledTileSize" => scaledTileSize,
-            "packingFormat" => packingFormat,
-            "useDrawBitmap" => useDrawBitmap,
-            "tileLayerMax" => tileLayerMax,
-            "tileLayerMin" => tileLayerMin,
-            "tileCacheSize" => tileCacheSize,
-            "storageTileCacheSize" => storageTileCacheSize,
-            "storageSeedBoundingBox" => storageSeedBoundingBox,
-            "storageSeedRouteDistanceM" => storageSeedRouteDistanceM,
-            "centerUserOffsetY" => centerUserOffsetY,
-            "mapMoveScreenSize" => mapMoveScreenSize,
-            "tileCachePadding" => tileCachePadding,
-            "recalculateIntervalS" => recalculateIntervalS,
-            "mode" => mode,
-            "mapEnabled" => mapEnabled,
-            "cacheTilesInStorage" => cacheTilesInStorage,
-            "storageMapTilesOnly" => storageMapTilesOnly,
-            "drawLineToClosestPoint" => drawLineToClosestPoint,
-            "showPoints" => showPoints,
-            "drawLineToClosestTrack" => drawLineToClosestTrack,
-            "showTileBorders" => showTileBorders,
-            "showErrorTileMessages" => showErrorTileMessages,
-            "includeDebugPageInOnScreenUi" => includeDebugPageInOnScreenUi,
-            "drawHitBoxes" => drawHitBoxes,
-            "showDirectionPoints" => showDirectionPoints,
-            "displayLatLong" => displayLatLong,
-            "scaleRestrictedToTileLayers" => scaleRestrictedToTileLayers(),
-            "trackColour" => trackColour.format("%X"),
-            "defaultRouteColour" => defaultRouteColour.format("%X"),
-            "tileErrorColour" => tileErrorColour.format("%X"),
-            "elevationColour" => elevationColour.format("%X"),
-            "userColour" => userColour.format("%X"),
-            "maxPendingWebRequests" => maxPendingWebRequests,
-            "metersAroundUser" => metersAroundUser,
-            "zoomAtPaceMode" => zoomAtPaceMode,
-            "zoomAtPaceSpeedMPS" => zoomAtPaceSpeedMPS,
-            "uiMode" => uiMode,
-            "elevationMode" => elevationMode,
-            "alertType" => alertType,
-            "renderMode" => renderMode,
-            "fixedLatitude" => fixedLatitude == null ? 0f : fixedLatitude,
-            "fixedLongitude" => fixedLongitude == null ? 0f : fixedLongitude,
-            "tileUrl" => tileUrl,
-            "authToken" => authToken,
-            "mapChoice" => mapChoice,
-            "routes" => routesToSave(),
-            "routesEnabled" => routesEnabled,
-            "displayRouteNames" => displayRouteNames,
-            "disableMapsFailureCount" => disableMapsFailureCount,
-            "enableOffTrackAlerts" => enableOffTrackAlerts,
-            "offTrackWrongDirection" => offTrackWrongDirection,
-            "drawCheverons" => drawCheverons,
-            "offTrackAlertsDistanceM" => offTrackAlertsDistanceM,
-            "offTrackAlertsMaxReportIntervalS" => offTrackAlertsMaxReportIntervalS,
-            "offTrackCheckIntervalS" => offTrackCheckIntervalS,
-            "normalModeColour" => normalModeColour.format("%X"),
-            "routeMax" => _routeMax,
-            "uiColour" => uiColour.format("%X"),
-            "debugColour" => debugColour.format("%X"),
-            "resetDefaults" => false,
-        };
+        return (
+            ({
+                "tileSize" => tileSize,
+                "httpErrorTileTTLS" => httpErrorTileTTLS,
+                "turnAlertTimeS" => turnAlertTimeS,
+                "minTurnAlertDistanceM" => minTurnAlertDistanceM,
+                "maxTrackPoints" => maxTrackPoints,
+                "showDirectionPointTextUnderIndex" => showDirectionPointTextUnderIndex,
+                "errorTileTTLS" => errorTileTTLS,
+                "fullTileSize" => fullTileSize,
+                "scaledTileSize" => scaledTileSize,
+                "packingFormat" => packingFormat,
+                "useDrawBitmap" => useDrawBitmap,
+                "tileLayerMax" => tileLayerMax,
+                "tileLayerMin" => tileLayerMin,
+                "tileCacheSize" => tileCacheSize,
+                "storageTileCacheSize" => storageTileCacheSize,
+                "storageSeedBoundingBox" => storageSeedBoundingBox,
+                "storageSeedRouteDistanceM" => storageSeedRouteDistanceM,
+                "centerUserOffsetY" => centerUserOffsetY,
+                "mapMoveScreenSize" => mapMoveScreenSize,
+                "tileCachePadding" => tileCachePadding,
+                "recalculateIntervalS" => recalculateIntervalS,
+                "mode" => mode,
+                "mapEnabled" => mapEnabled,
+                "cacheTilesInStorage" => cacheTilesInStorage,
+                "storageMapTilesOnly" => storageMapTilesOnly,
+                "drawLineToClosestPoint" => drawLineToClosestPoint,
+                "showPoints" => showPoints,
+                "drawLineToClosestTrack" => drawLineToClosestTrack,
+                "showTileBorders" => showTileBorders,
+                "showErrorTileMessages" => showErrorTileMessages,
+                "includeDebugPageInOnScreenUi" => includeDebugPageInOnScreenUi,
+                "drawHitBoxes" => drawHitBoxes,
+                "showDirectionPoints" => showDirectionPoints,
+                "displayLatLong" => displayLatLong,
+                "scaleRestrictedToTileLayers" => scaleRestrictedToTileLayers(),
+                "trackColour" => trackColour.format("%X"),
+                "defaultRouteColour" => defaultRouteColour.format("%X"),
+                "tileErrorColour" => tileErrorColour.format("%X"),
+                "elevationColour" => elevationColour.format("%X"),
+                "userColour" => userColour.format("%X"),
+                "maxPendingWebRequests" => maxPendingWebRequests,
+                "metersAroundUser" => metersAroundUser,
+                "zoomAtPaceMode" => zoomAtPaceMode,
+                "zoomAtPaceSpeedMPS" => zoomAtPaceSpeedMPS,
+                "uiMode" => uiMode,
+                "elevationMode" => elevationMode,
+                "alertType" => alertType,
+                "renderMode" => renderMode,
+                "fixedLatitude" => fixedLatitude == null ? 0f : fixedLatitude,
+                "fixedLongitude" => fixedLongitude == null ? 0f : fixedLongitude,
+                "tileUrl" => tileUrl,
+                "authToken" => authToken,
+                "mapChoice" => mapChoice,
+                "routes" => routesToSave(),
+                "routesEnabled" => routesEnabled,
+                "displayRouteNames" => displayRouteNames,
+                "disableMapsFailureCount" => disableMapsFailureCount,
+                "enableOffTrackAlerts" => enableOffTrackAlerts,
+                "offTrackWrongDirection" => offTrackWrongDirection,
+                "drawCheverons" => drawCheverons,
+                "offTrackAlertsDistanceM" => offTrackAlertsDistanceM,
+                "offTrackAlertsMaxReportIntervalS" => offTrackAlertsMaxReportIntervalS,
+                "offTrackCheckIntervalS" => offTrackCheckIntervalS,
+                "normalModeColour" => normalModeColour.format("%X"),
+                "routeMax" => _routeMax,
+                "uiColour" => uiColour.format("%X"),
+                "debugColour" => debugColour.format("%X"),
+                "resetDefaults" => false,
+            }) as Dictionary<String, PropertyValueType>
+        );
     }
 
     function saveSettings(settings as Dictionary<String, PropertyValueType>) as Void {

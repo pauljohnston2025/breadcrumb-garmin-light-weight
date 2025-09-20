@@ -52,7 +52,7 @@ class BreadcrumbRenderer {
         500000000 => "500km",
         1000000000 => "1000km",
         2000000000 => "2000km",
-    };
+    } as Dictionary<Number, String>;
 
     // yep the key of the array is in mm (they will never know, it will be our little secret)
     var SCALE_NAMES_IMPERIAL as Dictionary<Number, String> = {
@@ -74,7 +74,7 @@ class BreadcrumbRenderer {
         160934400 => "100mi",
         804672000 => "500mi",
         1609344000 => "1000mi",
-    };
+    } as Dictionary<Number, String>;
 
     // we want much smaller elevation changes to be seen
     // so elevation scales are in mm, not meters
@@ -99,7 +99,7 @@ class BreadcrumbRenderer {
         100000 => "100m",
         250000 => "250m",
         500000 => "500m",
-    };
+    } as Dictionary<Number, String>;
 
     // key is in mm
     var ELEVATION_SCALE_NAMES_IMPERIAL as Dictionary<Number, String> = {
@@ -116,7 +116,7 @@ class BreadcrumbRenderer {
         76200 => "250ft",
         152400 => "500ft",
         304800 => "1000ft",
-    };
+    } as Dictionary<Number, String>;
 
     // benchmark same track loaded (just render track no activity running) using
     // average time over 1min of benchmark

@@ -104,27 +104,27 @@ class CachedValues {
     var mapMoveDistanceM as Float = -1f;
 
     // updated whenever we get new activity data with a new heading
-    var rotationRad as Float = 0.0; // heading in radians
-    var rotateCos as Float = Math.cos(rotationRad).toFloat();
-    var rotateSin as Float = Math.sin(rotationRad).toFloat();
+    var rotationRad as Float = 0.0f; // heading in radians
+    var rotateCos as Float = Math.cos(rotationRad).toFloat() as Float;
+    var rotateSin as Float = Math.sin(rotationRad).toFloat() as Float;
     var currentSpeed as Float = -1f;
     var elapsedDistanceM as Float = 0f;
     var currentlyZoomingAroundUser as Boolean = false;
 
     // updated whenever onlayout changes (audit usages, these should not need to be floats, but sometimes are used to do float math)
     // default to full screen guess
-    var physicalScreenWidth as Float = System.getDeviceSettings().screenWidth.toFloat();
-    var physicalScreenHeight as Float = System.getDeviceSettings().screenHeight.toFloat();
-    var minPhysicalScreenDim as Float = minF(physicalScreenWidth, physicalScreenHeight);
-    var maxPhysicalScreenDim as Float = maxF(physicalScreenWidth, physicalScreenHeight);
+    var physicalScreenWidth as Float = System.getDeviceSettings().screenWidth.toFloat() as Float;
+    var physicalScreenHeight as Float = System.getDeviceSettings().screenHeight.toFloat() as Float;
+    var minPhysicalScreenDim as Float = -1f;
+    var maxPhysicalScreenDim as Float = -1f;
     var xHalfPhysical as Float = physicalScreenWidth / 2f;
     var yHalfPhysical as Float = physicalScreenHeight / 2f;
-    var virtualScreenWidth as Float = System.getDeviceSettings().screenWidth.toFloat();
-    var virtualScreenHeight as Float = System.getDeviceSettings().screenHeight.toFloat();
-    var minVirtualScreenDim as Float = minF(virtualScreenWidth, virtualScreenHeight);
-    var maxVirtualScreenDim as Float = maxF(virtualScreenWidth, virtualScreenHeight);
-    var bufferedBitmapOffsetX as Float = -(maxVirtualScreenDim - physicalScreenWidth) / 2f;
-    var bufferedBitmapOffsetY as Float = 0f; // only neeed for buffered rotation mode, with user offset values less than 0.5
+    var virtualScreenWidth as Float = System.getDeviceSettings().screenWidth.toFloat() as Float;
+    var virtualScreenHeight as Float = System.getDeviceSettings().screenHeight.toFloat() as Float;
+    var minVirtualScreenDim as Float = -1f;
+    var maxVirtualScreenDim as Float = -1f;
+    var bufferedBitmapOffsetX as Float = -1f;
+    var bufferedBitmapOffsetY as Float = 0f; // only need for buffered rotation mode, with user offset values less than 0.5
     var rotateAroundScreenX as Float = physicalScreenWidth / 2f;
     var rotateAroundScreenY as Float = physicalScreenHeight / 2f;
     var rotateAroundScreenXOffsetFactoredIn as Float = rotateAroundScreenX - bufferedBitmapOffsetX;
@@ -133,8 +133,8 @@ class CachedValues {
     var mapScreenHeight as Float = physicalScreenHeight;
     var mapBitmapOffsetX as Float = 0f;
     var mapBitmapOffsetY as Float = 0f;
-    var rotateAroundMinScreenDim as Float = minPhysicalScreenDim;
-    var rotateAroundMaxScreenDim as Float = maxPhysicalScreenDim;
+    var rotateAroundMinScreenDim as Float = -1f;
+    var rotateAroundMaxScreenDim as Float = -1f;
     var rotationMatrix as AffineTransform = new AffineTransform();
 
     // map related fields updated whenever scale changes
@@ -199,6 +199,14 @@ class CachedValues {
 
     function initialize(settings as Settings) {
         self._settings = settings;
+        // initialised in constructor so they can be inlined
+        minPhysicalScreenDim = minF(physicalScreenWidth, physicalScreenHeight);
+        maxPhysicalScreenDim = maxF(physicalScreenWidth, physicalScreenHeight);
+        minVirtualScreenDim = minF(virtualScreenWidth, virtualScreenHeight);
+        maxVirtualScreenDim = maxF(virtualScreenWidth, virtualScreenHeight);
+        bufferedBitmapOffsetX = -(maxVirtualScreenDim - physicalScreenWidth) / 2f;
+        rotateAroundMinScreenDim = minPhysicalScreenDim;
+        rotateAroundMaxScreenDim = maxPhysicalScreenDim;
     }
 
     function setup() as Void {
@@ -238,10 +246,27 @@ class CachedValues {
             if (!_settings.routeEnabled(route.storageIndex)) {
                 continue;
             }
-            outerBoundingBox[0] = minF(route.boundingBox[0] / scaleDivisor, outerBoundingBox[0]);
-            outerBoundingBox[1] = minF(route.boundingBox[1] / scaleDivisor, outerBoundingBox[1]);
-            outerBoundingBox[2] = maxF(route.boundingBox[2] / scaleDivisor, outerBoundingBox[2]);
-            outerBoundingBox[3] = maxF(route.boundingBox[3] / scaleDivisor, outerBoundingBox[3]);
+
+            // tmp vars so we can inline the function and remove it
+            var outerBoundingBox0Tmp = outerBoundingBox[0] as Float;
+            var outerBoundingBox1Tmp = outerBoundingBox[1] as Float;
+            var outerBoundingBox2Tmp = outerBoundingBox[2] as Float;
+            var outerBoundingBox3Tmp = outerBoundingBox[3] as Float;
+
+            var routeBoundingBox0Tmp = route.boundingBox[0] as Float;
+            var routeBoundingBox1Tmp = route.boundingBox[1] as Float;
+            var routeBoundingBox2Tmp = route.boundingBox[2] as Float;
+            var routeBoundingBox3Tmp = route.boundingBox[3] as Float;
+
+            outerBoundingBox0Tmp = minF(routeBoundingBox0Tmp / scaleDivisor, outerBoundingBox0Tmp);
+            outerBoundingBox1Tmp = minF(routeBoundingBox1Tmp / scaleDivisor, outerBoundingBox1Tmp);
+            outerBoundingBox2Tmp = maxF(routeBoundingBox2Tmp / scaleDivisor, outerBoundingBox2Tmp);
+            outerBoundingBox3Tmp = maxF(routeBoundingBox3Tmp / scaleDivisor, outerBoundingBox3Tmp);
+
+            outerBoundingBox[0] = outerBoundingBox0Tmp;
+            outerBoundingBox[1] = outerBoundingBox1Tmp;
+            outerBoundingBox[2] = outerBoundingBox2Tmp;
+            outerBoundingBox[3] = outerBoundingBox3Tmp;
         }
 
         return outerBoundingBox;

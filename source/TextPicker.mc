@@ -43,7 +43,8 @@ class TextPickerView extends Ui.View {
     static const DEVICE_WIDTH = System.getDeviceSettings().screenHeight as Number;
     static const DEVICE_HEIGHT = System.getDeviceSettings().screenWidth as Number;
 
-    static const INPUT_LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789~!@#$%^&*()_-+`'\"{}|[]\\/:;?<>,."; // valid characters for input
+    static const INPUT_LETTERS =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789~!@#$%^&*()_-+`'\"{}|[]\\/:;?<>,."; // valid characters for input
     static const INPUT_CONTROLS = "<*"; // control characters for input
     static const INPUT_OK = "OK"; // what to render in place of the '*' (accept) character
     static const INPUT_BACK = "<<"; // what to render in place of the '<' (delete) character
@@ -230,15 +231,15 @@ class TextPickerView extends Ui.View {
 }
 
 (:settingsView)
-class TextPickerDelegate extends Ui.BehaviorDelegate {
-    // millisec between updates when long pressing up/down on picker
-    static const LONG_PRESS_UPDATE_FREQUENCY = 250;
-
+class MyTextPickerDelegate extends Ui.BehaviorDelegate {
     var picker as TextPickerView?;
-    var callback as Method;
+    var callback as (Method(text as String) as Boolean);
     var longPressTimer as Timer.Timer?;
 
-    function initialize(_callback as Method, the_picker as TextPickerView) {
+    function initialize(
+        _callback as (Method(text as String) as Boolean),
+        the_picker as TextPickerView
+    ) {
         picker = the_picker;
         callback = _callback;
         BehaviorDelegate.initialize();
@@ -259,24 +260,27 @@ class TextPickerDelegate extends Ui.BehaviorDelegate {
     }
 
     function onSelect() as Boolean {
-        if (picker != null) {
-            if ("*".equals(picker.input_chars.substring(picker.charIdx, picker.charIdx + 1))) {
+        var localPicker = picker;
+        if (localPicker != null) {
+            if ("*".equals(localPicker.input_chars.substring(picker.charIdx, picker.charIdx + 1))) {
                 // don't let the user select OK if there aren't enough characters...
+                var inputStr = localPicker.inputStr;
                 if (
-                    (picker as TextPickerView).inputStr.length() <
-                    (picker as TextPickerView).mMinChars
+                    localPicker.inputStr.length() <
+                    localPicker.mMinChars
                 ) {
                     return true;
                 }
 
-                if (!callback.invoke((picker as TextPickerView).inputStr)) {
+                if (!callback.invoke(inputStr)) {
                     return false;
                 }
 
                 // we're selecting 'OK' so set the picker to null (to eliminate potential circ ref)
                 picker = null;
+                localPicker = null;
             } else {
-                picker.charSelected();
+                localPicker.charSelected();
                 forceRefresh();
             }
         }
