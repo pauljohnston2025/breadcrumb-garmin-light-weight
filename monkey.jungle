@@ -8,6 +8,7 @@ base.sourcePath=$(srcBase)
 base.excludeAnnotations = $(base.excludeAnnotations);tileBorders;showPoints;drawHitBoxes;noShowTurnAlertPoints
 
 highMemExcludes=noSettingsView;noUnbufferedRotations;noStorage;noCompanionTiles;lowMemory;noImageTiles
+# low memory devices only support image tiles, no companion app
 lowMemExcludes=settingsView;unbufferedRotations;storage;companionTiles;highMemory;noImageTiles
 
 

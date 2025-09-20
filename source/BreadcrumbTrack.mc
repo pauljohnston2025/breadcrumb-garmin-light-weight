@@ -535,8 +535,62 @@ class BreadcrumbTrack {
         var distancePixelsCheck = turnAlertDistancePx(currentSpeedPPS, turnAlertTimeS, minTurnAlertDistanceM, cachedValues.currentScale);
         var directionsRaw = directions._internalArrayBuffer; // raw dog access means we can do the calcs much faster
         var coordinatesRaw = coordinates._internalArrayBuffer; // raw dog access means we can do the calcs much faster
+        // note: extremely short out and back sections with a single point may trigger strange alerts
+        // eg.
+        // - = route/track
+        // | = route/track
+        // * = direction turn point
+        // + = standard track/route pount
+        //
+        //         *       OUT AND BACK SECTION
+        //         |
+        //         |
+        //         |
+        //  *-----**--------- END
+        //  |
+        //  |
+        // START
+        // 
+        // When we come into the corner with 2 points (traveling to the right of the page), we get a turn alert (left), but then we check for the next turn alert (up to 5 points away).
+        // This skips the point at the top of the page, but then checks the second point on the corner and tells us that we should then turn left (as if we were coming out of the corner).
+        // All of this happens before we even turn though, so we get 2 direction alerts very close together that are confusing, then it skips the OUT AND BACK SECTION turn alert, because it 
+        // thinks we are already up to exiting the corner.
+        //
+        // Consider another case though where we intentionally skip going down the turn because we do not want to do the out and back since its so short, it should skip ahead to the next direction.
+
+        // We also need this to work with back to back corners
+        //
+        // Case 2, back-to-back corners
+        //      * END
+        //      |
+        //      |
+        //      |
+        //  *-*-*
+        //  |
+        //  |
+        // START
+        // 
+        // We need to ensure we look ahead, because although we are currently in range of the first turn we did, we want to tell the user that they are in range of another turn.
+        // If off track alerts are enabled, we know when we have moved closer to the next turn, but if they are not enabled, we need to ensure the user gets the next turn alert.
+        //
+        // There is a third case though too, where there ar e many points leading up to the turn - we need to be able to skip over them so we can get an alert many meters from the turn
+        // Case 3 - many points before turn
+        //      * END
+        //      |
+        //      |
+        //      |
+        //         +
+        //         *   THE TURN POINT IS THE 4th point in the corner, but its still within "Turn alert Time (s)" or "Min Turn Alert Distance (m)"
+        //  *---+++
+        //  |
+        //  |
+        // START
+        // 
+        // So we need the lookahead, but it does not work very well for short out and back sections- we will just have to live with this. They should be rare.
+        // I should probably write some unit test code for these 3 cases ...
+
         // longer routes with more points allow more look ahead (up to some percentage of the route)
-        var allowedCoordinatePerimeter = maxN(5, (coordinates.pointSize() / 20).toNumber());
+        var allowedCoordinatePerimeter = 5;
         var oldLastClosePointIndex = lastClosePointIndex;
         var stillNearTheLastDirectionPoint = false;
         var startAt = 0;

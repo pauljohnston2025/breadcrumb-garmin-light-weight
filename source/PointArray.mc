@@ -127,7 +127,6 @@ class PointArray {
     // So we should be able to do nearly 250 coordinates and 100 directions and have 3 routes, and a track 400*3 * 300 = 1500 points (though I think 100 directions is quite high)
     // This is only for worst case when we have 3 routes loaded (general use case is one route and 1 track) so it will easily fit 400coords per track and  route and 100 directions = 900 points
     // users could also get creative and send some of the routes without directions (swimming leg of triathlon)
-    
 
     // (_internalArrayBuffer as as Array<Float>, same for directions (they are now reverted) ~400 coordinates ~100 directions
     // Application Code: 101836
@@ -204,7 +203,7 @@ class PointArray {
     }
 
     // similar to restrictPoints, but also makes sure the underlying array buffer is fixed to that size too
-    function restrictPointsToMaxMemory(maxPoints as Number) as Void{
+    function restrictPointsToMaxMemory(maxPoints as Number) as Void {
         restrictPoints(maxPoints);
         // memory may double when doing this, but its only on setting change
         _internalArrayBuffer = _internalArrayBuffer.slice(0, maxPoints * ARRAY_POINT_SIZE);
@@ -310,7 +309,7 @@ class PointArray {
 // [xLatRect, YLatRect, angleToTurnDegrees (-180 to 180), coordinatesIndex]
 class DirectionPointArray {
     // we pack the turn angle direction and the index into a single number to save memory space, index is the only variabl frequently access, so its stored in the lower 16 bits
-    // ie. 
+    // ie.
     // index = _internalArrayBuffer[i] & 0x0000FFFF
     // angleDeg (-180 to 180) = ((_internalArrayBuffer[i] & 0xFFFF0000) >> 16) - 180
     var _internalArrayBuffer as Array<Number> = new [0] as Array<Number>;
@@ -331,13 +330,15 @@ class DirectionPointArray {
             ++leftIndex;
             // the angle must be flipped, and the index now starts from the opposite end of the array
             var left = _internalArrayBuffer[leftIndex];
-            var leftCoordIndex = left & 0x0000FFFF;
-            var leftAngle = (left & 0xFFFF0000) >> 16 - 180;
+            var leftCoordIndex = left & 0x0000ffff;
+            var leftAngle = ((left & 0xffff0000) >> 16) - 180;
             var right = _internalArrayBuffer[rightIndex0];
-            var rightCoordIndex = right & 0x0000FFFF;
-            var rightAngle = (right & 0xFFFF0000) >> 16 - 180;
-            _internalArrayBuffer[leftIndex] = ((-rightAngle + 180) << 16) | (coordinatesPointSize - 1 - rightCoordIndex);
-            _internalArrayBuffer[rightIndex0] = ((-leftAngle + 180) << 16) | (coordinatesPointSize - 1 - leftCoordIndex);
+            var rightCoordIndex = right & 0x0000ffff;
+            var rightAngle = ((right & 0xffff0000) >> 16) - 180;
+            _internalArrayBuffer[leftIndex] =
+                ((-rightAngle + 180) << 16) | (coordinatesPointSize - 1 - rightCoordIndex);
+            _internalArrayBuffer[rightIndex0] =
+                ((-leftAngle + 180) << 16) | (coordinatesPointSize - 1 - leftCoordIndex);
         }
 
         logD("reverseDirectionPoints occurred");
