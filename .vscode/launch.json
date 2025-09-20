@@ -4,14 +4,13 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        // not sure why omonkeyc cannot see command:GetTargetDevice on the newer sdk (8.2.3)
-        // resorting to monkeyc for debugging until I can figure out why
         {
-            "type": "monkeyc",
+            "type": "omonkeyc",
             "request": "launch",
             "name": "Run App",
             "stopAtLaunch": false,
-            "device": "${command:GetTargetDevice}"
+            "device": "${command:GetTargetDevice}",
+            "releaseBuild": true
         }
         // {
         //     "type": "omonkeyc",
