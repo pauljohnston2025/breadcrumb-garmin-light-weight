@@ -204,6 +204,10 @@
         <setting propertyKey="@Properties.trackColour" title="@Strings.trackColourTitle" prompt="@Strings.colourPrompt">
             <settingConfig type="alphaNumeric"/>
         </setting>
+        
+        <setting propertyKey="@Properties.defaultRouteColour" title="@Strings.defaultRouteColourTitle" prompt="@Strings.colourPrompt">
+            <settingConfig type="alphaNumeric"/>
+        </setting>
 
         <setting propertyKey="@Properties.elevationColour" title="@Strings.elevationColourTitle" prompt="@Strings.colourPrompt">
             <settingConfig type="alphaNumeric"/>

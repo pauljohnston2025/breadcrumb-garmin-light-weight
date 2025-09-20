@@ -32,6 +32,7 @@
 	<property id="normalModeColour" type="string">0000FF</property>
 	<property id="uiColour" type="string">555555</property>
 	<property id="debugColour" type="string">FEFFFFFF</property>
+	<property id="defaultRouteColour" type="string">00AAFF</property>
 
 	<property id="fixedLatitude" type="float">0</property>
 	<property id="fixedLongitude" type="float">0</property>

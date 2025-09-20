@@ -33,8 +33,8 @@ class BreadcrumbContext {
         tileCache.setup();
 
         // routes loaded from storage will be rescaled on the first calculate in cached values
-        // had a bug where routes were stil in storage, but removed from settings, so load everything that is enabled (up to 10 routes)
-        // was some strange issue that i never could quitre figure out, possibly when changing route max and disabling routes in settings in the same settings commit?
+        // had a bug where routes were still in storage, but removed from settings, so load everything that is enabled (up to 10 routes)
+        // was some strange issue that i never could quite figure out, possibly when changing route max and disabling routes in settings in the same settings commit?
         for (var i = 0; i < 10; ++i) {
             var route = BreadcrumbTrack.readFromDisk(ROUTE_KEY, i);
             if (route == null) {
@@ -107,6 +107,7 @@ class BreadcrumbContext {
             settings.setRouteReversed(routeId, false);
             settings.setRouteName(routeId, route.name);
             settings.setRouteEnabled(routeId, true);
+            settings.setRouteColour(routeId, settings.defaultRouteColour);
             return route;
         }
 
@@ -122,6 +123,7 @@ class BreadcrumbContext {
         settings.setRouteReversed(nextId, false);
         settings.setRouteName(nextId, route.name);
         settings.setRouteEnabled(nextId, true);
+        settings.setRouteColour(nextId, settings.defaultRouteColour);
         return route;
     }
 

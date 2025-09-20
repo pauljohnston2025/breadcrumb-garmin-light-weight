@@ -394,11 +394,11 @@ class Settings {
     var elevationMode as Number = ELEVATION_MODE_STACKED;
     var mapEnabled as Boolean = false;
     // cache the tiles in storage when they are loaded, allows for fully offline maps
-    // unfortunately bufferred bitmaps cannot be stored into storage (resources and BitMapResources can be, but not the bufferred kind)
+    // unfortunately bufferred bitmaps cannot be stored into storage (resources and BitMapResources can be, but not the buffered kind)
     // so we need to store the result of makeImageRequest or makeWebRequest
     var cacheTilesInStorage as Boolean = false;
     var storageMapTilesOnly as Boolean = false;
-    // storage seems to fill up around 200 with 192*192 tiles from imagerequests
+    // storage seems to fill up around 200 with 192*192 tiles from image requests
     // can be much larger for companion app is used, since the tiles can be much smaller with TILE_DATA_TYPE_BASE64_FULL_COLOUR
     // saw a crash around 513 tiles, which would be from our internal array StorageTileCache._tilesInStorage
     var storageTileCacheSize as Number = 350;
@@ -406,13 +406,14 @@ class Settings {
     var storageSeedRouteDistanceM as Float = 10f; // if seeding based on route (storageSeedBoundingBox = false) seed this far around the route
 
     var trackColour as Number = Graphics.COLOR_GREEN;
+    var defaultRouteColour as Number = Graphics.COLOR_BLUE;
     var elevationColour as Number = Graphics.COLOR_ORANGE;
     var userColour as Number = Graphics.COLOR_ORANGE;
     // this should probably be the same as tileCacheSize? since there is no point having 20 outstanding if we can only store 10 of them
     var maxPendingWebRequests as Number = 5;
     // Renders around the users position
-    var metersAroundUser as Number = 500; // keep this fairly high by default, too small and the map tiles start to go blury
-    var centerUserOffsetY as Float = 0.5f; // fraction of the screen to move the user down the page 0.5 - user appears in center, 0.75 - user appears 3/4 down the screen. Useful to see more of the route infront of the user.
+    var metersAroundUser as Number = 500; // keep this fairly high by default, too small and the map tiles start to go blurry
+    var centerUserOffsetY as Float = 0.5f; // fraction of the screen to move the user down the page 0.5 - user appears in center, 0.75 - user appears 3/4 down the screen. Useful to see more of the route in front of the user.
     var mapMoveScreenSize as Float = 0.3f; // how far to move the map when the user presses on screen buttons, a fraction of the screen size.
     var zoomAtPaceMode as Number = ZOOM_AT_PACE_MODE_PACE;
     var zoomAtPaceSpeedMPS as Float = 1.0; // meters per second
@@ -445,7 +446,7 @@ class Settings {
     var uiColour as Number = Graphics.COLOR_DK_GRAY;
     var debugColour as Number = 0xfeffffff; // white, but colour_white results in FFFFFFFF (-1) when we parse it and that is fully transparent
     // I did get up to 4 large routes working with off track alerts, but any more than that and watchdog catches us out, 3 is a safer limit.
-    // currently we still load disabled routes into memory, so its also not great having this larege and a heap of disabled routes
+    // currently we still load disabled routes into memory, so its also not great having this large and a heap of disabled routes
     private var _routeMax as Number = 3;
 
     // note this only works if a single track is enabled (multiple tracks would always error)
@@ -465,10 +466,10 @@ class Settings {
     var packingFormat as Number = 1;
     var useDrawBitmap as Boolean = false; // implies scaleRestrictedToTileLayers, since the renders will be off if we do not
 
-    // scratrchpad used for rotations, but it also means we have a large bitmap stored around
+    // scratchpad used for rotations, but it also means we have a large bitmap stored around
     // I will also use that bitmap for re-renders though, and just do rotations every render rather than re-drawing all the tracks/tiles again
     var renderMode as Number = RENDER_MODE_BUFFERED_ROTATING;
-    // how many seconds should we wait before even considerring the next point
+    // how many seconds should we wait before even considering the next point
     // changes in speed/angle/zoom are not effected by this number. Though maybe they should be?
     var recalculateIntervalS as Number = 5;
     // pre seed tiles on either side of the viewable area
@@ -1314,7 +1315,7 @@ class Settings {
     function routeColour(routeId as Number) as Number {
         var routeIndex = getRouteIndexById(routeId);
         if (routeIndex == null) {
-            return Graphics.COLOR_BLUE;
+            return defaultRouteColour;
         }
 
         return routes[routeIndex]["colour"] as Number;
@@ -1366,7 +1367,6 @@ class Settings {
         return routes[routeIndex]["reversed"] as Boolean;
     }
 
-    (:settingsView)
     function setRouteColour(routeId as Number, value as Number) as Void {
         ensureRouteId(routeId);
         var routeIndex = getRouteIndexById(routeId);
@@ -1497,6 +1497,12 @@ class Settings {
     function setTrackColour(value as Number) as Void {
         trackColour = value;
         setValue("trackColour", trackColour.format("%X"));
+    }
+    
+    (:settingsView)
+    function setDefaultRouteColour(value as Number) as Void {
+        defaultRouteColour = value;
+        setValue("defaultRouteColour", defaultRouteColour.format("%X"));
     }
 
     (:settingsView)
@@ -2067,6 +2073,7 @@ class Settings {
         displayLatLong = defaultSettings.displayLatLong;
         _scaleRestrictedToTileLayers = defaultSettings.scaleRestrictedToTileLayers();
         trackColour = defaultSettings.trackColour;
+        defaultRouteColour = defaultSettings.defaultRouteColour;
         tileErrorColour = defaultSettings.tileErrorColour;
         elevationColour = defaultSettings.elevationColour;
         userColour = defaultSettings.userColour;
@@ -2154,6 +2161,7 @@ class Settings {
             "displayLatLong" => displayLatLong,
             "scaleRestrictedToTileLayers" => scaleRestrictedToTileLayers(),
             "trackColour" => trackColour.format("%X"),
+            "defaultRouteColour" => defaultRouteColour.format("%X"),
             "tileErrorColour" => tileErrorColour.format("%X"),
             "elevationColour" => elevationColour.format("%X"),
             "userColour" => userColour.format("%X"),
@@ -2287,6 +2295,7 @@ class Settings {
         drawCheverons = parseBool("drawCheverons", drawCheverons);
         routesEnabled = parseBool("routesEnabled", routesEnabled);
         trackColour = parseColour("trackColour", trackColour);
+        defaultRouteColour = parseColour("defaultRouteColour", defaultRouteColour);
         tileErrorColour = parseColour("tileErrorColour", tileErrorColour);
         elevationColour = parseColour("elevationColour", elevationColour);
         userColour = parseColour("userColour", userColour);

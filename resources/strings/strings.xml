@@ -19,6 +19,7 @@
     <string id="trackRouteMode">Track/Route</string>
     <string id="mapEnabledTitle">Map Enabled</string>
     <string id="trackColourTitle">Track Colour</string>
+    <string id="defaultRouteColourTitle">Default Route Colour</string>
     <string id="routeColourTitle">Route Colour</string>
     <string id="routeDelete">Delete</string>
     <string id="debugColour">Debug Colour</string>
