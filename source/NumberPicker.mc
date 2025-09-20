@@ -174,6 +174,7 @@ class NumberPicker {
 
         currentVal += letter;
         myText.setText(currentVal);
+        forceRefresh();
         return true;
     }
 
@@ -328,11 +329,7 @@ class NumberPickerDelegate extends WatchUi.BehaviorDelegate {
         var x = coords[0];
         var y = coords[1];
 
-        var handled = picker.onTap(x, y);
-        if (handled) {
-            forceRefresh();
-        }
-        return handled;
+        return picker.onTap(x, y);
     }
 
     // for touch devices this is touching a section on the screen (we want to handle the onTap instead)
