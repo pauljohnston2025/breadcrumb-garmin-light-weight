@@ -96,36 +96,36 @@ function newBitmap(width as Number, height as Number) as Graphics.BufferedBitmap
     return bitmap;
 }
 
-(:debug)
+(:debug,:inline)
 function logLevel(lvl as String, message as String) as Void {
     System.println("" + Time.now().value() + " " + lvl + " " + message);
 }
 
-(:release)
+(:release,:inline)
 function logLevel(lvl as String, message as String) as Void {}
 
-(:debug)
+(:debug,:inline)
 function logE(message as String) as Void {
     logLevel("E", message);
 }
 
-(:release)
+(:release,:inline)
 function logE(message as String) as Void {}
 
-(:debug)
+(:debug,:inline)
 function logD(message as String) as Void {
     logLevel("D", message);
 }
 
-(:release)
+(:release,:inline)
 function logD(message as String) as Void {}
 
-(:debug)
+(:debug,:inline)
 function logT(message as String) as Void {
     logLevel("T", message);
 }
 
-(:release)
+(:release,:inline)
 function logT(message as String) as Void {}
 
 (:scaledbitmap)
