@@ -423,7 +423,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                         handleOffTrackAlerts(epoch, lastPoint);
                     }
 
-                    if (settings.turnAlertS >= 0) {
+                    if (settings.turnAlertTimeS >= 0 || settings.minTurnAlertDistanceM >= 0) {
                         handleDirections(lastPoint);
                     }
                 }
@@ -440,7 +440,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             }
             var res = route.checkDirections(
                 newPoint,
-                settings.turnAlertS,
+                settings.turnAlertTimeS,
+                settings.minTurnAlertDistanceM,
                 _cachedValues
             );
 

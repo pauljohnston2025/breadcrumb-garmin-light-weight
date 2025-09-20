@@ -485,7 +485,12 @@ class BreadcrumbRenderer {
             currentSpeedPPS *= _cachedValues.currentScale;
         }
 
-        return currentSpeedPPS * settings.turnAlertS;
+        return turnAlertDistancePx(
+            currentSpeedPPS,
+            settings.turnAlertTimeS,
+            settings.minTurnAlertDistanceM,
+            _cachedValues.currentScale
+        );
     }
 
     (:noShowTurnAlertPoints)

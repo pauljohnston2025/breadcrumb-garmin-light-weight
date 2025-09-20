@@ -477,7 +477,8 @@ class Settings {
     var tileCachePadding as Number = 0;
     var httpErrorTileTTLS as Number = 60;
     var errorTileTTLS as Number = 20; // other errors are from garmin ble connection issues, retry faster by default
-    var turnAlertS as Number = -1; // -1 disables the check, 60 seems to be a good value
+    var turnAlertTimeS as Number = -1; // -1 disables the check
+    var minTurnAlertDistanceM as Number = -1; // -1 disables the check
     var maxTrackPoints as Number = 400;
 
     // bunch of debug settings
@@ -967,9 +968,15 @@ class Settings {
     }
 
     (:settingsView)
-    function setTurnAlertS(value as Number) as Void {
-        turnAlertS = value;
-        setValue("turnAlertS", turnAlertS);
+    function setTurnAlertTimeS(value as Number) as Void {
+        turnAlertTimeS = value;
+        setValue("turnAlertTimeS", turnAlertTimeS);
+    }
+    
+    (:settingsView)
+    function setMinTurnAlertDistanceM(value as Number) as Void {
+        minTurnAlertDistanceM = value;
+        setValue("minTurnAlertDistanceM", minTurnAlertDistanceM);
     }
 
     (:settingsView)
@@ -2043,7 +2050,8 @@ class Settings {
         var defaultSettings = new Settings();
         tileSize = defaultSettings.tileSize;
         httpErrorTileTTLS = defaultSettings.httpErrorTileTTLS;
-        turnAlertS = defaultSettings.turnAlertS;
+        turnAlertTimeS = defaultSettings.turnAlertTimeS;
+        minTurnAlertDistanceM = defaultSettings.minTurnAlertDistanceM;
         maxTrackPoints = defaultSettings.maxTrackPoints;
         showDirectionPointTextUnderIndex = defaultSettings.showDirectionPointTextUnderIndex;
         errorTileTTLS = defaultSettings.errorTileTTLS;
@@ -2131,7 +2139,8 @@ class Settings {
         return {
             "tileSize" => tileSize,
             "httpErrorTileTTLS" => httpErrorTileTTLS,
-            "turnAlertS" => turnAlertS,
+            "turnAlertTimeS" => turnAlertTimeS,
+            "minTurnAlertDistanceM" => minTurnAlertDistanceM,
             "maxTrackPoints" => maxTrackPoints,
             "showDirectionPointTextUnderIndex" => showDirectionPointTextUnderIndex,
             "errorTileTTLS" => errorTileTTLS,
@@ -2225,7 +2234,8 @@ class Settings {
 
     function loadSettingsPart1() as Void {
         httpErrorTileTTLS = parseNumber("httpErrorTileTTLS", httpErrorTileTTLS);
-        turnAlertS = parseNumber("turnAlertS", turnAlertS);
+        turnAlertTimeS = parseNumber("turnAlertTimeS", turnAlertTimeS);
+        minTurnAlertDistanceM = parseNumber("minTurnAlertDistanceM", minTurnAlertDistanceM);
         maxTrackPoints = parseNumber("maxTrackPoints", maxTrackPoints);
         showDirectionPointTextUnderIndex = parseNumber(
             "showDirectionPointTextUnderIndex",

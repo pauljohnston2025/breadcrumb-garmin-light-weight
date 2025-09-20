@@ -260,3 +260,29 @@ function unsupported(dc as Dc, message as String) as Void {
         Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
     );
 }
+
+// todo should we cache this calculation? It's ran max 3 times per route when drawing the debug circles and turn based alerts are on
+function turnAlertDistancePx(
+    currentSpeedPPS as Float,
+    turnAlertTimeS as Number,
+    minTurnAlertDistanceM as Number,
+    currentScale as Float
+) as Float {
+    var timeBasedPx = currentSpeedPPS * turnAlertTimeS;
+    var distanceBasedPx = minTurnAlertDistanceM;
+    if (currentScale != 0f) {
+        distanceBasedPx *= currentScale;
+    }
+
+    if (minTurnAlertDistanceM < 0) {
+        // assume we are time based only
+        return timeBasedPx;
+    }
+
+    if (turnAlertTimeS < 0) {
+        // assume we are distance based only
+        return distanceBasedPx;
+    }
+
+    return maxF(distanceBasedPx, timeBasedPx);
+}

@@ -515,7 +515,8 @@ class BreadcrumbTrack {
     // returns [turnAngleDeg, distancePx] or null if no direction within range
     function checkDirections(
         checkPoint as RectangularPoint,
-        turnAlertS as Number,
+        turnAlertTimeS as Number,
+        minTurnAlertDistanceM as Number,
         cachedValues as CachedValues
     ) as [Number, Float]? {
 
@@ -531,7 +532,7 @@ class BreadcrumbTrack {
             currentSpeedPPS *= cachedValues.currentScale;
         }
 
-        var distancePixelsCheck =  currentSpeedPPS * turnAlertS;
+        var distancePixelsCheck = turnAlertDistancePx(currentSpeedPPS, turnAlertTimeS, minTurnAlertDistanceM, cachedValues.currentScale);
         var directionsRaw = directions._internalArrayBuffer; // raw dog access means we can do the calcs much faster
         var coordinatesRaw = coordinates._internalArrayBuffer; // raw dog access means we can do the calcs much faster
         // longer routes with more points allow more look ahead (up to some percentage of the route)
@@ -551,7 +552,7 @@ class BreadcrumbTrack {
             );
             // if we have slowed down still keep the larger perimeter, if we speed up when we exit the corner we also need to take the higher speed so we do not clear 
             // the index and then add it straight back again when the distance increases because the speed increased
-            var oldDistancePixelsCheck = maxF(lastDirectionSpeedPPS, currentSpeedPPS) * turnAlertS;
+            var oldDistancePixelsCheck = turnAlertDistancePx(maxF(lastDirectionSpeedPPS, currentSpeedPPS), turnAlertTimeS, minTurnAlertDistanceM, cachedValues.currentScale);
             stillNearTheLastDirectionPoint = oldLastDirectionPointDistance < oldDistancePixelsCheck;
             if (stillNearTheLastDirectionPoint) {
                 // only use it if we are still close, otherwise we will get locked to this coordinate when we move forwards if we do not know our current position on the track

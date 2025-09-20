@@ -185,7 +185,10 @@
         <setting propertyKey="@Properties.enableOffTrackAlerts" title="@Strings.enableOffTrackAlertsTitle">
             <settingConfig type="boolean"/>
         </setting>
-        <setting propertyKey="@Properties.turnAlertS" title="@Strings.turnAlertSTitle"  prompt="@Strings.turnAlertSPrompt">
+        <setting propertyKey="@Properties.turnAlertTimeS" title="@Strings.turnAlertTimeSTitle"  prompt="@Strings.turnAlertPrompt">
+            <settingConfig type="numeric" min="-1"/>
+        </setting>
+        <setting propertyKey="@Properties.minTurnAlertDistanceM" title="@Strings.minTurnAlertDistanceMTitle"  prompt="@Strings.turnAlertPrompt">
             <settingConfig type="numeric" min="-1"/>
         </setting>
         <setting propertyKey="@Properties.offTrackAlertsMaxReportIntervalS" title="@Strings.offTrackAlertsMaxReportIntervalSTitle">
