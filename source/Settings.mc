@@ -983,14 +983,14 @@ class Settings {
     function setMaxTrackPoints(value as Number) as Void {
         var oldmaxTrackPoints = maxTrackPoints;
         maxTrackPoints = value;
-        if (oldmaxTrackPoints > maxTrackPoints) {
-            maxTrackPointsReduced();
+        if (oldmaxTrackPoints != maxTrackPoints) {
+            maxTrackPointsChanged();
         }
         setValue("maxTrackPoints", maxTrackPoints);
     }
 
-    function maxTrackPointsReduced() as Void {
-        getApp()._breadcrumbContext.track.coordinates.restrictPoints(maxTrackPoints);
+    function maxTrackPointsChanged() as Void {
+        getApp()._breadcrumbContext.track.coordinates.restrictPointsToMaxMemory(maxTrackPoints);
     }
 
     (:settingsView)
@@ -1412,7 +1412,6 @@ class Settings {
         updateViewSettings(); // routes enabled/disabled can effect off track alerts and other view renderring
     }
 
-    (:settingsView)
     function setRouteReversed(routeId as Number, value as Boolean) as Void {
         ensureRouteId(routeId);
         var routeIndex = getRouteIndexById(routeId);
@@ -2492,8 +2491,8 @@ class Settings {
             tileCacheSizeReduced();
         }
 
-        if (oldMaxTrackPoints > maxTrackPoints) {
-            maxTrackPointsReduced();
+        if (oldMaxTrackPoints != maxTrackPoints) {
+            maxTrackPointsChanged();
         }
 
         if (oldMapEnabled != mapEnabled) {

@@ -203,13 +203,20 @@ class PointArray {
         );
     }
 
-    function restrictPoints(maPoints as Number) as Boolean {
+    // similar to restrictPoints, but also makes sure the underlying array buffer is fixed to that size too
+    function restrictPointsToMaxMemory(maxPoints as Number) as Void{
+        restrictPoints(maxPoints);
+        // memory may double when doing this, but its only on setting change
+        _internalArrayBuffer = _internalArrayBuffer.slice(0, maxPoints * ARRAY_POINT_SIZE);
+    }
+
+    function restrictPoints(maxPoints as Number) as Boolean {
         // make sure we only have an acceptable amount of points
         // current process is to cull every second point
         // this means near the end of the track, we will have lots of close points
         // the start of the track will start getting more and more granular every
         // time we cull points
-        if (_size / ARRAY_POINT_SIZE < maPoints) {
+        if (_size / ARRAY_POINT_SIZE < maxPoints) {
             return false;
         }
 
@@ -222,7 +229,7 @@ class PointArray {
             _internalArrayBuffer[j + 2] = _internalArrayBuffer[i + 2];
         }
 
-        resize((ARRAY_POINT_SIZE * maPoints) / 2);
+        resize((ARRAY_POINT_SIZE * maxPoints) / 2);
         logD("restrictPoints occurred");
         return true;
     }

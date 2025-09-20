@@ -152,24 +152,41 @@ class CachedValues {
     var firstTileY as Number = -1;
 
     // todo store all these in a 'seeding' class so the variables are not using memory when the seeding is not happening
+    (:storage)
     var seedingZ as Number = -1; // -1 means not seeding
+    (:storage)
     var seedingRectanglarTopLeft as RectangularPoint = new RectangularPoint(0f, 0f, 0f);
+    (:storage)
     var seedingRectanglarBottomRight as RectangularPoint = new RectangularPoint(0f, 0f, 0f);
+    (:storage)
     var seedingUpToTileX as Number = 0;
+    (:storage)
     var seedingUpToTileY as Number = 0;
+    (:storage)
     var seedingRouteLeftRightValid as Boolean = false;
+    (:storage)
     var seedingUpToRoute as Number = 0;
+    (:storage)
     var seedingUpToRoutePoint as Number = 0;
+    (:storage)
     var seedingUpToRoutePointPartial as SegmentPointIterator? = null;
+    (:storage)
     var seedingTilesOnThisLayer as Number = NUMBER_MAX;
+    (:storage)
     var seedingTilesProgressForThisLayer as Number = 0;
+    // we need this one for some functions, its never read only written to in (:noStorage) mode
     var seedingMapCacheDistanceM as Float = -1f;
     // todo remove the dictionary for memory perf, but it's only populated during a seed so should not be too bad
+    (:storage)
     var seedingInProgressTiles as Dictionary<String, [Number, Number, Number]> =
         ({}) as Dictionary<String, [Number, Number, Number]>;
+    (:storage)
     var seedingFirstTileX as Number = 0;
+    (:storage)
     var seedingFirstTileY as Number = 0;
+    (:storage)
     var seedingLastTileX as Number = 0;
+    (:storage)
     var seedingLastTileY as Number = 0;
 
     function atMinTileLayer() as Boolean {
@@ -895,9 +912,9 @@ class CachedValues {
         if (scale == null) {
             _settings.clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
             updateScaleCenterAndMap();
-            // this is not the best guess, but will onyl require the user to tap zoom once to see that it cannot zoom
+            // this is not the best guess, but will only require the user to tap zoom once to see that it cannot zoom
             // getScaleDecIncAmount() only works when the scale is not null. We could update it to use the currentScale if scale is null?
-            // they are not acutally in a user scale in this case though, so makes sense to show that we are tracking the users desired zoom instead of ours
+            // they are not actually in a user scale in this case though, so makes sense to show that we are tracking the users desired zoom instead of ours
             scaleCanInc = true;
             scaleCanDec = true;
             getApp()._view.resetRenderTime();
@@ -909,6 +926,10 @@ class CachedValues {
         getApp()._view.resetRenderTime();
     }
 
+    (:noStorage)
+    function cancelCacheCurrentMapArea() as Void {}
+
+    (:storage)
     function cancelCacheCurrentMapArea() as Void {
         seedingZ = -1;
         seedingRectanglarTopLeft = new RectangularPoint(0f, 0f, 0f);
@@ -958,14 +979,19 @@ class CachedValues {
         }
 
         // start at max, and move towards min.
-        // It's slower to do the lower layers first, but means if we run out of storage the higher layers will still be cached, so we will get a better experiece.
+        // It's slower to do the lower layers first, but means if we run out of storage the higher layers will still be cached, so we will get a better experience.
         // Rather than having all the fine details, but no overview, we at least get the overview tiles. Users can set tileLayerMin and tileLayerMax if they would prefer to cache only a single layer.
         seedingZ = _settings.tileLayerMax;
         // todo store current x and y for the for loop, also need to store the max/min tile coords
         // seedingX = ...
         // seedingY = ...
     }
+    (:noStorage)
+    function seeding() as Boolean {
+        return false;
+    }
 
+    (:storage)
     function seeding() as Boolean {
         return seedingZ >= 0 || seedingInProgressTiles.size() != 0;
     }
