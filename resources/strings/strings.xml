@@ -110,7 +110,6 @@
     <string id="clearCachedTiles">Clear Cached Tiles</string>
 
     <string id="routesTitle">Routes</string>
-    <string id="routesTitle2">Routes (read only)</string>
     <string id="routeId">Id</string>
     <string id="routeName">Name</string>
     <string id="routeMax">Max Routes</string>

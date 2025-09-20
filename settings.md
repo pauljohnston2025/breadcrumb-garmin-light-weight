@@ -503,7 +503,7 @@ Debug Colour - The colour of the debug page
 
 ### Routes
 
-Garmin has an issue with array settings where they cannot be modified by the connect iq app. It appears to be a known issue, but unlikely to be solved. Per route settings should be edited from the watch only, attempts to edit them from the connect iq settings page will likely break until garmin fix the issue.
+Garmin has an issue with array settings where they cannot be modified by the connect iq app. It appears to be a known issue, but unlikely to be solved. Per route settings should be edited from the watch or android app only.
 
 ### Enable Routes
 

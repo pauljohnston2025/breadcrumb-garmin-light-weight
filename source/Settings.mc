@@ -269,7 +269,8 @@ class TileUpdateHandler extends JsonWebHandler {
 
     function handle(
         responseCode as Number,
-        data as Dictionary or
+        data as
+            Dictionary or
                 String or
                 Iterator or
                 WatchUi.BitmapResource or
@@ -492,8 +493,10 @@ class Settings {
 
     // these settings can only be modified externally, but we cahe them for faster/easier lookup
     // https://www.youtube.com/watch?v=LasrD6SZkZk&ab_channel=JaylaB
-    var distanceImperialUnits as Boolean = System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE;
-    var elevationImperialUnits as Boolean = System.getDeviceSettings().elevationUnits == System.UNIT_STATUTE;
+    var distanceImperialUnits as Boolean =
+        System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE;
+    var elevationImperialUnits as Boolean =
+        System.getDeviceSettings().elevationUnits == System.UNIT_STATUTE;
 
     (:lowMemory)
     function routeMax() as Number {
@@ -508,7 +511,7 @@ class Settings {
     function setMode(_mode as Number) as Void {
         mode = _mode;
         // directly set mode, its only for what is displayed, which takes effect ont he next onUpdate
-        // we do not want to call view.onSettingsChanged because it clears timestamps when going to the debug page. 
+        // we do not want to call view.onSettingsChanged because it clears timestamps when going to the debug page.
         // The setValue method on this class calls the view changed method, so do not call it.
         Application.Properties.setValue("mode", mode);
     }
@@ -962,13 +965,13 @@ class Settings {
         setValue("httpErrorTileTTLS", httpErrorTileTTLS);
         tileServerPropChanged();
     }
-    
+
     (:settingsView)
     function setDirectionDistanceM(value as Number) as Void {
         directionDistanceM = value;
         setValue("directionDistanceM", directionDistanceM);
     }
-    
+
     (:settingsView)
     function setMaxTrackPoints(value as Number) as Void {
         var oldmaxTrackPoints = maxTrackPoints;
@@ -982,7 +985,7 @@ class Settings {
     function maxTrackPointsReduced() as Void {
         getApp()._breadcrumbContext.track.coordinates.restrictPoints(maxTrackPoints);
     }
-    
+
     (:settingsView)
     function setShowDirectionPointTextUnderIndex(value as Number) as Void {
         showDirectionPointTextUnderIndex = value;
@@ -1150,11 +1153,11 @@ class Settings {
         clearPendingWebRequests();
         getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // do not remove our cached tiles, we only reduced the caches size, so they are still valid
     }
-    
+
     function storageTileCacheSizeReduced() as Void {
         getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues();
     }
-    
+
     (:settingsView)
     function setStorageTileCacheSize(value as Number) as Void {
         setStorageTileCacheSizeWithoutSideEffect(value);
@@ -1278,13 +1281,13 @@ class Settings {
         includeDebugPageInOnScreenUi = value;
         setValue("includeDebugPageInOnScreenUi", includeDebugPageInOnScreenUi);
     }
-    
+
     (:settingsView)
     function setDrawHitBoxes(value as Boolean) as Void {
         drawHitBoxes = value;
         setValue("drawHitBoxes", drawHitBoxes);
     }
-    
+
     (:settingsView)
     function setShowDirectionPoints(value as Boolean) as Void {
         showDirectionPoints = value;
@@ -1487,7 +1490,7 @@ class Settings {
 
     function saveRoutesNoSideEffect() as Void {
         var toSave = routesToSave();
-        Application.Properties.setValue(
+        Application.Storage.setValue(
             "routes",
             toSave as Dictionary<PropertyKeyType, PropertyValueType>
         );
@@ -1498,7 +1501,7 @@ class Settings {
         trackColour = value;
         setValue("trackColour", trackColour.format("%X"));
     }
-    
+
     (:settingsView)
     function setDefaultRouteColour(value as Number) as Void {
         defaultRouteColour = value;
@@ -1609,17 +1612,17 @@ class Settings {
     (:settingsView)
     function toggleIncludeDebugPageInOnScreenUi() as Void {
         includeDebugPageInOnScreenUi = !includeDebugPageInOnScreenUi;
-        setValue( "includeDebugPageInOnScreenUi", includeDebugPageInOnScreenUi);
+        setValue("includeDebugPageInOnScreenUi", includeDebugPageInOnScreenUi);
     }
     (:settingsView)
     function toggleDrawHitBoxes() as Void {
         drawHitBoxes = !drawHitBoxes;
-        setValue( "drawHitBoxes", drawHitBoxes);
+        setValue("drawHitBoxes", drawHitBoxes);
     }
     (:settingsView)
     function toggleShowDirectionPoints() as Void {
         showDirectionPoints = !showDirectionPoints;
-        setValue( "showDirectionPoints", showDirectionPoints);
+        setValue("showDirectionPoints", showDirectionPoints);
     }
     (:settingsView)
     function toggleDisplayLatLong() as Void {
@@ -1716,7 +1719,7 @@ class Settings {
     function updateViewSettings() as Void {
         getApp()._view.onSettingsChanged();
     }
-    
+
     function updateRouteSettings() as Void {
         var contextRoutes = getApp()._breadcrumbContext.routes;
         for (var i = 0; i < contextRoutes.size(); ++i) {
@@ -1990,7 +1993,7 @@ class Settings {
     ) as Array<Dictionary> {
         var value = null;
         try {
-            value = Application.Properties.getValue(key);
+            value = Application.Storage.getValue(key);
             if (value == null) {
                 return defaultValue;
             }
@@ -2205,7 +2208,14 @@ class Settings {
             // for now just blindly trust the users
             // we do reload which sanitizes, but they could break garmins settings page with unexpected types
             try {
-                Application.Properties.setValue(key, value as PropertyValueType);
+                if (key.equals("routes")) {
+                    Application.Storage.setValue(
+                        key,
+                        value as Dictionary<PropertyKeyType, PropertyValueType>
+                    );
+                } else {
+                    Application.Properties.setValue(key, value as PropertyValueType);
+                }
             } catch (e) {
                 logE("failed property save: " + e.getErrorMessage() + " " + key + ":" + value);
                 ++$.globalExceptionCounter;
@@ -2217,7 +2227,10 @@ class Settings {
         httpErrorTileTTLS = parseNumber("httpErrorTileTTLS", httpErrorTileTTLS);
         directionDistanceM = parseNumber("directionDistanceM", directionDistanceM);
         maxTrackPoints = parseNumber("maxTrackPoints", maxTrackPoints);
-        showDirectionPointTextUnderIndex = parseNumber("showDirectionPointTextUnderIndex", showDirectionPointTextUnderIndex);
+        showDirectionPointTextUnderIndex = parseNumber(
+            "showDirectionPointTextUnderIndex",
+            showDirectionPointTextUnderIndex
+        );
         errorTileTTLS = parseNumber("errorTileTTLS", errorTileTTLS);
         fullTileSize = parseNumber("fullTileSize", fullTileSize);
         useDrawBitmap = parseBool("useDrawBitmap", useDrawBitmap);
@@ -2276,14 +2289,8 @@ class Settings {
             "includeDebugPageInOnScreenUi",
             includeDebugPageInOnScreenUi
         );
-        drawHitBoxes = parseBool(
-            "drawHitBoxes",
-            drawHitBoxes
-        );
-        showDirectionPoints = parseBool(
-            "showDirectionPoints",
-            showDirectionPoints
-        );
+        drawHitBoxes = parseBool("drawHitBoxes", drawHitBoxes);
+        showDirectionPoints = parseBool("showDirectionPoints", showDirectionPoints);
         displayLatLong = parseBool("displayLatLong", displayLatLong);
         _scaleRestrictedToTileLayers = parseBool(
             "scaleRestrictedToTileLayers",
@@ -2467,15 +2474,14 @@ class Settings {
             tileServerPropChanged();
         }
 
-        if (oldStorageTileCacheSize > storageTileCacheSize)
-        {
+        if (oldStorageTileCacheSize > storageTileCacheSize) {
             storageTileCacheSizeReduced();
         }
 
         if (oldTileCacheSize > tileCacheSize) {
             tileCacheSizeReduced();
         }
-        
+
         if (oldMaxTrackPoints > maxTrackPoints) {
             maxTrackPointsReduced();
         }
