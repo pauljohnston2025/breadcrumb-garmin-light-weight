@@ -602,8 +602,8 @@ function alertsCommon(menu as WatchUi.Menu2, settings as Settings) as Void {
     safeSetToggle(menu, :settingsAlertsEnabled, settings.enableOffTrackAlerts);
     safeSetSubLabel(
         menu,
-        :settingsAlertsDirectionDistanceM,
-        settings.directionDistanceM.toString()
+        :settingsAlertsTurnAlertS,
+        settings.turnAlertS.toString()
     );
     var alertTypeString = "";
     switch (settings.alertType) {
@@ -1836,11 +1836,11 @@ function onSelectAlertCommon(
             ),
             view
         );
-    } else if (itemId == :settingsAlertsDirectionDistanceM) {
+    } else if (itemId == :settingsAlertsTurnAlertS) {
         startPicker(
             new SettingsNumberPicker(
-                settings.method(:setDirectionDistanceM),
-                settings.directionDistanceM
+                settings.method(:setTurnAlertS),
+                settings.turnAlertS
             ),
             view
         );

@@ -78,6 +78,7 @@ class BreadcrumbTrack {
     var coordinates as PointArray = new PointArray(0); // SCALED (note: altitude is currently unscaled)
     var directions as DirectionPointArray = new DirectionPointArray();
     var lastDirectionIndex as Number = -1;
+    var lastDirectionSpeedPPS as Float = -1f;
     var seenStartupPoints as Number = 0;
     var possibleBadPointsAdded as Number = 0;
     var inRestartMode as Boolean = true;
@@ -105,6 +106,7 @@ class BreadcrumbTrack {
         coordinates.reversePoints();
         directions.reversePoints(coordinates.pointSize());
         lastDirectionIndex = -1;
+        lastDirectionSpeedPPS = -1f;
         lastClosePointIndex = null;
         lastClosePoint = null; // we want to recalculate off track, since the cheveron direction will change
         writeToDisk(ROUTE_KEY); // write ourselves back to storage in reverse, so next time we load (on app restart) it is correct
@@ -115,6 +117,7 @@ class BreadcrumbTrack {
         // This is mainly because the turn by turn direction alerts need to know where we are on track, or fall back to using the directions themselves.
         // If we turn off 'off track' alerts calculation the turn by turn directions will think we are always at that location and will not progress.
         lastDirectionIndex = -1;
+        lastDirectionSpeedPPS = -1f;
         lastClosePoint = null;
         lastClosePointIndex = null;
     }
@@ -512,29 +515,44 @@ class BreadcrumbTrack {
     // returns [turnAngleDeg, distancePx] or null if no direction within range
     function checkDirections(
         checkPoint as RectangularPoint,
-        distanceCheck as Float,
+        turnAlertS as Number,
         cachedValues as CachedValues
     ) as [Number, Float]? {
+
+        var currentSpeedPPS = 1f; // assume a slow walk if we cannot get the current speed
+        var info = Activity.getActivityInfo();
+        if(info != null && info.currentSpeed != null)
+        {
+            currentSpeedPPS = info.currentSpeed as Float;
+        }
+
+        // it's in meters before this point then switches to pixels per second
+        if (cachedValues.currentScale != 0f) {
+            currentSpeedPPS *= cachedValues.currentScale;
+        }
+
+        var distancePixelsCheck =  currentSpeedPPS * turnAlertS;
         var directionsRaw = directions._internalArrayBuffer; // raw dog access means we can do the calcs much faster
         var coordinatesRaw = coordinates._internalArrayBuffer; // raw dog access means we can do the calcs much faster
         // longer routes with more points allow more look ahead (up to some percentage of the route)
         var allowedCoordinatePerimeter = maxN(5, (coordinates.pointSize() / 20).toNumber());
-        var oldLastDirectionIndex = lastDirectionIndex;
         var oldLastClosePointIndex = lastClosePointIndex;
         var stillNearTheLastDirectionPoint = false;
         var startAt = 0;
         var oldCoordinatesIndex = -1;
-        if (oldLastDirectionIndex >= 0 && oldLastDirectionIndex < directions.pointSize()) {
-            startAt = oldLastDirectionIndex;
-            var oldLastDirectionIndexStart = oldLastDirectionIndex;
-            var oldCoordinatesIndexTemp = directionsRaw[oldLastDirectionIndexStart] & 0xffff;
+        if (lastDirectionIndex >= 0 && lastDirectionIndex < directions.pointSize()) {
+            startAt = lastDirectionIndex;
+            var oldCoordinatesIndexTemp = directionsRaw[lastDirectionIndex] & 0xffff;
             var oldLastDirectionPointDistance = distance(
                 coordinatesRaw[oldCoordinatesIndexTemp * ARRAY_POINT_SIZE],
                 coordinatesRaw[oldCoordinatesIndexTemp * ARRAY_POINT_SIZE + 1],
                 checkPoint.x,
                 checkPoint.y
             );
-            stillNearTheLastDirectionPoint = oldLastDirectionPointDistance < distanceCheck;
+            // if we have slowed down still keep the larger perimeter, if we speed up when we exit the corner we also need to take the higher speed so we do not clear 
+            // the index and then add it straight back again when the distance increases because the speed increased
+            var oldDistancePixelsCheck = maxF(lastDirectionSpeedPPS, currentSpeedPPS) * turnAlertS;
+            stillNearTheLastDirectionPoint = oldLastDirectionPointDistance < oldDistancePixelsCheck;
             if (stillNearTheLastDirectionPoint) {
                 // only use it if we are still close, otherwise we will get locked to this coordinate when we move forwards if we do not know our current position on the track
                 oldCoordinatesIndex = oldCoordinatesIndexTemp;
@@ -575,8 +593,9 @@ class BreadcrumbTrack {
                 checkPoint.x,
                 checkPoint.y
             );
-            if (distancePx < distanceCheck) {
+            if (distancePx < distancePixelsCheck) {
                 lastDirectionIndex = i;
+                lastDirectionSpeedPPS = currentSpeedPPS;
                 // inline for perf, no function call overhead but unreadable :(
                 var angle = ((directionsRaw[i] & 0xffff0000) >> 16) - 180;
                 // by the time we get here we have parsed all the off track calculations and direction checks
@@ -596,6 +615,7 @@ class BreadcrumbTrack {
             // consider all directions again, we have moved outside the perimeter of the last direction
             // this is so we can rejoin at the start
             lastDirectionIndex = -1;
+            lastDirectionSpeedPPS = -1f;
         }
         return null;
     }
@@ -722,6 +742,7 @@ class BreadcrumbTrack {
                     oldLastClosePointIndex > lastClosePointIndex;
                 if (wrongDirection) {
                     lastDirectionIndex = -1; // reset the direction index once we go back, this is so we can revisit the direction again if we go past it again
+                    lastDirectionSpeedPPS = -1f;
                 }
                 return new OffTrackInfo(true, lastClosePoint, wrongDirection);
             }

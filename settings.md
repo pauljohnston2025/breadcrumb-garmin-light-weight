@@ -461,10 +461,10 @@ Trigger an alert when you leave a route by `Off Track Distance`.
 
 Trigger an alert when you navigate the track in the wrong direction. Note: this can take up to twice as long as [Off Track Check Interval](#off-track-check-interval) to detect travel in the wrong direction.
 
-### Turn Alerts Distance (m)
+### Turn Alert Time (s)
 
 Enabled turn-by-turn navigation (requires directions to be sent from the companion app).  
-The number correlate the the distance away from the turn the alert will fire, larger distances should be used for faster paced activities to ensure the alert is triggered before we reach the turn.  
+The number correlates to the time away from the turn the alert will fire (based on current speed). Ie. if set to 20 an alert will fire 20s before we reach the turn, based on the current speed of travel, if we are moving at 2m/s the alert will fire 40m before the turn.  
 Set to -1 to disable turn alerts.
 
 Note: If your are off track the direction shown in the turn alert may be incorrect, this is because the direction is precomputed assuming you are on track, this is for performance reasons to avoid tripping the watchdog.
@@ -589,7 +589,7 @@ Show the hit-boxes for onscreen ui touches.
 
 ### Show Turn Points
 
-Draws a circle around all of the turns that are in a route. The circle corresponds to [Turn Alert Distance (m)](#turn-alerts-distance-m).
+Draws a circle around all of the turns that are in a route. The circle corresponds to [Turn Alert Time (s)](#turn-alert-time-s).
 
 ### Show Turn Point Text Under Index
 

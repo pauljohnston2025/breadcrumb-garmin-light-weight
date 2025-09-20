@@ -136,8 +136,8 @@
     <string id="tileErrorColourTitle">Tile Error Colour</string>
     <string id="includeDebugPageInOnScreenUiTitle">Include Debug Page In On Screen Ui</string>
 
-    <string id="directionDistanceMTitle">Turn Alerts Distance (m)</string>
-    <string id="directionDistanceMPrompt">-1 to disable</string>
+    <string id="turnAlertSTitle">Turn Alert Time (s)</string>
+    <string id="turnAlertSPrompt">-1 to disable</string>
     <string id="maxTrackPointsTitle">Max Track Points</string>
     <string id="drawHitBoxesTitle">Draw Hit Boxes</string>
     <string id="showDirectionPointsTitle">Show Turn Points</string>

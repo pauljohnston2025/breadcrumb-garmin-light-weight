@@ -423,7 +423,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                         handleOffTrackAlerts(epoch, lastPoint);
                     }
 
-                    if (settings.directionDistanceM >= 0) {
+                    if (settings.turnAlertS >= 0) {
                         handleDirections(lastPoint);
                     }
                 }
@@ -440,7 +440,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             }
             var res = route.checkDirections(
                 newPoint,
-                settings.directionDistanceM * _cachedValues.currentScale,
+                settings.turnAlertS,
                 _cachedValues
             );
 
@@ -1093,7 +1093,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             // do not divide by 0 my good friends
             percentage = (hits * 100) / total;
         }
-        var cacheHits = "cacheHits: " + percentage.format("%.1f") + "%";
+        var currentSpeedMPS = 0f;
+        var info = Activity.getActivityInfo();
+        if (info != null && info.currentSpeed != null) {
+            currentSpeedMPS = info.currentSpeed as Float;
+        }
+        var cacheHits = "cacheHits: " + percentage.format("%.1f") + "% s: " + currentSpeedMPS.format("%.1f") + "m/s";
         dc.drawText(x, y, Graphics.FONT_XTINY, cacheHits, Graphics.TEXT_JUSTIFY_CENTER);
         y += spacing;
         dc.drawText(

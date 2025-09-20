@@ -234,7 +234,7 @@
         <setting propertyKey="@Properties.enableOffTrackAlerts" title="@Strings.enableOffTrackAlertsTitle">
             <settingConfig type="boolean"/>
         </setting>
-        <setting propertyKey="@Properties.directionDistanceM" title="@Strings.directionDistanceMTitle"  prompt="@Strings.directionDistanceMPrompt">
+        <setting propertyKey="@Properties.turnAlertS" title="@Strings.turnAlertSTitle"  prompt="@Strings.turnAlertSPrompt">
             <settingConfig type="numeric" min="-1"/>
         </setting>
         <setting propertyKey="@Properties.offTrackAlertsMaxReportIntervalS" title="@Strings.offTrackAlertsMaxReportIntervalSTitle">

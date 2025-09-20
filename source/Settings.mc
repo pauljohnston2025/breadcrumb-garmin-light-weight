@@ -477,7 +477,7 @@ class Settings {
     var tileCachePadding as Number = 0;
     var httpErrorTileTTLS as Number = 60;
     var errorTileTTLS as Number = 20; // other errors are from garmin ble connection issues, retry faster by default
-    var directionDistanceM as Number = -1; // -1 disables the check, 60 seems to be a good value
+    var turnAlertS as Number = -1; // -1 disables the check, 60 seems to be a good value
     var maxTrackPoints as Number = 400;
 
     // bunch of debug settings
@@ -967,9 +967,9 @@ class Settings {
     }
 
     (:settingsView)
-    function setDirectionDistanceM(value as Number) as Void {
-        directionDistanceM = value;
-        setValue("directionDistanceM", directionDistanceM);
+    function setTurnAlertS(value as Number) as Void {
+        turnAlertS = value;
+        setValue("turnAlertS", turnAlertS);
     }
 
     (:settingsView)
@@ -2043,7 +2043,7 @@ class Settings {
         var defaultSettings = new Settings();
         tileSize = defaultSettings.tileSize;
         httpErrorTileTTLS = defaultSettings.httpErrorTileTTLS;
-        directionDistanceM = defaultSettings.directionDistanceM;
+        turnAlertS = defaultSettings.turnAlertS;
         maxTrackPoints = defaultSettings.maxTrackPoints;
         showDirectionPointTextUnderIndex = defaultSettings.showDirectionPointTextUnderIndex;
         errorTileTTLS = defaultSettings.errorTileTTLS;
@@ -2131,7 +2131,7 @@ class Settings {
         return {
             "tileSize" => tileSize,
             "httpErrorTileTTLS" => httpErrorTileTTLS,
-            "directionDistanceM" => directionDistanceM,
+            "turnAlertS" => turnAlertS,
             "maxTrackPoints" => maxTrackPoints,
             "showDirectionPointTextUnderIndex" => showDirectionPointTextUnderIndex,
             "errorTileTTLS" => errorTileTTLS,
@@ -2225,7 +2225,7 @@ class Settings {
 
     function loadSettingsPart1() as Void {
         httpErrorTileTTLS = parseNumber("httpErrorTileTTLS", httpErrorTileTTLS);
-        directionDistanceM = parseNumber("directionDistanceM", directionDistanceM);
+        turnAlertS = parseNumber("turnAlertS", turnAlertS);
         maxTrackPoints = parseNumber("maxTrackPoints", maxTrackPoints);
         showDirectionPointTextUnderIndex = parseNumber(
             "showDirectionPointTextUnderIndex",

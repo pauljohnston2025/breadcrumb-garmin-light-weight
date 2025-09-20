@@ -472,6 +472,32 @@ class BreadcrumbRenderer {
         }
     }
 
+    (:showTurnAlertPoints)
+    function getTurnAlertDistancePx() as Float {
+        var currentSpeedPPS = 1f; // assume a slow walk if we cannot get the current speed
+        var info = Activity.getActivityInfo();
+        if (info != null && info.currentSpeed != null) {
+            currentSpeedPPS = info.currentSpeed as Float;
+        }
+
+        // it's in meters before this point then switches to pixels per second
+        if (_cachedValues.currentScale != 0f) {
+            currentSpeedPPS *= _cachedValues.currentScale;
+        }
+
+        return currentSpeedPPS * settings.turnAlertS;
+    }
+
+    (:noShowTurnAlertPoints)
+    function renderTrackDirectionPointsUnrotated(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType
+    ) as Void {
+        unsupported(dc, "show turn points");
+    }
+
+    (:showTurnAlertPoints)
     function renderTrackDirectionPointsUnrotated(
         dc as Dc,
         breadcrumb as BreadcrumbTrack,
@@ -480,11 +506,11 @@ class BreadcrumbRenderer {
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
         var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
-        var distance = _cachedValues.currentScale * settings.directionDistanceM; // local lookup faster
+        var distance = getTurnAlertDistancePx();
 
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
-            // its very cofusing seeing the routes disappear when scrolling
-            // and it makes sense to want to sroll around the route too
+            // its very confusing seeing the routes disappear when scrolling
+            // and it makes sense to want to scroll around the route too
             return;
         }
 
@@ -915,7 +941,16 @@ class BreadcrumbRenderer {
         colour as Graphics.ColorType
     ) as Void {}
 
-    (:unbufferedRotations)
+    (:unbufferedRotations,:noShowTurnAlertPoints)
+    function renderTrackDirectionPoints(
+        dc as Dc,
+        breadcrumb as BreadcrumbTrack,
+        colour as Graphics.ColorType
+    ) as Void {
+        unsupported(dc, "show turn points");
+    }
+
+    (:unbufferedRotations,:showTurnAlertPoints)
     function renderTrackDirectionPoints(
         dc as Dc,
         breadcrumb as BreadcrumbTrack,
@@ -926,7 +961,7 @@ class BreadcrumbRenderer {
         var rotateSin = _cachedValues.rotateSin; // local lookup faster
         var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
         var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
-        var distance = _cachedValues.currentScale * settings.directionDistanceM; // local lookup faster
+        var distance = getTurnAlertDistancePx();
 
         if (settings.mode != MODE_NORMAL && settings.mode != MODE_MAP_MOVE) {
             // its very confusing seeing the routes disappear when scrolling
@@ -1571,7 +1606,7 @@ class BreadcrumbRenderer {
                 }
 
                 // we want the result to be
-                var nextDistanceM = keys[nextScaleIndex] / 1000f as Float;
+                var nextDistanceM = keys[nextScaleIndex] / (1000f as Float);
                 // -2 since we need some fudge factor to make sure we are very close to desired length, but not past it
                 var desiredScale = (DESIRED_SCALE_PIXEL_WIDTH - 2) / nextDistanceM;
                 var toInc = desiredScale - scale;

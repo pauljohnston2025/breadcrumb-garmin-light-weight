@@ -120,7 +120,6 @@ class MapRenderer {
     (:noTileBorders)
     function drawTileBordersUnrotated(
         dc as Dc,
-        showTileBorders as Boolean,
         xPixel as Number,
         yPixel as Number,
         tileScalePixelSize as Number
@@ -131,16 +130,13 @@ class MapRenderer {
     (:tileBorders)
     function drawTileBordersUnrotated(
         dc as Dc,
-        showTileBorders as Boolean,
         xPixel as Number,
         yPixel as Number,
         tileScalePixelSize as Number
     ) as Void {
-        if (showTileBorders) {
-            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-            dc.setPenWidth(4);
-            dc.drawRectangle(xPixel, yPixel, tileScalePixelSize, tileScalePixelSize);
-        }
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(4);
+        dc.drawRectangle(xPixel, yPixel, tileScalePixelSize, tileScalePixelSize);
     }
 
     (:companionTiles,:imageTiles)
@@ -221,13 +217,9 @@ class MapRenderer {
                     );
                 }
 
-                drawTileBordersUnrotated(
-                    dc,
-                    _settings.showTileBorders,
-                    xPixel,
-                    yPixel,
-                    tileScalePixelSize
-                );
+                if (_settings.showTileBorders) {
+                    drawTileBordersUnrotated(dc, xPixel, yPixel, tileScalePixelSize);
+                }
             }
         }
     }

@@ -5,6 +5,6 @@
     <toggle-menu-item id="settingsAlertsDrawCheverons" label="@Strings.drawCheveronsTitle"/>
     <toggle-menu-item id="settingsAlertsOffTrackWrongDirection" label="@Strings.offTrackWrongDirectionTitle"/>
     <toggle-menu-item id="settingsAlertsEnabled" label="@Strings.enableOffTrackAlertsTitle"/>
-    <menu-item id="settingsAlertsDirectionDistanceM" label="@Strings.directionDistanceMTitle"/>
+    <menu-item id="settingsAlertsTurnAlertS" label="@Strings.turnAlertSTitle"/>
     <menu-item id="settingsAlertsAlertType" label="@Strings.alertTypeTitle"/>
 </menu2>
