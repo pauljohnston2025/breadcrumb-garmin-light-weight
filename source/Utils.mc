@@ -10,56 +10,32 @@ const NUMBER_MAX = 0x7fffffff;
 
 (:inline)
 function maxF(lhs as Float, rhs as Float) as Float {
-    if (lhs > rhs) {
-        return lhs;
-    }
-
-    return rhs;
+    return lhs > rhs ? lhs : rhs;
 }
 
 (:inline)
 function maxN(lhs as Number, rhs as Number) as Number {
-    if (lhs > rhs) {
-        return lhs;
-    }
-
-    return rhs;
+    return lhs > rhs ? lhs : rhs;
 }
 
 (:inline)
 function minF(lhs as Float, rhs as Float) as Float {
-    if (lhs < rhs) {
-        return lhs;
-    }
-
-    return rhs;
+    return lhs < rhs ? lhs : rhs;
 }
 
 (:inline)
 function minN(lhs as Number, rhs as Number) as Number {
-    if (lhs < rhs) {
-        return lhs;
-    }
-
-    return rhs;
+    return lhs < rhs ? lhs : rhs;
 }
 
 (:inline)
 function abs(val as Float) as Float {
-    if (val < 0) {
-        return -val;
-    }
-
-    return val;
+    return val < 0 ? -val : val;
 }
 
 (:inline)
 function absN(val as Number) as Number {
-    if (val < 0) {
-        return -val;
-    }
-
-    return val;
+    return val < 0 ? -val : val;
 }
 
 // from https://forums.garmin.com/developer/connect-iq/f/discussion/338071/testing-for-nan/1777041#1777041
@@ -74,7 +50,7 @@ class BitmapCreateError extends Lang.Exception {
     }
 
     function getErrorMessage() as String? {
-        return "failed btmap create";
+        return "failed bitmap create";
     }
 }
 
