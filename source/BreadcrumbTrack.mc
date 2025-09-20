@@ -540,7 +540,7 @@ class BreadcrumbTrack {
         // - = route/track
         // | = route/track
         // * = direction turn point
-        // + = standard track/route pount
+        // + = standard track/route point
         //
         //         *       OUT AND BACK SECTION
         //         |
