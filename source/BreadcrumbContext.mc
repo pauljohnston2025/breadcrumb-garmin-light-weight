@@ -35,15 +35,21 @@ class BreadcrumbContext {
         // routes loaded from storage will be rescaled on the first calculate in cached values
         // had a bug where routes were still in storage, but removed from settings, so load everything that is enabled (up to 10 routes)
         // was some strange issue that i never could quite figure out, possibly when changing route max and disabling routes in settings in the same settings commit?
+        var currentScale = cachedValues.currentScale;
         for (var i = 0; i < 10; ++i) {
             var route = BreadcrumbTrack.readFromDisk(ROUTE_KEY, i);
             if (route == null) {
                 continue;
             }
-            settings.ensureRouteId(route.storageIndex); // may not actualy add the route if we are over route max
+            settings.ensureRouteId(route.storageIndex); // may not actually add the route if we are over route max
             if (settings.getRouteIndexById(route.storageIndex) == null) {
                 clearRouteId(route.storageIndex); // clear it from storage, it was meant to get purged when we changed the settings
                 continue;
+            }
+
+            if (currentScale != 0f) {
+                // make sure we are in the correct scale
+                route.rescale(currentScale);
             }
 
             routes.add(route);
@@ -53,6 +59,9 @@ class BreadcrumbContext {
                 settings.setRouteName(route.storageIndex, route.name);
             }
         }
+
+        // we pulled in some new route data, make sure we recalculate the bounding box etc.
+        cachedValues.recalculateAll();
     }
 
     function newRoute(name as String) as BreadcrumbTrack? {

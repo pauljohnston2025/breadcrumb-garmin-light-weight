@@ -652,7 +652,7 @@ class CachedValues {
 
         var scaleFactor = newScale;
         if (currentScale != null && currentScale != 0f) {
-            // adjsut by old scale
+            // adjust by old scale
             scaleFactor = newScale / currentScale;
         }
 
