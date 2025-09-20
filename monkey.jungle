@@ -7,6 +7,12 @@ base.sourcePath=$(srcBase)
 # turn off a heap of debug code that we do not need compiled in takeing up space
 base.excludeAnnotations = $(base.excludeAnnotations);tileBorders;showPoints;drawHitBoxes;noShowTurnAlertPoints
 
+
+# to get devices and their memory limits
+# cd <homedir>/AppData/Roaming/Garmin/ConnectIQ/Devices/
+# cat ./**/compiler.json | grep -E '"type": "datafield"|displayName' -B 1
+# we currently need 128.5Kb of memory
+
 highMemExcludes=noSettingsView;noUnbufferedRotations;noStorage;noCompanionTiles;lowMemory;noImageTiles
 # low memory devices only support image tiles, no companion app
 lowMemExcludes=settingsView;unbufferedRotations;storage;companionTiles;highMemory;noImageTiles
@@ -38,10 +44,16 @@ edge1050.excludeAnnotations = $(edge1050.excludeAnnotations);round;scaledbitmap;
 edge1050.resourcePath = $(edge1050.resourcePath);resources-low-memory
 edge540.excludeAnnotations = $(edge540.excludeAnnotations);round;scaledbitmap;$(lowMemExcludes)
 edge540.resourcePath = $(edge540.resourcePath);resources-low-memory
+edge550.excludeAnnotations = $(edge550.excludeAnnotations);round;scaledbitmap;$(lowMemExcludes)
+edge550.resourcePath = $(edge550.resourcePath);resources-low-memory
 edge840.excludeAnnotations = $(edge840.excludeAnnotations);round;scaledbitmap;$(lowMemExcludes)
 edge840.resourcePath = $(edge840.resourcePath);resources-low-memory
+edge850.excludeAnnotations = $(edge850.excludeAnnotations);round;scaledbitmap;$(lowMemExcludes)
+edge850.resourcePath = $(edge850.resourcePath);resources-low-memory
 edgeexplore2.excludeAnnotations = $(edgeexplore2.excludeAnnotations);round;scaledbitmap;$(lowMemExcludes)
 edgeexplore2.resourcePath = $(edgeexplore2.resourcePath);resources-low-memory
+edgemtb.excludeAnnotations = $(edgemtb.excludeAnnotations);round;scaledbitmap;$(lowMemExcludes)
+edgemtb.resourcePath = $(edgemtb.resourcePath);resources-low-memory
 
 enduro3.excludeAnnotations = $(enduro3.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
 enduro3.resourcePath = $(enduro3.resourcePath);resources-high-memory
@@ -73,6 +85,8 @@ fenix843mm.excludeAnnotations = $(fenix843mm.excludeAnnotations);rectangle;nosca
 fenix843mm.resourcePath = $(fenix843mm.resourcePath);resources-low-memory
 fenix847mm.excludeAnnotations = $(fenix847mm.excludeAnnotations);rectangle;noscaledbitmap;$(lowMemExcludes)
 fenix847mm.resourcePath = $(fenix847mm.resourcePath);resources-low-memory
+fenix8pro47mm.excludeAnnotations = $(fenix8pro47mm.excludeAnnotations);rectangle;noscaledbitmap;$(lowMemExcludes)
+fenix8pro47mm.resourcePath = $(fenix8pro47mm.resourcePath);resources-low-memory
 fenix8solar47mm.excludeAnnotations = $(fenix8solar47mm.excludeAnnotations);rectangle;noscaledbitmap;$(lowMemExcludes)
 fenix8solar47mm.resourcePath = $(fenix8solar47mm.resourcePath);resources-low-memory
 fenix8solar51mm.excludeAnnotations = $(fenix8solar51mm.excludeAnnotations);rectangle;noscaledbitmap;$(lowMemExcludes)
@@ -95,10 +109,16 @@ fr265.excludeAnnotations = $(fr265.excludeAnnotations);rectangle;noscaledbitmap;
 fr265.resourcePath = $(fr265.resourcePath);resources-high-memory
 fr265s.excludeAnnotations = $(fr265s.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
 fr265s.resourcePath = $(fr265s.resourcePath);resources-high-memory
+fr57042mm.excludeAnnotations = $(fr57042mm.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
+fr57042mm.resourcePath = $(fr57042mm.resourcePath);resources-high-memory
+fr57047mm.excludeAnnotations = $(fr57047mm.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
+fr57047mm.resourcePath = $(fr57047mm.resourcePath);resources-high-memory
 fr955.excludeAnnotations = $(fr955.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
 fr955.resourcePath = $(fr955.resourcePath);resources-high-memory
 fr965.excludeAnnotations = $(fr965.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
 fr965.resourcePath = $(fr965.resourcePath);resources-high-memory
+fr970.excludeAnnotations = $(fr970.excludeAnnotations);rectangle;noscaledbitmap;$(lowMemExcludes)
+fr970.resourcePath = $(fr970.resourcePath);resources-low-memory
 instinct3amoled45mm.excludeAnnotations = $(instinct3amoled45mm.excludeAnnotations);rectangle;scaledbitmap;$(lowMemExcludes)
 instinct3amoled45mm.resourcePath = $(instinct3amoled45mm.resourcePath);resources-low-memory
 instinct3amoled50mm.excludeAnnotations = $(instinct3amoled50mm.excludeAnnotations);rectangle;scaledbitmap;$(lowMemExcludes)
@@ -119,10 +139,16 @@ venu3.excludeAnnotations = $(venu3.excludeAnnotations);rectangle;noscaledbitmap;
 venu3.resourcePath = $(venu3.resourcePath);resources-high-memory
 venu3s.excludeAnnotations = $(venu3s.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
 venu3s.resourcePath = $(venu3s.resourcePath);resources-high-memory
+venu441mm.excludeAnnotations = $(venu441mm.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
+venu441mm.resourcePath = $(venu441mm.resourcePath);resources-high-memory
+venu445mm.excludeAnnotations = $(venu445mm.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
+venu445mm.resourcePath = $(venu445mm.resourcePath);resources-high-memory
 venusq2.excludeAnnotations = $(venusq2.excludeAnnotations);round;scaledbitmap;$(highMemExcludes)
 venusq2.resourcePath = $(venusq2.resourcePath);resources-high-memory
 venusq2m.excludeAnnotations = $(venusq2m.excludeAnnotations);round;scaledbitmap;$(highMemExcludes)
-venusq2m.resourcePath = $(venusq2m.resourcePath);resources-high-memory
+venusq2m.resourcePath = $(venusq2m.resourcePath);resources-high-memoryve
+venux1.excludeAnnotations = $(venux1.excludeAnnotations);round;noscaledbitmap;$(highMemExcludes)
+venux1.resourcePath = $(venux1.resourcePath);resources-high-memory
 vivoactive5.excludeAnnotations = $(vivoactive5.excludeAnnotations);rectangle;scaledbitmap;$(highMemExcludes)
 vivoactive5.resourcePath = $(vivoactive5.resourcePath);resources-high-memory
 vivoactive6.excludeAnnotations = $(vivoactive6.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)

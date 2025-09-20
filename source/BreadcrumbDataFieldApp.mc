@@ -51,7 +51,7 @@ class SettingsSent extends Communications.ConnectionListener {
     }
 }
 
-// to get devices and their memeory limits
+// to get devices and their memory limits
 // cd <homedir>/AppData/Roaming/Garmin/ConnectIQ/Devices/
 // cat ./**/compiler.json | grep -E '"type": "datafield"|displayName' -B 1
 // we currently need 128.5Kb of memory

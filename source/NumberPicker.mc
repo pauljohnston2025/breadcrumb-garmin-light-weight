@@ -54,8 +54,8 @@ class NumberPicker {
 
         var angleIncrement = (2 * Math.PI) / numPoints;
 
-        var x0 = centerX + radius;
-        var y0 = centerY;
+        var x0 = (centerX + radius).toFloat();
+        var y0 = centerY.toFloat();
         points[0] = [x0, y0];
         var x = x0;
         var y = y0;

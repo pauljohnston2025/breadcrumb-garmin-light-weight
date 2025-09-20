@@ -1360,6 +1360,7 @@ class CachedValues {
         }
     }
 
+    (:storage)
     function seedingProgressString() as String {
         if (_settings.storageSeedBoundingBox) {
             return (

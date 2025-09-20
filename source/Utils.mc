@@ -269,7 +269,7 @@ function turnAlertDistancePx(
     currentScale as Float
 ) as Float {
     var timeBasedPx = currentSpeedPPS * turnAlertTimeS;
-    var distanceBasedPx = minTurnAlertDistanceM;
+    var distanceBasedPx = minTurnAlertDistanceM.toFloat();
     if (currentScale != 0f) {
         distanceBasedPx *= currentScale;
     }
