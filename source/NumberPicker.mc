@@ -136,6 +136,7 @@ class NumberPicker {
         if (currentSelected < 0) {
             currentSelected = letterPositions.size() - 1;
         }
+        forceRefresh();
     }
 
     function nextSelection() as Void {
@@ -143,6 +144,7 @@ class NumberPicker {
         if (currentSelected >= letterPositions.size()) {
             currentSelected = 0;
         }
+        forceRefresh();
     }
 
     function removeLast() as Void {
