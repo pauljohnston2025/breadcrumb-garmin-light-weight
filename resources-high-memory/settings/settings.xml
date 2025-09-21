@@ -51,7 +51,7 @@
         <settingConfig type="numeric" min="1"/>
     </setting>
     
-    <group id="zoomAtPace" title="@Strings.zoomAtPaceTitle">
+    <!-- <group id="zoomAtPace" title="@Strings.zoomAtPaceTitle"> -->
         <setting propertyKey="@Properties.zoomAtPaceMode" title="@Strings.zoomAtPaceModeTitle">
             <settingConfig type="list">
                 <listEntry value="0">@Strings.zoomAtPaceModePace</listEntry>
@@ -69,12 +69,12 @@
         <setting propertyKey="@Properties.zoomAtPaceSpeedMPS" title="@Strings.zoomAtPaceSpeedMPS" prompt="@Strings.zoomAtPaceSpeedMPSPrompt">
             <settingConfig type="numeric" min="0" max="50"/>
         </setting>
-    </group>
+    <!-- </group> -->
 
     <setting propertyKey="@Properties.mapEnabled" title="@Strings.mapEnabledTitle">
         <settingConfig type="boolean"/>
     </setting>
-    <group id="mapSettings" title="@Strings.mapsettingsTitle" enableIfTrue="@Properties.mapEnabled">
+    <!-- <group id="mapSettings" title="@Strings.mapsettingsTitle" enableIfTrue="@Properties.mapEnabled"> -->
         <setting propertyKey="@Properties.tileCacheSize" title="@Strings.tileCacheSizeTitle" prompt="@Strings.tileCacheSizePrompt">
             <settingConfig type="numeric" min="0"/>
         </setting>
@@ -126,8 +126,8 @@
         <setting propertyKey="@Properties.useDrawBitmap" title="@Strings.useDrawBitmapTitle">
             <settingConfig type="boolean"/>
         </setting>
-    </group>
-    <group id="tileServerSettings" title="@Strings.tileServerSettingsTitle" enableIfTrue="@Properties.mapEnabled">
+    <!-- </group> -->
+    <!-- <group id="tileServerSettings" title="@Strings.tileServerSettingsTitle" enableIfTrue="@Properties.mapEnabled"> -->
         <setting propertyKey="@Properties.mapChoice" title="@Strings.mapChoice">
             <settingConfig type="list">
                 <listEntry value="0">@Strings.custom</listEntry>
@@ -192,8 +192,8 @@
         <setting propertyKey="@Properties.fullTileSize" title="@Strings.fullTileSizeTitle" prompt="@Strings.fullTileSizePrompt">
             <settingConfig type="numeric" min="2" max="256"/>
         </setting>
-    </group>
-    <group id="mapStorageSettings" title="@Strings.mapStorageSettingsTitle" enableIfTrue="@Properties.mapEnabled">
+    <!-- </group> -->
+    <!-- <group id="mapStorageSettings" title="@Strings.mapStorageSettingsTitle" enableIfTrue="@Properties.mapEnabled"> -->
         <setting propertyKey="@Properties.cacheTilesInStorage" title="@Strings.cacheTilesInStorageTitle">
             <settingConfig type="boolean"/>
         </setting>
@@ -217,9 +217,9 @@
         <setting propertyKey="@Properties.storageSeedRouteDistanceM" title="@Strings.storageSeedRouteDistanceMTitle">
             <settingConfig type="numeric" min="0"/>
         </setting>
-    </group>
+    <!-- </group> -->
 
-    <group id="offTrackAlertsGroup" title="@Strings.offTrackAlertsGroupTitle">
+    <!-- <group id="offTrackAlertsGroup" title="@Strings.offTrackAlertsGroupTitle"> -->
         <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle">
             <settingConfig type="numeric" min="0"/>
         </setting>
@@ -254,9 +254,9 @@
                 <listEntry value="2">@Strings.alertTypeImage</listEntry>
             </settingConfig>
         </setting>
-    </group>
+    <!-- </group> -->
 
-    <group id="colours" title="@Strings.coloursTitle">
+    <!-- <group id="colours" title="@Strings.coloursTitle"> -->
         <setting propertyKey="@Properties.trackColour" title="@Strings.trackColourTitle" prompt="@Strings.colourPrompt">
             <settingConfig type="alphaNumeric"/>
         </setting>
@@ -284,9 +284,9 @@
         <setting propertyKey="@Properties.debugColour" title="@Strings.debugColour" prompt="@Strings.colourPrompt">
             <settingConfig type="alphaNumeric"/>
         </setting>
-    </group>
+    <!-- </group> -->
 
-    <group id="routesdesc" title="@Strings.routesTitle">
+    <!-- <group id="routesdesc" title="@Strings.routesTitle"> -->
         <setting propertyKey="@Properties.routesEnabled" title="@Strings.routesEnabled">
             <settingConfig type="boolean"/>
         </setting>
@@ -298,9 +298,9 @@
         <setting propertyKey="@Properties.routeMax" title="@Strings.routeMax">
             <settingConfig type="numeric"/>
         </setting>
-    </group>
+    <!-- </group> -->
     
-    <group id="debugSettings" title="@Strings.debugSettingsTitle">
+    <!-- <group id="debugSettings" title="@Strings.debugSettingsTitle"> -->
         <setting propertyKey="@Properties.showPoints" title="@Strings.showPointsTitle">
             <settingConfig type="boolean"/>
         </setting>
@@ -336,7 +336,7 @@
         <setting propertyKey="@Properties.showDirectionPointTextUnderIndex" title="@Strings.showDirectionPointTextUnderIndexTitle">
             <settingConfig type="numeric" min="0"/>
         </setting>
-    </group>
+    <!-- </group> -->
 
     <setting propertyKey="@Properties.returnToUser" title="@Strings.returnToUserTitle">
         <settingConfig type="boolean"/>
