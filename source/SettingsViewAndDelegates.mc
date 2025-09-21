@@ -547,7 +547,7 @@ class SettingsMapStorage extends Rez.Menus.SettingsMapStorage {
         );
         var cacheSize =
             "" +
-            getApp()._breadcrumbContext.tileCache._storageTileCache._tilesInStorage.size() +
+            getApp()._breadcrumbContext.tileCache._storageTileCache._totalTileCount +
             "/" +
             settings.storageTileCacheSize;
         safeSetSubLabel(me, :settingsMapStorageCacheCurrentArea, cacheSize);
@@ -992,7 +992,7 @@ class ClearStorageDelegate extends WatchUi.ConfirmationDelegate {
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
             Application.Storage.clearValues(); // purge the storage, but we have to clean up all our classes that load from storage too
-            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues(); // reload our tile storage class
+            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues(getApp()._breadcrumbContext.settings.storageTileCachePageCount); // reload our tile storage class
             getApp()._breadcrumbContext.tileCache.clearValues(); // also clear the tile cache, it case it pulled from our storage
             getApp()._breadcrumbContext.clearRoutes(); // also clear the routes to mimic storage being removed
         }
@@ -1008,7 +1008,7 @@ class ClearCachedTilesDelegate extends WatchUi.ConfirmationDelegate {
     }
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
-            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues();
+            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues(getApp()._breadcrumbContext.settings.storageTileCachePageCount);
             getApp()._breadcrumbContext.tileCache.clearValues(); // also clear the tile cache, it case it pulled from our storage
 
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop confirmation

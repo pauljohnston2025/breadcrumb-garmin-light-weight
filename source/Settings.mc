@@ -366,7 +366,7 @@ class Settings {
     // 18 192*192 tiles 120.3k = ~0.294k per tile - less than the 64*64 tiles possibly because it stored as an optimised png image instead of a bitmap?
     // 64 64*64 tiles 145.0k = ~0.468 per tile
     // what I did notice though is that I can have many more tiles of 64*64 even though each tile is larger. The 192*192 image tiles crash the system at ~20 tiles with OOM errors.
-    // Think its not registerrring correctly with System.getSystemStats().usedMemory, since its graphics memory pool
+    // Think its not registering correctly with System.getSystemStats().usedMemory, since its graphics memory pool
     // 95 64*64 tiles 180.0k (though sim was spitting out error saying it could not render) = ~ 0.684
     // so its ~0.000146484375k per pixel
     // there appears to be some overhead though
@@ -405,6 +405,7 @@ class Settings {
     var storageTileCacheSize as Number = 350;
     var storageSeedBoundingBox as Boolean = false; // seed entire bounding box
     var storageSeedRouteDistanceM as Float = 10f; // if seeding based on route (storageSeedBoundingBox = false) seed this far around the route
+    var storageTileCachePageCount as Number = 5;
 
     var trackColour as Number = Graphics.COLOR_GREEN;
     var defaultRouteColour as Number = Graphics.COLOR_BLUE;
@@ -1161,8 +1162,8 @@ class Settings {
         getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // do not remove our cached tiles, we only reduced the caches size, so they are still valid
     }
 
-    function storageTileCacheSizeReduced() as Void {
-        getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues();
+    function storageTileCacheSizeReduced(oldStorageTileCachePageCount as Number) as Void {
+        getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues(oldStorageTileCachePageCount);
     }
 
     (:settingsView)
@@ -1177,7 +1178,7 @@ class Settings {
 
         if (oldStorageTileCacheSize > storageTileCacheSize) {
             // only nuke storage tile cache if we reduce the number of tiles we can store
-            storageTileCacheSizeReduced();
+            storageTileCacheSizeReduced(storageTileCachePageCount);
         }
     }
 
@@ -2489,7 +2490,7 @@ class Settings {
         }
 
         if (oldStorageTileCacheSize > storageTileCacheSize) {
-            storageTileCacheSizeReduced();
+            storageTileCacheSizeReduced(storageTileCachePageCount);
         }
 
         if (oldTileCacheSize > tileCacheSize) {

@@ -489,8 +489,8 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 }
 
 const TILES_KEY = "tileKeys";
-const TILES_VERION_KEY = "tilesVersion";
-const TILES_STORAGE_VERSION = 3; // udate this every time the tile format on disk changes, so we can purge of the old tiles on startup
+const TILES_VERSION_KEY = "tilesVersion";
+const TILES_STORAGE_VERSION = 4; // update this every time the tile format on disk changes, so we can purge of the old tiles on startup
 const TILES_TILE_PREFIX = "tileData";
 const TILES_META_PREFIX = "tileMeta";
 
@@ -517,8 +517,6 @@ typedef StorageTileDataType as [Number, Dictionary or WatchUi.BitmapResource or 
 
 (:noStorage)
 class StorageTileCache {
-    var _tilesInStorage as Array<String> = [];
-
     function initialize(settings as Settings) {}
     function setup() as Void {}
 
@@ -535,60 +533,93 @@ class StorageTileCache {
         data as Dictionary<PropertyKeyType, PropertyValueType>
     ) as Void {}
     function addBitmap(tileKeyStr as String, bitmap as WatchUi.BitmapResource) as Void {}
-    function clearValues() as Void {}
+    function clearValues(oldPageCount as Number) as Void {}
 }
 
 (:storage)
 class StorageTileCache {
-    // the Storage module does not allow  querying the current keys, so we would have to query every possible tile to get the oldest an be able to remove
-    // so we will store what tiles we know exist, and be able to purge them ourselves
-    // we have to optimise this to just contain a list of tile keys, otherwise it takes up too much memory
-    // all the metadata about a tile is stored in the tile key
+    // The Storage module does not allow querying the current keys, so we would have to query every possible tile to get the oldest and be able to remove it.
+    // To manage memory, we will store what tiles we know exist in pages, and be able to purge them ourselves.
     var _settings as Settings;
-    var _tilesInStorage as Array<String> = [];
+
+    // we store the tiles into pages based on the tile keys hash, this is so we only have to load small chunks of known keys at a time (if we try and store all the keys we quickly run out of memory)
+    // 1 page is the most cpu efficient for reading, but limits the max number of tiles we can store
+    var _pageCount as Number = 1;
+    var _totalTileCount as Number = 0;
+    var _currentPageIndex as Number = -1; // -1 indicates no page is loaded
+    var _currentPageKeys as Array<String> = [];
 
     function initialize(settings as Settings) {
-        var tilesVersion = Storage.getValue(TILES_VERION_KEY);
+        var tilesVersion = Storage.getValue(TILES_VERSION_KEY);
         if (tilesVersion != null && (tilesVersion as Number) != TILES_STORAGE_VERSION) {
             Storage.clearValues(); // we have to purge all storage (even our routes, since we have no way of cleanly removing the old storage keys (without having back compat for each format))
         }
-        Storage.setValue(TILES_VERION_KEY, TILES_STORAGE_VERSION);
-
-        // test storage does not cache values in memory
-        // var newKey = "newkey";
-        // Storage.setValue(newKey, { "test" => "value" });
-        // var val1 = Storage.getValue(newKey);
-        // Storage.setValue(newKey, { "test" => "value2" });
-        // var val2 = Storage.getValue(newKey);
-        // if (val2 instanceof Dictionary) {
-        //     logT("val was dict");
-        //     val2["test"] = "val2mod";
-        //     val2["test2"] = "val2test"; // new keys should be created
-        // }
-        // var val3 = Storage.getValue(newKey);
-
-        // logT("val1: " + val1);
-        // logT("val2: " + val2);
-        // logT("val3: " + val3);
-        // logT("val3 test bad dict key access: " + (val3 as Dictionary)["badkey"]);
+        Storage.setValue(TILES_VERSION_KEY, TILES_STORAGE_VERSION);
 
         _settings = settings;
-        var tiles = Storage.getValue(TILES_KEY);
-        if (tiles != null && tiles instanceof Array) {
-            // todo validate its an array of strings?
-            _tilesInStorage = tiles as Array<String>;
+        _pageCount = _settings.storageTileCachePageCount;
+        if (_pageCount <= 0) {
+            _pageCount = 1;
+        }
+
+        // Instead of loading all keys, we load the total count of tiles across all pages.
+        var totalCount = Storage.getValue("totalTileCount");
+        if (totalCount != null) {
+            _totalTileCount = totalCount as Number;
+        } else {
+            _totalTileCount = 0;
         }
     }
 
     function setup() as Void {
-        if (_settings.storageTileCacheSize < _tilesInStorage.size()) {
-            // purge off the old tiles, we have been reduced
-            // this usually will occur when the storageTileCacheSize setting is increased
-            // then the app crashes due to OOM
-            // The app only flushes changes to settings on successful termination, so next time we boot we have all the saved tiles from storage, but a limit in settings that is much lower
-            // this then stays like this on new tile adds, because we only remove 1 tile when the limit is reached
-            _settings.storageTileCacheSizeReduced();
+        if (_settings.storageTileCacheSize < _totalTileCount) {
+            // Purge excess tiles if the cache size has been reduced.
+            var numberToEvict = _totalTileCount - _settings.storageTileCacheSize;
+            for (var i = 0; i < numberToEvict; ++i) {
+                evictLeastRecentlyUsedTile();
+            }
         }
+    }
+
+    private function pageStorageKey(pageIndex as Number) as String {
+        return TILES_KEY + "_" + pageIndex;
+    }
+
+    private function loadPage(pageIndex as Number) as Void {
+        if (_currentPageIndex == pageIndex) {
+            return; // Page is already loaded.
+        }
+        logT("Loading storage page: " + pageIndex);
+        var pageKey = pageStorageKey(pageIndex);
+        var page = Storage.getValue(pageKey);
+
+        if (page instanceof Array) {
+            _currentPageKeys = page as Array<String>;
+        } else {
+            _currentPageKeys = []; // This is a new or empty page.
+        }
+        _currentPageIndex = pageIndex;
+        logT("page: " + pageIndex + " size: " + _currentPageKeys.size());
+    }
+
+    private function saveCurrentPage() as Void {
+        if (_currentPageIndex != -1) {
+            var pageKey = pageStorageKey(_currentPageIndex);
+            Storage.setValue(pageKey, _currentPageKeys);
+        }
+    }
+
+    // Determines which page a tile key belongs to using a simple hash.
+    private function getPageIndexForKey(tileKeyStr as String) as Number {
+        var hash = 0;
+        var chars = tileKeyStr.toCharArray();
+        for (var i = 0; i < chars.size(); i++) {
+            // Simple hash algorithm
+            hash = 31 * hash + chars[i].toNumber();
+        }
+        var res = absN(hash % _pageCount);
+        // logT("tile key: " + tileKeyStr + " page: " + res);
+        return res;
     }
 
     private function metaKey(tileKeyStr as String) as String {
@@ -600,7 +631,10 @@ class StorageTileCache {
     }
 
     function get(tileKeyStr as String) as StorageTileDataType? {
-        if (_tilesInStorage.indexOf(tileKeyStr) < 0) {
+        var pageIndex = getPageIndexForKey(tileKeyStr);
+        loadPage(pageIndex);
+
+        if (_currentPageKeys.indexOf(tileKeyStr) < 0) {
             // we do not have the tile key
             return null;
         }
@@ -659,7 +693,10 @@ class StorageTileCache {
     function haveTile(tileKeyStr as String) as Boolean {
         // need to check for expired tiles
         // we could call get, but that also loads the tile data, and increments the "lastUsed" time
-        if (_tilesInStorage.indexOf(tileKeyStr) < 0) {
+        var pageIndex = getPageIndexForKey(tileKeyStr);
+        loadPage(pageIndex);
+
+        if (_currentPageKeys.indexOf(tileKeyStr) < 0) {
             // we do not have the tile key
             return false;
         }
@@ -747,17 +784,27 @@ class StorageTileCache {
         }
     }
 
-    private function addMetaData(tileKeyStr as String, metaData as Array<Number>) as Boolean {
+    private function addMetaData(
+        tileKeyStr as String,
+        metaData as Array<PropertyValueType>
+    ) as Boolean {
+        var pageIndex = getPageIndexForKey(tileKeyStr);
+        loadPage(pageIndex);
+
+        _currentPageKeys.add(tileKeyStr);
+        _totalTileCount++;
+
         try {
             // update our tracking first, we do not want to loose tiles because we stored them, but could then not update the tracking
-            _tilesInStorage.add(tileKeyStr);
-            Storage.setValue(TILES_KEY, _tilesInStorage as Array<PropertyValueType>);
-            Storage.setValue(metaKey(tileKeyStr), metaData as Array<PropertyValueType>);
+            // Save metadata and the updated page list first.
+            saveCurrentPage();
+            Storage.setValue(metaKey(tileKeyStr), metaData);
+            Storage.setValue("totalTileCount", _totalTileCount);
         } catch (e) {
             if (e instanceof Lang.StorageFullException) {
                 // we expect storage to get full at some point, but there seems to be no way to get the size of the storage,
-                // or how much is remaining programatically
-                // we could allow the user to specify 'maxTileCache storage' but we will just fill it up untill there is no more space
+                // or how much is remaining programmatically
+                // we could allow the user to specify 'maxTileCache storage' but we will just fill it up until there is no more space
                 // note: This means routes need to be loaded first, or there will be no space left for new routes
 
                 // todo: clear the oldest tile from storage and try again
@@ -769,7 +816,7 @@ class StorageTileCache {
             logE("failed tile storage add: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
         }
-        if (_tilesInStorage.size() > _settings.storageTileCacheSize) {
+        if (_totalTileCount > _settings.storageTileCacheSize) {
             // Does this ever need to do more than one pass? Saw it in the sim early on where it was higher than storage cache size, but never again.
             // do not wat to do a while loop, since it could go for a long time and trigger watchdog
             evictLeastRecentlyUsedTile();
@@ -784,8 +831,8 @@ class StorageTileCache {
         } catch (e) {
             if (e instanceof Lang.StorageFullException) {
                 // we expect storage to get full at some point, but there seems to be no way to get the size of the storage,
-                // or how much is remaining programatically
-                // we could allow the user to specify 'maxTileCache storage' but we will just fill it up untill there is no more space
+                // or how much is remaining programmatically
+                // we could allow the user to specify 'maxTileCache storage' but we will just fill it up until there is no more space
                 // note: This means routes need to be loaded first, or there will be no space left for new routes
 
                 // todo: clear the oldest tile from storage and try again
@@ -801,52 +848,66 @@ class StorageTileCache {
     }
 
     private function evictLeastRecentlyUsedTile() as Void {
-        // todo put older tiles into disk, and store what tiles are on disk (storage class)
-        // it will be faster to load them from there than bluetooth
         var oldestTime = null;
         var oldestKey = null;
-
+        var oldestKeyPage = -1;
         var epoch = Time.now().value();
+        var corruptOrExpired = false;
 
-        var keys = _tilesInStorage;
-        for (var i = 0; i < keys.size(); i++) {
-            var key = keys[i];
-            // this is not ideal that we have to load all tiles in order to check when they were last used,
-            // but its better than keeping the last used time in memory and causing OOM (when we have lots of tiles in storage).
-            // this is slower, but better for memory.
-            // we could have another key where we store the array of last used times, but that is harder to manage.
-            var metaKeyStr = metaKey(key);
-            var tileMetaData = Storage.getValue(metaKeyStr);
-            if (
-                tileMetaData == null ||
-                !(tileMetaData instanceof Array) ||
-                tileMetaData.size() < 3
-            ) {
-                // we do not have it in storage anymore somehow, remove this tile
-                oldestKey = key;
-                break;
+        // This loop iterates over all pages to find the globally oldest tile.
+        // This is the most dangerous for watchdog, if we evict a tile we should not do anything else
+        for (var i = 0; i < _pageCount; i++) {
+            loadPage(i);
+            var keysOnPage = _currentPageKeys;
+            for (var j = 0; j < keysOnPage.size(); j++) {
+                var key = keysOnPage[j];
+                var tileMetaData = Storage.getValue(metaKey(key));
+
+                if (
+                    tileMetaData == null ||
+                    !(tileMetaData instanceof Array) ||
+                    tileMetaData.size() < 3
+                ) {
+                    oldestKey = key; // Found a corrupted/dangling entry
+                    oldestKeyPage = i;
+                    corruptOrExpired = true;
+                    break;
+                }
+
+                var expiresAt = tileMetaData[2] as Number;
+                if (expired(expiresAt, epoch)) {
+                    oldestKey = key; // Found an expired tile
+                    oldestKeyPage = i;
+                    corruptOrExpired = true;
+                    break;
+                }
+
+                var lastUsed = tileMetaData[0] as Number;
+                if (oldestTime == null || oldestTime > lastUsed) {
+                    oldestTime = lastUsed;
+                    oldestKey = key;
+                    oldestKeyPage = i;
+                }
             }
 
-            var expiresAt = tileMetaData[2] as Number;
-            if (expired(expiresAt, epoch)) {
-                oldestKey = key;
+            if (oldestKey != null && oldestKeyPage == i && corruptOrExpired) {
+                // If we found an expired or corrupted tile on this page, we can stop searching.
                 break;
-            }
-
-            var lastUsed = tileMetaData[0] as Number;
-            if (oldestTime == null || oldestTime > lastUsed) {
-                oldestTime = lastUsed;
-                oldestKey = key;
             }
         }
 
         if (oldestKey != null) {
+            // Load the page where the oldest key resides to modify it.
+            loadPage(oldestKeyPage);
+
             deleteByMetaData(oldestKey);
-            _tilesInStorage.remove(oldestKey);
+            _currentPageKeys.remove(oldestKey);
+            saveCurrentPage();
+
+            _totalTileCount--;
+            Storage.setValue("totalTileCount", _totalTileCount);
             logT("Evicted tile " + oldestKey + " from storage cache");
         }
-
-        Storage.setValue(TILES_KEY, _tilesInStorage as Array<PropertyValueType>);
     }
 
     private function deleteByMetaData(key as String) as Void {
@@ -875,14 +936,22 @@ class StorageTileCache {
         }
     }
 
-    function clearValues() as Void {
-        var keys = _tilesInStorage;
-        for (var i = 0; i < keys.size(); ++i) {
-            var key = keys[i];
-            deleteByMetaData(key);
+    function clearValues(oldPageCount as Number) as Void {
+        if (oldPageCount < 0) {
+            oldPageCount = 1;
         }
-        _tilesInStorage = [];
-        Storage.setValue(TILES_KEY, _tilesInStorage);
+        for (var i = 0; i < _pageCount; i++) {
+            loadPage(i);
+            var keys = _currentPageKeys;
+            for (var j = 0; j < keys.size(); j++) {
+                deleteByMetaData(keys[j]);
+            }
+            Storage.deleteValue(pageStorageKey(i));
+        }
+        _currentPageKeys = [];
+        _currentPageIndex = -1;
+        _totalTileCount = 0;
+        Storage.deleteValue("totalTileCount");
     }
 }
 
@@ -1013,7 +1082,7 @@ class TileCache {
         // whenever we purge the tile cache it is usually because the tile server properties have changed, safest to nuke the storage cache too
         // though sme times its when the in memory tile cache size changes
         // users should not be modifying the tile settings in any way, otherwise the storage will also be out of date (eg. when tile size or tile url changes)
-        _storageTileCache.clearValues();
+        _storageTileCache.clearValues(_settings.storageTileCachePageCount);
     }
 
     public function clearValuesWithoutStorage() as Void {

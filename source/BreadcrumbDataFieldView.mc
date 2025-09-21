@@ -969,7 +969,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             "  tiles: " +
             _breadcrumbContext.tileCache._internalCache.size() +
             " s: " +
-            _breadcrumbContext.tileCache._storageTileCache._tilesInStorage.size();
+            _breadcrumbContext.tileCache._storageTileCache._totalTileCount;
 
         dc.drawText(x, y, Graphics.FONT_XTINY, combined, Graphics.TEXT_JUSTIFY_CENTER);
         y += spacing;

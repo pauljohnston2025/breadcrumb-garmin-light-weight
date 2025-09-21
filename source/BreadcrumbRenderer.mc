@@ -1111,7 +1111,7 @@ class BreadcrumbRenderer {
                 (System.getSystemStats().freeMemory / 1024f).format("%.1f") +
                 "K" +
                 "\nstorage tiles: " +
-                breadcrumbContext.tileCache._storageTileCache._tilesInStorage.size() +
+                breadcrumbContext.tileCache._storageTileCache._totalTileCount +
                 "/" +
                 settings.storageTileCacheSize,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
