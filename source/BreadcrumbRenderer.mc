@@ -27,96 +27,100 @@ class BreadcrumbRenderer {
     var _downArrow as BitmapResource;
 
     // units in mm (float/int) to label
-    var SCALE_NAMES as Dictionary<Number, String> = {
-        1000 => "1m",
-        5000 => "5m",
-        10000 => "10m",
-        20000 => "20m",
-        30000 => "30m",
-        40000 => "40m",
-        50000 => "50m",
-        100000 => "100m",
-        250000 => "250m",
-        500000 => "500m",
-        1000000 => "1km",
-        2000000 => "2km",
-        3000000 => "3km",
-        4000000 => "4km",
-        5000000 => "5km",
-        10000000 => "10km",
-        20000000 => "20km",
-        30000000 => "30km",
-        40000000 => "40km",
-        50000000 => "50km",
-        100000000 => "100km",
-        500000000 => "500km",
-        1000000000 => "1000km",
-        2000000000 => "2000km",
-    } as Dictionary<Number, String>;
+    var SCALE_NAMES as Dictionary<Number, String> =
+        ({
+            1000 => "1m",
+            5000 => "5m",
+            10000 => "10m",
+            20000 => "20m",
+            30000 => "30m",
+            40000 => "40m",
+            50000 => "50m",
+            100000 => "100m",
+            250000 => "250m",
+            500000 => "500m",
+            1000000 => "1km",
+            2000000 => "2km",
+            3000000 => "3km",
+            4000000 => "4km",
+            5000000 => "5km",
+            10000000 => "10km",
+            20000000 => "20km",
+            30000000 => "30km",
+            40000000 => "40km",
+            50000000 => "50km",
+            100000000 => "100km",
+            500000000 => "500km",
+            1000000000 => "1000km",
+            2000000000 => "2000km",
+        }) as Dictionary<Number, String>;
 
     // yep the key of the array is in mm (they will never know, it will be our little secret)
-    var SCALE_NAMES_IMPERIAL as Dictionary<Number, String> = {
-        1524 => "5ft",
-        3048 => "10ft",
-        7620 => "25ft",
-        15240 => "50ft",
-        30480 => "100ft",
-        76200 => "250ft",
-        152400 => "500ft",
-        304800 => "1000ft",
-        804672 => "0.5mi",
-        1609344 => "1mi",
-        3218688 => "2mi",
-        8046720 => "5mi",
-        16093440 => "10mi",
-        32186880 => "20mi",
-        80467200 => "50mi",
-        160934400 => "100mi",
-        804672000 => "500mi",
-        1609344000 => "1000mi",
-    } as Dictionary<Number, String>;
+    var SCALE_NAMES_IMPERIAL as Dictionary<Number, String> =
+        ({
+            1524 => "5ft",
+            3048 => "10ft",
+            7620 => "25ft",
+            15240 => "50ft",
+            30480 => "100ft",
+            76200 => "250ft",
+            152400 => "500ft",
+            304800 => "1000ft",
+            804672 => "0.5mi",
+            1609344 => "1mi",
+            3218688 => "2mi",
+            8046720 => "5mi",
+            16093440 => "10mi",
+            32186880 => "20mi",
+            80467200 => "50mi",
+            160934400 => "100mi",
+            804672000 => "500mi",
+            1609344000 => "1000mi",
+        }) as Dictionary<Number, String>;
 
     // we want much smaller elevation changes to be seen
     // so elevation scales are in mm, not meters
-    var ELEVATION_SCALE_NAMES as Dictionary<Number, String> = {
-        // some rediculously small values for level ground (highly unlikely in the wild, but common on simulator)
-        1 => "1mm",
-        2 => "2mm",
-        5 => "5mm",
-        10 => "1cm",
-        25 => "2.5cm",
-        50 => "5cm",
-        100 => "10cm",
-        250 => "25cm",
-        500 => "50cm",
-        1000 => "1m",
-        5000 => "5m",
-        10000 => "10m",
-        20000 => "20m",
-        30000 => "30m",
-        40000 => "40m",
-        50000 => "50m",
-        100000 => "100m",
-        250000 => "250m",
-        500000 => "500m",
-    } as Dictionary<Number, String>;
+    var ELEVATION_SCALE_NAMES as Dictionary<Number, String> =
+        ({
+            // some rediculously small values for level ground (highly unlikely in the wild, but common on simulator)
+            1 => "1mm",
+            2 => "2mm",
+            5 => "5mm",
+            10 => "1cm",
+            25 => "2.5cm",
+            50 => "5cm",
+            100 => "10cm",
+            250 => "25cm",
+            500 => "50cm",
+            1000 => "1m",
+            5000 => "5m",
+            10000 => "10m",
+            20000 => "20m",
+            30000 => "30m",
+            40000 => "40m",
+            50000 => "50m",
+            100000 => "100m",
+            250000 => "250m",
+            500000 => "500m",
+        }) as Dictionary<Number, String>;
 
     // key is in mm
-    var ELEVATION_SCALE_NAMES_IMPERIAL as Dictionary<Number, String> = {
-        25 => "1in",
-        51 => "2in",
-        127 => "5in",
-        254 => "10in",
-        305 => "1ft",
-        1524 => "5ft",
-        3048 => "10ft",
-        6096 => "20ft",
-        15240 => "50ft",
-        30480 => "100ft",
-        76200 => "250ft",
-        152400 => "500ft",
-        304800 => "1000ft",
-    } as Dictionary<Number, String>;
+    var ELEVATION_SCALE_NAMES_IMPERIAL as Dictionary<Number, String> =
+        ({
+            25 => "1in",
+            51 => "2in",
+            127 => "5in",
+            254 => "10in",
+            305 => "1ft",
+            1524 => "5ft",
+            3048 => "10ft",
+            6096 => "20ft",
+            15240 => "50ft",
+            30480 => "100ft",
+            76200 => "250ft",
+            152400 => "500ft",
+            304800 => "1000ft",
+        }) as Dictionary<Number, String>;
 
     // benchmark same track loaded (just render track no activity running) using
     // average time over 1min of benchmark
@@ -1068,25 +1072,9 @@ class BreadcrumbRenderer {
         var halfLineLength = lineLength / 2;
         var lineFromEdge = 10;
 
-        // cross at the top of the screen to cancel download
-        // could just do this with an X? but that looks a bit weird
-        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_DK_GREEN);
-        dc.setPenWidth(8);
-        dc.drawLine(
-            xHalfPhysical - halfLineLength,
-            lineFromEdge,
-            xHalfPhysical + halfLineLength,
-            lineFromEdge + lineLength
-        );
-        dc.drawLine(
-            xHalfPhysical - halfLineLength,
-            lineFromEdge + lineLength,
-            xHalfPhysical + halfLineLength,
-            lineFromEdge
-        );
-
         dc.setColor(settings.uiColour, Graphics.COLOR_DK_GREEN);
 
+        var seedingProgress = _cachedValues.seedingProgress();
         dc.drawText(
             xHalfPhysical,
             yHalfPhysical,
@@ -1094,7 +1082,7 @@ class BreadcrumbRenderer {
             "Caching Tile Layer " +
                 _cachedValues.seedingZ +
                 " ...\n" +
-                _cachedValues.seedingProgressString() +
+                seedingProgress[0] +
                 "\npending web: " +
                 breadcrumbContext.webRequestHandler.pending.size() +
                 "\noutstanding: " +
@@ -1115,6 +1103,38 @@ class BreadcrumbRenderer {
                 "/" +
                 settings.storageTileCacheSize,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+        );
+
+        var overallProgress = seedingProgress[1];
+        // --- Draw Circular Progress Bar ---
+        var progressBarRadius =
+            (dc.getWidth() < dc.getHeight() ? dc.getWidth() : dc.getHeight()) / 2 - 5;
+        dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(10);
+        dc.drawArc(
+            xHalfPhysical,
+            yHalfPhysical,
+            progressBarRadius,
+            Graphics.ARC_CLOCKWISE,
+            90,
+            90 - (360 * overallProgress).toNumber()
+        );
+
+        // cross at the top of the screen to cancel download
+        // could just do this with an X? but that looks a bit weird
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(8);
+        dc.drawLine(
+            xHalfPhysical - halfLineLength,
+            lineFromEdge,
+            xHalfPhysical + halfLineLength,
+            lineFromEdge + lineLength
+        );
+        dc.drawLine(
+            xHalfPhysical - halfLineLength,
+            lineFromEdge + lineLength,
+            xHalfPhysical + halfLineLength,
+            lineFromEdge
         );
 
         return true;

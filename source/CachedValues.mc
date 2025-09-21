@@ -1387,45 +1387,81 @@ class CachedValues {
     }
 
     (:storage)
-    function seedingProgressString() as String {
+    function seedingProgress() as [String, Float] {
+        // The total number of layers to process is the difference + 1.
+        // e.g., from layer 15 down to 10 is (15 - 10) + 1 = 6 layers.
+        var tileLayers = (_settings.tileLayerMax - _settings.tileLayerMin + 1).toFloat();
+        tileLayers = maxF(tileLayers, 1f);
+        var currentTileLayerProgress = (_settings.tileLayerMax - seedingZ).toFloat();
+
         if (_settings.storageSeedBoundingBox) {
-            return (
+            // simple tile layer progress, since we do not know how many tile per layer without some complex math
+            // if we are on the first layer (currentTileLayerProgress=0) we still want something to be shown, so add 1 to each field
+            var overallProgress = (currentTileLayerProgress + 1) / (tileLayers + 1);
+            return [
                 seedingTilesProgressForThisLayer +
-                "/" +
-                seedingTilesOnThisLayer +
-                "  (" +
-                (
-                    (seedingTilesProgressForThisLayer / seedingTilesOnThisLayer.toFloat()) *
-                    100
-                ).format("%.1f") +
-                "%)"
-            );
+                    "/" +
+                    seedingTilesOnThisLayer +
+                    "  (" +
+                    (
+                        (seedingTilesProgressForThisLayer / seedingTilesOnThisLayer.toFloat()) *
+                        100
+                    ).format("%.1f") +
+                    "%)",
+                overallProgress,
+            ];
         }
 
         var routes = getApp()._breadcrumbContext.routes;
         if (seedingUpToRoute >= routes.size()) {
-            return "Route: " + seedingUpToRoute + "/" + routes.size();
+            return ["Route: " + seedingUpToRoute + "/" + routes.size(), 0f];
         }
+
+        var totalPointsPerLayer = 0;
+        var totalPointsUntilRoute = 0;
+        for (var i = 0; i < routes.size(); i++) {
+            var route = routes[i];
+            if (!_settings.routeEnabled(route.storageIndex)) {
+                continue;
+            }
+
+            var routeCoordsPontSize = route.coordinates.pointSize();
+
+            if (i < seedingUpToRoute) {
+                totalPointsUntilRoute += routeCoordsPontSize;
+            }
+            totalPointsPerLayer += routeCoordsPontSize;
+        }
+
+        // if we are on the first layer (currentTileLayerProgress=0) we still want something to be shown, so add 1 to each field
+        var totalPointsChecked =
+            currentTileLayerProgress * totalPointsPerLayer +
+            totalPointsUntilRoute +
+            seedingUpToRoutePoint + 1;
+        var totalPointsToCheck = tileLayers * totalPointsPerLayer + 1;
+        var overallProgress = totalPointsChecked / totalPointsToCheck;
+
         var coords = routes[seedingUpToRoute].coordinates;
         var points = coords.pointSize();
-        return (
+        return [
             "Route: " +
-            (seedingUpToRoute + 1) +
-            "/" +
-            routes.size() +
-            " P: " +
-            seedingUpToRoutePoint +
-            "/" +
-            points +
-            " (" +
-            ((seedingUpToRoutePoint.toFloat() / points) * 100).format("%.1f") +
-            "%)\n" +
-            (seedingLastTileX - seedingFirstTileX) +
-            " X " +
-            (seedingLastTileY - seedingFirstTileY) +
-            " tiles (" +
-            _settings.storageSeedRouteDistanceM.format("%.1f") +
-            "m)"
-        );
+                (seedingUpToRoute + 1) +
+                "/" +
+                routes.size() +
+                " P: " +
+                seedingUpToRoutePoint +
+                "/" +
+                points +
+                " (" +
+                ((seedingUpToRoutePoint.toFloat() / points) * 100).format("%.1f") +
+                "%)\n" +
+                (seedingLastTileX - seedingFirstTileX) +
+                " X " +
+                (seedingLastTileY - seedingFirstTileY) +
+                " tiles (" +
+                _settings.storageSeedRouteDistanceM.format("%.1f") +
+                "m)",
+            overallProgress,
+        ];
     }
 }

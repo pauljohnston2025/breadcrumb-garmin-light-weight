@@ -647,7 +647,7 @@ class StorageTileCache {
         if (_currentPageIndex == pageIndex) {
             return; // Page is already loaded.
         }
-        logT("Loading storage page: " + pageIndex);
+        // logT("Loading storage page: " + pageIndex);
         var pageKey = pageStorageKey(pageIndex);
         var page = Storage.getValue(pageKey);
 
@@ -657,7 +657,9 @@ class StorageTileCache {
             _currentPageKeys = []; // This is a new or empty page.
         }
         _currentPageIndex = pageIndex;
-        logT("page: " + pageIndex + " size: " + _currentPageKeys.size());
+        // these pages could be wildly different sizes, but testing has shown they are normally pretty close
+        // maybe I need to cap the max size per page to (maxStorageTiles/pageSize)+10 or something
+        // logT("page: " + pageIndex + " size: " + _currentPageKeys.size());
     }
 
     private function saveCurrentPage() as Void {
@@ -682,7 +684,7 @@ class StorageTileCache {
         var spatialHash = gridX * 31 + gridY * 61 + z * 97;
 
         var res = absN(spatialHash % _pageCount);
-        logT("tile: " + x + "-" + y + "-" + z + " page: " + res);
+        // logT("tile: " + x + "-" + y + "-" + z + " page: " + res);
         return res;
     }
 
