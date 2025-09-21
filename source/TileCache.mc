@@ -23,9 +23,9 @@ function tileKeyHash(x as Number, y as Number, z as Number) as String {
 
     // we can base64 encode and get a shorter unique string
     // toString() contains '-' characters, and base64 does not have hyphens
-    if (string.length() <= 12) {
-        return string;
-    }
+    // if (string.length() <= 12) {
+    //     return string;
+    // }
 
     var byteArr = new [9]b;
     byteArr.encodeNumber(x, Lang.NUMBER_FORMAT_SINT32, {
@@ -609,16 +609,74 @@ class StorageTileCache {
         }
     }
 
-    // Determines which page a tile key belongs to using a simple hash.
-    private function getPageIndexForKey(tileKeyStr as String) as Number {
-        var hash = 0;
-        var chars = tileKeyStr.toCharArray();
-        for (var i = 0; i < chars.size(); i++) {
-            // Simple hash algorithm
-            hash = 31 * hash + chars[i].toNumber();
+    // todo provide the x/y/z directly so we do not have to reverse the hashing
+    private function decodeTileKey(tileKeyStr as String) as [Number, Number, Number]? {
+        try {
+            // First, try to decode as Base64, which is the format for longer keys.
+            var byteArr =
+                StringUtil.convertEncodedString(tileKeyStr, {
+                    :fromRepresentation => StringUtil.REPRESENTATION_STRING_BASE64,
+                    :toRepresentation => StringUtil.REPRESENTATION_BYTE_ARRAY,
+                }) as ByteArray?;
+
+            if (byteArr != null && byteArr.size() == 9) {
+                var x =
+                    byteArr.decodeNumber(Lang.NUMBER_FORMAT_SINT32, {
+                        :offset => 0,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Number;
+                var y =
+                    byteArr.decodeNumber(Lang.NUMBER_FORMAT_SINT32, {
+                        :offset => 4,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Number;
+                var z =
+                    byteArr.decodeNumber(Lang.NUMBER_FORMAT_UINT8, {
+                        :offset => 8,
+                        :endianness => Lang.ENDIAN_BIG,
+                    }) as Number;
+                return [x, y, z];
+            }
+        } catch (ex) {
+            // If it fails, it's likely the simple "x-y-z" string format.
         }
-        var res = absN(hash % _pageCount);
-        // logT("tile key: " + tileKeyStr + " page: " + res);
+        return null; // Could not decode
+    }
+
+    // Determines which page a tile key belongs to using a spatial hash.
+    // This new algorithm groups tiles that are geographically close onto the same page,
+    // which dramatically reduces page loading when panning the map.
+    private function getPageIndexForKey(tileKeyStr as String) as Number {
+        var coords = decodeTileKey(tileKeyStr);
+        if (coords == null) {
+            // Fallback for safety, though this should not happen with valid keys.
+            // This uses the old character hash method if decoding fails.
+            var hash = 0;
+            var chars = tileKeyStr.toCharArray();
+            for (var i = 0; i < chars.size(); i++) {
+                hash = 31 * hash + chars[i].toNumber();
+            }
+            var res = absN(hash % _pageCount);
+            logT("tile: " + tileKeyStr + " page: " + res);
+            return res;
+        }
+
+        var x = coords[0] as Number;
+        var y = coords[1] as Number;
+        var z = coords[2] as Number;
+
+        // This spatial hash groups tiles into 4x4 blocks. All tiles in a block
+        // at the same zoom level will be on the same page.
+        // Integer division (x / 4) effectively creates a grid.
+        var gridX = x / 4;
+        var gridY = y / 4;
+
+        // Combine the grid coordinates and zoom level to get a consistent hash value.
+        // The prime numbers help in distributing the pages more evenly across zoom levels.
+        var spatialHash = gridX * 31 + gridY * 61 + z * 97;
+
+        var res = absN(spatialHash % _pageCount);
+        logT("tile: " + tileKeyStr + " page: " + res);
         return res;
     }
 
@@ -981,7 +1039,7 @@ class TileCache {
         _storageTileCache = new StorageTileCache(_settings);
 
         // note: these need to match whats in the app
-        // would like tho use the bitmaps colour pallet, but we cannot :( because it erros with
+        // would like to use the bitmaps colour pallet, but we cannot :( because it errors with
         // Exception: Source must not use a color palette
         _palette = [
             // Greens (Emphasis) - 22 colors
