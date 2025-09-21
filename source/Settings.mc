@@ -858,6 +858,15 @@ class Settings {
     }
 
     function updateMapChoiceChange(value as Number) as Void {
+        // we need to store the last one we processed seperately so we can know on startup if the setting changed underneath us
+        var lastMapChoice = Application.Storage.getValue("lastMapChoice");
+        if (lastMapChoice == null || (lastMapChoice instanceof Number and lastMapChoice != value)) {
+            updateMapChoiceChangeInner(value);
+        }
+        Application.Storage.setValue("lastMapChoice", value);
+    }
+    
+    function updateMapChoiceChangeInner(value as Number) as Void {
         ++mapChoiceVersion;
 
         if (value == 0) {
@@ -1163,7 +1172,9 @@ class Settings {
     }
 
     function storageTileCacheSizeReduced(oldStorageTileCachePageCount as Number) as Void {
-        getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues(oldStorageTileCachePageCount);
+        getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues(
+            oldStorageTileCachePageCount
+        );
     }
 
     (:settingsView)
@@ -1478,13 +1489,14 @@ class Settings {
         var toSave = [] as Array<Dictionary<String, PropertyValueType> >;
         for (var i = 0; i < routes.size(); ++i) {
             var entry = routes[i];
-            var toAdd = {
-                "routeId" => entry["routeId"] as Number,
-                "name" => entry["name"] as String,
-                "enabled" => entry["enabled"] as Boolean,
-                "colour" => (entry["colour"] as Number).format("%X"), // this is why we have to copy it :(
-                "reversed" => entry["reversed"] as Boolean,
-            } as Dictionary<String, PropertyValueType>;
+            var toAdd =
+                ({
+                    "routeId" => entry["routeId"] as Number,
+                    "name" => entry["name"] as String,
+                    "enabled" => entry["enabled"] as Boolean,
+                    "colour" => (entry["colour"] as Number).format("%X"), // this is why we have to copy it :(
+                    "reversed" => entry["reversed"] as Boolean,
+                }) as Dictionary<String, PropertyValueType>;
             toSave.add(toAdd);
         }
         return toSave;
