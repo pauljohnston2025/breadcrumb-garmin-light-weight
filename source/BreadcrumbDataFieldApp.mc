@@ -72,14 +72,9 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     }
 
     function onSettingsChanged() as Void {
-        System.println("" + Time.now().value() + " " + "onSettingsChange started: ");
         try {
             _breadcrumbContext.settings.onSettingsChanged();
         } catch (e) {
-            // keep this log in releases for now trying to debug https://github.com/pauljohnston2025/breadcrumb-garmin/issues/6#issuecomment-3315354517
-            System.println(
-                "" + Time.now().value() + " failed onSettingsChange: " + e.getErrorMessage()
-            );
             logE("failed onSettingsChange: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
         }
