@@ -1262,8 +1262,9 @@ class CachedValues {
         var keys = seedingInProgressTiles.keys();
         for (var i = 0; i < seedingInProgressTiles.size(); ++i) {
             var key = keys[i];
+            var item = seedingInProgressTiles[key] as [Number, Number, Number];
 
-            if (tileCache._storageTileCache.haveTile(key)) {
+            if (tileCache._storageTileCache.haveTile(item[0], item[1], item[2], key)) {
                 toRemove.add(key);
             }
         }
@@ -1372,7 +1373,7 @@ class CachedValues {
                 ++x
             ) {
                 var tileKeyStr = tileKeyHash(x, y, seedingZ);
-                if (!tileCache._storageTileCache.haveTile(tileKeyStr)) {
+                if (!tileCache._storageTileCache.haveTile(x, y, seedingZ, tileKeyStr)) {
                     // we need to seed some more
                     return;
                 }
