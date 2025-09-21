@@ -28,7 +28,7 @@ All settings are editable from 4 places.
 
 Please note: All settings are entered in metric (meters or seconds) because there is no way for me to support both without bloating the app considerably. The watch will render the distance and elevation scales based on the units set on the watches system settings.  
 
-- The [connect iq store](#garmin-settings-connect-iq-store) where you installed the app
+- The [connect iq store](#garmin-settings-connect-iq-store) where you installed the app.
 - [On Device](#on-device)
 - [Companion App](https://github.com/pauljohnston2025/breadcrumb-mobile/blob/master/manual.md#device-settings-page)
 - [On Screen UI](#ui-mode)
@@ -36,6 +36,8 @@ Please note: All settings are entered in metric (meters or seconds) because ther
 The connectiq store does not work for all settings (namely route configuration), use the on device or companion app settings instead.
 
 # Garmin Settings (Connect Iq Store)
+
+Please note: The nested garmin settings have a strange behaviour of the app is not running when the setttings are saved. Please ensure the datafields in running in the foreground to have the best experience when editing the settings through garmin connect iq see detailed note at: https://github.com/pauljohnston2025/breadcrumb-garmin/issues/6#issuecomment-3315417515
 
 ---
 
