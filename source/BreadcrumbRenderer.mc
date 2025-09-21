@@ -1065,16 +1065,32 @@ class BreadcrumbRenderer {
         }
 
         var breadcrumbContext = getApp()._breadcrumbContext;
-        dc.setColor(settings.uiColour, Graphics.COLOR_DK_GREEN);
+        dc.setColor(settings.uiColour, Graphics.COLOR_BLACK);
         dc.clear();
 
         var lineLength = 20;
         var halfLineLength = lineLength / 2;
         var lineFromEdge = 10;
 
-        dc.setColor(settings.uiColour, Graphics.COLOR_DK_GREEN);
-
         var seedingProgress = _cachedValues.seedingProgress();
+        var overallProgress = seedingProgress[1];
+        // --- Draw Circular Progress Bar ---
+        var progressBarRadius =
+            (dc.getWidth() < dc.getHeight() ? dc.getWidth() : dc.getHeight()) / 2 - 5;
+        dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(10);
+        dc.drawArc(
+            xHalfPhysical,
+            yHalfPhysical,
+            progressBarRadius,
+            Graphics.ARC_CLOCKWISE,
+            90,
+            90 - (360 * overallProgress).toNumber()
+        );
+
+        
+        // Information text on top of progress bar
+        dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
             xHalfPhysical,
             yHalfPhysical,
@@ -1103,21 +1119,6 @@ class BreadcrumbRenderer {
                 "/" +
                 settings.storageTileCacheSize,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-        );
-
-        var overallProgress = seedingProgress[1];
-        // --- Draw Circular Progress Bar ---
-        var progressBarRadius =
-            (dc.getWidth() < dc.getHeight() ? dc.getWidth() : dc.getHeight()) / 2 - 5;
-        dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(10);
-        dc.drawArc(
-            xHalfPhysical,
-            yHalfPhysical,
-            progressBarRadius,
-            Graphics.ARC_CLOCKWISE,
-            90,
-            90 - (360 * overallProgress).toNumber()
         );
 
         // cross at the top of the screen to cancel download
