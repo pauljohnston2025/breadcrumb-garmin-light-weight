@@ -2230,6 +2230,12 @@ class Settings {
         }
     }
 
+    function setup() as Void {
+        // assert the map choice when we load the settings, as it may have been changed when the app was not running and onSettingsChanged might not be called
+        loadSettings();
+        updateMapChoiceChange(mapChoice);
+    }
+
     function loadSettingsPart1() as Void {
         httpErrorTileTTLS = parseNumber("httpErrorTileTTLS", httpErrorTileTTLS);
         turnAlertTimeS = parseNumber("turnAlertTimeS", turnAlertTimeS);

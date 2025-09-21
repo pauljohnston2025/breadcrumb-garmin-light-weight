@@ -28,7 +28,7 @@ class BreadcrumbContext {
     }
 
     function setup() as Void {
-        settings.loadSettings(); // we want to make sure everything is done later
+        settings.setup(); // we want to make sure everything is done later
         cachedValues.setup();
         tileCache.setup();
 

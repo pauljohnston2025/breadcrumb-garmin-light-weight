@@ -72,7 +72,17 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     }
 
     function onSettingsChanged() as Void {
-        _breadcrumbContext.settings.onSettingsChanged();
+        System.println("" + Time.now().value() + " " + "onSettingsChange started: ");
+        try {
+            _breadcrumbContext.settings.onSettingsChanged();
+        } catch (e) {
+            // keep this log in releases for now trying to debug https://github.com/pauljohnston2025/breadcrumb-garmin/issues/6#issuecomment-3315354517
+            System.println(
+                "" + Time.now().value() + " failed onSettingsChange: " + e.getErrorMessage()
+            );
+            logE("failed onSettingsChange: " + e.getErrorMessage());
+            ++$.globalExceptionCounter;
+        }
     }
 
     // onStart() is called on application start up
@@ -140,9 +150,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 if (rawData.size() > 2) {
                     directions = rawData[2] as Array<Number>;
                 }
-                if (
-                    routeData.size() % ARRAY_POINT_SIZE == 0
-                ) {
+                if (routeData.size() % ARRAY_POINT_SIZE == 0) {
                     var route = _breadcrumbContext.newRoute(name);
                     if (route == null) {
                         logE("Failed to add route");
