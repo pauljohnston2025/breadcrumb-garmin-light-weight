@@ -57,7 +57,11 @@ class SettingsNumberPicker extends IntPicker {
 class SettingsStringPicker extends MyTextPickerDelegate {
     private var callback as (Method(value as String) as Void);
     public var parent as Renderable? = null;
-    function initialize(callback as (Method(value as String) as Void), parent as Renderable?, picker as TextPickerView) {
+    function initialize(
+        callback as (Method(value as String) as Void),
+        parent as Renderable?,
+        picker as TextPickerView
+    ) {
         MyTextPickerDelegate.initialize(me.method(:onTextEntered), picker);
         self.callback = callback;
         self.parent = parent;
@@ -535,6 +539,11 @@ class SettingsMapStorage extends Rez.Menus.SettingsMapStorage {
             :settingsMapStorageStorageTileCacheSize,
             settings.storageTileCacheSize.toString()
         );
+        safeSetSubLabel(
+            me,
+            :settingsMapStorageStorageTileCachePageCount,
+            settings.storageTileCachePageCount.toString()
+        );
         safeSetToggle(
             me,
             :settingsMapStorageStorageSeedBoundingBox,
@@ -992,7 +1001,7 @@ class ClearStorageDelegate extends WatchUi.ConfirmationDelegate {
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
             Application.Storage.clearValues(); // purge the storage, but we have to clean up all our classes that load from storage too
-            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues(getApp()._breadcrumbContext.settings.storageTileCachePageCount); // reload our tile storage class
+            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues(); // reload our tile storage class
             getApp()._breadcrumbContext.tileCache.clearValues(); // also clear the tile cache, it case it pulled from our storage
             getApp()._breadcrumbContext.clearRoutes(); // also clear the routes to mimic storage being removed
         }
@@ -1008,7 +1017,7 @@ class ClearCachedTilesDelegate extends WatchUi.ConfirmationDelegate {
     }
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
-            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues(getApp()._breadcrumbContext.settings.storageTileCachePageCount);
+            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues();
             getApp()._breadcrumbContext.tileCache.clearValues(); // also clear the tile cache, it case it pulled from our storage
 
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop confirmation
@@ -1744,6 +1753,14 @@ class SettingsMapStorageDelegate extends WatchUi.Menu2InputDelegate {
                 new SettingsNumberPicker(
                     settings.method(:setStorageTileCacheSize),
                     settings.storageTileCacheSize
+                ),
+                view
+            );
+        } else if (itemId == :settingsMapStorageStorageTileCachePageCount) {
+            startPicker(
+                new SettingsNumberPicker(
+                    settings.method(:setStorageTileCachePageCount),
+                    settings.storageTileCachePageCount
                 ),
                 view
             );

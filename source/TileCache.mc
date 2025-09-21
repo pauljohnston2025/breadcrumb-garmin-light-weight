@@ -1041,13 +1041,24 @@ class StorageTileCache {
         }
     }
 
-    function clearValues(oldPageCount as Number) as Void {
-        if (oldPageCount < 0) {
-            oldPageCount = 1;
+    // if this setting is changed whist the app is not running it will leave tile dangling in storage, and we have no way to know they are there, so guess thats up to the user to clear the storage
+    // or we could try every page on startup?
+    function setNewPageCount(newPageCount as Number) as Void {
+        if (newPageCount == _pageCount) {
+            return;
         }
-        var maxPagesToClear = oldPageCount > _pageCount ? oldPageCount : _pageCount;
 
-        for (var i = 0; i < maxPagesToClear; i++) {
+        // we need to purge everything, otherwise we will look in the wrong page for a tile
+        clearValues();
+
+        // set ourselves up for the enw partition strategy
+        _pageCount = newPageCount;
+        if (_pageCount <= 0) {
+            _pageCount = 1;
+        }
+    }
+    function clearValues() as Void {
+        for (var i = 0; i < _pageCount; i++) {
             loadPage(i);
             var keys = _currentPageKeys;
             for (var j = 0; j < keys.size(); j++) {
@@ -1189,7 +1200,7 @@ class TileCache {
         // whenever we purge the tile cache it is usually because the tile server properties have changed, safest to nuke the storage cache too
         // though sme times its when the in memory tile cache size changes
         // users should not be modifying the tile settings in any way, otherwise the storage will also be out of date (eg. when tile size or tile url changes)
-        _storageTileCache.clearValues(_settings.storageTileCachePageCount);
+        _storageTileCache.clearValues();
     }
 
     public function clearValuesWithoutStorage() as Void {

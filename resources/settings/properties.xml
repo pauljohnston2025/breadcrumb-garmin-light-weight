@@ -22,7 +22,8 @@
 	<property id="tileCacheSize" type="number">64</property>
 	<property id="tileCachePadding" type="number">0</property>
 	<property id="maxPendingWebRequests" type="number">100</property>
-	<property id="storageTileCacheSize" type="number">350</property>
+	<property id="storageTileCacheSize" type="number">150</property>
+	<property id="storageTileCachePageCount" type="number">1</property>
 	<property id="packingFormat" type="number">1</property>
 
 	<property id="trackColour" type="string">00FF00</property>

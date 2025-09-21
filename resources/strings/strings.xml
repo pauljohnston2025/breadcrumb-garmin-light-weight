@@ -87,7 +87,7 @@
     <string id="cacheTilesInStorageTitle">Store Tiles For Offline Use</string>
     <string id="storageMapTilesOnlyTitle">Only Use Stored Tiles (no ble data)</string>
     <string id="storageTileCacheSizeTitle">Storage Tile Cache Size (tiles)</string>
-    <string id="storageTileCacheSizeShortTitle">Storage Cache Size (tiles)</string>
+    <string id="storageTileCachePageCountTitle">Storage Tile Page Count (pages)</string>
     <string id="storageSeedBoundingBoxTitle">Seed Entire Bounding Box</string>
     <string id="storageSeedRouteDistanceMTitle">Seed Route Path Distance (m)</string>
 

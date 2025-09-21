@@ -402,10 +402,10 @@ class Settings {
     // storage seems to fill up around 200 with 192*192 tiles from image requests
     // can be much larger for companion app is used, since the tiles can be much smaller with TILE_DATA_TYPE_BASE64_FULL_COLOUR
     // saw a crash around 513 tiles, which would be from our internal array StorageTileCache._tilesInStorage
-    var storageTileCacheSize as Number = 350;
+    var storageTileCacheSize as Number = 150;
     var storageSeedBoundingBox as Boolean = false; // seed entire bounding box
     var storageSeedRouteDistanceM as Float = 10f; // if seeding based on route (storageSeedBoundingBox = false) seed this far around the route
-    var storageTileCachePageCount as Number = 5;
+    var storageTileCachePageCount as Number = 1;
 
     var trackColour as Number = Graphics.COLOR_GREEN;
     var defaultRouteColour as Number = Graphics.COLOR_BLUE;
@@ -1171,10 +1171,8 @@ class Settings {
         getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // do not remove our cached tiles, we only reduced the caches size, so they are still valid
     }
 
-    function storageTileCacheSizeReduced(oldStorageTileCachePageCount as Number) as Void {
-        getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues(
-            oldStorageTileCachePageCount
-        );
+    function storageTileCacheSizeReduced() as Void {
+        getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues();
     }
 
     (:settingsView)
@@ -1189,10 +1187,25 @@ class Settings {
 
         if (oldStorageTileCacheSize > storageTileCacheSize) {
             // only nuke storage tile cache if we reduce the number of tiles we can store
-            storageTileCacheSizeReduced(storageTileCachePageCount);
+            storageTileCacheSizeReduced();
         }
     }
 
+    (:settingsView)
+    function setStorageTileCachePageCount(value as Number) as Void {
+        var oldStorageTileCachePageCount = storageTileCachePageCount;
+        storageTileCachePageCount = value;
+        if (oldStorageTileCachePageCount != storageTileCachePageCount) {
+            storageTilePageCountChanged();
+        }
+        setValue("storageTileCachePageCount", storageTileCachePageCount);
+    }
+
+    function storageTilePageCountChanged() as Void
+    {
+        getApp()._breadcrumbContext.tileCache._storageTileCache.setNewPageCount(storageTileCachePageCount);
+    }
+    
     (:settingsView)
     function setTileCachePadding(value as Number) as Void {
         tileCachePadding = value;
@@ -2072,6 +2085,7 @@ class Settings {
         tileLayerMin = defaultSettings.tileLayerMin;
         tileCacheSize = defaultSettings.tileCacheSize;
         storageTileCacheSize = defaultSettings.storageTileCacheSize;
+        storageTileCachePageCount = defaultSettings.storageTileCachePageCount;
         storageSeedBoundingBox = defaultSettings.storageSeedBoundingBox;
         storageSeedRouteDistanceM = defaultSettings.storageSeedRouteDistanceM;
         centerUserOffsetY = defaultSettings.centerUserOffsetY;
@@ -2162,6 +2176,7 @@ class Settings {
                 "tileLayerMin" => tileLayerMin,
                 "tileCacheSize" => tileCacheSize,
                 "storageTileCacheSize" => storageTileCacheSize,
+                "storageTileCachePageCount" => storageTileCachePageCount,
                 "storageSeedBoundingBox" => storageSeedBoundingBox,
                 "storageSeedRouteDistanceM" => storageSeedRouteDistanceM,
                 "centerUserOffsetY" => centerUserOffsetY,
@@ -2292,6 +2307,7 @@ class Settings {
 
         tileCacheSize = parseNumber("tileCacheSize", tileCacheSize);
         storageTileCacheSize = parseNumber("storageTileCacheSize", storageTileCacheSize);
+        storageTileCachePageCount = parseNumber("storageTileCachePageCount", storageTileCachePageCount);
         storageSeedBoundingBox = parseBool("storageSeedBoundingBox", storageSeedBoundingBox);
         storageSeedRouteDistanceM = parseFloat(
             "storageSeedRouteDistanceM",
@@ -2445,6 +2461,7 @@ class Settings {
         var oldUseDrawBitmap = useDrawBitmap;
         var oldTileCacheSize = tileCacheSize;
         var oldStorageTileCacheSize = storageTileCacheSize;
+        var oldStorageTileCachePageCount = storageTileCachePageCount;
         var oldMapEnabled = mapEnabled;
         var oldCacheTilesInStorage = cacheTilesInStorage;
         var oldAuthToken = authToken;
@@ -2502,7 +2519,11 @@ class Settings {
         }
 
         if (oldStorageTileCacheSize > storageTileCacheSize) {
-            storageTileCacheSizeReduced(storageTileCachePageCount);
+            storageTileCacheSizeReduced();
+        }
+        
+        if (oldStorageTileCachePageCount != storageTileCachePageCount) {
+            storageTilePageCountChanged();
         }
 
         if (oldTileCacheSize > tileCacheSize) {

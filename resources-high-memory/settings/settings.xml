@@ -205,6 +205,10 @@
         <setting propertyKey="@Properties.storageTileCacheSize" title="@Strings.storageTileCacheSizeTitle">
             <settingConfig type="numeric" min="0"/>
         </setting>
+        
+        <setting propertyKey="@Properties.storageTileCachePageCount" title="@Strings.storageTileCachePageCountTitle">
+            <settingConfig type="numeric" min="1"/>
+        </setting>
 
         <setting propertyKey="@Properties.storageSeedBoundingBox" title="@Strings.storageSeedBoundingBoxTitle">
             <settingConfig type="boolean"/>

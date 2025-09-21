@@ -407,6 +407,8 @@ Some formats will result in faster downloads, others will result in better rende
 
 A small number of tiles can be saved for complete offline use (no phone connection required). This is limited by the storage capacity of each device (the app storage, not the full storage capacity for music etc.). This is normally on the order of Mb, **NOT** Gb, so only a small number of tiles can be stored. For small routes enough tiles can be stored so that we can leave the phone at home. Storing tiles in this cache can also save battery power by not having to download map tiles over the bluetooth connection.
 
+see [Storage Tile Page Count (pages)](#storage-tile-page-count-pages) for ways to increase this number beyond what will fit into memory.
+
 Note: I had some issues when different tile servers crashing the app with a system failure 'failed inside handle_image_callback' when using the tile server directly from the watch. The companion app did not seem to suffer this issue (likely because the tiles are much smaller). I tried a few preventative measures, but the issue still persists. If you have issues with offline maps, its best to change the tile server, or turn them off entirely (they are disabled by default).
 
 Tiles can be cleared from storage through the on device settings `Map Settings -> Offline Tile Storage -> Clear Cached Tiles`.  
@@ -428,6 +430,25 @@ Only used the stored tiles from the watch, no ble data will be used to fetch til
 ### Storage Tile Cache Size (tiles)
 
 How many tiles to store on the watch. Take care with this settings, large values can cause crashes. Similar to [Tile Cache Size](#tile-cache-size), ensure you test the limits of your device and set this value with a reasonable buffer in mind. The storage cache (like the in memory cache) is a LRU (last recently used) cache, the least used tiles will be removed once the cache is full and a new tile needs to be added.
+
+see [Storage Tile Page Count (pages)](#storage-tile-page-count-pages) for ways to increase this number beyond what will fit into memory.
+
+### Storage Tile Page Count (pages)
+
+In order to be able to store more tiles into storage, we need to stripe the 'known tile keys' into pages/partitions, this significantly increases the number of tiles we can store.
+
+Think of this setting like pages in a dictionary/book. If we have one page, we can only store so many words on that page (eg. 100). If we have 2 pages in a book we can write twice as many words because we have twice the space. However the more pages we have the more times we need to flick back and forward between the pages if we are searching for a specific word.
+
+The page size determines the number of 'known tile keys' that we can load at one time, its effectively `<Number of Storage Tiles in Memory> = <Storage Tile Cache Size (tiles)> / <Storage Tile Page Count (pages)>`.
+
+As with all the settings though, there is a trade off. 
+
+If we set `<Storage Tile Page Count (pages)> = 1` we will have a large memory consumption, and therefore will not be able to store many tiles (~300 absolute max on the venu2s). However, there will be very little io needed to read a tile (its just the tile read), because we already know of its existence. So this is better for cpu/io.
+
+If we set `<Storage Tile Page Count (pages)> = 5` we should be able to effectively increase the number of stored tiles by 5X, since we only need to load a portion of them into memory each time. Note the max `Storage Tile Cache Size` is still capped by the maximum storage size allowed per device, normally on the order of Mb, **NOT** Gb. This memory saving is not free though, as we need more io and cpu power to process 5 different pages, and need to load the page for the tile we are requesting (so switching out pages could happen quite often).
+
+Smaller values of `<Storage Tile Page Count (pages)>` should be better than larger, as we will need to do less io to get the page if we already have it, but may crash due to memory issues.
+
 
 ### Storage Seed Bounding Box
 
