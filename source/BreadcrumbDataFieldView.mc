@@ -921,7 +921,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         dc.clear();
         // its only a debug menu that should probably be optimised out in release, hard code to venu2s screen coordinates
         // it is actually pretty nice info, best guess on string sizes down the screen
-        var fieldCount = 13;
+        var fieldCount = 14;
         var y = 5;
         var bottomSpacing = 5; // physical devices seem to clip the bottom of the datafield
         var spacing = (dc.getHeight() - y - bottomSpacing).toFloat() / fieldCount;
@@ -972,6 +972,15 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             _breadcrumbContext.tileCache._storageTileCache._totalTileCount;
 
         dc.drawText(x, y, Graphics.FONT_XTINY, combined, Graphics.TEXT_JUSTIFY_CENTER);
+        y += spacing;
+        var pagesStr = "pages: ";
+        for (var i = 0; i < _breadcrumbContext.tileCache._storageTileCache._pageCount; i++) {
+            if (i != 0) {
+                pagesStr += ", ";
+            }
+            pagesStr += _breadcrumbContext.tileCache._storageTileCache._pageSizes[i];
+        }
+        dc.drawText(x, y, Graphics.FONT_XTINY, pagesStr, Graphics.TEXT_JUSTIFY_CENTER);
         y += spacing;
         dc.drawText(
             x,
@@ -1099,7 +1108,12 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         if (info != null && info.currentSpeed != null) {
             currentSpeedMPS = info.currentSpeed as Float;
         }
-        var cacheHits = "cacheHits: " + percentage.format("%.1f") + "% s: " + currentSpeedMPS.format("%.1f") + "m/s";
+        var cacheHits =
+            "cacheHits: " +
+            percentage.format("%.1f") +
+            "% s: " +
+            currentSpeedMPS.format("%.1f") +
+            "m/s";
         dc.drawText(x, y, Graphics.FONT_XTINY, cacheHits, Graphics.TEXT_JUSTIFY_CENTER);
         y += spacing;
         dc.drawText(

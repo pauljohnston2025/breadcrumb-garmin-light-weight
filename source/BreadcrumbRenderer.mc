@@ -1091,6 +1091,13 @@ class BreadcrumbRenderer {
         
         // Information text on top of progress bar
         dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
+        var pagesStr = "\npages: ";
+        for (var i = 0; i < breadcrumbContext.tileCache._storageTileCache._pageCount; i++) {
+            if (i != 0) {
+                pagesStr += ", ";
+            }
+            pagesStr += breadcrumbContext.tileCache._storageTileCache._pageSizes[i];
+        }
         dc.drawText(
             xHalfPhysical,
             yHalfPhysical,
@@ -1117,7 +1124,7 @@ class BreadcrumbRenderer {
                 "\nstorage tiles: " +
                 breadcrumbContext.tileCache._storageTileCache._totalTileCount +
                 "/" +
-                settings.storageTileCacheSize,
+                settings.storageTileCacheSize + pagesStr,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
 

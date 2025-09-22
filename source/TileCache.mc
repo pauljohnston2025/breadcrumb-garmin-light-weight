@@ -606,6 +606,9 @@ class StorageTileCache {
     var _totalTileCount as Number = 0;
     var _currentPageIndex as Number = -1; // -1 indicates no page is loaded
     var _currentPageKeys as Array<String> = [];
+    var _pageSizes as Array<Number>;
+    private var _lastEvictedPageIndex as Number = 0;
+    private var _maxPageSize as Number;
 
     function initialize(settings as Settings) {
         var tilesVersion = Storage.getValue(TILES_VERSION_KEY);
@@ -616,9 +619,7 @@ class StorageTileCache {
 
         _settings = settings;
         _pageCount = _settings.storageTileCachePageCount;
-        if (_pageCount <= 0) {
-            _pageCount = 1;
-        }
+        pageCountUpdated();
 
         // Instead of loading all keys, we load the total count of tiles across all pages.
         var totalCount = Storage.getValue("totalTileCount");
@@ -629,13 +630,35 @@ class StorageTileCache {
         }
     }
 
+    private function pageCountUpdated() as Void {
+        if (_pageCount <= 0) {
+            _pageCount = 1;
+        }
+        _pageSizes = new [_pageCount] as Array<Number>;
+        for (var i = 0; i < _pageCount; i++) {
+            _pageSizes[i] = 0;
+        }
+
+        // Calculate the maximum allowed size for a single page to prevent memory issues.
+        var idealPageSize = _settings.storageTileCacheSize / _pageCount;
+        _maxPageSize = (idealPageSize * 1.1).toNumber();
+    }
+
     function setup() as Void {
+        populateInitialPageSizes();
         if (_settings.storageTileCacheSize < _totalTileCount) {
             // Purge excess tiles if the cache size has been reduced.
             var numberToEvict = _totalTileCount - _settings.storageTileCacheSize;
             for (var i = 0; i < numberToEvict; ++i) {
                 evictLeastRecentlyUsedTile();
             }
+        }
+    }
+
+    private function populateInitialPageSizes() as Void {
+        for (var i = 0; i < _pageCount; i++) {
+            loadPage(i);
+            _pageSizes[i] = _currentPageKeys.size();
         }
     }
 
@@ -647,19 +670,18 @@ class StorageTileCache {
         if (_currentPageIndex == pageIndex) {
             return; // Page is already loaded.
         }
+
         // logT("Loading storage page: " + pageIndex);
-        var pageKey = pageStorageKey(pageIndex);
-        var page = Storage.getValue(pageKey);
+
+        // Release memory of the old page's keys before loading the new one.
+        _currentPageKeys = [];
+        var page = Storage.getValue(pageStorageKey(pageIndex));
 
         if (page instanceof Array) {
             _currentPageKeys = page as Array<String>;
-        } else {
-            _currentPageKeys = []; // This is a new or empty page.
         }
+        // No else needed, _currentPageKeys is already an empty array.
         _currentPageIndex = pageIndex;
-        // these pages could be wildly different sizes, but testing has shown they are normally pretty close
-        // maybe I need to cap the max size per page to (maxStorageTiles/pageSize)+10 or something
-        // logT("page: " + pageIndex + " size: " + _currentPageKeys.size());
     }
 
     private function saveCurrentPage() as Void {
@@ -673,6 +695,11 @@ class StorageTileCache {
     // This new algorithm groups tiles that are geographically close onto the same page,
     // which dramatically reduces page loading when panning the map.
     private function getPageIndexForKey(x as Number, y as Number, z as Number) as Number {
+        if (_pageCount <= 1) {
+            // optimise for single page
+            return 0;
+        }
+
         // This spatial hash groups tiles into 4x4 blocks. All tiles in a block
         // at the same zoom level will be on the same page.
         // Integer division (x / 4) effectively creates a grid.
@@ -841,6 +868,7 @@ class StorageTileCache {
         }
     }
 
+    (:inline)
     private function loadBitmap(
         tileKeyStr as String,
         tileCount as Number,
@@ -851,6 +879,7 @@ class StorageTileCache {
         return Storage.getValue(tileKey(tileKeyStr)) as WatchUi.BitmapResource?;
     }
 
+    (:inline)
     private function deleteBitmap(tileKeyStr as String, tileCount as Number) as Void {
         // for (var i = 0; i < tileCount; ++i) {
         //     var key = tileKey(tileKeyStr) +;
@@ -896,8 +925,12 @@ class StorageTileCache {
         var pageIndex = getPageIndexForKey(x, y, z);
         loadPage(pageIndex);
 
+        // This is a new tile.
         _currentPageKeys.add(tileKeyStr);
+        _pageSizes[pageIndex]++;
         _totalTileCount++;
+        // If keyIndex is not -1, it's an existing tile being updated.
+        // We still proceed to save its new metadata below.
 
         try {
             // update our tracking first, we do not want to loose tiles because we stored them, but could then not update the tracking
@@ -912,8 +945,9 @@ class StorageTileCache {
                 // we could allow the user to specify 'maxTileCache storage' but we will just fill it up until there is no more space
                 // note: This means routes need to be loaded first, or there will be no space left for new routes
 
-                // todo: clear the oldest tile from storage and try again
                 logE("tile storage full: " + e.getErrorMessage());
+                // this page might have been too big, or we might just be full, so evict 2 tiles to  be safe
+                evictOldestTileFromPage();
                 evictLeastRecentlyUsedTile();
                 return false;
             }
@@ -921,6 +955,12 @@ class StorageTileCache {
             logE("failed tile storage add: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
         }
+
+        // Check if this page is getting too large, and evict its oldest tile.
+        if (_pageSizes[pageIndex] >= _maxPageSize) {
+            evictOldestTileFromPage();
+        }
+
         if (_totalTileCount > _settings.storageTileCacheSize) {
             // Does this ever need to do more than one pass? Saw it in the sim early on where it was higher than storage cache size, but never again.
             // do not want to do a while loop, since it could go for a long time and trigger watchdog
@@ -940,7 +980,6 @@ class StorageTileCache {
                 // we could allow the user to specify 'maxTileCache storage' but we will just fill it up until there is no more space
                 // note: This means routes need to be loaded first, or there will be no space left for new routes
 
-                // todo: clear the oldest tile from storage and try again
                 logE("tile storage full: " + e.getErrorMessage());
                 evictLeastRecentlyUsedTile();
                 return false;
@@ -952,38 +991,29 @@ class StorageTileCache {
         return true;
     }
 
-    private function evictLeastRecentlyUsedTile() as Void {
+    private function evictOldestTileFromPage() as Void {
+        if (_currentPageIndex < 0 || _currentPageIndex >= _pageSizes.size()) {
+            logE("evicting from page thats not loaded");
+            return;
+        }
+
+        if (_currentPageKeys.size() == 0) {
+            return; // Nothing to evict.
+        }
+
         var oldestTime = null;
         var oldestKey = null;
-        var oldestKeyPage = -1;
         var epoch = Time.now().value();
-        var corruptOrExpired = false;
 
-        // This loop iterates over all pages to find the globally oldest tile.
-        // This is the most dangerous for watchdog, if we evict a tile we should not do anything else
-        for (var i = 0; i < _pageCount; i++) {
-            loadPage(i);
-            var keysOnPage = _currentPageKeys;
-            for (var j = 0; j < keysOnPage.size(); j++) {
-                var key = keysOnPage[j];
-                var tileMetaData = Storage.getValue(metaKey(key));
+        // Find the oldest tile ON THE CURRENT PAGE.
+        for (var i = 0; i < _currentPageKeys.size(); i++) {
+            var key = _currentPageKeys[i];
+            var tileMetaData = Storage.getValue(metaKey(key));
 
-                if (
-                    tileMetaData == null ||
-                    !(tileMetaData instanceof Array) ||
-                    tileMetaData.size() < 3
-                ) {
-                    oldestKey = key; // Found a corrupted/dangling entry
-                    oldestKeyPage = i;
-                    corruptOrExpired = true;
-                    break;
-                }
-
+            if (tileMetaData instanceof Array && tileMetaData.size() >= 3) {
                 var expiresAt = tileMetaData[2] as Number;
                 if (expired(expiresAt, epoch)) {
-                    oldestKey = key; // Found an expired tile
-                    oldestKeyPage = i;
-                    corruptOrExpired = true;
+                    oldestKey = key; // Found an expired tile, evict immediately.
                     break;
                 }
 
@@ -991,28 +1021,38 @@ class StorageTileCache {
                 if (oldestTime == null || oldestTime > lastUsed) {
                     oldestTime = lastUsed;
                     oldestKey = key;
-                    oldestKeyPage = i;
                 }
-            }
-
-            if (oldestKey != null && oldestKeyPage == i && corruptOrExpired) {
-                // If we found an expired or corrupted tile on this page, we can stop searching.
+            } else {
+                // Corrupted/dangling entry, evict immediately.
+                oldestKey = key;
                 break;
             }
         }
 
         if (oldestKey != null) {
-            // Load the page where the oldest key resides to modify it.
-            loadPage(oldestKeyPage);
-
             deleteByMetaData(oldestKey);
             _currentPageKeys.remove(oldestKey);
-            saveCurrentPage();
-
+            _pageSizes[_currentPageIndex]--;
             _totalTileCount--;
-            Storage.setValue("totalTileCount", _totalTileCount);
-            logT("Evicted tile " + oldestKey + " from storage cache");
+            // The calling function is responsible for saving the page and total count.
+            logT("Evicted tile " + oldestKey + " from page " + _currentPageIndex);
         }
+    }
+
+    private function evictLeastRecentlyUsedTile() as Void {
+        // so that we do not read every page and every tile we just evict from the next page in the list
+        // this may not actually remove a tile if the page is empty
+        // the tiles are meant to be spread out evenly across pages though, if they are not, none of the assumptions in the class help
+        _lastEvictedPageIndex = (_lastEvictedPageIndex + 1) % _pageCount;
+        loadPage(_lastEvictedPageIndex);
+
+        // single shot try to get a non-empty page (incredibly rare case)
+        if (_currentPageKeys.size() == 0) {
+            _lastEvictedPageIndex = (_lastEvictedPageIndex + 1) % _pageCount;
+            loadPage(_lastEvictedPageIndex);
+        }
+
+        evictOldestTileFromPage();
     }
 
     private function deleteByMetaData(key as String) as Void {
@@ -1053,9 +1093,7 @@ class StorageTileCache {
 
         // set ourselves up for the enw partition strategy
         _pageCount = newPageCount;
-        if (_pageCount <= 0) {
-            _pageCount = 1;
-        }
+        pageCountUpdated();
     }
     function clearValues() as Void {
         for (var i = 0; i < _pageCount; i++) {
@@ -1070,6 +1108,9 @@ class StorageTileCache {
         _currentPageIndex = -1;
         _totalTileCount = 0;
         Storage.deleteValue("totalTileCount");
+        for (var i = 0; i < _pageCount; i++) {
+            _pageSizes[i] = 0;
+        }
     }
 }
 
@@ -1722,7 +1763,7 @@ class TileCache {
         var offset = 0;
         for (var i = 0; i < tileSize; ++i) {
             for (var j = 0; j < tileSize; ++j) {
-                // probbaly a faster way to do this
+                // probably a faster way to do this
                 var colour =
                     mapTileBytes.decodeNumber(Lang.NUMBER_FORMAT_UINT32, {
                         :offset => offset,
