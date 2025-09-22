@@ -618,8 +618,6 @@ class StorageTileCache {
         Storage.setValue(TILES_VERSION_KEY, TILES_STORAGE_VERSION);
 
         _settings = settings;
-        _pageCount = _settings.storageTileCachePageCount;
-        pageCountUpdated();
 
         // Instead of loading all keys, we load the total count of tiles across all pages.
         var totalCount = Storage.getValue("totalTileCount");
@@ -645,6 +643,9 @@ class StorageTileCache {
     }
 
     function setup() as Void {
+        // we have to leave _pageCount as 1 in the constructor because the setting have not loaded yet
+        _pageCount = _settings.storageTileCachePageCount;
+        pageCountUpdated();
         populateInitialPageSizes();
         if (_settings.storageTileCacheSize < _totalTileCount) {
             // Purge excess tiles if the cache size has been reduced.
@@ -691,27 +692,37 @@ class StorageTileCache {
         }
     }
 
-    // Determines which page a tile key belongs to using a spatial hash.
-    // This new algorithm groups tiles that are geographically close onto the same page,
-    // which dramatically reduces page loading when panning the map.
+    // this function needs to spread out amongst pages, but also should favour a page for a few tiles in a row
+    // so we do not have a heap of page loads when we do 'for y { for x { ... } }'
     private function getPageIndexForKey(x as Number, y as Number, z as Number) as Number {
         if (_pageCount <= 1) {
-            // optimise for single page
+            // Optimise for a single page.
             return 0;
         }
 
-        // This spatial hash groups tiles into 4x4 blocks. All tiles in a block
-        // at the same zoom level will be on the same page.
-        // Integer division (x / 4) effectively creates a grid.
-        var gridX = x / 4;
-        var gridY = y / 4;
+        // This determines how many tiles are grouped into a single block.
+        // A larger size means a bigger map area is on the same page, reducing page
+        // loads during panning.
+        var BLOCK_SIZE = 8;
 
-        // Combine the grid coordinates and zoom level to get a consistent hash value.
-        // The prime numbers help in distributing the pages more evenly across zoom levels.
-        var spatialHash = gridX * 31 + gridY * 61 + z * 97;
+        var gridX = x / BLOCK_SIZE;
+        var gridY = y / BLOCK_SIZE;
 
-        var res = absN(spatialHash % _pageCount);
-        // logT("tile: " + x + "-" + y + "-" + z + " page: " + res);
+        // Use bitwise shifting to pack z, gridY, and gridX into a single 64-bit Long.
+        // This is extremely robust and avoids "magic number" multipliers that can fail
+        // with large coordinates. It creates a unique, sequential ID for each block.
+        // We allocate bits for each component:
+        // - z (zoom): 5 bits (up to zoom 31)
+        // - gridY: 29 bits
+        // - gridX: 30 bits
+        // This structure ensures that changes in gridX are the most granular, followed
+        // by gridY, perfectly matching the 'for y { for x { ... } }' access pattern.
+        var combinedId = (z.toLong() << 59) | (gridY.toLong() << 30) | gridX.toLong();
+
+        // The modulo maps the sequential block IDs across the available pages.
+        // Because the ID is sequential, adjacent blocks will likely be on the same page.
+        var res = absN((combinedId % _pageCount).toNumber());
+        logT("tile: " + x + "-" + y + "-" + z + " page: " + res);
         return res;
     }
 

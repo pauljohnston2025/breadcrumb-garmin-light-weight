@@ -959,6 +959,18 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
+        dc.drawText(
+            x,
+            y,
+            Graphics.FONT_XTINY,
+            "lastAlert: " +
+                (epoch - lastOffTrackAlertNotified) +
+                "s check: " +
+                (epoch - lastOffTrackAlertChecked) +
+                "s",
+            Graphics.TEXT_JUSTIFY_CENTER
+        );
+        y += spacing;
         var combined = "lastWebRes: " + _breadcrumbContext.webRequestHandler._lastResult;
 
         if (settings.storageMapTilesOnly) {
@@ -973,7 +985,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
         dc.drawText(x, y, Graphics.FONT_XTINY, combined, Graphics.TEXT_JUSTIFY_CENTER);
         y += spacing;
-        var pagesStr = "pages: ";
+        var pagesStr = "ps: ";
         for (var i = 0; i < _breadcrumbContext.tileCache._storageTileCache._pageCount; i++) {
             if (i != 0) {
                 pagesStr += ", ";
@@ -981,18 +993,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             pagesStr += _breadcrumbContext.tileCache._storageTileCache._pageSizes[i];
         }
         dc.drawText(x, y, Graphics.FONT_XTINY, pagesStr, Graphics.TEXT_JUSTIFY_CENTER);
-        y += spacing;
-        dc.drawText(
-            x,
-            y,
-            Graphics.FONT_XTINY,
-            "lastAlert: " +
-                (epoch - lastOffTrackAlertNotified) +
-                "s check: " +
-                (epoch - lastOffTrackAlertChecked) +
-                "s",
-            Graphics.TEXT_JUSTIFY_CENTER
-        );
         y += spacing;
         var distToLastStr = "NA";
         var lastPoint = _breadcrumbContext.track.lastPoint();

@@ -1074,17 +1074,17 @@ class CachedValues {
             ++counter;
             if (counter > 20) {
                 // we should not take any amount of time to do this
-                // the while lloop ony oves the state machine forward
+                // the while loop ony moves the state machine forward
                 // one iteration each for
                 //
-                // next route (routes might not be enabled so X maxroutes)
+                // next route (routes might not be enabled so X maxRoutes)
                 // next point in route
-                // next partial point bwteen route points
+                // next partial point between route points
                 // get the tile coordinates from the partial point
                 // inc tile x
                 // inc tile y
 
-                // most will return within 1 or 2 iterations, some will take more to increent each level of the loop
+                // most will return within 1 or 2 iterations, some will take more to increment each level of the loop
                 logE("we reached or recursion limit");
                 seedingRouteLeftRightValid = false;
                 return null; // pretend we are done, something seems wrong
@@ -1206,7 +1206,7 @@ class CachedValues {
         }
 
         seedingRouteLeftRightValid = false;
-        return null; // should alwasy return fromt he shile loop above, this should be unreachable, but pretend we are finished if we hit here
+        return null; // should always return from the while loop above, this should be unreachable, but pretend we are finished if we hit here
     }
 
     (:storage)
@@ -1222,7 +1222,7 @@ class CachedValues {
         removeFromSeedingInProgressTilesAndSeedThem(); // do not call in for loop, we want to break out so we do not get watchdog errors
 
         // max 10 outstanding requests, and 10 lots of work for the watchdog, work is variable depending on nextRoutePointTileKey complexity
-        // we also need the i tracking it, because on the lower layers we can add the same tile multiple times. eg. layer 0 all the route points will likely point at a single tile, but we stil have to precess the entire route
+        // we also need the i tracking it, because on the lower layers we can add the same tile multiple times. eg. layer 0 all the route points will likely point at a single tile, but we still have to precess the entire route
         var maxTilesAtATime = 50;
         maxTilesAtATime = minN(maxTilesAtATime, _settings.storageTileCacheSize);
         // logD("starting for");

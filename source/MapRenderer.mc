@@ -5,7 +5,7 @@ import Toybox.PersistedContent;
 
 class MapRenderer {
     // single dim array might be better performance?
-    // Could do multidim array to make calling code slightly easier
+    // Could do multidimensional array to make calling code slightly easier
     // todo: get screen size and factor in some amount of padding
     var _tileCache as TileCache;
     var _settings as Settings;
@@ -46,14 +46,14 @@ class MapRenderer {
         var tileZ = cachedValues.tileZ; // local lookup faster
 
         for (
-            var x = -_settings.tileCachePadding;
-            x < tileCountX + _settings.tileCachePadding;
-            ++x
+            var y = -_settings.tileCachePadding;
+            y < tileCountY + _settings.tileCachePadding;
+            ++y
         ) {
             for (
-                var y = -_settings.tileCachePadding;
-                y < tileCountY + _settings.tileCachePadding;
-                ++y
+                var x = -_settings.tileCachePadding;
+                x < tileCountX + _settings.tileCachePadding;
+                ++x
             ) {
                 // seed it for the next render
                 if (_tileCache.seedTile(firstTileX + x, firstTileY + y, tileZ)) {
@@ -183,8 +183,8 @@ class MapRenderer {
         var tileSize = _settings.tileSize;
         var useDrawBitmap = _settings.useDrawBitmap;
 
-        for (var x = 0; x < tileCountX; ++x) {
-            for (var y = 0; y < tileCountY; ++y) {
+        for (var y = 0; y < tileCountY; ++y) {
+            for (var x = 0; x < tileCountX; ++x) {
                 var tileFromCache = _tileCache.getTile(firstTileX + x, firstTileY + y, tileZ); // seed it for the next render
                 if (tileFromCache == null) {
                     continue;
@@ -282,8 +282,8 @@ class MapRenderer {
             dc.setPenWidth(4);
         }
 
-        for (var x = 0; x < tileCountX; ++x) {
-            for (var y = 0; y < tileCountY; ++y) {
+        for (var y = 0; y < tileCountY; ++y) {
+            for (var x = 0; x < tileCountX; ++x) {
                 var tileFromCache = _tileCache.getTile(firstTileX + x, firstTileY + y, tileZ); // seed it for the next render
                 if (tileFromCache == null) {
                     continue;

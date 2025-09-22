@@ -1088,7 +1088,6 @@ class BreadcrumbRenderer {
             90 - (360 * overallProgress).toNumber()
         );
 
-        
         // Information text on top of progress bar
         dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
         var pagesStr = "\npages: ";
@@ -1108,23 +1107,24 @@ class BreadcrumbRenderer {
                 seedingProgress[0] +
                 "\npending web: " +
                 breadcrumbContext.webRequestHandler.pending.size() +
-                "\noutstanding: " +
+                " running: " +
                 breadcrumbContext.webRequestHandler._outstandingCount +
-                "\nlast web res: " +
-                breadcrumbContext.webRequestHandler._lastResult +
-                "\nweb err: " +
+                "\n storage: " +
+                breadcrumbContext.tileCache._storageTileCache._totalTileCount +
+                "/" +
+                settings.storageTileCacheSize +
+                pagesStr +
+                "\nWeb Error: " +
                 breadcrumbContext.webRequestHandler._errorCount +
-                " web ok: " +
+                " Web Ok: " +
                 breadcrumbContext.webRequestHandler._successCount +
-                "\nmem: " +
+                "\nMem: " +
                 (System.getSystemStats().usedMemory / 1024f).format("%.1f") +
                 "K f: " +
                 (System.getSystemStats().freeMemory / 1024f).format("%.1f") +
                 "K" +
-                "\nstorage tiles: " +
-                breadcrumbContext.tileCache._storageTileCache._totalTileCount +
-                "/" +
-                settings.storageTileCacheSize + pagesStr,
+                "\nlast web res: " +
+                breadcrumbContext.webRequestHandler._lastResult,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
 
