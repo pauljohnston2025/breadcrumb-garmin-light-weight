@@ -1001,6 +1001,7 @@ class ClearStorageDelegate extends WatchUi.ConfirmationDelegate {
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
             Application.Storage.clearValues(); // purge the storage, but we have to clean up all our classes that load from storage too
+            // todo: call something like reset() on these classes, the storage is purged underneath them already
             getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues(); // reload our tile storage class
             getApp()._breadcrumbContext.tileCache.clearValues(); // also clear the tile cache, it case it pulled from our storage
             getApp()._breadcrumbContext.clearRoutes(); // also clear the routes to mimic storage being removed
@@ -1011,14 +1012,37 @@ class ClearStorageDelegate extends WatchUi.ConfirmationDelegate {
 }
 
 (:settingsView)
+class MyProgressDelegate extends WatchUi.BehaviorDelegate {
+    function initialize() {
+        BehaviorDelegate.initialize();
+    }
+
+    function onBack() as Boolean {
+        return false;
+    }
+}
+
+(:settingsView)
 class ClearCachedTilesDelegate extends WatchUi.ConfirmationDelegate {
     function initialize() {
         WatchUi.ConfirmationDelegate.initialize();
     }
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
-            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues();
-            getApp()._breadcrumbContext.tileCache.clearValues(); // also clear the tile cache, it case it pulled from our storage
+            var progressBar = new WatchUi.ProgressBar(
+                "Processing...",
+                1.0f
+            );
+            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValuesProgress(progressBar.method(:setProgress));
+            WatchUi.pushView(
+                progressBar,
+                new MyProgressDelegate(),
+                WatchUi.SLIDE_IMMEDIATE
+            );
+            forceRefresh();
+            
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop the progress bar
+            getApp()._breadcrumbContext.tileCache.clearValues(); // also clear the tile cache, in case it pulled from our storage
 
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop confirmation
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop map storage view

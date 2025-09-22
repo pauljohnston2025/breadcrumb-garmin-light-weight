@@ -550,7 +550,7 @@ typedef StorageTileDataType as [Number, Dictionary or WatchUi.BitmapResource or 
 
 (:noStorage)
 class StorageTileCache {
-    function initialize(settings as Settings) {}
+    function initialize(settings as Settings, cachedValues as CachedValues) {}
     function setup() as Void {}
 
     function get(
@@ -599,6 +599,7 @@ class StorageTileCache {
     // The Storage module does not allow querying the current keys, so we would have to query every possible tile to get the oldest and be able to remove it.
     // To manage memory, we will store what tiles we know exist in pages, and be able to purge them ourselves.
     var _settings as Settings;
+    var _cachedValues as CachedValues;
 
     // we store the tiles into pages based on the tile keys hash, this is so we only have to load small chunks of known keys at a time (if we try and store all the keys we quickly run out of memory)
     // 1 page is the most cpu efficient for reading, but limits the max number of tiles we can store
@@ -610,7 +611,7 @@ class StorageTileCache {
     private var _lastEvictedPageIndex as Number = 0;
     private var _maxPageSize as Number;
 
-    function initialize(settings as Settings) {
+    function initialize(settings as Settings, cachedValues as CachedValues) {
         var tilesVersion = Storage.getValue(TILES_VERSION_KEY);
         if (tilesVersion != null && (tilesVersion as Number) != TILES_STORAGE_VERSION) {
             Storage.clearValues(); // we have to purge all storage (even our routes, since we have no way of cleanly removing the old storage keys (without having back compat for each format))
@@ -618,6 +619,7 @@ class StorageTileCache {
         Storage.setValue(TILES_VERSION_KEY, TILES_STORAGE_VERSION);
 
         _settings = settings;
+        _cachedValues = cachedValues;
 
         // Instead of loading all keys, we load the total count of tiles across all pages.
         var totalCount = Storage.getValue("totalTileCount");
@@ -703,10 +705,10 @@ class StorageTileCache {
         // This determines how many tiles are grouped into a single block.
         // A larger size means a bigger map area is on the same page, reducing page
         // loads during panning.
-        var BLOCK_SIZE = 8;
+        var blockSize = _cachedValues.blockSize;
 
-        var gridX = x / BLOCK_SIZE;
-        var gridY = y / BLOCK_SIZE;
+        var gridX = x / blockSize;
+        var gridY = y / blockSize;
 
         // Use bitwise shifting to pack z, gridY, and gridX into a single 64-bit Long.
         // This is extremely robust and avoids "magic number" multipliers that can fail
@@ -1106,11 +1108,23 @@ class StorageTileCache {
         _pageCount = newPageCount;
         pageCountUpdated();
     }
+
+    function ignoredProgress(value as Float) as Void {}
+
     function clearValues() as Void {
+        clearValuesProgress(me.method(:ignoredProgress));
+    }
+
+    function clearValuesProgress(progressCallback as (Method(progress as Float) as Void)) as Void {
         for (var i = 0; i < _pageCount; i++) {
             loadPage(i);
             var keys = _currentPageKeys;
-            for (var j = 0; j < keys.size(); j++) {
+            var keysSize = keys.size();
+            for (var j = 0; j < keysSize; j++) {
+                // assume all pages are the same size (this is not true, but good enough for progress)
+                var numberProcessed = keysSize * i + j;
+                var totalTiles = (keysSize * _pageCount).toFloat();
+                progressCallback.invoke(numberProcessed / totalTiles);
                 deleteByMetaData(keys[j]);
             }
             Storage.deleteValue(pageStorageKey(i));
@@ -1148,7 +1162,7 @@ class TileCache {
         _cachedValues = cachedValues;
         _webRequestHandler = webRequestHandler;
         _internalCache = ({}) as Dictionary<String, Tile>;
-        _storageTileCache = new StorageTileCache(_settings);
+        _storageTileCache = new StorageTileCache(_settings, _cachedValues);
 
         // note: these need to match whats in the app
         // would like to use the bitmaps colour pallet, but we cannot :( because it errors with

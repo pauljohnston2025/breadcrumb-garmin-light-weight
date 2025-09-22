@@ -4,6 +4,8 @@ import Toybox.Graphics;
 import Toybox.System;
 import Toybox.Activity;
 
+const BLOCK_SIZE_SCALE_FACTOR = 2; // this gives us a large area, 64*64 tiles are 4 tiles per big tile which then gives us 8 as a blockSize or for full tiles its 2 full tiles, should be ok
+
 // An iterator that walks along a line segment, yielding one point at a time.
 (:storage)
 class SegmentPointIterator {
@@ -86,11 +88,14 @@ class CachedValues {
     private var _settings as Settings;
 
     // cache some important maths to make everything faster
-    // things set to -1 are updated on the first layout/calcualte call
+    // things set to -1 are updated on the first layout/calculate call
 
     // updated when settings change
     var smallTilesPerScaledTile as Number = -1;
     var smallTilesPerFullTile as Number = -1;
+    // block size based on tile size
+    // because if they are full tiles, the area to move will be quite large if we leave this at 8
+    var blockSize as Number = 8;
     // updated when user manually pans around screen
     var fixedPosition as RectangularPoint?; // NOT SCALED - raw meters
     var scale as Float? = null; // fixed map scale, when manually zooming or panning around map
@@ -216,6 +221,7 @@ class CachedValues {
         smallTilesPerFullTile = Math.ceil(
             _settings.fullTileSize / _settings.tileSize.toFloat()
         ).toNumber();
+        blockSize = smallTilesPerFullTile * BLOCK_SIZE_SCALE_FACTOR;
         fixedPosition = null;
         // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
         mapMoveDistanceM = _settings.metersAroundUser.toFloat() * _settings.mapMoveScreenSize;
@@ -618,7 +624,7 @@ class CachedValues {
     function calcScaleForScreenMeters(maxDistanceM as Float) as Float {
         // we want the whole map to be show on the screen, we have 360 pixels on the
         // venu 2s
-        // but this would only work for sqaures, so 0.75 fudge factor for circle
+        // but this would only work for squares, so 0.75 fudge factor for circle
         // watch face
         return (rotateAroundMinScreenDim / maxDistanceM) * 0.75;
     }
@@ -719,6 +725,12 @@ class CachedValues {
         smallTilesPerFullTile = Math.ceil(
             _settings.fullTileSize / _settings.tileSize.toFloat()
         ).toNumber();
+        var oldBlockSize = blockSize;
+        blockSize = smallTilesPerFullTile * BLOCK_SIZE_SCALE_FACTOR;
+        if (oldBlockSize != blockSize) {
+            // the block size determines how pages are stripped
+            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues();
+        }
         updateFixedPositionFromSettings();
         updateVirtualScreenSize();
         updateScaleCenterAndMap();
@@ -1437,7 +1449,8 @@ class CachedValues {
         var totalPointsChecked =
             currentTileLayerProgress * totalPointsPerLayer +
             totalPointsUntilRoute +
-            seedingUpToRoutePoint + 1;
+            seedingUpToRoutePoint +
+            1;
         var totalPointsToCheck = tileLayers * totalPointsPerLayer + 1;
         var overallProgress = totalPointsChecked / totalPointsToCheck;
 
