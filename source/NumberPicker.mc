@@ -262,10 +262,10 @@ class RerenderIgnoredView extends WatchUi.View {
     function initialize() {
         View.initialize();
 
-        // for seom reason WatchUi.requestUpdate(); was not working so im pushing this view just to remove it, which should force a re-render
+        // for some reason WatchUi.requestUpdate(); was not working so im pushing this view just to remove it, which should force a re-render
         // note: this seems to be a problem with datafields settings views on physical devices, appears to work fine on the sim
         // timer = new Timer.Timer();
-        // need a timer running of this, since button presses from within the delegate were not trigering a reload
+        // need a timer running of this, since button presses from within the delegate were not triggering a reload
         // timer.start(method(:onTimer), 1000, true);
         // but timers are not available in the settings view (or at all in datafield)
         // "Module 'Toybox.Timer' not available to 'Data Field'"
