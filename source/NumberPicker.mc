@@ -291,7 +291,7 @@ class NumberPickerView extends WatchUi.View {
         View.initialize();
 
         // timer = new Timer.Timer();
-        // need a timer running of this, since button presses from within the delegate were not trigering a reload
+        // need a timer running of this, since button presses from within the delegate were not triggering a reload
         // timer.start(method(:onTimer), 1000, true);
         // but timers are not available in the settings view (or at all in datafield)
         // "Module 'Toybox.Timer' not available to 'Data Field'"

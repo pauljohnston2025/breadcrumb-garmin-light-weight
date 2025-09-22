@@ -1012,73 +1012,17 @@ class ClearStorageDelegate extends WatchUi.ConfirmationDelegate {
 }
 
 (:settingsView)
-class MyProgressView extends WatchUi.View {
-    var _progress as Float = 0f;
-    function initialize() {
-        View.initialize();
-    }
-
-    function setProgress(progress as Float) as Void {
-        _progress = progress;
-
-        // we are doing remainder of 9 because when it starts at 0.00001 we do not want to always refresh every report
-        if ((_progress * 100).toNumber() % 10 == 9) {
-            logT("progress: " + progress);
-            forceRefresh(); // forceRefresh triggers "Application view stack is full" if we do it too fast, so allow some back off by only showing every 10%
-        }
-    }
-
-    function onUpdate(dc as Dc) as Void {
-        // --- Draw Circular Progress Bar ---
-        var progressBarRadius =
-            (dc.getWidth() < dc.getHeight() ? dc.getWidth() : dc.getHeight()) / 2 - 5;
-        dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(10);
-        dc.drawArc(
-            dc.getWidth() / 2,
-            dc.getHeight() / 2,
-            progressBarRadius,
-            Graphics.ARC_CLOCKWISE,
-            90,
-            90 - (360 * _progress).toNumber()
-        );
-    }
-}
-
-const LOOP_COUNT = 1000;
-function clearValuesProgressEmulated(
-    progressCallback as (Method(progress as Float) as Void)
-) as Void {
-    for (var i = 0; i < LOOP_COUNT; i++) {
-        Application.Storage.getValue("value1");
-        Application.Storage.getValue("value1");
-        Application.Storage.getValue("value1");
-        Application.Storage.getValue("value1");
-        Application.Storage.getValue("value1");
-        progressCallback.invoke((i.toFloat() / LOOP_COUNT) * 100);
-    }
-}
-
-(:settingsView)
 class ClearCachedTilesDelegate extends WatchUi.ConfirmationDelegate {
     function initialize() {
         WatchUi.ConfirmationDelegate.initialize();
     }
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
-            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop confirmation
-            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop map storage view
-            
-            var myProgressView = new MyProgressView();
-            WatchUi.pushView(myProgressView, null, WatchUi.SLIDE_IMMEDIATE);
-            clearValuesProgressEmulated(myProgressView.method(:setProgress));
-            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValuesProgress(
-                myProgressView.method(:setProgress)
-            );
+            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues();
             getApp()._breadcrumbContext.tileCache.clearValues(); // also clear the tile cache, in case it pulled from our storage
 
-            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop the progress bar
-
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop confirmation
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop map storage view
             var view = new $.SettingsMapStorage();
             WatchUi.pushView(view, new $.SettingsMapStorageDelegate(view), WatchUi.SLIDE_IMMEDIATE); // replace with new updated map storage view
             WatchUi.pushView(new DummyView(), null, WatchUi.SLIDE_IMMEDIATE); // push dummy view for the confirmation to pop

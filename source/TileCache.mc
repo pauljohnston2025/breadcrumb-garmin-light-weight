@@ -591,7 +591,7 @@ class StorageTileCache {
         tileKeyStr as String,
         bitmap as WatchUi.BitmapResource
     ) as Void {}
-    function clearValues(oldPageCount as Number) as Void {}
+    function clearValues() as Void {}
 }
 
 (:storage)
@@ -1117,19 +1117,11 @@ class StorageTileCache {
     }
 
     function clearValues() as Void {
-        clearValuesProgress(me.method(:ignoredProgress));
-    }
-
-    function clearValuesProgress(progressCallback as (Method(progress as Float) as Void)) as Void {
         for (var i = 0; i < _pageCount; i++) {
             loadPage(i);
             var keys = _currentPageKeys;
             var keysSize = keys.size();
             for (var j = 0; j < keysSize; j++) {
-                // assume all pages are the same size (this is not true, but good enough for progress)
-                var numberProcessed = keysSize * i + j;
-                var totalTiles = (keysSize * _pageCount).toFloat();
-                progressCallback.invoke(numberProcessed / totalTiles * 100);
                 deleteByMetaData(keys[j]);
             }
             Storage.deleteValue(pageStorageKey(i));
