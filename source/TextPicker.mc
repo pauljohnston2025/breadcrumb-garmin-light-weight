@@ -262,7 +262,7 @@ class MyTextPickerDelegate extends Ui.BehaviorDelegate {
     function onSelect() as Boolean {
         var localPicker = picker;
         if (localPicker != null) {
-            if ("*".equals(localPicker.input_chars.substring(picker.charIdx, picker.charIdx + 1))) {
+            if ("*".equals(localPicker.input_chars.substring(localPicker.charIdx, localPicker.charIdx + 1))) {
                 // don't let the user select OK if there aren't enough characters...
                 var inputStr = localPicker.inputStr;
                 if (

@@ -607,9 +607,9 @@ class StorageTileCache {
     var _totalTileCount as Number = 0;
     var _currentPageIndex as Number = -1; // -1 indicates no page is loaded
     var _currentPageKeys as Array<String> = [];
-    var _pageSizes as Array<Number>;
+    var _pageSizes as Array<Number> = [0];
     private var _lastEvictedPageIndex as Number = 0;
-    private var _maxPageSize as Number;
+    private var _maxPageSize as Number = 0;
 
     function initialize(settings as Settings, cachedValues as CachedValues) {
         var tilesVersion = Storage.getValue(TILES_VERSION_KEY);
@@ -690,7 +690,7 @@ class StorageTileCache {
     private function saveCurrentPage() as Void {
         if (_currentPageIndex != -1) {
             var pageKey = pageStorageKey(_currentPageIndex);
-            Storage.setValue(pageKey, _currentPageKeys);
+            Storage.setValue(pageKey, _currentPageKeys as Array<PropertyValueType>);
         }
     }
 
@@ -724,7 +724,7 @@ class StorageTileCache {
         // The modulo maps the sequential block IDs across the available pages.
         // Because the ID is sequential, adjacent blocks will likely be on the same page.
         var res = absN((combinedId % _pageCount).toNumber());
-        logT("tile: " + x + "-" + y + "-" + z + " page: " + res);
+        // logT("tile: " + x + "-" + y + "-" + z + " page: " + res);
         return res;
     }
 
@@ -1111,6 +1111,11 @@ class StorageTileCache {
 
     function ignoredProgress(value as Float) as Void {}
 
+    function reset() as Void {
+        // called when storage is purged underneath us, we just need to reset our state rather than do the for loop
+        clearValues(); // should be fairly fast unless we happen to be on page 0 - in which case it will try and delete by meta data, which will not be queryable, but it handles that, so a single for loop worst case.
+    }
+
     function clearValues() as Void {
         clearValuesProgress(me.method(:ignoredProgress));
     }
@@ -1124,7 +1129,7 @@ class StorageTileCache {
                 // assume all pages are the same size (this is not true, but good enough for progress)
                 var numberProcessed = keysSize * i + j;
                 var totalTiles = (keysSize * _pageCount).toFloat();
-                progressCallback.invoke(numberProcessed / totalTiles);
+                progressCallback.invoke(numberProcessed / totalTiles * 100);
                 deleteByMetaData(keys[j]);
             }
             Storage.deleteValue(pageStorageKey(i));

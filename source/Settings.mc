@@ -865,7 +865,7 @@ class Settings {
         }
         Application.Storage.setValue("lastMapChoice", value);
     }
-    
+
     function updateMapChoiceChangeInner(value as Number) as Void {
         ++mapChoiceVersion;
 
@@ -1201,11 +1201,12 @@ class Settings {
         setValue("storageTileCachePageCount", storageTileCachePageCount);
     }
 
-    function storageTilePageCountChanged() as Void
-    {
-        getApp()._breadcrumbContext.tileCache._storageTileCache.setNewPageCount(storageTileCachePageCount);
+    function storageTilePageCountChanged() as Void {
+        getApp()._breadcrumbContext.tileCache._storageTileCache.setNewPageCount(
+            storageTileCachePageCount
+        );
     }
-    
+
     (:settingsView)
     function setTileCachePadding(value as Number) as Void {
         tileCachePadding = value;
@@ -1522,7 +1523,12 @@ class Settings {
 
     function saveRoutesNoSideEffect() as Void {
         var toSave = routesToSave();
-        Application.Storage.setValue("routes", toSave);
+        // note toSave is Array<Dictionary<String, PropertyValueType>>
+        // but the compiler only allows "Array<PropertyValueType>" even though the array of dicts seems to work on sim and real watch
+        Application.Storage.setValue(
+            "routes",
+            toSave as Array<PropertyValueType>
+        );
     }
 
     (:settingsView)
@@ -2309,7 +2315,10 @@ class Settings {
 
         tileCacheSize = parseNumber("tileCacheSize", tileCacheSize);
         storageTileCacheSize = parseNumber("storageTileCacheSize", storageTileCacheSize);
-        storageTileCachePageCount = parseNumber("storageTileCachePageCount", storageTileCachePageCount);
+        storageTileCachePageCount = parseNumber(
+            "storageTileCachePageCount",
+            storageTileCachePageCount
+        );
         storageSeedBoundingBox = parseBool("storageSeedBoundingBox", storageSeedBoundingBox);
         storageSeedRouteDistanceM = parseFloat(
             "storageSeedRouteDistanceM",
@@ -2523,7 +2532,7 @@ class Settings {
         if (oldStorageTileCacheSize > storageTileCacheSize) {
             storageTileCacheSizeReduced();
         }
-        
+
         if (oldStorageTileCachePageCount != storageTileCachePageCount) {
             storageTilePageCountChanged();
         }

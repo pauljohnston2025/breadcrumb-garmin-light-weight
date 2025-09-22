@@ -4,6 +4,7 @@ import Toybox.Time;
 import Toybox.WatchUi;
 import Toybox.Communications;
 import Toybox.Graphics;
+import Toybox.Application;
 
 typedef Renderable as interface {
     function rerender() as Void;
@@ -1001,8 +1002,7 @@ class ClearStorageDelegate extends WatchUi.ConfirmationDelegate {
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
             Application.Storage.clearValues(); // purge the storage, but we have to clean up all our classes that load from storage too
-            // todo: call something like reset() on these classes, the storage is purged underneath them already
-            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues(); // reload our tile storage class
+            getApp()._breadcrumbContext.tileCache._storageTileCache.reset(); // reload our tile storage class
             getApp()._breadcrumbContext.tileCache.clearValues(); // also clear the tile cache, it case it pulled from our storage
             getApp()._breadcrumbContext.clearRoutes(); // also clear the routes to mimic storage being removed
         }
@@ -1022,27 +1022,36 @@ class MyProgressDelegate extends WatchUi.BehaviorDelegate {
     }
 }
 
+const LOOP_COUNT = 1000;
+function clearValuesProgressEmulated(
+    progressCallback as (Method(progress as Float) as Void)
+) as Void {
+    for (var i = 0; i < LOOP_COUNT; i++) {
+        Application.Storage.getValue("value1");
+        Application.Storage.getValue("value1");
+        Application.Storage.getValue("value1");
+        Application.Storage.getValue("value1");
+        Application.Storage.getValue("value1");
+        progressCallback.invoke(i.toFloat() / LOOP_COUNT * 100);
+    }
+}
+
 (:settingsView)
 class ClearCachedTilesDelegate extends WatchUi.ConfirmationDelegate {
+    var progressBar as WatchUi.ProgressBar = new WatchUi.ProgressBar("Removing Tiles ...", 1.0f);
     function initialize() {
         WatchUi.ConfirmationDelegate.initialize();
     }
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
-            var progressBar = new WatchUi.ProgressBar(
-                "Processing...",
-                1.0f
+            WatchUi.pushView(progressBar, new MyProgressDelegate(), WatchUi.SLIDE_IMMEDIATE);
+            clearValuesProgressEmulated(me.method(:setProgress));
+            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValuesProgress(
+                me.method(:setProgress)
             );
-            getApp()._breadcrumbContext.tileCache._storageTileCache.clearValuesProgress(progressBar.method(:setProgress));
-            WatchUi.pushView(
-                progressBar,
-                new MyProgressDelegate(),
-                WatchUi.SLIDE_IMMEDIATE
-            );
-            forceRefresh();
-            
-            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop the progress bar
             getApp()._breadcrumbContext.tileCache.clearValues(); // also clear the tile cache, in case it pulled from our storage
+
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop the progress bar
 
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop confirmation
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // pop map storage view
@@ -1052,6 +1061,15 @@ class ClearCachedTilesDelegate extends WatchUi.ConfirmationDelegate {
         }
 
         return true; // we always handle it
+    }
+
+    function setProgress(progress as Float /*0-100*/) as Void {
+        progressBar.setProgress(progress);
+        // we are doing remainder of 9 because when it starts at 0.00001 we do not want to always refresh every report
+        if (progress.toNumber() % 10 == 9) {
+            logT("progress: " + progress);
+            // forceRefresh(); // forceRefresh triggers "Application view stack is full" if we do it too fast, so allow some back off by only showing every 10%
+        }
     }
 }
 
