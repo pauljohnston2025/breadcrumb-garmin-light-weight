@@ -719,7 +719,10 @@ class StorageTileCache {
         // - gridX: 30 bits
         // This structure ensures that changes in gridX are the most granular, followed
         // by gridY, perfectly matching the 'for y { for x { ... } }' access pattern.
-        var combinedId = (z.toLong() << 59) | (gridY.toLong() << 30) | gridX.toLong();
+        // Combine the grid coordinates and zoom level to get a consistent hash value.
+        // The prime numbers help in distributing the pages more evenly across zoom levels.
+        var combinedId = gridX * 31 + gridY * 61 + z * 97;
+
 
         // The modulo maps the sequential block IDs across the available pages.
         // Because the ID is sequential, adjacent blocks will likely be on the same page.
