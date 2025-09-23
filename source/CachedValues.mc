@@ -168,17 +168,13 @@ class CachedValues {
     (:storage)
     var seedingUpToTileY as Number = 0;
     (:storage)
-    var seedingRouteLeftRightValid as Boolean = false;
+    var seedingTilesLeftRightValid as Boolean = false;
     (:storage)
     var seedingUpToRoute as Number = 0;
     (:storage)
     var seedingUpToRoutePoint as Number = 0;
     (:storage)
     var seedingUpToRoutePointPartial as SegmentPointIterator? = null;
-    (:storage)
-    var seedingTilesOnThisLayer as Number = NUMBER_MAX;
-    (:storage)
-    var seedingTilesProgressForThisLayer as Number = 0;
     // we need this one for some functions, its never read only written to in (:noStorage) mode
     var seedingMapCacheDistanceM as Float = -1f;
     // todo remove the dictionary for memory perf, but it's only populated during a seed so should not be too bad
@@ -1014,12 +1010,10 @@ class CachedValues {
         seedingFirstTileY = 0;
         seedingLastTileX = 0;
         seedingLastTileY = 0;
-        seedingRouteLeftRightValid = false;
+        seedingTilesLeftRightValid = false;
         seedingUpToRoute = 0;
         seedingUpToRoutePoint = 0;
         seedingUpToRoutePointPartial = null;
-        seedingTilesOnThisLayer = NUMBER_MAX;
-        seedingTilesProgressForThisLayer = 0;
         seedingInProgressTiles = ({}) as Dictionary<String, [Number, Number, Number]>;
     }
 
@@ -1037,20 +1031,6 @@ class CachedValues {
         // Error: System Error
         // Details: failed inside handle_image_callback
         tileCache.clearValuesWithoutStorage();
-
-        if (_settings.storageSeedBoundingBox) {
-            var centerRectangular = getScreenCenter();
-            seedingRectanglarTopLeft = new RectangularPoint(
-                centerRectangular.x - seedingMapCacheDistanceM,
-                centerRectangular.y + seedingMapCacheDistanceM,
-                0f
-            );
-            seedingRectanglarBottomRight = new RectangularPoint(
-                centerRectangular.x + seedingMapCacheDistanceM,
-                centerRectangular.y - seedingMapCacheDistanceM,
-                0f
-            );
-        }
 
         // start at max, and move towards min.
         // It's slower to do the lower layers first, but means if we run out of storage the higher layers will still be cached, so we will get a better experience.
@@ -1080,19 +1060,16 @@ class CachedValues {
             return false;
         }
 
-        if (
-            seedingZ >= _settings.tileLayerMin &&
-            ((_settings.storageSeedBoundingBox && seedNextTilesToStorageBoundingBox()) ||
-                (!_settings.storageSeedBoundingBox && seedNextTilesToStorageAlongRoute()))
-        ) {
+        if (seedingZ >= _settings.tileLayerMin && seedNextTilesToStorage()) {
             seedingZ--;
-            seedingUpToTileX = 0;
-            seedingUpToTileY = 0;
-            seedingFirstTileX = 0;
-            seedingFirstTileY = 0;
-            seedingLastTileX = 0;
-            seedingLastTileY = 0;
-            seedingRouteLeftRightValid = false;
+            // don't reset them, we need them for the debug screen
+            // seedingUpToTileX = 0;
+            // seedingUpToTileY = 0;
+            // seedingFirstTileX = 0;
+            // seedingFirstTileY = 0;
+            // seedingLastTileX = 0;
+            // seedingLastTileY = 0;
+            seedingTilesLeftRightValid = false;
             seedingUpToRoute = 0;
             seedingUpToRoutePoint = 0;
             seedingUpToRoutePointPartial = null;
@@ -1116,14 +1093,14 @@ class CachedValues {
 
     // null indicates no more tiles
     (:storage)
-    function nextRoutePointTileKey() as [Number, Number, Number]? {
+    function nextSeedingTileKey() as [Number, Number, Number]? {
         // DANGEROUS - could trigger watchdog
         var counter = 0;
         while (true) {
             ++counter;
             if (counter > 20) {
                 // we should not take any amount of time to do this
-                // the while loop ony moves the state machine forward
+                // the while loop only moves the state machine forward
                 // one iteration each for
                 //
                 // next route (routes might not be enabled so X maxRoutes)
@@ -1135,14 +1112,34 @@ class CachedValues {
 
                 // most will return within 1 or 2 iterations, some will take more to increment each level of the loop
                 logE("we reached or recursion limit");
-                seedingRouteLeftRightValid = false;
+                seedingTilesLeftRightValid = false;
                 return null; // pretend we are done, something seems wrong
             }
 
-            if (seedingRouteLeftRightValid) {
+            if (seedingTilesLeftRightValid) {
                 // grab the current tile
                 var x = seedingUpToTileX;
                 var y = seedingUpToTileY;
+
+                var tilesPerXRow = seedingLastTileX - seedingFirstTileX;
+            var seedingTilesOnThisLayer = tilesPerXRow * (seedingLastTileY - seedingFirstTileY);
+            var seedingTilesProgressForThisLayer =
+                tilesPerXRow * (seedingUpToTileY - seedingFirstTileY) +
+                seedingUpToTileX -
+                seedingFirstTileX;
+
+                logT("up to tile " + seedingTilesProgressForThisLayer + "/" + seedingTilesOnThisLayer);
+
+                if (
+                    _settings.storageSeedBoundingBox &&
+                    seedingUpToTileY >= seedingLastTileY
+                ) {
+                    // we have returned to the function after the last tile layer
+                    // we have finished this layer, go onto the next
+                    // the last tile will not be returned though, since we exit too early
+                    logT("completed layer, going to next: " + seedingZ);
+                    return null;
+                }
 
                 // increment for the next call
                 ++seedingUpToTileX;
@@ -1153,83 +1150,101 @@ class CachedValues {
 
                 if (seedingUpToTileY >= seedingLastTileY) {
                     // we were on our last tile for this partial point, reset for the next layer
-                    seedingRouteLeftRightValid = false;
+                    seedingTilesLeftRightValid = _settings.storageSeedBoundingBox;
+                    // in storageSeedBoundingBox we use this tile counters as the way to know we are on the last tile, so we need to keep seedingTilesLeftRightValid and check that we are beyond the limits
+                    // we still need to return this tile though
                 }
 
+                // logT("getting tile x: " + x + " y: " + y + " z: " + seedingZ);
                 return [x, y, seedingZ];
             }
 
-            var routes = getApp()._breadcrumbContext.routes;
-            // might be no enabled routes? or the routes might have no coordinates. Guess we just have to return finished?
-            if (routes.size() == 0 || !_settings.atLeast1RouteEnabled()) {
-                // set up a tile to be downloaded, so that 'seedNextTilesToStorageBoundingBox' returns true
-                seedingRouteLeftRightValid = false;
-                return null; // there is nothing to process
-            }
+            if (_settings.storageSeedBoundingBox) {
+                // no complicated route logic, just move onto the next layer and get the full bounding box
+                var centerRectangular = getScreenCenter();
+                seedingRectanglarTopLeft = new RectangularPoint(
+                    centerRectangular.x - seedingMapCacheDistanceM,
+                    centerRectangular.y + seedingMapCacheDistanceM,
+                    0f
+                );
+                seedingRectanglarBottomRight = new RectangularPoint(
+                    centerRectangular.x + seedingMapCacheDistanceM,
+                    centerRectangular.y - seedingMapCacheDistanceM,
+                    0f
+                );
+            } else {
+                var routes = getApp()._breadcrumbContext.routes;
+                // might be no enabled routes? or the routes might have no coordinates. Guess we just have to return finished?
+                if (routes.size() == 0 || !_settings.atLeast1RouteEnabled()) {
+                    // set up a tile to be downloaded, so that 'seedNextTilesToStorageBoundingBox' returns true
+                    seedingTilesLeftRightValid = false;
+                    return null; // there is nothing to process
+                }
 
-            if (seedingUpToRoute >= routes.size()) {
-                seedingUpToRoute = 0;
-                seedingUpToRoutePoint = 0;
-                seedingUpToRoutePointPartial = null;
-                return null; // we have processed all the routes
-            }
+                if (seedingUpToRoute >= routes.size()) {
+                    seedingUpToRoute = 0;
+                    seedingUpToRoutePoint = 0;
+                    seedingUpToRoutePointPartial = null;
+                    return null; // we have processed all the routes
+                }
 
-            var route = routes[seedingUpToRoute];
-            if (!_settings.routeEnabled(route.storageIndex)) {
-                ++seedingUpToRoute;
-                seedingUpToRoutePoint = 0;
-                seedingUpToRoutePointPartial = null;
-                continue; // call me again asap
-            }
-            var routePoint = route.coordinates.getPoint(seedingUpToRoutePoint);
-            var nextRoutePoint = route.coordinates.getPoint(seedingUpToRoutePoint + 1);
-            if (routePoint == null || nextRoutePoint == null) {
-                // we are at the end of the route, no more points, move onto the next route
-                ++seedingUpToRoute;
-                seedingUpToRoutePoint = 0;
-                seedingUpToRoutePointPartial = null;
-                continue; // call me again asap
-            }
+                var route = routes[seedingUpToRoute];
+                if (!_settings.routeEnabled(route.storageIndex)) {
+                    ++seedingUpToRoute;
+                    seedingUpToRoutePoint = 0;
+                    seedingUpToRoutePointPartial = null;
+                    continue; // call me again asap
+                }
+                var routePoint = route.coordinates.getPoint(seedingUpToRoutePoint);
+                var nextRoutePoint = route.coordinates.getPoint(seedingUpToRoutePoint + 1);
+                if (routePoint == null || nextRoutePoint == null) {
+                    // we are at the end of the route, no more points, move onto the next route
+                    ++seedingUpToRoute;
+                    seedingUpToRoutePoint = 0;
+                    seedingUpToRoutePointPartial = null;
+                    continue; // call me again asap
+                }
 
-            var divisor = currentScale;
-            if (divisor == 0f) {
-                // we should always have a current scale at this point, since we manually set scale (or we are caching map tiles)
-                logE("Warning: current scale was somehow not set");
-                divisor = 1f;
-            }
+                var divisor = currentScale;
+                if (divisor == 0f) {
+                    // we should always have a current scale at this point, since we manually set scale (or we are caching map tiles)
+                    logE("Warning: current scale was somehow not set");
+                    divisor = 1f;
+                }
 
-            if (seedingUpToRoutePointPartial == null) {
-                var tileWidthM =
-                    earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
-                seedingUpToRoutePointPartial = new SegmentPointIterator(
-                    routePoint.x / divisor,
-                    routePoint.y / divisor,
-                    nextRoutePoint.x / divisor,
-                    nextRoutePoint.y / divisor,
-                    tileWidthM.toFloat() / 2.0f // we only need to step at half the tile distance, this guarantees we do not miss any tiles (if we have a large gap in coordinates)
+                if (seedingUpToRoutePointPartial == null) {
+                    var tileWidthM =
+                        earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
+                    seedingUpToRoutePointPartial = new SegmentPointIterator(
+                        routePoint.x / divisor,
+                        routePoint.y / divisor,
+                        nextRoutePoint.x / divisor,
+                        nextRoutePoint.y / divisor,
+                        tileWidthM.toFloat() / 2.0f // we only need to step at half the tile distance, this guarantees we do not miss any tiles (if we have a large gap in coordinates)
+                    );
+                }
+
+                var nextPoint = (seedingUpToRoutePointPartial as SegmentPointIterator).next();
+                if (nextPoint == null) {
+                    // we are onto the next route point
+                    ++seedingUpToRoutePoint;
+                    seedingUpToRoutePointPartial = null;
+                    continue; // call us again soon asap
+                }
+
+                // we have reached a new point, update the our bounding box for the point
+                seedingRectanglarTopLeft = new RectangularPoint(
+                    nextPoint[0] - _settings.storageSeedRouteDistanceM,
+                    nextPoint[1] + _settings.storageSeedRouteDistanceM,
+                    0f
+                );
+
+                seedingRectanglarBottomRight = new RectangularPoint(
+                    nextPoint[0] + _settings.storageSeedRouteDistanceM,
+                    nextPoint[1] - _settings.storageSeedRouteDistanceM,
+                    0f
                 );
             }
-
-            var nextPoint = (seedingUpToRoutePointPartial as SegmentPointIterator).next();
-            if (nextPoint == null) {
-                // we are onto the next route point
-                ++seedingUpToRoutePoint;
-                seedingUpToRoutePointPartial = null;
-                continue; // call us again soon asap
-            }
-
-            // we have reached a new point, update the our bounding box for the point
-            seedingRectanglarTopLeft = new RectangularPoint(
-                nextPoint[0] - _settings.storageSeedRouteDistanceM,
-                nextPoint[1] + _settings.storageSeedRouteDistanceM,
-                0f
-            );
-
-            seedingRectanglarBottomRight = new RectangularPoint(
-                nextPoint[0] + _settings.storageSeedRouteDistanceM,
-                nextPoint[1] - _settings.storageSeedRouteDistanceM,
-                0f
-            );
 
             var tileWidthM = earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
 
@@ -1250,16 +1265,16 @@ class CachedValues {
 
             seedingUpToTileX = seedingFirstTileX;
             seedingUpToTileY = seedingFirstTileY;
-            seedingRouteLeftRightValid = true;
+            seedingTilesLeftRightValid = true;
             continue;
         }
 
-        seedingRouteLeftRightValid = false;
+        seedingTilesLeftRightValid = false;
         return null; // should always return from the while loop above, this should be unreachable, but pretend we are finished if we hit here
     }
 
     (:storage)
-    function seedNextTilesToStorageAlongRoute() as Boolean {
+    function seedNextTilesToStorage() as Boolean {
         var tileCache = getApp()._breadcrumbContext.tileCache;
         // could use Bresenham's Line Algorithm to find all tiles on the path
         // instead we split the routes points up into segments, and download all the tiles for each point in the route,
@@ -1270,7 +1285,7 @@ class CachedValues {
         // tile over and over
         removeFromSeedingInProgressTilesAndSeedThem(); // do not call in for loop, we want to break out so we do not get watchdog errors
 
-        // max 10 outstanding requests, and 10 lots of work for the watchdog, work is variable depending on nextRoutePointTileKey complexity
+        // max 10 outstanding requests, and 10 lots of work for the watchdog, work is variable depending on nextSeedingTileKey complexity
         // we also need the i tracking it, because on the lower layers we can add the same tile multiple times. eg. layer 0 all the route points will likely point at a single tile, but we still have to precess the entire route
         var maxTilesAtATime = 50;
         maxTilesAtATime = minN(maxTilesAtATime, _settings.storageTileCacheSize);
@@ -1280,7 +1295,7 @@ class CachedValues {
             i < maxTilesAtATime && seedingInProgressTiles.size() < maxTilesAtATime;
             ++i
         ) {
-            var nextTileKey = nextRoutePointTileKey();
+            var nextTileKey = nextSeedingTileKey();
             // logD("tile:" + nextTileKey);
             if (nextTileKey == null) {
                 // we are finished the z layer, move on to the next
@@ -1333,108 +1348,6 @@ class CachedValues {
         }
     }
 
-    // todo: switch seedNextTilesToStorageBoundingBox over to use seedingInProgressTiles, so we can start tiles on the next layer before they are done
-    // and should also be using cached values for
-    // seedingFirstTileX = 0;
-    // seedingFirstTileY = 0;
-    // seedingLastTileX = 0;
-    // seedingLastTileY = 0;
-    (:storage)
-    function seedNextTilesToStorageBoundingBox() as Boolean {
-        var tileWidthM = earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
-
-        // find which tile we are closest to
-        var firstTileX = ((seedingRectanglarTopLeft.x + originShift) / tileWidthM).toNumber();
-        var firstTileY = ((originShift - seedingRectanglarTopLeft.y) / tileWidthM).toNumber();
-        // last tile is open ended range (+1)
-        var lastTileX =
-            ((seedingRectanglarBottomRight.x + originShift) / tileWidthM).toNumber() + 1;
-        var lastTileY =
-            ((originShift - seedingRectanglarBottomRight.y) / tileWidthM).toNumber() + 1;
-        var origFirstTileY = firstTileY;
-
-        var tilesPerXRow = lastTileX - firstTileX;
-        seedingTilesOnThisLayer = tilesPerXRow * (lastTileY - firstTileY);
-
-        // firstTileX = maxN(firstTileX, seedingUpToTileX); firstTileX cannot be capped, since it needs to start fresh on each row
-        firstTileY = maxN(firstTileY, seedingUpToTileY);
-
-        updateSeedingProgress(firstTileX, firstTileY, lastTileX, lastTileY);
-        if (seedingUpToTileX == lastTileX - 1 && seedingUpToTileY == lastTileY - 1) {
-            return true;
-        }
-
-        // our progress might have changed
-        firstTileY = maxN(firstTileY, seedingUpToTileY);
-
-        seedingTilesProgressForThisLayer =
-            tilesPerXRow * (firstTileY - origFirstTileY) +
-            tilesPerXRow -
-            (lastTileX - maxN(firstTileX, seedingUpToTileX));
-
-        var tileCache = getApp()._breadcrumbContext.tileCache;
-
-        // we do not want to get a massive for loop that we then get killed by the watchdog
-        // we also might not even fetch a tile, we need to wait until the previous set have responded
-        // the we can move onto fetching the next set of tiles
-        // the storage could also be very small, so we need to keep this number small
-        // otherwise we will
-        // * try and download 10 tile to storage
-        // * only fit the last 9 tiles in storage
-        // * then we do not have all 10, so we will start again
-        // ideally we would progress the storage seed based on the web handler responding with a tile
-        var maxTilesAtATime = 50;
-        maxTilesAtATime = minN(maxTilesAtATime, _settings.storageTileCacheSize);
-
-        var tileStarted = 0;
-        for (var y = firstTileY; y < lastTileY; ++y) {
-            for (
-                var x = y == firstTileY ? maxN(firstTileX, seedingUpToTileX) : firstTileX;
-                x < lastTileX;
-                ++x
-            ) {
-                if (tileCache.seedTileToStorage(tileKeyHash(x, y, seedingZ), x, y, seedingZ)) {
-                    ++tileStarted;
-                }
-
-                if (tileStarted >= maxTilesAtATime) {
-                    return false;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    (:storage)
-    function updateSeedingProgress(
-        firstTileX as Number,
-        firstTileY as Number,
-        lastTileX as Number,
-        lastTileY as Number
-    ) as Void {
-        var tileCache = getApp()._breadcrumbContext.tileCache;
-
-        for (var y = firstTileY; y < lastTileY; ++y) {
-            for (
-                var x = y == firstTileY ? maxN(firstTileX, seedingUpToTileX) : firstTileX;
-                x < lastTileX;
-                ++x
-            ) {
-                var tileKeyStr = tileKeyHash(x, y, seedingZ);
-                if (!tileCache._storageTileCache.haveTile(x, y, seedingZ, tileKeyStr)) {
-                    // we need to seed some more
-                    return;
-                }
-
-                // we have the tile (may be a bad response, but we have attempted it in the past), move our progress forward
-                // users should remove tile cache and start from scratch if they want to retry failed tiles
-                seedingUpToTileX = x;
-                seedingUpToTileY = y;
-            }
-        }
-    }
-
     (:storage)
     function seedingProgress() as [String, Float] {
         // The total number of layers to process is the difference + 1.
@@ -1447,16 +1360,28 @@ class CachedValues {
             // simple tile layer progress, since we do not know how many tile per layer without some complex math
             // if we are on the first layer (currentTileLayerProgress=0) we still want something to be shown, so add 1 to each field
             var overallProgress = (currentTileLayerProgress + 1) / (tileLayers + 1);
+            var tilesPerXRow = seedingLastTileX - seedingFirstTileX;
+            var seedingTilesOnThisLayer = tilesPerXRow * (seedingLastTileY - seedingFirstTileY);
+            var seedingTilesProgressForThisLayer =
+                tilesPerXRow * (seedingUpToTileY - seedingFirstTileY) +
+                seedingUpToTileX -
+                seedingFirstTileX;
+
+            var percentageStr =
+                seedingTilesOnThisLayer == 0
+                    ? ""
+                    : "(" +
+                      (
+                          (seedingTilesProgressForThisLayer / seedingTilesOnThisLayer.toFloat()) *
+                          100
+                      ).format("%.1f") +
+                      "%)";
             return [
                 seedingTilesProgressForThisLayer +
                     "/" +
                     seedingTilesOnThisLayer +
-                    "  (" +
-                    (
-                        (seedingTilesProgressForThisLayer / seedingTilesOnThisLayer.toFloat()) *
-                        100
-                    ).format("%.1f") +
-                    "%)",
+                    " " +
+                    percentageStr,
                 overallProgress,
             ];
         }
@@ -1493,6 +1418,10 @@ class CachedValues {
 
         var coords = routes[seedingUpToRoute].coordinates;
         var points = coords.pointSize();
+        var pointsPercentStr =
+            points == 0
+                ? ""
+                : " (" + ((seedingUpToRoutePoint.toFloat() / points) * 100).format("%.1f") + "%)";
         return [
             "Route: " +
                 (seedingUpToRoute + 1) +
@@ -1502,9 +1431,8 @@ class CachedValues {
                 seedingUpToRoutePoint +
                 "/" +
                 points +
-                " (" +
-                ((seedingUpToRoutePoint.toFloat() / points) * 100).format("%.1f") +
-                "%)\n" +
+                pointsPercentStr +
+                "\n" +
                 (seedingLastTileX - seedingFirstTileX) +
                 " X " +
                 (seedingLastTileY - seedingFirstTileY) +

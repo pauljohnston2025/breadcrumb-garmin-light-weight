@@ -107,7 +107,7 @@
     <string id="scaleRestrictedToTileLayersTitle">Restrict Scale To Tile Layers</string>
     <string id="cacheCurrentArea">Cache Current Area</string>
     <string id="cancelCacheDownload">Cancel Cache Download</string>
-    <string id="clearCachedTiles">Clear Cached Tiles</string>
+    <string id="clearCachedTiles">Clear Cached Tiles.\nThis is Slow!\nBe Patient!</string>
 
     <string id="routesTitle">Routes</string>
     <string id="routeId">Id</string>
