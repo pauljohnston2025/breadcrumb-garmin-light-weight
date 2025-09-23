@@ -1097,12 +1097,15 @@ class BreadcrumbRenderer {
             }
             pagesStr += breadcrumbContext.tileCache._storageTileCache._pageSizes[i];
         }
+        var tileLayerStr =
+            _cachedValues.seedingZ < 0
+                ? "Finalising"
+                : "Caching Tile Layer " + _cachedValues.seedingZ;
         dc.drawText(
             xHalfPhysical,
             yHalfPhysical,
             Graphics.FONT_XTINY,
-            "Caching Tile Layer " +
-                _cachedValues.seedingZ +
+            tileLayerStr +
                 " ...\n" +
                 seedingProgress[0] +
                 "\npending web: " +

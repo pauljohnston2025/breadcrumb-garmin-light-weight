@@ -5,6 +5,7 @@ import Toybox.System;
 import Toybox.Activity;
 
 const BLOCK_SIZE_SCALE_FACTOR = 2; // this gives us a large area, 64*64 tiles are 4 tiles per big tile which then gives us 8 as a blockSize or for full tiles its 2 full tiles, should be ok
+const MAX_TILES_AT_A_TIME = 50;
 
 // An iterator that walks along a line segment, yielding one point at a time.
 (:storage)
@@ -1073,7 +1074,8 @@ class CachedValues {
             seedingUpToRoute = 0;
             seedingUpToRoutePoint = 0;
             seedingUpToRoutePointPartial = null;
-            seedingInProgressTiles = ({}) as Dictionary<String, [Number, Number, Number]>;
+            // definitely DO NOT reset seedingInProgressTiles, or we will loose the last 50 or so outstanding requests 'maxTilesAtATime'
+            // seedingInProgressTiles = ({}) as Dictionary<String, [Number, Number, Number]>;
         }
 
         if (seedingInProgressTiles.size() != 0) {
@@ -1122,18 +1124,17 @@ class CachedValues {
                 var y = seedingUpToTileY;
 
                 var tilesPerXRow = seedingLastTileX - seedingFirstTileX;
-            var seedingTilesOnThisLayer = tilesPerXRow * (seedingLastTileY - seedingFirstTileY);
-            var seedingTilesProgressForThisLayer =
-                tilesPerXRow * (seedingUpToTileY - seedingFirstTileY) +
-                seedingUpToTileX -
-                seedingFirstTileX;
+                var seedingTilesOnThisLayer = tilesPerXRow * (seedingLastTileY - seedingFirstTileY);
+                var seedingTilesProgressForThisLayer =
+                    tilesPerXRow * (seedingUpToTileY - seedingFirstTileY) +
+                    seedingUpToTileX -
+                    seedingFirstTileX;
 
-                logT("up to tile " + seedingTilesProgressForThisLayer + "/" + seedingTilesOnThisLayer);
+                logT(
+                    "up to tile " + seedingTilesProgressForThisLayer + "/" + seedingTilesOnThisLayer
+                );
 
-                if (
-                    _settings.storageSeedBoundingBox &&
-                    seedingUpToTileY >= seedingLastTileY
-                ) {
+                if (_settings.storageSeedBoundingBox && seedingUpToTileY >= seedingLastTileY) {
                     // we have returned to the function after the last tile layer
                     // we have finished this layer, go onto the next
                     // the last tile will not be returned though, since we exit too early
@@ -1286,8 +1287,8 @@ class CachedValues {
         removeFromSeedingInProgressTilesAndSeedThem(); // do not call in for loop, we want to break out so we do not get watchdog errors
 
         // max 10 outstanding requests, and 10 lots of work for the watchdog, work is variable depending on nextSeedingTileKey complexity
-        // we also need the i tracking it, because on the lower layers we can add the same tile multiple times. eg. layer 0 all the route points will likely point at a single tile, but we still have to precess the entire route
-        var maxTilesAtATime = 50;
+        // we also need the `i` variable tracking it, because on the lower layers we can add the same tile multiple times. eg. layer 0 all the route points will likely point at a single tile, but we still have to precess the entire route
+        var maxTilesAtATime = MAX_TILES_AT_A_TIME;
         maxTilesAtATime = minN(maxTilesAtATime, _settings.storageTileCacheSize);
         // logD("starting for");
         for (
@@ -1313,6 +1314,16 @@ class CachedValues {
             // logD("adding");
             // we might already have the tile in the storage cache, queue it up anyway so we reach our terminating condition faster
             seedingInProgressTiles[hash] = nextTileKey;
+            logT(
+                "seeding tile x: " +
+                    nextTileKey[0] +
+                    " y: " +
+                    nextTileKey[1] +
+                    " z: " +
+                    nextTileKey[2] +
+                    " seedingInProgressTiles size: " +
+                    seedingInProgressTiles.size()
+            );
             tileCache.seedTileToStorage(hash, nextTileKey[0], nextTileKey[1], nextTileKey[2]);
         }
 
@@ -1327,11 +1338,16 @@ class CachedValues {
         for (var i = 0; i < seedingInProgressTiles.size(); ++i) {
             var key = keys[i];
             var item = seedingInProgressTiles[key] as [Number, Number, Number];
+            logT("checking if tile completed x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
 
             if (tileCache._storageTileCache.haveTile(item[0], item[1], item[2], key)) {
+                logT("we have tile x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
                 toRemove.add(key);
             }
         }
+
+        logT("toremove size: " + toRemove.size());
+        logT("seedingInProgressTiles size: " + seedingInProgressTiles.size());
 
         for (var i = 0; i < toRemove.size(); ++i) {
             var key = toRemove[i];
@@ -1344,6 +1360,7 @@ class CachedValues {
             var key = keys[i];
             var item = seedingInProgressTiles[key] as [Number, Number, Number];
             // we better request it again, it might not have reached the web handler before
+            logT("seeding tile again x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
             tileCache.seedTileToStorage(key, item[0], item[1], item[2]);
         }
     }
@@ -1355,6 +1372,12 @@ class CachedValues {
         var tileLayers = (_settings.tileLayerMax - _settings.tileLayerMin + 1).toFloat();
         tileLayers = maxF(tileLayers, 1f);
         var currentTileLayerProgress = (_settings.tileLayerMax - seedingZ).toFloat();
+
+        if (seedingZ < 0) {
+            // we are just waiting on the last few to finish
+            var size = seedingInProgressTiles.size();
+            return [size.toString() + " remaining", (MAX_TILES_AT_A_TIME - size) / MAX_TILES_AT_A_TIME.toFloat()];
+        }
 
         if (_settings.storageSeedBoundingBox) {
             // simple tile layer progress, since we do not know how many tile per layer without some complex math

@@ -154,6 +154,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
     ) as Void {
         // do not store tiles in storage if the tile cache version does not match
         if (_tileCacheVersion != _tileCache._tileCacheVersion) {
+            logE("failed seed cache version mismatch");
             return;
         }
 
@@ -188,6 +189,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
     ) as Void {
         var settings = getApp()._breadcrumbContext.settings;
         var cachedValues = getApp()._breadcrumbContext.cachedValues;
+        // logT("handling success tile x: " + _x + " y: " + _y + " z: " + _z);
 
         if (!(data instanceof Dictionary)) {
             logE("wrong data type, not dict: " + data);
@@ -367,6 +369,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
     ) as Void {
         // do not store tiles in storage if the tile cache version does not match
         if (_tileCacheVersion != _tileCache._tileCacheVersion) {
+            logE("failed seed cache version mismatch");
             return;
         }
 
@@ -407,7 +410,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
     ) as Void {
         var settings = getApp()._breadcrumbContext.settings;
         var cachedValues = getApp()._breadcrumbContext.cachedValues;
-
+        // logT("handling success tile x: " + _x + " y: " + _y + " z: " + _z);
         if (
             data == null ||
             (!(data instanceof WatchUi.BitmapResource) &&
