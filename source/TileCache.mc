@@ -456,14 +456,14 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
             return;
         }
 
-        // we have to downsample the tile, not recomendedd, as this mean we will have to request the same tile multiple times (cant save big tiles around anywhere)
+        // we have to downsample the tile, not recommended, as this mean we will have to request the same tile multiple times (cant save big tiles around anywhere)
         // also means we have to use scratch space to draw the tile and downsample it
 
         // if (data.getWidth() != settings.tileSize || data.getHeight() != settings.tileSize) {
         //     // dangerous large bitmap could cause oom, buts its the only way to upscale the image and then slice it
         //     // we cannot downscale because we would be slicing a pixel in half
         //     // I guess we could just figure out which pixels to double up on?
-        //     // anyone using an external tile server should be setting thier tileSize to 256, but perhaps some devices will run out of memory?
+        //     // anyone using an external tile server should be setting their tileSize to 256, but perhaps some devices will run out of memory?
         //     // if users are using a smaller size it should be a multiple of 256.
         //     // if its not, we will stretch the image then downsize, if its already a multiple we will use the image as is (optimal)
         //     var maxDim = maxN(data.getWidth(), data.getHeight()); // should be equal (every time server i know of is 256*256), but who knows
@@ -540,7 +540,7 @@ enum /* StorageTileType */ {
 
 // <type specific data> for
 // STORAGE_TILE_TYPE_DICT -> nothing
-// STORAGE_TILE_TYPE_BITMAP -> <tileCount>, <tileWidth>, <tileHeight> (we have to split the bitmap up into multiple images sometimes)
+// STORAGE_TILE_TYPE_BITMAP -> nothing
 // STORAGE_TILE_TYPE_ERRORED -> the error code
 
 // tile format returned is [<httpresponseCode>, <tileData>]
@@ -769,23 +769,13 @@ class StorageTileCache {
 
         switch (tileMeta[1] as Number) {
             case STORAGE_TILE_TYPE_DICT:
+            // bitmap has to just load as a single image (we cannot slice it because we cannot store buffered bitmaps, only the original bitmap), it could be over the 32Kb limit, but we have no other choice
+            case STORAGE_TILE_TYPE_BITMAP: // fallthrough
                 // no need to check type of the getValue call, handling code checks it
-                return [200, Storage.getValue(tileKey(tileKeyStr)) as Dictionary]; // should always fit into the 32Kb size
-            case STORAGE_TILE_TYPE_BITMAP:
-                if (tileMeta.size() < 6) {
-                    logE("bad tile metadata in storage for bitmap tile" + tileMeta);
-                    return null;
-                }
-                // no need to check type of loadBitmap, handling code checks it
                 return [
                     200,
-                    loadBitmap(
-                        tileKeyStr,
-                        tileMeta[3] as Number,
-                        tileMeta[4] as Number,
-                        tileMeta[5] as Number
-                    ),
-                ];
+                    Storage.getValue(tileKey(tileKeyStr)) as Dictionary or WatchUi.BitmapResource,
+                ]; // should always fit into the 32Kb size
             case STORAGE_TILE_TYPE_ERRORED:
                 if (tileMeta.size() < 4) {
                     logE("bad tile metadata in storage for error tile" + tileMeta);
@@ -870,36 +860,20 @@ class StorageTileCache {
         tileKeyStr as String,
         data as Dictionary<PropertyKeyType, PropertyValueType>
     ) as Void {
-        if (
-            addMetaData(x, y, z, tileKeyStr, [
-                Time.now().value(),
-                STORAGE_TILE_TYPE_DICT,
-                NO_EXPIRY,
-            ])
-        ) {
+        addHelper(STORAGE_TILE_TYPE_DICT, x, y, z, tileKeyStr, data);
+    }
+
+    function addHelper(
+        type as Number,
+        x as Number,
+        y as Number,
+        z as Number,
+        tileKeyStr as String,
+        data as Dictionary<PropertyKeyType, PropertyValueType> or WatchUi.BitmapResource
+    ) as Void {
+        if (addMetaData(x, y, z, tileKeyStr, [Time.now().value(), type, NO_EXPIRY])) {
             safeAdd(tileKey(tileKeyStr), data);
         }
-    }
-
-    (:inline)
-    private function loadBitmap(
-        tileKeyStr as String,
-        tileCount as Number,
-        tileWidth as Number,
-        tileHeight as Number
-    ) as WatchUi.BitmapResource? {
-        // bitmap has to just load as a single image, but it could be over the 32Kb limit
-        return Storage.getValue(tileKey(tileKeyStr)) as WatchUi.BitmapResource?;
-    }
-
-    (:inline)
-    private function deleteBitmap(tileKeyStr as String, tileCount as Number) as Void {
-        // for (var i = 0; i < tileCount; ++i) {
-        //     var key = tileKey(tileKeyStr) +;
-        //     Storage.deleteValue(key);
-        // }
-        // bitmap has to just load as a single image, but it could be over the 32Kb limit
-        Storage.deleteValue(tileKey(tileKeyStr));
     }
 
     function addBitmap(
@@ -909,23 +883,11 @@ class StorageTileCache {
         tileKeyStr as String,
         bitmap as WatchUi.BitmapResource
     ) as Void {
-        if (
-            addMetaData(x, y, z, tileKeyStr, [
-                Time.now().value(),
-                STORAGE_TILE_TYPE_BITMAP,
-                NO_EXPIRY,
-                1,
-                bitmap.getWidth(),
-                bitmap.getHeight(),
-            ])
-        ) {
-            // bitmaps can be larger than the allowed 32kb limit, we must store it as 4 smaller bitmaps
-            // todo slice the bitmap into small chunks (4 should always be enough, hard code for now)
-            // this is not currently possible, since we can only draw to a bufferred bitmap, but cannot save the buffered bitmap to storage
-            // so we have to hope the tile size fits into storage
-            logD("storing tile " + tileKey(tileKeyStr));
-            safeAdd(tileKey(tileKeyStr), bitmap);
-        }
+        // bitmaps can be larger than the allowed 32kb limit, we must store it as 4 smaller bitmaps
+        // todo slice the bitmap into small chunks (4 should always be enough, hard code for now)
+        // this is not currently possible, since we can only draw to a buffered bitmap, but cannot save the buffered bitmap to storage
+        // so we have to hope the tile size fits into storage
+        addHelper(STORAGE_TILE_TYPE_BITMAP, x, y, z, tileKeyStr, bitmap);
     }
 
     private function addMetaData(
@@ -1079,14 +1041,8 @@ class StorageTileCache {
 
         switch (metaData[1] as Number) {
             case STORAGE_TILE_TYPE_DICT:
+            case STORAGE_TILE_TYPE_BITMAP: // fallthrough
                 Storage.deleteValue(tileKey(key));
-                break;
-            case STORAGE_TILE_TYPE_BITMAP:
-                if (metaData.size() < 4) {
-                    logE("bad tile metadata in storage for bitmap tile remove" + metaData);
-                    break;
-                }
-                deleteBitmap(key, metaData[3] as Number);
                 break;
             case STORAGE_TILE_TYPE_ERRORED:
                 // noop its just the meta key
