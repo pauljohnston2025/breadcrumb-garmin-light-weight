@@ -467,7 +467,7 @@ class CachedValues {
             _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_ALWAYS_ZOOM;
         if (currentlyZoomingAroundUser != weShouldZoomAroundUser) {
             currentlyZoomingAroundUser = weShouldZoomAroundUser;
-            updateUserRotationElements();
+            updateUserRotationElements(getCenterUserOffsetY());
             var ret = updateScaleCenterAndMap();
             _settings.clearPendingWebRequests();
             getApp()._view.resetRenderTime();
@@ -489,17 +489,27 @@ class CachedValues {
         updateScaleCenterAndMap();
     }
 
+    (:inline)
+    function getCenterUserOffsetY() as Float {
+        var centerUserOffsetY = _settings.centerUserOffsetY;
+        // we do not want to be offset from the center of the screen, when we are viewing a position or panning around the map use the center of the screen,
+        // not the offset center that we want when following our location (to see more of the map ahead)
+        return fixedPosition != null ? 0.5f : centerUserOffsetY;
+    }
+
     function updateVirtualScreenSize() as Void {
+        var centerUserOffsetY = getCenterUserOffsetY();
+
         virtualScreenWidth = physicalScreenWidth; // always the same, just using naming for consistency
         if (
             _settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
             _settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING
         ) {
-            if (_settings.centerUserOffsetY >= 0.5) {
-                virtualScreenHeight = physicalScreenHeight * _settings.centerUserOffsetY * 2;
+            if (centerUserOffsetY >= 0.5) {
+                virtualScreenHeight = physicalScreenHeight * centerUserOffsetY * 2;
             } else {
                 virtualScreenHeight =
-                    (physicalScreenHeight - physicalScreenHeight * _settings.centerUserOffsetY) * 2;
+                    (physicalScreenHeight - physicalScreenHeight * centerUserOffsetY) * 2;
             }
         } else {
             virtualScreenHeight = physicalScreenHeight;
@@ -508,13 +518,13 @@ class CachedValues {
         minVirtualScreenDim = minF(virtualScreenWidth, virtualScreenHeight);
         maxVirtualScreenDim = maxF(virtualScreenWidth, virtualScreenHeight);
 
-        updateUserRotationElements();
+        updateUserRotationElements(centerUserOffsetY);
     }
 
-    function updateUserRotationElements() as Void {
+    function updateUserRotationElements(centerUserOffsetY as Float) as Void {
         if (currentlyZoomingAroundUser) {
             rotateAroundScreenX = virtualScreenWidth / 2f;
-            rotateAroundScreenY = physicalScreenHeight * _settings.centerUserOffsetY;
+            rotateAroundScreenY = physicalScreenHeight * centerUserOffsetY;
             rotateAroundMinScreenDim = minVirtualScreenDim;
             rotateAroundMaxScreenDim = maxVirtualScreenDim;
             mapScreenWidth = rotateAroundMaxScreenDim;
@@ -524,7 +534,7 @@ class CachedValues {
                 _settings.renderMode == RENDER_MODE_UNBUFFERED_NO_ROTATION ||
                 _settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
             ) {
-                // attempt to reduce the number of map tiles needed in render modes without roatations
+                // attempt to reduce the number of map tiles needed in render modes without rotations
                 // rotation mode still needs all the map tiles, since it could rotate to any of them at any point
                 // RENDER_MODE_BUFFERED_ROTATING is a pretty rarely used mode, so not sure its worth this.
                 // we do not modify virtual screen size, since that would mean the buffered bitmap would change size and need updating too. We could do it for RENDER_MODE_UNBUFFERED_ROTATING only.
@@ -560,7 +570,7 @@ class CachedValues {
             rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX - bufferedBitmapOffsetX;
             rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY - bufferedBitmapOffsetY;
 
-            if (_settings.centerUserOffsetY >= 0.5 && currentlyZoomingAroundUser) {
+            if (centerUserOffsetY >= 0.5 && currentlyZoomingAroundUser) {
                 rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY; // draw straight to the buffered canvas, since the canvas top matches our top
             }
         } else if (_settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING) {
@@ -573,12 +583,12 @@ class CachedValues {
             if (currentlyZoomingAroundUser) {
                 bufferedBitmapOffsetX = -(rotateAroundMaxScreenDim - physicalScreenWidth) / 2f;
                 bufferedBitmapOffsetY = -(rotateAroundMaxScreenDim - physicalScreenHeight);
-                // dirty hacks, using bufferedBitmapOffsetX for map rednerer to do the tile offsets
+                // dirty hacks, using bufferedBitmapOffsetX for map renderer to do the tile offsets
                 // if we use just mapBitmapOffsetX/mapBitmapOffsetY we get clipping
                 bufferedBitmapOffsetX = rotateAroundScreenX - bufferedBitmapOffsetX;
                 bufferedBitmapOffsetY = rotateAroundScreenY - bufferedBitmapOffsetY;
 
-                if (_settings.centerUserOffsetY >= 0.5) {
+                if (centerUserOffsetY >= 0.5) {
                     bufferedBitmapOffsetY = rotateAroundScreenY;
                 }
             }
@@ -761,6 +771,26 @@ class CachedValues {
         yMoveUnrotated as Float,
         xMoveRotated as Float,
         yMoveRotated as Float
+    ) as Void {
+        var updateScreen = setPositionAndScaleIfNotSet();
+        var latlong = getNewLatLong(xMoveUnrotated, yMoveUnrotated, xMoveRotated, yMoveRotated);
+
+        if (latlong != null) {
+            _settings.setFixedPositionRaw(latlong[0], latlong[1]);
+        }
+        updateFixedPositionFromSettings();
+        updateScaleCenterAndMap();
+        if (updateScreen) {
+            getApp()._view.updateScratchPadBitmap();
+        }
+        getApp()._view.resetRenderTime();
+    }
+
+    function getNewLatLong(
+        xMoveUnrotated as Float,
+        yMoveUnrotated as Float,
+        xMoveRotated as Float,
+        yMoveRotated as Float
     ) as [Float, Float]? {
         var fixedPositionL = fixedPosition;
         if (fixedPositionL == null) {
@@ -785,68 +815,39 @@ class CachedValues {
     }
 
     function moveFixedPositionUp() as Void {
-        setPositionAndScaleIfNotSet();
-
-        var latlong = moveLatLong(
+        moveLatLong(
             0f,
             mapMoveDistanceM,
             rotateSin * mapMoveDistanceM,
             rotateCos * mapMoveDistanceM
         );
-        if (latlong != null) {
-            _settings.setFixedPositionRaw(latlong[0], latlong[1]);
-        }
-        updateFixedPositionFromSettings();
-        updateScaleCenterAndMap();
-        getApp()._view.resetRenderTime();
     }
 
     function moveFixedPositionDown() as Void {
-        setPositionAndScaleIfNotSet();
-        var latlong = moveLatLong(
+        moveLatLong(
             0f,
             -mapMoveDistanceM,
             -rotateSin * mapMoveDistanceM,
             -rotateCos * mapMoveDistanceM
         );
-        if (latlong != null) {
-            _settings.setFixedPositionRaw(latlong[0], latlong[1]);
-        }
-        updateFixedPositionFromSettings();
-        updateScaleCenterAndMap();
-        getApp()._view.resetRenderTime();
     }
 
     function moveFixedPositionLeft() as Void {
-        setPositionAndScaleIfNotSet();
-        var latlong = moveLatLong(
+        moveLatLong(
             -mapMoveDistanceM,
             0f,
             -rotateCos * mapMoveDistanceM,
             rotateSin * mapMoveDistanceM
         );
-        if (latlong != null) {
-            _settings.setFixedPositionRaw(latlong[0], latlong[1]);
-        }
-        updateFixedPositionFromSettings();
-        updateScaleCenterAndMap();
-        getApp()._view.resetRenderTime();
     }
 
     function moveFixedPositionRight() as Void {
-        setPositionAndScaleIfNotSet();
-        var latlong = moveLatLong(
+        moveLatLong(
             mapMoveDistanceM,
             0f,
             rotateCos * mapMoveDistanceM,
             -rotateSin * mapMoveDistanceM
         );
-        if (latlong != null) {
-            _settings.setFixedPositionRaw(latlong[0], latlong[1]);
-        }
-        updateFixedPositionFromSettings();
-        updateScaleCenterAndMap();
-        getApp()._view.resetRenderTime();
     }
 
     function calcCenterPoint() as Boolean {
@@ -894,7 +895,8 @@ class CachedValues {
         }
     }
 
-    function setPositionAndScaleIfNotSet() as Void {
+    // returns true if the screen needs to be updated
+    function setPositionAndScaleIfNotSet() as Boolean {
         // we need to set a fixed scale so that a user moving does not change the zoom level randomly whilst they are viewing a map and panning
         if (scale == null) {
             var scaleToSet = currentScale;
@@ -903,8 +905,41 @@ class CachedValues {
             }
             setScale(scaleToSet);
         }
-        fixedPosition = getScreenCenter();
+
+        if (fixedPosition != null) {
+            // we are already good to go
+            return false;
+        }
+
+        var center = getScreenCenter();
+
+        // the current center can have an offset applied, we want the current middle of the screen to become our new fixed position location
+        var offsetXPx = xHalfPhysical - rotateAroundScreenX;
+        var offsetYPx = yHalfPhysical - rotateAroundScreenY;
+
+        var unrotatedOffsetXPx = offsetXPx * rotateCos - offsetYPx * rotateSin;
+        var unrotatedOffsetYPx = offsetXPx * rotateSin + offsetYPx * rotateCos;
+
+        if (currentScale == 0f) {
+            // hmm how did this happen?
+            logE("currentScale not set when it should be");
+            fixedPosition = center;
+            updateVirtualScreenSize();
+            return true;
+        }
+
+        var xAddM = unrotatedOffsetXPx / currentScale;
+        // The Y-axis is inverted between screen (down is +) and map (up is +),
+        // so we must subtract the Y offset to correctly move North/South.
+        var yAddM = -(unrotatedOffsetYPx / currentScale);
+        fixedPosition = new RectangularPoint(center.x + xAddM, center.y + yAddM, 0f);
+
         // logT("new fixed pos: " + fixedPosition);
+        // all code paths that call into here also call
+        // updateScaleCenterAndMap so we will avoid calling it here
+        // but we must update the screen size, and tell the view about it
+        updateVirtualScreenSize();
+        return true;
     }
 
     function getScreenCenter() as RectangularPoint {
@@ -939,8 +974,10 @@ class CachedValues {
     }
 
     function returnToUser() as Void {
+        // set fixed position recalculates all on us
         _settings.setFixedPosition(null, null, true);
         setScale(null);
+        getApp()._view.updateScratchPadBitmap();
     }
 
     function setScale(_scale as Float?) as Void {
