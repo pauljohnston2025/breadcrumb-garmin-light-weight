@@ -1123,22 +1123,22 @@ class CachedValues {
                 var x = seedingUpToTileX;
                 var y = seedingUpToTileY;
 
-                var tilesPerXRow = seedingLastTileX - seedingFirstTileX;
-                var seedingTilesOnThisLayer = tilesPerXRow * (seedingLastTileY - seedingFirstTileY);
-                var seedingTilesProgressForThisLayer =
-                    tilesPerXRow * (seedingUpToTileY - seedingFirstTileY) +
-                    seedingUpToTileX -
-                    seedingFirstTileX;
+                // var tilesPerXRow = seedingLastTileX - seedingFirstTileX;
+                // var seedingTilesOnThisLayer = tilesPerXRow * (seedingLastTileY - seedingFirstTileY);
+                // var seedingTilesProgressForThisLayer =
+                //     tilesPerXRow * (seedingUpToTileY - seedingFirstTileY) +
+                //     seedingUpToTileX -
+                //     seedingFirstTileX;
 
-                logT(
-                    "up to tile " + seedingTilesProgressForThisLayer + "/" + seedingTilesOnThisLayer
-                );
+                // logT(
+                //     "up to tile " + seedingTilesProgressForThisLayer + "/" + seedingTilesOnThisLayer
+                // );
 
                 if (_settings.storageSeedBoundingBox && seedingUpToTileY >= seedingLastTileY) {
                     // we have returned to the function after the last tile layer
                     // we have finished this layer, go onto the next
                     // the last tile will not be returned though, since we exit too early
-                    logT("completed layer, going to next: " + seedingZ);
+                    // logT("completed layer, going to next: " + seedingZ);
                     return null;
                 }
 
@@ -1314,16 +1314,16 @@ class CachedValues {
             // logD("adding");
             // we might already have the tile in the storage cache, queue it up anyway so we reach our terminating condition faster
             seedingInProgressTiles[hash] = nextTileKey;
-            logT(
-                "seeding tile x: " +
-                    nextTileKey[0] +
-                    " y: " +
-                    nextTileKey[1] +
-                    " z: " +
-                    nextTileKey[2] +
-                    " seedingInProgressTiles size: " +
-                    seedingInProgressTiles.size()
-            );
+            // logT(
+            //     "seeding tile x: " +
+            //         nextTileKey[0] +
+            //         " y: " +
+            //         nextTileKey[1] +
+            //         " z: " +
+            //         nextTileKey[2] +
+            //         " seedingInProgressTiles size: " +
+            //         seedingInProgressTiles.size()
+            // );
             tileCache.seedTileToStorage(hash, nextTileKey[0], nextTileKey[1], nextTileKey[2]);
         }
 
@@ -1338,16 +1338,16 @@ class CachedValues {
         for (var i = 0; i < seedingInProgressTiles.size(); ++i) {
             var key = keys[i];
             var item = seedingInProgressTiles[key] as [Number, Number, Number];
-            logT("checking if tile completed x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
+            // logT("checking if tile completed x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
 
             if (tileCache._storageTileCache.haveTile(item[0], item[1], item[2], key)) {
-                logT("we have tile x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
+                // logT("we have tile x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
                 toRemove.add(key);
             }
         }
 
-        logT("toremove size: " + toRemove.size());
-        logT("seedingInProgressTiles size: " + seedingInProgressTiles.size());
+        // logT("toremove size: " + toRemove.size());
+        // logT("seedingInProgressTiles size: " + seedingInProgressTiles.size());
 
         for (var i = 0; i < toRemove.size(); ++i) {
             var key = toRemove[i];
@@ -1360,7 +1360,7 @@ class CachedValues {
             var key = keys[i];
             var item = seedingInProgressTiles[key] as [Number, Number, Number];
             // we better request it again, it might not have reached the web handler before
-            logT("seeding tile again x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
+            // logT("seeding tile again x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
             tileCache.seedTileToStorage(key, item[0], item[1], item[2]);
         }
     }
