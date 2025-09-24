@@ -260,10 +260,10 @@ function getTileServerInfo(id as Number) as TileServerInfo? {
 }
 
 (:companionTiles)
-class TileUpdateHandler extends JsonWebHandler {
+class TileUpdateHandler extends WebHandler {
     var mapChoiceVersion as Number;
     function initialize(_mapChoiceVersion as Number) {
-        JsonWebHandler.initialize();
+        WebHandler.initialize();
         mapChoiceVersion = _mapChoiceVersion;
     }
 
@@ -863,7 +863,7 @@ class Settings {
         if (lastMapChoice == null || (lastMapChoice instanceof Number and lastMapChoice != value)) {
             updateMapChoiceChangeInner(value);
         }
-        Application.Storage.setValue("lastMapChoice", value);
+        safeSetStorage("lastMapChoice", value);
     }
 
     function updateMapChoiceChangeInner(value as Number) as Void {
@@ -1525,7 +1525,7 @@ class Settings {
         var toSave = routesToSave();
         // note toSave is Array<Dictionary<String, PropertyValueType>>
         // but the compiler only allows "Array<PropertyValueType>" even though the array of dicts seems to work on sim and real watch
-        Application.Storage.setValue(
+        safeSetStorage(
             "routes",
             toSave as Array<PropertyValueType>
         );

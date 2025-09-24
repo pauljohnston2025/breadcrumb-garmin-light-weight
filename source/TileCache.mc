@@ -79,7 +79,7 @@ class Tile {
 }
 
 (:noCompanionTiles)
-class JsonWebTileRequestHandler extends JsonWebHandler {
+class JsonWebTileRequestHandler extends WebHandler {
     function initialize(
         tileCache as TileCache,
         x as Number,
@@ -89,7 +89,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
     ) {
-        JsonWebHandler.initialize();
+        WebHandler.initialize();
     }
 
     function handle(
@@ -105,7 +105,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
 }
 
 (:companionTiles)
-class JsonWebTileRequestHandler extends JsonWebHandler {
+class JsonWebTileRequestHandler extends WebHandler {
     var _tileCache as TileCache;
     var _tileKeyStr as String;
     var _tileCacheVersion as Number;
@@ -123,7 +123,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
     ) {
-        JsonWebHandler.initialize();
+        WebHandler.initialize();
         _tileCache = tileCache;
         _x = x;
         _y = y;
@@ -163,7 +163,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
 
         if (responseCode != 200) {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
-            logE("failed with: " + responseCode);
+            logE("json failed with: " + responseCode);
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                 _tileCache._storageTileCache.addErroredTile(_x, _y, _z, _tileKeyStr, responseCode);
             }
@@ -222,7 +222,7 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         }
 
         // logT("data: " + data);
-        var mapTile = data["data"];
+        var mapTile = data.get("data");
         if (!(mapTile instanceof String)) {
             logE("wrong data type, not string");
             _tileCache.addErroredTile(_tileKeyStr, _tileCacheVersion, "WD", false);
@@ -233,12 +233,12 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         if (type == null || !(type instanceof Number)) {
             // back compat
             logE("bad type for type: falling back: " + type);
-            handle64ColourDataString(mapTile);
+            handle64ColourDataString(data.get("paletteId") as Number?, mapTile);
             return;
         }
 
         if (type == TILE_DATA_TYPE_64_COLOUR) {
-            handle64ColourDataString(mapTile);
+            handle64ColourDataString(data.get("paletteId") as Number?, mapTile);
             return;
         } else if (type == TILE_DATA_TYPE_BASE64_FULL_COLOUR) {
             handleBase64FullColourDataString(mapTile);
@@ -251,9 +251,15 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
         _tileCache.addErroredTile(_tileKeyStr, _tileCacheVersion, "UT", false);
     }
 
-    function handle64ColourDataString(mapTile as String) as Void {
+    function handle64ColourDataString(paletteId as Number?, mapTile as String) as Void {
+        if (!(paletteId instanceof Number)) {
+            logE("wrong paletteId type, not number: " + paletteId);
+            _tileCache.addErroredTile(_tileKeyStr, _tileCacheVersion, "WPID", false);
+            return;
+        }
+
         // logT("got tile string of length: " + mapTile.length());
-        var bitmap = _tileCache.tileDataToBitmap64ColourString(mapTile.toCharArray());
+        var bitmap = _tileCache.tileDataToBitmap64ColourString(paletteId, mapTile.toCharArray());
         if (bitmap == null) {
             logE("failed to parse bitmap");
             _tileCache.addErroredTile(_tileKeyStr, _tileCacheVersion, "FP", false);
@@ -296,8 +302,69 @@ class JsonWebTileRequestHandler extends JsonWebHandler {
     }
 }
 
+(:noCompanionTiles)
+class JsonPelletLoadHandler extends WebHandler {
+    function initialize(tileCache as TileCache) {
+        WebHandler.initialize();
+    }
+
+    function handle(
+        responseCode as Number,
+        data as
+            Dictionary or
+                String or
+                Iterator or
+                WatchUi.BitmapResource or
+                Graphics.BitmapReference or
+                Null
+    ) as Void {}
+}
+
+(:companionTiles)
+class JsonPelletLoadHandler extends WebHandler {
+    var _tileCache as TileCache;
+
+    function initialize(tileCache as TileCache) {
+        WebHandler.initialize();
+        _tileCache = tileCache;
+    }
+
+    function handle(
+        responseCode as Number,
+        data as
+            Dictionary or
+                String or
+                Iterator or
+                WatchUi.BitmapResource or
+                Graphics.BitmapReference or
+                Null
+    ) as Void {
+        logD("handling JsonPelletLoadHandler");
+
+        if (responseCode != 200) {
+            logE("JsonPelletLoadHandler failed with: " + responseCode);
+            if (responseCode > 0) {
+                mustUpdate(); // probably because the companion app is out of date and does not have the route (maybe check 404 instead of any http error code)
+            }
+            return;
+        }
+
+        if (!(data instanceof Dictionary)) {
+            logE("JsonPelletLoadHandler wrong data type, not dict: " + data);
+            return;
+        }
+
+        logD("JsonPelletLoadHandler response: " + data);
+
+        var palette = data.get("data");
+        var id = data.get("id");
+
+        _tileCache.updatePalette(id as Number?, palette as Array?);
+    }
+}
+
 (:noImageTiles)
-class ImageWebTileRequestHandler extends ImageWebHandler {
+class ImageWebTileRequestHandler extends WebHandler {
     function initialize(
         tileCache as TileCache,
         x as Number,
@@ -308,7 +375,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
     ) {
-        ImageWebHandler.initialize();
+        WebHandler.initialize();
     }
 
     function handle(
@@ -317,7 +384,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
     ) as Void {}
 }
 (:imageTiles)
-class ImageWebTileRequestHandler extends ImageWebHandler {
+class ImageWebTileRequestHandler extends WebHandler {
     var _tileCache as TileCache;
     var _tileKeyStr as String;
     var _fullTileKeyStr as String;
@@ -337,7 +404,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
     ) {
-        ImageWebHandler.initialize();
+        WebHandler.initialize();
         _tileCache = tileCache;
         _x = x;
         _y = y;
@@ -378,7 +445,7 @@ class ImageWebTileRequestHandler extends ImageWebHandler {
 
         if (responseCode != 200) {
             // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
-            logE("failed with: " + responseCode);
+            logE("image failed with: " + responseCode);
             if (settings.cacheTilesInStorage || cachedValues.seeding()) {
                 _tileCache._storageTileCache.addErroredTile(
                     _x,
@@ -619,7 +686,7 @@ class StorageTileCache {
         if (tilesVersion != null && (tilesVersion as Number) != TILES_STORAGE_VERSION) {
             Storage.clearValues(); // we have to purge all storage (even our routes, since we have no way of cleanly removing the old storage keys (without having back compat for each format))
         }
-        Storage.setValue(TILES_VERSION_KEY, TILES_STORAGE_VERSION);
+        safeSetStorage(TILES_VERSION_KEY, TILES_STORAGE_VERSION);
 
         _settings = settings;
         _cachedValues = cachedValues;
@@ -760,7 +827,7 @@ class StorageTileCache {
             return null;
         }
         tileMeta[0] = Time.now().value();
-        Storage.setValue(metaKeyStr, tileMeta);
+        safeSetStorage(metaKeyStr, tileMeta);
 
         var epoch = Time.now().value();
         var expiresAt = tileMeta[2] as Number;
@@ -1098,7 +1165,8 @@ class StorageTileCache {
 class TileCache {
     var _internalCache as Dictionary<String, Tile>;
     var _webRequestHandler as WebRequestHandler;
-    var _palette as Array<Number>;
+    var _paletteId as Number?;
+    var _palette as Array<Number>?;
     var _settings as Settings;
     var _cachedValues as CachedValues;
     var _hits as Number = 0;
@@ -1119,98 +1187,42 @@ class TileCache {
         _webRequestHandler = webRequestHandler;
         _internalCache = ({}) as Dictionary<String, Tile>;
         _storageTileCache = new StorageTileCache(_settings, _cachedValues);
+    }
 
-        // note: these need to match whats in the app
-        // would like to use the bitmaps colour pallet, but we cannot :( because it errors with
-        // Exception: Source must not use a color palette
-        _palette = [
-            // Greens (Emphasis) - 22 colors
-            Graphics.createColor(255, 61, 179, 61), // Vibrant Green
-            Graphics.createColor(255, 102, 179, 102), // Medium Green
-            Graphics.createColor(255, 153, 204, 153), // Light Green
-            Graphics.createColor(255, 0, 102, 0), // Dark Green
-            Graphics.createColor(255, 128, 179, 77), // Slightly Yellowish Green
-            Graphics.createColor(255, 77, 179, 128), // Slightly Bluish Green
-            Graphics.createColor(255, 179, 179, 179), // Pale Green
-            Graphics.createColor(255, 92, 128, 77), // Olive Green
-            Graphics.createColor(255, 148, 209, 23),
-            Graphics.createColor(255, 107, 142, 35), // OliveDrab
-            Graphics.createColor(255, 179, 230, 0), // Lime Green
-            Graphics.createColor(255, 102, 179, 0), // Spring Green
-            Graphics.createColor(255, 77, 204, 77), // Bright Green
-            Graphics.createColor(255, 128, 153, 128), // Grayish Green
-            Graphics.createColor(255, 153, 204, 153), // Soft Green
-            Graphics.createColor(255, 0, 128, 0), // Forest Green
-            Graphics.createColor(255, 34, 139, 34), // ForestGreen
-            Graphics.createColor(255, 50, 205, 50), // LimeGreen
-            Graphics.createColor(255, 144, 238, 144), // LightGreen
-            Graphics.createColor(255, 0, 100, 0), // DarkGreen
-            Graphics.createColor(255, 60, 179, 113), // Medium Sea Green
-            Graphics.createColor(255, 46, 139, 87), // SeaGreen
+    function updatePalette(id as Number?, data as Array?) as Void {
+        // do we maybe want to store multiple palettes and just load the correct one form storage by id?
+        // then we never need to nuke the palettes unless they change, and storage tiles could use whatever they wanted
+        loadPalette(id, data);
+        safeSetStorage("paletteId", id as Application.PropertyValueType); // can store null, this is fine (clear out any old palette)
+        safeSetStorage("palette", _palette as Application.PropertyValueType); // can store null, this is fine (clear out any old palette)
+    }
 
-            // Reds - 8 colors
-            Graphics.createColor(255, 230, 0, 0), // Bright Red
-            Graphics.createColor(255, 204, 102, 102), // Light Red (Pink)
-            Graphics.createColor(255, 153, 0, 0), // Dark Red
-            Graphics.createColor(255, 230, 92, 77), // Coral Red
-            Graphics.createColor(255, 179, 0, 38), // Crimson
-            Graphics.createColor(255, 204, 102, 102), // Rose
-            Graphics.createColor(255, 255, 0, 0), // Pure Red
-            Graphics.createColor(255, 255, 69, 0), // RedOrange
-
-            // Blues - 8 colors
-            Graphics.createColor(255, 0, 0, 230), // Bright Blue
-            Graphics.createColor(255, 102, 102, 204), // Light Blue
-            Graphics.createColor(255, 0, 0, 153), // Dark Blue
-            Graphics.createColor(255, 102, 153, 230), // Sky Blue
-            Graphics.createColor(255, 38, 0, 179), // Indigo
-            Graphics.createColor(255, 77, 128, 179), // Steel Blue
-            Graphics.createColor(255, 0, 0, 255), // Pure Blue
-            Graphics.createColor(255, 0, 191, 255), // DeepSkyBlue
-            Graphics.createColor(255, 151, 210, 227), // ocean blue
-
-            // Yellows - 6 colors
-            Graphics.createColor(255, 230, 230, 0), // Bright Yellow
-            Graphics.createColor(255, 204, 204, 102), // Light Yellow
-            Graphics.createColor(255, 153, 153, 0), // Dark Yellow (Gold)
-            Graphics.createColor(255, 179, 153, 77), // Mustard Yellow
-            Graphics.createColor(255, 255, 255, 0), // Pure Yellow
-            Graphics.createColor(255, 255, 215, 0), // Gold
-
-            // Oranges - 6 colors
-            Graphics.createColor(255, 230, 115, 0), // Bright Orange
-            Graphics.createColor(255, 204, 153, 102), // Light Orange
-            Graphics.createColor(255, 153, 77, 0), // Dark Orange
-            Graphics.createColor(255, 179, 51, 0), // Burnt Orange
-            Graphics.createColor(255, 255, 165, 0), // Orange
-            Graphics.createColor(255, 255, 140, 0), // DarkOrange
-
-            // Purples - 6 colors
-            Graphics.createColor(255, 230, 0, 230), // Bright Purple
-            Graphics.createColor(255, 204, 102, 204), // Light Purple
-            Graphics.createColor(255, 153, 0, 153), // Dark Purple
-            Graphics.createColor(255, 230, 153, 230), // Lavender
-            Graphics.createColor(255, 128, 0, 128), // Purple
-            Graphics.createColor(255, 75, 0, 130), // Indigo
-
-            // Neutral/Grayscale - 4 colors
-            Graphics.createColor(255, 242, 242, 242), // White
-            // Graphics.createColor(255, 179, 179, 179),       // Light Gray
-            Graphics.createColor(255, 77, 77, 77), // Dark Gray
-            Graphics.createColor(255, 0, 0, 0), // Black
-
-            // manually picked to match map tiles
-            Graphics.createColor(255, 246, 230, 98), // road colours (yellow)
-            Graphics.createColor(255, 194, 185, 108), // slightly darker yellow road
-            Graphics.createColor(255, 214, 215, 216), // some mountains (light grey)
-            Graphics.createColor(255, 213, 237, 168), // some greenery that was not a nice colour
-        ];
-
-        if (_palette.size() != 64) {
-            logE("colour pallet has only: " + _palette.size() + "elements");
+    function loadPalette(id as Number?, data as Array?) as Void {
+        if (!(data instanceof Array)) {
+            logE("colour palette wrong type: " + data);
+            return;
         }
 
-        // loadPersistedTiles();
+        var dataArr = data as Array;
+        if (dataArr.size() != 64) {
+            logE("colour palette has only: " + dataArr.size() + "elements");
+            return;
+        }
+
+        for (var i = 0; i < dataArr.size(); ++i) {
+            if (!(dataArr[i] instanceof Number)) {
+                logE("colour palette dataArr wrong type");
+                return;
+            }
+        }
+
+        if (!(id instanceof Number)) {
+            logE("colour palette id wrong type: " + id);
+            return;
+        }
+
+        _paletteId = id as Number;
+        _palette = data as Array<Number>;
     }
 
     function setup() as Void {
@@ -1229,6 +1241,13 @@ class TileCache {
         _internalCache = ({}) as Dictionary<String, Tile>;
         _errorBitmaps = ({}) as Dictionary<String, WeakReference<Graphics.BufferedBitmap> >;
         _tileCacheVersion++;
+
+        // clear the pallet and it's storage, we need to load it again
+        // this could be a problem if storage tiles are saying use a pallet that we do not have
+        _paletteId = null;
+        _palette = null;
+        safeSetStorage("paletteId", null);
+        safeSetStorage("palette", null);
     }
 
     // loads a tile into the cache
@@ -1563,12 +1582,56 @@ class TileCache {
         }
     }
 
+    function loadPalletFromWeb() as Void {
+        // if we are still null after a load, we need to lad the palette from the tile server on the phone
+        logD("loading TilePalette from web");
+        var jsonTileHandler = new JsonPelletLoadHandler(me);
+        _webRequestHandler.add(
+            new JsonRequest(
+                "getTilePalette",
+                _settings.tileUrl + "/getTilePalette",
+                {},
+                jsonTileHandler
+            )
+        );
+    }
+
     (:noCompanionTiles)
-    function tileDataToBitmap64ColourString(charArr as Array<Char>?) as Graphics.BufferedBitmap? {
+    function tileDataToBitmap64ColourString(
+        paletteId as Number,
+        charArr as Array<Char>?
+    ) as Graphics.BufferedBitmap? {
         return null;
     }
     (:companionTiles)
-    function tileDataToBitmap64ColourString(charArr as Array<Char>?) as Graphics.BufferedBitmap? {
+    function tileDataToBitmap64ColourString(
+        paletteId as Number,
+        charArr as Array<Char>?
+    ) as Graphics.BufferedBitmap? {
+        if (_paletteId == null || _palette == null) {
+            loadPalette(
+                Storage.getValue("paletteId") as Number?,
+                Storage.getValue("palette") as Array?
+            );
+            if (_paletteId == null || _palette == null) {
+                loadPalletFromWeb();
+                return null;
+            }
+        }
+
+        // this is safe, the above code sets it if its null
+        var paletteArr = _palette as Array<Number>;
+
+        if (paletteId != _paletteId) {
+            logE("wrong pallet loaded, current: " + _paletteId + " target: " + paletteId);
+            _paletteId = null;
+            _palette = null;
+            // clear the storage
+            safeSetStorage("paletteId", null);
+            safeSetStorage("palette", null);
+            loadPalletFromWeb();
+            return null;
+        }
         // logT("tile data " + arr);
         var tileSize = _settings.tileSize;
         var requiredSize = tileSize * tileSize;
@@ -1610,7 +1673,7 @@ class TileCache {
         }
 
         if (charArr.size() != requiredSize) {
-            // we could load tile partially, but that would require checking each itteration of the for loop,
+            // we could load tile partially, but that would require checking each iteration of the for loop,
             // want to avoid any extra work for perf
             logE("bad tile length 64colour: " + charArr.size() + " best effort load");
         }
@@ -1624,7 +1687,7 @@ class TileCache {
         for (var i = 0; i < tileSize; ++i) {
             for (var j = 0; j < tileSize; ++j) {
                 // _palette should have all values that are possible, not checking size for perf reasons
-                var colour = _palette[charArr[it].toNumber() & 0x3f]; // charArr[it] as Char the toNumber is The UTF-32 representation of the Char interpreted as a Number
+                var colour = paletteArr[charArr[it].toNumber() & 0x3f]; // charArr[it] as Char the toNumber is The UTF-32 representation of the Char interpreted as a Number
                 it++;
                 localDc.setColor(colour, colour);
                 localDc.drawPoint(i, j);

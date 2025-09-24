@@ -3,6 +3,8 @@ import Toybox.System;
 import Toybox.Graphics;
 import Toybox.Time;
 import Toybox.Math;
+import Toybox.Application;
+import Toybox.WatchUi;
 
 const FLOAT_MIN = -340282346638528859811704183484516925440.0;
 const FLOAT_MAX = 340282346638528859811704183484516925440.0;
@@ -261,4 +263,19 @@ function turnAlertDistancePx(
     }
 
     return maxF(distanceBasedPx, timeBasedPx);
+}
+
+function safeSetStorage(
+    key as Application.PropertyKeyType,
+    value as Application.PropertyValueType
+) as Void {
+    try {
+        Application.Storage.setValue(key, value);
+    } catch (e) {
+        logE("failed to set storage key: " + key + " " + e.getErrorMessage());
+    }
+}
+
+function mustUpdate() as Void {
+    WatchUi.showToast(Rez.Strings.mustUpdate, {});
 }

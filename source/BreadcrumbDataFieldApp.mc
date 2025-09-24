@@ -111,10 +111,6 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         return [settings, new $.SettingsMainDelegate(settings)];
     }
 
-    function mustUpdate() as Void {
-        WatchUi.showToast(Rez.Strings.mustUpdate, {});
-    }
-
     function onPhone(msg as Communications.PhoneAppMessage) as Void {
         try {
             var data = msg.data as Array?;

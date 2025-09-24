@@ -6,20 +6,7 @@ import Toybox.System;
 import Toybox.Communications;
 import Toybox.Application;
 
-class JsonWebHandler {
-    // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
-    function handle(
-        responseCode as Number,
-        data as Dictionary or
-                String or
-                Iterator or
-                WatchUi.BitmapResource or
-                Graphics.BitmapReference or
-                Null
-    ) as Void;
-}
-
-class ImageWebHandler {
+class WebHandler {
     // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
     function handle(
         responseCode as Number,
@@ -46,12 +33,12 @@ class WebRequest {
 }
 
 class JsonRequest extends WebRequest {
-    var handler as JsonWebHandler;
+    var handler as WebHandler;
     function initialize(
         _hash as String,
         _url as String,
         _params as Dictionary,
-        _handler as JsonWebHandler
+        _handler as WebHandler
     ) {
         WebRequest.initialize(_hash, _url, _params);
         handler = _handler;
@@ -59,12 +46,12 @@ class JsonRequest extends WebRequest {
 }
 
 class ImageRequest extends WebRequest {
-    var handler as ImageWebHandler;
+    var handler as WebHandler;
     function initialize(
         _hash as String,
         _url as String,
         _params as Dictionary,
-        _handler as ImageWebHandler
+        _handler as WebHandler
     ) {
         WebRequest.initialize(_hash, _url, _params);
         handler = _handler;
@@ -74,12 +61,12 @@ class ImageRequest extends WebRequest {
 class WebRequestHandleWrapper {
     var webHandler as WebRequestHandler;
     var hash as String;
-    var handler as JsonWebHandler or ImageWebHandler;
+    var handler as WebHandler;
     var alreadyDecedWebHandler as Boolean = false;
 
     function initialize(
         _webHandler as WebRequestHandler,
-        _handler as JsonWebHandler or ImageWebHandler,
+        _handler as WebHandler,
         _hash as String
     ) {
         webHandler = _webHandler;
