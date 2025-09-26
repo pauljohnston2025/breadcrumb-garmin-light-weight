@@ -231,12 +231,12 @@ class JsonWebTileRequestHandler {
         if (type == null || !(type instanceof Number)) {
             // back compat
             logE("bad type for type: falling back: " + type);
-            handle64ColourDataString(data.get("paletteId") as Number?, mapTile);
+            handle64ColourDataString(data.get("pId") as Number?, mapTile);
             return;
         }
 
         if (type == TILE_DATA_TYPE_64_COLOUR) {
-            handle64ColourDataString(data.get("paletteId") as Number?, mapTile);
+            handle64ColourDataString(data.get("pId") as Number?, mapTile);
             return;
         } else if (type == TILE_DATA_TYPE_BASE64_FULL_COLOUR) {
             handleBase64FullColourDataString(mapTile);
