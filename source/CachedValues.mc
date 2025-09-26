@@ -1340,7 +1340,7 @@ class CachedValues {
             var item = seedingInProgressTiles[key] as [Number, Number, Number];
             // logT("checking if tile completed x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
 
-            if (tileCache._storageTileCache.haveTile(item[0], item[1], item[2], key)) {
+            if (tileCache._storageTileCache.haveTile(key)) {
                 // logT("we have tile x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
                 toRemove.add(key);
             }

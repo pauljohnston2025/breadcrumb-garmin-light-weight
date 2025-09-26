@@ -624,14 +624,11 @@ class StorageTileCache {
     function setup() as Void {}
 
     function get(
-        x as Number,
-        y as Number,
-        z as Number,
         tileKeyStr as String
     ) as StorageTileDataType? {
         return null;
     }
-    function haveTile(x as Number, y as Number, z as Number, tileKeyStr as String) as Boolean {
+    function haveTile(tileKeyStr as String) as Boolean {
         return false;
     }
     function addErroredTile(
@@ -806,24 +803,24 @@ class StorageTileCache {
         return TILES_TILE_PREFIX + tileKeyStr;
     }
 
+    function loadIfSinglePage() as Void {}
+
     function get(
-        x as Number,
-        y as Number,
-        z as Number,
         tileKeyStr as String
     ) as StorageTileDataType? {
-        var pageIndex = getPageIndexForKey(x, y, z);
-        loadPage(pageIndex);
-
-        if (_currentPageKeys.indexOf(tileKeyStr) < 0) {
-            // we do not have the tile key
-            return null;
+        // if we are only a single page, load and do a quicker check (it should already be loaded)
+        // if we are a multi page, we will spend more time loading the page then we would the meta dta key, so just load the meta data
+        if (_totalTileCount == 1) {
+            loadPage(0);
+            if (_currentPageKeys.indexOf(tileKeyStr) < 0) {
+                // we do not have the tile key
+                return null;
+            }
         }
 
         var metaKeyStr = metaKey(tileKeyStr);
         var tileMeta = Storage.getValue(metaKeyStr);
         if (tileMeta == null || !(tileMeta instanceof Array) || tileMeta.size() < 3) {
-            logE("bad tile metadata in storage" + tileMeta);
             return null;
         }
         tileMeta[0] = Time.now().value();
@@ -861,21 +858,23 @@ class StorageTileCache {
         return null;
     }
 
-    function haveTile(x as Number, y as Number, z as Number, tileKeyStr as String) as Boolean {
+    function haveTile(tileKeyStr as String) as Boolean {
         // need to check for expired tiles
         // we could call get, but that also loads the tile data, and increments the "lastUsed" time
-        var pageIndex = getPageIndexForKey(x, y, z);
-        loadPage(pageIndex);
-
-        if (_currentPageKeys.indexOf(tileKeyStr) < 0) {
-            // we do not have the tile key
-            return false;
+        
+        // if we are only a single page, load and do a quicker check (it should already be loaded)
+        // if we are a multi page, we will spend more time loading the page then we would the meta dta key, so just load the meta data
+        if (_totalTileCount == 1) {
+            loadPage(0);
+            if (_currentPageKeys.indexOf(tileKeyStr) < 0) {
+                // we do not have the tile key
+                return false;
+            }
         }
 
         var metaKeyStr = metaKey(tileKeyStr);
         var tileMeta = Storage.getValue(metaKeyStr);
         if (tileMeta == null || !(tileMeta instanceof Array) || tileMeta.size() < 3) {
-            logE("bad tile metadata in storage" + tileMeta);
             return false;
         }
 
@@ -1264,16 +1263,16 @@ class TileCache {
         return startSeedTile(tileKeyStr, x, y, z, false);
     }
 
-    // seedTile puts the tile into memory, either by pulling from storage, or by runnung a web request
+    // seedTile puts the tile into memory, either by pulling from storage, or by running a web request
     // seedTileToStorage only puts the tile into storage
-    // returns true if a tile seed was started, flase if we already have the tile
+    // returns true if a tile seed was started, false if we already have the tile
     function seedTileToStorage(
         tileKeyStr as String,
         x as Number,
         y as Number,
         z as Number
     ) as Boolean {
-        if (_storageTileCache.haveTile(x, y, z, tileKeyStr)) {
+        if (_storageTileCache.haveTile(tileKeyStr)) {
             // we already have the tile (and it is not expired)
             return false;
         }
@@ -1332,7 +1331,7 @@ class TileCache {
             _tileCacheVersion,
             onlySeedStorage
         );
-        var tileFromStorage = _storageTileCache.get(x, y, _z, fullSizeTileStr);
+        var tileFromStorage = _storageTileCache.get(fullSizeTileStr);
         if (tileFromStorage != null) {
             var responseCode = tileFromStorage[0];
             // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
@@ -1401,7 +1400,7 @@ class TileCache {
             _tileCacheVersion,
             onlySeedStorage
         );
-        var tileFromStorage = _storageTileCache.get(_x, _y, _z, tileKeyStr);
+        var tileFromStorage = _storageTileCache.get(tileKeyStr);
         if (tileFromStorage != null) {
             var responseCode = tileFromStorage[0];
             // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
