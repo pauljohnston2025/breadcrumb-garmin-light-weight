@@ -6,7 +6,7 @@ import Toybox.System;
 import Toybox.Communications;
 import Toybox.Application;
 
-class WebHandler {
+typedef WebHandler as interface {
     // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
     function handle(
         responseCode as Number,

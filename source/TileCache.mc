@@ -79,7 +79,7 @@ class Tile {
 }
 
 (:noCompanionTiles)
-class JsonWebTileRequestHandler extends WebHandler {
+class JsonWebTileRequestHandler {
     function initialize(
         tileCache as TileCache,
         x as Number,
@@ -89,7 +89,6 @@ class JsonWebTileRequestHandler extends WebHandler {
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
     ) {
-        WebHandler.initialize();
     }
 
     function handle(
@@ -105,7 +104,7 @@ class JsonWebTileRequestHandler extends WebHandler {
 }
 
 (:companionTiles)
-class JsonWebTileRequestHandler extends WebHandler {
+class JsonWebTileRequestHandler {
     var _tileCache as TileCache;
     var _tileKeyStr as String;
     var _tileCacheVersion as Number;
@@ -123,7 +122,6 @@ class JsonWebTileRequestHandler extends WebHandler {
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
     ) {
-        WebHandler.initialize();
         _tileCache = tileCache;
         _x = x;
         _y = y;
@@ -303,9 +301,8 @@ class JsonWebTileRequestHandler extends WebHandler {
 }
 
 (:noCompanionTiles)
-class JsonPelletLoadHandler extends WebHandler {
+class JsonPelletLoadHandler {
     function initialize(tileCache as TileCache) {
-        WebHandler.initialize();
     }
 
     function handle(
@@ -321,11 +318,10 @@ class JsonPelletLoadHandler extends WebHandler {
 }
 
 (:companionTiles)
-class JsonPelletLoadHandler extends WebHandler {
+class JsonPelletLoadHandler {
     var _tileCache as TileCache;
 
     function initialize(tileCache as TileCache) {
-        WebHandler.initialize();
         _tileCache = tileCache;
     }
 
@@ -364,7 +360,7 @@ class JsonPelletLoadHandler extends WebHandler {
 }
 
 (:noImageTiles)
-class ImageWebTileRequestHandler extends WebHandler {
+class ImageWebTileRequestHandler {
     function initialize(
         tileCache as TileCache,
         x as Number,
@@ -375,7 +371,6 @@ class ImageWebTileRequestHandler extends WebHandler {
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
     ) {
-        WebHandler.initialize();
     }
 
     function handle(
@@ -384,7 +379,7 @@ class ImageWebTileRequestHandler extends WebHandler {
     ) as Void {}
 }
 (:imageTiles)
-class ImageWebTileRequestHandler extends WebHandler {
+class ImageWebTileRequestHandler {
     var _tileCache as TileCache;
     var _tileKeyStr as String;
     var _fullTileKeyStr as String;
@@ -404,7 +399,6 @@ class ImageWebTileRequestHandler extends WebHandler {
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
     ) {
-        WebHandler.initialize();
         _tileCache = tileCache;
         _x = x;
         _y = y;

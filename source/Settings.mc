@@ -260,10 +260,9 @@ function getTileServerInfo(id as Number) as TileServerInfo? {
 }
 
 (:companionTiles)
-class TileUpdateHandler extends WebHandler {
+class TileUpdateHandler {
     var mapChoiceVersion as Number;
     function initialize(_mapChoiceVersion as Number) {
-        WebHandler.initialize();
         mapChoiceVersion = _mapChoiceVersion;
     }
 
