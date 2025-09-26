@@ -10,51 +10,157 @@ typedef WebHandler as interface {
     // see error codes such as Communications.NETWORK_REQUEST_TIMED_OUT
     function handle(
         responseCode as Number,
-        data as Dictionary or
+        data as
+            Dictionary or
                 String or
                 Iterator or
                 WatchUi.BitmapResource or
                 Graphics.BitmapReference or
                 Null
     ) as Void;
-}
+};
+typedef WebRequest as interface {
+    var url as String;
+    var params as Dictionary;
+    var hash as String;
 
-class WebRequest {
+    function start(webRequestHandler as WebRequestHandler, settings as Settings) as Void;
+};
+class JsonRequest {
     var url as String;
     var params as Dictionary;
     // unique id for this request, if two requests have the same hash the second one will be dropped if the first is pending
     var hash as String;
+    var handler as WebHandler;
 
-    function initialize(_hash as String, _url as String, _params as Dictionary) {
+    function initialize(
+        _hash as String,
+        _url as String,
+        _params as Dictionary,
+        _handler as WebHandler
+    ) {
         hash = _hash;
         url = _url;
         params = _params;
+        handler = _handler;
+    }
+
+    function start(webRequestHandler as WebRequestHandler, settings as Settings) as Void {
+        // logT("sending json request");
+        var callback =
+            (new WebRequestHandleWrapper(webRequestHandler, handler, hash)).method(:handle) as
+            (Method
+                (
+                    responseCode as Lang.Number,
+                    data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null
+                ) as Void
+            ) or
+                (Method
+                (
+                    responseCode as Lang.Number,
+                    data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null,
+                    context as Lang.Object
+                ) as Void
+            );
+        // note: even though docs say that this could be sent over wifi it seems it never is, and requires the bluetooth connection
+        // also i tried several ways to force wifi, including calls to checkWifiConnection - which does connect wifi but the request still seems
+        // to go through the bluetooth bridge
+        // https://forums.garmin.com/developer/connect-iq/f/discussion/5230/web-requests-without-mobile-connect
+        // it seems like edge devices in the simulator do not support this, the callback is just never called (could be a simulator bug)
+        // routes still work though, so allowing them to still be used
+        Communications.makeWebRequest(
+            url,
+            params as Dictionary<Lang.Object, Lang.Object>,
+            {
+                :method => Communications.HTTP_REQUEST_METHOD_GET,
+                :headers => {
+                    // docs say you can do this (or omit it), but i found its not sent, or is sent as application/x-www-form-urlencoded when using HTTP_RESPONSE_CONTENT_TYPE_JSON
+                    // "Content-Type" => Communications.HTTP_RESPONSE_CONTENT_TYPE_JSON,
+                    // my local server does not like content type being supplied when its a get or post
+                    // the android server does not seem to get
+                    // "Content-Type" => "application/json",
+                },
+                :responseType => Communications.HTTP_RESPONSE_CONTENT_TYPE_JSON,
+            }, // options
+            // see https://forums.garmin.com/developer/connect-iq/f/discussion/2289/documentation-clarification-object-method-and-lang-method
+            callback
+        );
     }
 }
 
-class JsonRequest extends WebRequest {
+class ImageRequest {
+    var url as String;
+    var params as Dictionary;
+    // unique id for this request, if two requests have the same hash the second one will be dropped if the first is pending
+    var hash as String;
     var handler as WebHandler;
+
     function initialize(
         _hash as String,
         _url as String,
         _params as Dictionary,
         _handler as WebHandler
     ) {
-        WebRequest.initialize(_hash, _url, _params);
+        hash = _hash;
+        url = _url;
+        params = _params;
         handler = _handler;
     }
-}
 
-class ImageRequest extends WebRequest {
-    var handler as WebHandler;
-    function initialize(
-        _hash as String,
-        _url as String,
-        _params as Dictionary,
-        _handler as WebHandler
-    ) {
-        WebRequest.initialize(_hash, _url, _params);
-        handler = _handler;
+    function start(webRequestHandler as WebRequestHandler, settings as Settings) as Void {
+// logT("sending image request");
+        var callback =
+            (new WebRequestHandleWrapper(webRequestHandler, handler, hash)).method(:handle) as
+            (Method
+                (
+                    responseCode as Lang.Number,
+                    data as WatchUi.BitmapResource or Graphics.BitmapReference or Null
+                ) as Void
+            );
+        // we only use image requests for external servers
+        Communications.makeImageRequest(
+            url,
+            params,
+            {
+                :maxWidth => settings.scaledTileSize,
+                :maxHeight => settings.scaledTileSize,
+
+                // needs to be png or we will get
+                // Error: Unhandled Exception
+                // Exception: Source must not use a color palette if we try and draw it to another bufferedBitmap
+                // it appears PACKING_FORMAT_DEFAULT is the culprit
+                // PACKING_FORMAT_YUV, PACKING_FORMAT_PNG, PACKING_FORMAT_JPG are also fine
+                // docs say png is slow to load, yuv is fast and jpg is reasonably fast
+                // PACKING_FORMAT_YUV has weird issues in the physical device (its just tinting the image, not preserving pixel data)
+                // looks like PACKING_FORMAT_PNG does work, but its really slow -> we should only fallback to this if we really need it
+                // PACKING_FORMAT_JPG does weird things
+                // (we have to scale the image - at this point im thinking i should just override the users setting to 256 if the tile server is not the companion app)
+                // so we must use PACKING_FORMAT_PNG if they really want a slow response and smaller tiles cache
+                // so tried it again, ang PNG did the same colour issue as JPG/YUV :( AHHHHHHHHHHHH
+                // Communications.PACKING_FORMAT_DEFAULT - Image data is encoded in the device native format, a lossless encoding that available on all devices. It is very efficient to decode, but often results in large transfer sizes so is slow to download.
+                // The default is slow to download? wtf? guess it is efficient to decode though. But it also has a pallet on some devices, so cannot be rendered in unbuffered rotations mode
+                // PACKING_FORMAT_YUV - Image data is encoded in YUV format. This is a lossy encoding that is compressed, and is fast to load. It is ideal for photographic imagery with transparency.
+                // PACKING_FORMAT_PNG - Image data is encoded in PNG format. This is a lossless encoding that is compressed, but is relatively slow to load. It is ideal for non-photographic imagery.
+                // PACKING_FORMAT_JPG - Image data is encoded in JPG format. This is a lossy encoding that is compressed, and is reasonably fast to load. It is ideal for photographic imagery.
+                // PACKING_FORMAT_YUV seems the fastest, compressed and fast to load
+                // should perf test the others on real device, eg. perhaps jpg is faster download but slightly slower draw
+                // :packingFormat => Communications.PACKING_FORMAT_YUV, // do not specify a palette, as we cannot draw directly to dc on some devices
+                :packingFormat => settings.packingFormat as Communications.PackingFormat,
+                // from android code
+                // val osName = "Garmin"
+                // val osVersion = Build.VERSION.RELEASE ?: "Unknown"
+                // val deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}"
+                // required by openstreetmaps, not sure how to get this to work
+                // https://operations.osmfoundation.org/policies/tiles/
+                // https://help.openstreetmap.org/questions/29938/in-my-app-problem-downloading-maptile-000-http-response-http11-403-forbidden
+                // header("User-Agent", "Breadcrumb/1.0 ($osName $osVersion $deviceModel)")
+                // but unfortunatly the makeImageRequest does not support headers
+                // https://forums.garmin.com/developer/connect-iq/f/discussion/303994/makeimagerequest-additional-headers-and-svgs
+                // so no openstreet maps for us :(
+            }, // options
+            // see https://forums.garmin.com/developer/connect-iq/f/discussion/2289/documentation-clarification-object-method-and-lang-method
+            callback
+        );
     }
 }
 
@@ -64,11 +170,7 @@ class WebRequestHandleWrapper {
     var handler as WebHandler;
     var alreadyDecedWebHandler as Boolean = false;
 
-    function initialize(
-        _webHandler as WebRequestHandler,
-        _handler as WebHandler,
-        _hash as String
-    ) {
+    function initialize(_webHandler as WebRequestHandler, _handler as WebHandler, _hash as String) {
         webHandler = _webHandler;
         handler = _handler;
         hash = _hash;
@@ -184,7 +286,7 @@ class WebRequestHandler {
     // also dictionary seemed to make the code 2X slower, think because we had to serch all the keys for a string several times
     var pendingTransmit as
     Array<[Application.PersistableType, Dictionary?, Communications.ConnectionListener]> = [];
-    var pending as Array<JsonRequest or ImageRequest> = [];
+    var pending as Array<WebRequest> = [];
     var pendingHashes as Array<String> = [];
     var outstandingHashes as Array<String> = [];
     var _outstandingCount as Number = 0;
@@ -212,7 +314,7 @@ class WebRequestHandler {
         pendingTransmit.add([content, options, listener]);
     }
 
-    function add(jsonOrImageReq as JsonRequest or ImageRequest) as Void {
+    function add(webReq as WebRequest) as Void {
         // todo remove old requests if we get too many (slow network and requests too often mean the internal array grows and we OOM)
         // hard to know if there is one outstanding though, also need to startNext() on a timer if we have not seen any requests in a while
         if (pending.size() > _settings.maxPendingWebRequests) {
@@ -222,7 +324,7 @@ class WebRequestHandler {
             return;
         }
 
-        var hash = jsonOrImageReq.hash;
+        var hash = webReq.hash;
         if (pendingHashes.indexOf(hash) > -1) {
             // logD("Dropping req for: " + hash);
             // note: we cannot attempt to run the request, as i've gotten stack over flows on real devices
@@ -238,7 +340,7 @@ class WebRequestHandler {
             return;
         }
 
-        pending.add(jsonOrImageReq);
+        pending.add(webReq);
         pendingHashes.add(hash);
         // for now just start one at a time, simpler to track
         // At most 3 outstanding can occur, todo query this limit
@@ -293,120 +395,24 @@ class WebRequestHandler {
             return;
         }
 
-        var jsonOrImageReq = pending[0];
-        pending.remove(jsonOrImageReq);
+        var webReq = pending[0];
+        pending.remove(webReq);
         // trust that the keys are in the same order as the hash
-        pendingHashes.remove(jsonOrImageReq.hash);
+        pendingHashes.remove(webReq.hash);
         if (pending.size() != pendingHashes.size()) {
             logE("size mismatch: " + pending.size() + " " + pendingHashes.size());
             pending = [];
             pendingHashes = [];
         }
-        outstandingHashes.add(jsonOrImageReq.hash);
+        outstandingHashes.add(webReq.hash);
 
-        // logT("url: " + jsonOrImageReq.url);
-        // logT("params: "  + jsonOrImageReq.params);
+        // logT("url: " + webReq.url);
+        // logT("params: "  + webReq.params);
+        webReq.start(me, _settings);
 
-        if (jsonOrImageReq instanceof ImageRequest) {
-            // logT("sending image request");
-            var callback =
-                (
-                    new WebRequestHandleWrapper(me, jsonOrImageReq.handler, jsonOrImageReq.hash)
-                ).method(:handle) as
-                (Method
-                    (
-                        responseCode as Lang.Number,
-                        data as WatchUi.BitmapResource or Graphics.BitmapReference or Null
-                    ) as Void
-                );
-            // we only use image requests for exeternal servers
-            Communications.makeImageRequest(
-                jsonOrImageReq.url,
-                jsonOrImageReq.params,
-                {
-                    :maxWidth => _settings.scaledTileSize,
-                    :maxHeight => _settings.scaledTileSize,
-
-                    // needs to be png or we will get
-                    // Error: Unhandled Exception
-                    // Exception: Source must not use a color palette if we try and draw it to another bufferredBitmap
-                    // it appears PACKING_FORMAT_DEFAULT is the culprit
-                    // PACKING_FORMAT_YUV, PACKING_FORMAT_PNG, PACKING_FORMAT_JPG are also fine
-                    // docs say png is slow to load, yuv is fast and jpg is reasonably fast
-                    // PACKING_FORMAT_YUV has weird issues in the physical device (its just tinting the image, not preserving pixel data)
-                    // looks like PACKING_FORMAT_PNG does work, but its really slow -> we shold only fallback to this if we really need it
-                    // PACKING_FORMAT_JPG does weird things
-                    // (we have to scale the image - at this point im thinking i should just override the users setting to 256 if the tile server is not the companion app)
-                    // so we must use PACKING_FORMAT_PNG if they really want a slow response and smaller tiles cache
-                    // so tried it again, ang PNG did the same colour issue as JPG/YUV :( AHHHHHHHHHHHH
-                    // Communications.PACKING_FORMAT_DEFAULT - Image data is encoded in the device native format, a lossless encoding that available on all devices. It is very efficient to decode, but often results in large transfer sizes so is slow to download.
-                    // The default is slow to download? wtf? guess it is efficient to decode though. But it also has a pallet on some devices, so cannot be rendered in unbufferred rotations mode
-                    // PACKING_FORMAT_YUV - Image data is encoded in YUV format. This is a lossy encoding that is compressed, and is fast to load. It is ideal for photographic imagery with transparency.
-                    // PACKING_FORMAT_PNG - Image data is encoded in PNG format. This is a lossless encoding that is compressed, but is relatively slow to load. It is ideal for non-photographic imagery.
-                    // PACKING_FORMAT_JPG - Image data is encoded in JPG format. This is a lossy encoding that is compressed, and is reasonably fast to load. It is ideal for photographic imagery.
-                    // PACKING_FORMAT_YUV seems the fastest, compressed and fast to load
-                    // should perf test the others on real device, eg. perhaps jpg is faser download but slightly slower draw
-                    // :packingFormat => Communications.PACKING_FORMAT_YUV, // do not specify a pallete, as we cannot draw directly to dc on some devices
-                    :packingFormat => _settings.packingFormat as Communications.PackingFormat,
-                    // from android code
-                    // val osName = "Garmin"
-                    // val osVersion = Build.VERSION.RELEASE ?: "Unknown"
-                    // val deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}"
-                    // required by openstreetmaps, not sure how to get this to work
-                    // https://operations.osmfoundation.org/policies/tiles/
-                    // https://help.openstreetmap.org/questions/29938/in-my-app-problem-downloading-maptile-000-http-response-http11-403-forbidden
-                    // header("User-Agent", "Breadcrumb/1.0 ($osName $osVersion $deviceModel)")
-                    // but unfortunetly the makeImageRequest does not support headers
-                    // https://forums.garmin.com/developer/connect-iq/f/discussion/303994/makeimagerequest-additional-headers-and-svgs
-                    // so no openstreet maps for us :(
-                }, // options
-                // see https://forums.garmin.com/developer/connect-iq/f/discussion/2289/documentation-clarification-object-method-and-lang-method
-                callback
-            );
+        if (webReq instanceof ImageRequest) {
             return;
         }
-
-        // logT("sending json request");
-        var callback =
-            (new WebRequestHandleWrapper(me, jsonOrImageReq.handler, jsonOrImageReq.hash)).method(
-                :handle
-            ) as
-            (Method
-                (
-                    responseCode as Lang.Number,
-                    data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null
-                ) as Void
-            ) or
-                (Method
-                (
-                    responseCode as Lang.Number,
-                    data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null,
-                    context as Lang.Object
-                ) as Void
-            );
-        // note: even though docs say that this could be sent over wifi it seems it never is, and requires the blueotth connection
-        // also i tried several ways to force wifi, inclusding calls to checkWifiConnection - which does ocnnect wifi but the request still seems
-        // to go through the bluetooth bridge
-        // https://forums.garmin.com/developer/connect-iq/f/discussion/5230/web-requests-without-mobile-connect
-        // it seems like edge devices in the simulator do not support this, the callback is just never called (could be a simulator bug)
-        // routes still work though, so allowing them to still be used
-        Communications.makeWebRequest(
-            jsonOrImageReq.url,
-            jsonOrImageReq.params as Dictionary<Lang.Object, Lang.Object>,
-            {
-                :method => Communications.HTTP_REQUEST_METHOD_GET,
-                :headers => {
-                    // docs say you can do this (or ommit it), but i found its not sent, or is sent as application/x-www-form-urlencoded when using HTTP_RESPONSE_CONTENT_TYPE_JSON
-                    // "Content-Type" => Communications.HTTP_RESPONSE_CONTENT_TYPE_JSON,
-                    // my local server does not like content type being supplied when its a get or post
-                    // the android server does not seem to get
-                    // "Content-Type" => "application/json",
-                },
-                :responseType => Communications.HTTP_RESPONSE_CONTENT_TYPE_JSON,
-            }, // options
-            // see https://forums.garmin.com/developer/connect-iq/f/discussion/2289/documentation-clarification-object-method-and-lang-method
-            callback
-        );
     }
 
     function clearStats() as Void {
