@@ -209,48 +209,67 @@ class NumberPicker {
 }
 
 (:settingsView)
-class FloatPicker extends NumberPicker {
-    var defaultVal as Float;
-    function initialize(defaultVal as Float) {
+class SettingsFloatPicker extends NumberPicker {
+    private var callback as (Method(value as Float) as Void);
+    private var parent as Renderable;
+    private var defaultVal as Float;
+    function initialize(
+        callback as (Method(value as Float) as Void),
+        defaultVal as Float,
+        parent as Renderable
+    ) {
         NumberPicker.initialize("0123456789.", 10);
-        me.defaultVal = defaultVal;
+        self.defaultVal = defaultVal;
+        self.callback = callback;
+        self.parent = parent;
     }
 
     protected function onReading(value as String) as Void {
-        onValue(Settings.parseFloatRaw("key", value, defaultVal));
+        callback.invoke(Settings.parseFloatRaw("key", value, defaultVal));
+        parent.rerender();
     }
-
-    protected function onValue(value as Float?) as Void;
 }
 
 (:settingsView)
-class IntPicker extends NumberPicker {
-    var defaultVal as Number;
-    function initialize(defaultVal as Number) {
+class SettingsNumberPicker extends NumberPicker {
+    private var callback as (Method(value as Number) as Void);
+    private var parent as Renderable;
+    private var defaultVal as Number;
+
+    function initialize(
+        callback as (Method(value as Number) as Void),
+        defaultVal as Number,
+        parent as Renderable
+    ) {
         NumberPicker.initialize("-0123456789", 10);
-        me.defaultVal = defaultVal;
+        self.defaultVal = defaultVal;
+        self.callback = callback;
+        self.parent = parent;
     }
 
+    
     protected function onReading(value as String) as Void {
-        onValue(Settings.parseNumberRaw("key", value, defaultVal));
+        callback.invoke(Settings.parseNumberRaw("key", value, defaultVal));
+        parent.rerender();
     }
-
-    protected function onValue(value as Number?) as Void;
 }
 
 (:settingsView)
-class ColourPicker extends NumberPicker {
-    var defaultVal as Number;
-    function initialize(defaultVal as Number) {
+class SettingsColourPicker extends NumberPicker {
+    private var callback as (Method(value as Number) as Void);
+    private var parent as Renderable;
+    private var defaultVal as Number;
+    function initialize(callback as (Method(value as Number) as Void), defaultVal as Number, parent as Renderable) {
         NumberPicker.initialize("0123456789ABCDEF", 6);
-        me.defaultVal = defaultVal;
+        self.defaultVal = defaultVal;
+        self.callback = callback;
+        self.parent = parent;
     }
 
     protected function onReading(value as String) as Void {
-        onValue(Settings.parseColourRaw("key", value, defaultVal));
+        callback.invoke(Settings.parseColourRaw("key", value, defaultVal));
+        parent.rerender();
     }
-
-    protected function onValue(value as Number?) as Void;
 
     protected function backgroundColour(value as String) as Number {
         return Settings.parseColourRaw("key", value, Graphics.COLOR_BLACK);

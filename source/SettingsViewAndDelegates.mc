@@ -11,56 +11,12 @@ typedef Renderable as interface {
 };
 
 (:settingsView)
-class SettingsFloatPicker extends FloatPicker {
-    private var callback as Method;
-    public var parent as Renderable? = null;
-    function initialize(callback as Method, defaultVal as Float) {
-        FloatPicker.initialize(defaultVal);
-        self.callback = callback;
-    }
-
-    protected function onValue(value as Float?) as Void {
-        if (value == null) {
-            return;
-        }
-
-        callback.invoke(value);
-        var parentL = parent;
-        if (parentL != null) {
-            parentL.rerender();
-        }
-    }
-}
-
-(:settingsView)
-class SettingsNumberPicker extends IntPicker {
-    private var callback as Method;
-    public var parent as Renderable? = null;
-    function initialize(callback as Method, defaultVal as Number) {
-        IntPicker.initialize(defaultVal);
-        self.callback = callback;
-    }
-
-    protected function onValue(value as Number?) as Void {
-        if (value == null) {
-            return;
-        }
-
-        callback.invoke(value);
-        var parentL = parent;
-        if (parentL != null) {
-            parentL.rerender();
-        }
-    }
-}
-
-(:settingsView)
 class SettingsStringPicker extends MyTextPickerDelegate {
     private var callback as (Method(value as String) as Void);
-    public var parent as Renderable? = null;
+    public var parent as Renderable;
     function initialize(
         callback as (Method(value as String) as Void),
-        parent as Renderable?,
+        parent as Renderable,
         picker as TextPickerView
     ) {
         MyTextPickerDelegate.initialize(me.method(:onTextEntered), picker);
@@ -72,10 +28,7 @@ class SettingsStringPicker extends MyTextPickerDelegate {
         logT("onTextEntered: " + text);
 
         callback.invoke(text);
-        var parentL = parent;
-        if (parentL != null) {
-            parentL.rerender();
-        }
+        parent.rerender();
 
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         return true;
@@ -88,33 +41,9 @@ class SettingsStringPicker extends MyTextPickerDelegate {
 }
 
 (:settingsView)
-class SettingsColourPicker extends ColourPicker {
-    private var callback as Method;
-    public var parent as Renderable? = null;
-    function initialize(callback as Method, defaultVal as Number) {
-        ColourPicker.initialize(defaultVal);
-        self.callback = callback;
-    }
-
-    protected function onValue(value as Number?) as Void {
-        if (value == null) {
-            return;
-        }
-
-        callback.invoke(value);
-        var parentL = parent;
-        if (parentL != null) {
-            parentL.rerender();
-        }
-    }
-}
-
-(:settingsView)
 function startPicker(
-    picker as SettingsFloatPicker or SettingsColourPicker or SettingsNumberPicker,
-    parent as Renderable
+    picker as SettingsFloatPicker or SettingsColourPicker or SettingsNumberPicker
 ) as Void {
-    picker.parent = parent;
     WatchUi.pushView(
         new $.NumberPickerView(picker),
         new $.NumberPickerDelegate(picker),
@@ -878,9 +807,9 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setRecalculateIntervalS),
-                    settings.recalculateIntervalS
-                ),
-                view
+                    settings.recalculateIntervalS,
+                    view
+                )
             );
         } else if (itemId == :settingsMainRenderMode) {
             WatchUi.pushView(
@@ -892,9 +821,9 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(
                 new SettingsFloatPicker(
                     settings.method(:setCenterUserOffsetY),
-                    settings.centerUserOffsetY
-                ),
-                view
+                    settings.centerUserOffsetY,
+                    view
+                )
             );
         } else if (itemId == :settingsMainDisplayLatLong) {
             settings.toggleDisplayLatLong();
@@ -903,9 +832,9 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setMaxTrackPoints),
-                    settings.maxTrackPoints
-                ),
-                view
+                    settings.maxTrackPoints,
+                    view
+                )
             );
         } else if (itemId == :settingsMainZoomAtPace) {
             var view = new $.SettingsZoomAtPace();
@@ -1400,17 +1329,17 @@ class SettingsZoomAtPaceDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setMetersAroundUser),
-                    settings.metersAroundUser
-                ),
-                view
+                    settings.metersAroundUser,
+                    view
+                )
             );
         } else if (itemId == :settingsZoomAtPaceMPS) {
             startPicker(
                 new SettingsFloatPicker(
                     settings.method(:setZoomAtPaceSpeedMPS),
-                    settings.zoomAtPaceSpeedMPS
-                ),
-                view
+                    settings.zoomAtPaceSpeedMPS,
+                    view
+                )
             );
         }
     }
@@ -1453,7 +1382,7 @@ class SettingsRoutesDelegate extends WatchUi.Menu2InputDelegate {
             settings.toggleDisplayRouteNames();
             view.rerender();
         } else if (itemId == :settingsDisplayRouteMax) {
-            startPicker(new SettingsNumberPicker(method(:setRouteMax), settings.routeMax()), view);
+            startPicker(new SettingsNumberPicker(method(:setRouteMax), settings.routeMax(), view));
         } else if (itemId == :settingsRoutesClearAll) {
             var dialog = new WatchUi.Confirmation(
                 WatchUi.loadResource(Rez.Strings.clearRoutes1) as String
@@ -1510,8 +1439,7 @@ class SettingsRouteDelegate extends WatchUi.Menu2InputDelegate {
             view.rerender();
         } else if (itemId == :settingsRouteColour) {
             startPicker(
-                new SettingsColourPicker(view.method(:setColour), view.routeColour()),
-                view
+                new SettingsColourPicker(view.method(:setColour), view.routeColour(), view)
             );
         } else if (itemId == :settingsRouteDelete) {
             var dialog = new WatchUi.Confirmation(
@@ -1576,67 +1504,67 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setTileCacheSize),
-                    settings.tileCacheSize
-                ),
-                view
+                    settings.tileCacheSize,
+                    view
+                )
             );
         } else if (itemId == :settingsMapTileCachePadding) {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setTileCachePadding),
-                    settings.tileCachePadding
-                ),
-                view
+                    settings.tileCachePadding,
+                    view
+                )
             );
         } else if (itemId == :settingsMapMaxPendingWebRequests) {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setMaxPendingWebRequests),
-                    settings.maxPendingWebRequests
-                ),
-                view
+                    settings.maxPendingWebRequests,
+                    view
+                )
             );
         } else if (itemId == :settingsMapDisableMapsFailureCount) {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setDisableMapsFailureCount),
-                    settings.disableMapsFailureCount
-                ),
-                view
+                    settings.disableMapsFailureCount,
+                    view
+                )
             );
         } else if (itemId == :settingsMapHttpErrorTileTTLS) {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setHttpErrorTileTTLS),
-                    settings.httpErrorTileTTLS
-                ),
-                view
+                    settings.httpErrorTileTTLS,
+                    view
+                )
             );
         } else if (itemId == :settingsMapErrorTileTTLS) {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setErrorTileTTLS),
-                    settings.errorTileTTLS
-                ),
-                view
+                    settings.errorTileTTLS,
+                    view
+                )
             );
         } else if (itemId == :settingsMapFixedLatitude) {
             var fixedLatitude = settings.fixedLatitude;
             startPicker(
                 new SettingsFloatPicker(
                     settings.method(:setFixedLatitude),
-                    fixedLatitude != null ? fixedLatitude : 0f
-                ),
-                view
+                    fixedLatitude != null ? fixedLatitude : 0f,
+                    view
+                )
             );
         } else if (itemId == :settingsMapFixedLongitude) {
             var fixedLongitude = settings.fixedLongitude;
             startPicker(
                 new SettingsFloatPicker(
                     settings.method(:setFixedLongitude),
-                    fixedLongitude != null ? fixedLongitude : 0f
-                ),
-                view
+                    fixedLongitude != null ? fixedLongitude : 0f,
+                    view
+                )
             );
         } else if (itemId == :settingsMapScaleRestrictedToTileLayers) {
             settings.toggleScaleRestrictedToTileLayers();
@@ -1660,9 +1588,9 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(
                 new SettingsFloatPicker(
                     settings.method(:setMapMoveScreenSize),
-                    settings.mapMoveScreenSize
-                ),
-                view
+                    settings.mapMoveScreenSize,
+                    view
+                )
             );
         } else if (itemId == :settingsMapStorageSettings) {
             var view = new SettingsMapStorage();
@@ -1700,31 +1628,39 @@ class SettingsTileServerDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(pickerView, picker, WatchUi.SLIDE_IMMEDIATE);
         } else if (itemId == :settingsMapTileSize) {
             startPicker(
-                new SettingsNumberPicker(settings.method(:setTileSize), settings.tileSize),
-                view
+                new SettingsNumberPicker(settings.method(:setTileSize), settings.tileSize, view)
             );
         } else if (itemId == :settingsMapFullTileSize) {
             startPicker(
-                new SettingsNumberPicker(settings.method(:setFullTileSize), settings.fullTileSize),
-                view
+                new SettingsNumberPicker(
+                    settings.method(:setFullTileSize),
+                    settings.fullTileSize,
+                    view
+                )
             );
         } else if (itemId == :settingsMapScaledTileSize) {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setScaledTileSize),
-                    settings.scaledTileSize
-                ),
-                view
+                    settings.scaledTileSize,
+                    view
+                )
             );
         } else if (itemId == :settingsMapTileLayerMax) {
             startPicker(
-                new SettingsNumberPicker(settings.method(:setTileLayerMax), settings.tileLayerMax),
-                view
+                new SettingsNumberPicker(
+                    settings.method(:setTileLayerMax),
+                    settings.tileLayerMax,
+                    view
+                )
             );
         } else if (itemId == :settingsMapTileLayerMin) {
             startPicker(
-                new SettingsNumberPicker(settings.method(:setTileLayerMin), settings.tileLayerMin),
-                view
+                new SettingsNumberPicker(
+                    settings.method(:setTileLayerMin),
+                    settings.tileLayerMin,
+                    view
+                )
             );
         }
     }
@@ -1753,25 +1689,25 @@ class SettingsMapStorageDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setStorageTileCacheSize),
-                    settings.storageTileCacheSize
-                ),
-                view
+                    settings.storageTileCacheSize,
+                    view
+                )
             );
         } else if (itemId == :settingsMapStorageStorageTileCachePageCount) {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setStorageTileCachePageCount),
-                    settings.storageTileCachePageCount
-                ),
-                view
+                    settings.storageTileCachePageCount,
+                    view
+                )
             );
         } else if (itemId == :settingsMapStorageStorageSeedRouteDistanceM) {
             startPicker(
                 new SettingsFloatPicker(
                     settings.method(:setStorageSeedRouteDistanceM),
-                    settings.storageSeedRouteDistanceM
-                ),
-                view
+                    settings.storageSeedRouteDistanceM,
+                    view
+                )
             );
         } else if (itemId == :settingsMapStorageCacheCurrentArea) {
             var dialog = new WatchUi.Confirmation(
@@ -1856,30 +1792,33 @@ function onSelectAlertCommon(
         startPicker(
             new SettingsNumberPicker(
                 settings.method(:setOffTrackAlertsDistanceM),
-                settings.offTrackAlertsDistanceM
-            ),
-            view
+                settings.offTrackAlertsDistanceM,
+                view
+            )
         );
     } else if (itemId == :settingsAlertsTurnAlertTimeS) {
         startPicker(
-            new SettingsNumberPicker(settings.method(:setTurnAlertTimeS), settings.turnAlertTimeS),
-            view
+            new SettingsNumberPicker(
+                settings.method(:setTurnAlertTimeS),
+                settings.turnAlertTimeS,
+                view
+            )
         );
     } else if (itemId == :settingsAlertsMinTurnAlertDistanceM) {
         startPicker(
             new SettingsNumberPicker(
                 settings.method(:setMinTurnAlertDistanceM),
-                settings.minTurnAlertDistanceM
-            ),
-            view
+                settings.minTurnAlertDistanceM,
+                view
+            )
         );
     } else if (itemId == :settingsAlertsOffTrackCheckIntervalS) {
         startPicker(
             new SettingsNumberPicker(
                 settings.method(:setOffTrackCheckIntervalS),
-                settings.offTrackCheckIntervalS
-            ),
-            view
+                settings.offTrackCheckIntervalS,
+                view
+            )
         );
     } else if (itemId == :settingsAlertsAlertType) {
         WatchUi.pushView(
@@ -1905,9 +1844,9 @@ class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setOffTrackAlertsMaxReportIntervalS),
-                    settings.offTrackAlertsMaxReportIntervalS
-                ),
-                view
+                    settings.offTrackAlertsMaxReportIntervalS,
+                    view
+                )
             );
             return;
         }
@@ -1979,47 +1918,51 @@ class SettingsColoursDelegate extends WatchUi.Menu2InputDelegate {
         var itemId = item.getId();
         if (itemId == :settingsColoursTrackColour) {
             startPicker(
-                new SettingsColourPicker(settings.method(:setTrackColour), settings.trackColour),
-                view
+                new SettingsColourPicker(
+                    settings.method(:setTrackColour),
+                    settings.trackColour,
+                    view
+                )
             );
         } else if (itemId == :settingsColoursDefaultRouteColour) {
             startPicker(
                 new SettingsColourPicker(
                     settings.method(:setDefaultRouteColour),
-                    settings.defaultRouteColour
-                ),
-                view
+                    settings.defaultRouteColour,
+                    view
+                )
             );
         } else if (itemId == :settingsColoursElevationColour) {
             startPicker(
                 new SettingsColourPicker(
                     settings.method(:setElevationColour),
-                    settings.elevationColour
-                ),
-                view
+                    settings.elevationColour,
+                    view
+                )
             );
         } else if (itemId == :settingsColoursUserColour) {
             startPicker(
-                new SettingsColourPicker(settings.method(:setUserColour), settings.userColour),
-                view
+                new SettingsColourPicker(settings.method(:setUserColour), settings.userColour, view)
             );
         } else if (itemId == :settingsColoursNormalModeColour) {
             startPicker(
                 new SettingsColourPicker(
                     settings.method(:setNormalModeColour),
-                    settings.normalModeColour
-                ),
-                view
+                    settings.normalModeColour,
+                    view
+                )
             );
         } else if (itemId == :settingsColoursUiColour) {
             startPicker(
-                new SettingsColourPicker(settings.method(:setUiColour), settings.uiColour),
-                view
+                new SettingsColourPicker(settings.method(:setUiColour), settings.uiColour, view)
             );
         } else if (itemId == :settingsColoursDebugColour) {
             startPicker(
-                new SettingsColourPicker(settings.method(:setDebugColour), settings.debugColour),
-                view
+                new SettingsColourPicker(
+                    settings.method(:setDebugColour),
+                    settings.debugColour,
+                    view
+                )
             );
         }
     }
@@ -2039,9 +1982,9 @@ class SettingsDebugDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(
                 new SettingsColourPicker(
                     settings.method(:setTileErrorColour),
-                    settings.tileErrorColour
-                ),
-                view
+                    settings.tileErrorColour,
+                    view
+                )
             );
         } else if (itemId == :settingsDebugShowPoints) {
             settings.toggleShowPoints();
@@ -2068,9 +2011,9 @@ class SettingsDebugDelegate extends WatchUi.Menu2InputDelegate {
             startPicker(
                 new SettingsNumberPicker(
                     settings.method(:setShowDirectionPointTextUnderIndex),
-                    settings.showDirectionPointTextUnderIndex
-                ),
-                view
+                    settings.showDirectionPointTextUnderIndex,
+                    view
+                )
             );
         }
     }
