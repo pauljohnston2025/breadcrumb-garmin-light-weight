@@ -236,6 +236,13 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                     );
                 }
 
+                if (rawData.size() >= 4) {
+                    _breadcrumbContext.tileCache.updatePalette(
+                        rawData[2] as Number?,
+                        rawData[3] as Array?
+                    );
+                }
+
                 return;
             } else if (type == PROTOCOL_CACHE_CURRENT_AREA) {
                 // use to just be PROTOCOL_DROP_TILE_CACHE
