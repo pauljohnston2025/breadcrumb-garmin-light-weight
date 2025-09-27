@@ -1488,6 +1488,11 @@ class Settings {
         routes = [];
         saveRoutes();
     }
+    
+    function storageCleared() as Void {
+        // routes are already cleared seperately through context
+        safeSetStorage("lastMapChoice", mapChoice); // make sure we do not reload our map choice
+    }
 
     function clearRoute(routeId as Number) as Void {
         var routeIndex = getRouteIndexById(routeId);

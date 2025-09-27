@@ -934,6 +934,7 @@ class ClearStorageDelegate extends WatchUi.ConfirmationDelegate {
             getApp()._breadcrumbContext.tileCache._storageTileCache.reset(); // reload our tile storage class
             getApp()._breadcrumbContext.tileCache.clearValues(); // also clear the tile cache, it case it pulled from our storage
             getApp()._breadcrumbContext.clearRoutes(); // also clear the routes to mimic storage being removed
+            getApp()._breadcrumbContext.settings.storageCleared();
         }
 
         return true; // we always handle it
