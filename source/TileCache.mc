@@ -1050,7 +1050,7 @@ class StorageTileCache {
 
             // keep our tracking up to date
             saveCurrentPage();
-            safeSetStorage("totalTileCount", _totalTileCount); 
+            safeSetStorage("totalTileCount", _totalTileCount);
 
             logT("Evicted tile " + oldestKey + " from page " + _currentPageIndex);
         }
@@ -1302,17 +1302,19 @@ class TileCache {
             _tileCacheVersion,
             onlySeedStorage
         );
-        var tileFromStorage = _storageTileCache.get(fullSizeTileStr);
-        if (tileFromStorage != null) {
-            var responseCode = tileFromStorage[0];
-            // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
-            if (responseCode != 200) {
-                imageReqHandler.handleErroredTile(responseCode);
+        if (_settings.storageMapTilesOnly || _settings.cacheTilesInStorage) {
+            var tileFromStorage = _storageTileCache.get(fullSizeTileStr);
+            if (tileFromStorage != null) {
+                var responseCode = tileFromStorage[0];
+                // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
+                if (responseCode != 200) {
+                    imageReqHandler.handleErroredTile(responseCode);
+                    return true;
+                }
+                // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
+                imageReqHandler.handleSuccessfulTile(tileFromStorage[1] as BitmapResource?, false);
                 return true;
             }
-            // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
-            imageReqHandler.handleSuccessfulTile(tileFromStorage[1] as BitmapResource?, false);
-            return true;
         }
         if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
             // we are running in storage only mode, but the tile is not in the cache
@@ -1371,17 +1373,19 @@ class TileCache {
             _tileCacheVersion,
             onlySeedStorage
         );
-        var tileFromStorage = _storageTileCache.get(tileKeyStr);
-        if (tileFromStorage != null) {
-            var responseCode = tileFromStorage[0];
-            // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
-            if (responseCode != 200) {
-                jsonWebHandler.handleErroredTile(responseCode);
+        if (_settings.storageMapTilesOnly || _settings.cacheTilesInStorage) {
+            var tileFromStorage = _storageTileCache.get(tileKeyStr);
+            if (tileFromStorage != null) {
+                var responseCode = tileFromStorage[0];
+                // logD("image tile loaded from storage: " + tileKey + " with result: " + responseCode);
+                if (responseCode != 200) {
+                    jsonWebHandler.handleErroredTile(responseCode);
+                    return true;
+                }
+                // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
+                jsonWebHandler.handleSuccessfulTile(tileFromStorage[1] as Dictionary?, false);
                 return true;
             }
-            // only handle successful tiles for now, maybe we should handle some other errors (404, 403 etc)
-            jsonWebHandler.handleSuccessfulTile(tileFromStorage[1] as Dictionary?, false);
-            return true;
         }
         if (_settings.storageMapTilesOnly && !_cachedValues.seeding()) {
             // we are running in storage only mode, but the tile is not in the cache

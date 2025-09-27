@@ -1015,6 +1015,11 @@ class CachedValues {
             return;
         }
 
+        if (!_settings.storageMapTilesOnly && !_settings.cacheTilesInStorage) {
+            // storage tiles are not enabled, do not allow seeding
+            return;
+        }
+
         var tileCache = getApp()._breadcrumbContext.tileCache;
         // If we do not clear the in memory tile cache the image tiles sometimes cause us to crash.
         // Think its because the graphics pool runs out of memory, and makeImageRequest fails with
@@ -1365,7 +1370,10 @@ class CachedValues {
         if (seedingZ < 0) {
             // we are just waiting on the last few to finish
             var size = seedingInProgressTiles.size();
-            return [size.toString() + " remaining", (MAX_TILES_AT_A_TIME - size) / MAX_TILES_AT_A_TIME.toFloat()];
+            return [
+                size.toString() + " remaining",
+                (MAX_TILES_AT_A_TIME - size) / MAX_TILES_AT_A_TIME.toFloat(),
+            ];
         }
 
         if (_settings.storageSeedBoundingBox) {

@@ -1294,14 +1294,16 @@ class BreadcrumbRenderer {
         var physicalScreenWidth = _cachedValues.physicalScreenWidth; // local lookup faster
         var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
 
-        // right of screen
-        dc.drawText(
-            physicalScreenWidth - halfHitboxSize,
-            yHalfPhysical,
-            Graphics.FONT_XTINY,
-            "G",
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-        );
+        if (settings.storageMapTilesOnly || settings.cacheTilesInStorage) {
+            // right of screen
+            dc.drawText(
+                physicalScreenWidth - halfHitboxSize,
+                yHalfPhysical,
+                Graphics.FONT_XTINY,
+                "G",
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            );
+        }
     }
 
     (:noDrawHitBoxes)

@@ -394,7 +394,7 @@ class Settings {
     var elevationMode as Number = ELEVATION_MODE_STACKED;
     var mapEnabled as Boolean = false;
     // cache the tiles in storage when they are loaded, allows for fully offline maps
-    // unfortunately bufferred bitmaps cannot be stored into storage (resources and BitMapResources can be, but not the buffered kind)
+    // unfortunately buffered bitmaps cannot be stored into storage (resources and BitMapResources can be, but not the buffered kind)
     // so we need to store the result of makeImageRequest or makeWebRequest
     var cacheTilesInStorage as Boolean = false;
     var storageMapTilesOnly as Boolean = false;
