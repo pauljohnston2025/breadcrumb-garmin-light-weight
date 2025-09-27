@@ -108,7 +108,7 @@ class ImageRequest {
     }
 
     function start(webRequestHandler as WebRequestHandler, settings as Settings) as Void {
-// logT("sending image request");
+        // logT("sending image request");
         var callback =
             (new WebRequestHandleWrapper(webRequestHandler, handler, hash)).method(:handle) as
             (Method
@@ -314,16 +314,13 @@ class WebRequestHandler {
         pendingTransmit.add([content, options, listener]);
     }
 
-    function add(webReq as WebRequest) as Void {
-        // todo remove old requests if we get too many (slow network and requests too often mean the internal array grows and we OOM)
-        // hard to know if there is one outstanding though, also need to startNext() on a timer if we have not seen any requests in a while
-        if (pending.size() > _settings.maxPendingWebRequests) {
-            // we have too many, don't try and get the tile
-            // we should try and dedupe - as its making a request for the same tile twice (2 renders cause 2 requests)
-            // logE("Too many pending requests dropping: " + jsonReq.hash);
-            return;
-        }
-
+    // highPriority queries must be sent, and they must be sent first
+    // always adds (if not already present)
+    // it's currently still queued up in the order it sent to make adding simpler and consistent, monkeyc also has no insertAtFont() type method
+    // so we would have to build a new array (and then copy all elements) and we have to do this twice, for pending and pendingHashes
+    // not worth it since its only when a tile server setting changes, and maxPendingWebRequests should be low enough that we eventually get to the task
+    // this method just guarantees it is sent, and not dropped based on maxPendingWebRequests logic (because we could starve ourselves out, and never send things that must be sent)
+    function addHighPriority(webReq as WebRequest) {
         var hash = webReq.hash;
         if (pendingHashes.indexOf(hash) > -1) {
             // logD("Dropping req for: " + hash);
@@ -351,6 +348,19 @@ class WebRequestHandler {
         // stack overflow comes when it completes immediately, and calls into handle
         // see report at end of TileCache.mc
         // startNextIfWeCan();
+    }
+
+    function add(webReq as WebRequest) as Void {
+        // todo remove old requests if we get too many (slow network and requests too often mean the internal array grows and we OOM)
+        // hard to know if there is one outstanding though, also need to startNext() on a timer if we have not seen any requests in a while
+        if (pending.size() > _settings.maxPendingWebRequests) {
+            // we have too many, don't try and get the tile
+            // we should try and dedupe - as its making a request for the same tile twice (2 renders cause 2 requests)
+            // logE("Too many pending requests dropping: " + jsonReq.hash);
+            return;
+        }
+
+        addHighPriority(webReq);
     }
 
     function startNextIfWeCan() as Boolean {

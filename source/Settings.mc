@@ -784,7 +784,7 @@ class Settings {
         }
 
         // grab the min and max from the tile server
-        getApp()._breadcrumbContext.webRequestHandler.add(
+        getApp()._breadcrumbContext.webRequestHandler.addHighPriority(
             new JsonRequest(
                 "TUH-" + mapChoiceVersion,
                 tileUrl + "/tileServerDetails",

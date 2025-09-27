@@ -1556,7 +1556,7 @@ class TileCache {
         // if we are still null after a load, we need to lad the palette from the tile server on the phone
         logD("loading TilePalette from web");
         var jsonTileHandler = new JsonPelletLoadHandler(me);
-        _webRequestHandler.add(
+        _webRequestHandler.addHighPriority(
             new JsonRequest(
                 "getTilePalette",
                 _settings.tileUrl + "/getTilePalette",
