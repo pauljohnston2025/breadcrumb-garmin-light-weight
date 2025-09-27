@@ -447,8 +447,7 @@ If we set `<Storage Tile Page Count (pages)> = 1` we will have a large memory co
 
 If we set `<Storage Tile Page Count (pages)> = 5` we should be able to effectively increase the number of stored tiles by 5X, since we only need to load a portion of them into memory each time. Note the max `Storage Tile Cache Size` is still capped by the maximum storage size allowed per device, normally on the order of Mb, **NOT** Gb. This memory saving is not free though, as we need more io and cpu power to process 5 different pages, and need to load the page for the tile we are requesting (so switching out pages could happen quite often).
 
-Smaller values of `<Storage Tile Page Count (pages)>` should be better than larger, as we will need to do less io to get the page if we already have it, but may crash due to memory issues.
-
+On the venu 2s I can easily get up to 1200 storage tiles if I use 10 pages. The caching speed is limited by the ble performance, it can easily take ~20minutes to seed 1200 tiles (and it will also churn through a lot of battery doing so). Larger storage will be a benefit to users that use the same area regularly, as they will slowly build up a cache if [Store Tiles For Offline Use](#store-tiles-for-offline-use) is enabled. When caching an area for a route [Seed Entire Bounding Box](#storage-seed-bounding-box) = false is still preferred, so that only the tiles needed are downloaded.
 
 ### Storage Seed Bounding Box
 
