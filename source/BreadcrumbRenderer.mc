@@ -1090,7 +1090,7 @@ class BreadcrumbRenderer {
 
         // Information text on top of progress bar
         dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
-        var pagesStr = "\npages: ";
+        var pagesStr = "\nPages: ";
         for (var i = 0; i < breadcrumbContext.tileCache._storageTileCache._pageCount; i++) {
             if (i != 0) {
                 pagesStr += ", ";
@@ -1106,13 +1106,13 @@ class BreadcrumbRenderer {
             yHalfPhysical,
             Graphics.FONT_XTINY,
             tileLayerStr +
-                " ...\n" +
+                "\n" +
                 seedingProgress[0] +
-                "\npending web: " +
+                "\nPending Web: " +
                 breadcrumbContext.webRequestHandler.pending.size() +
-                " running: " +
+                " Running: " +
                 breadcrumbContext.webRequestHandler._outstandingCount +
-                "\n storage: " +
+                "\n Storage: " +
                 breadcrumbContext.tileCache._storageTileCache._totalTileCount +
                 "/" +
                 settings.storageTileCacheSize +
@@ -1126,7 +1126,7 @@ class BreadcrumbRenderer {
                 "K f: " +
                 (System.getSystemStats().freeMemory / 1024f).format("%.1f") +
                 "K" +
-                "\nlast web res: " +
+                "\nLast Web Res: " +
                 breadcrumbContext.webRequestHandler._lastResult,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );

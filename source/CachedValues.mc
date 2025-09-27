@@ -1448,7 +1448,7 @@ class CachedValues {
                 (seedingLastTileX - seedingFirstTileX) +
                 " X " +
                 (seedingLastTileY - seedingFirstTileY) +
-                " tiles (" +
+                " Tiles (" +
                 _settings.storageSeedRouteDistanceM.format("%.1f") +
                 "m)",
             overallProgress,
