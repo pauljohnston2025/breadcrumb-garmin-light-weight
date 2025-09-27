@@ -1073,23 +1073,10 @@ class StorageTileCache {
     }
 
     private function deleteByMetaData(key as String) as Void {
-        var metaKeyStr = metaKey(key);
-        var metaData = Storage.getValue(metaKeyStr);
-        Storage.deleteValue(metaKeyStr);
-
-        if (metaData == null || !(metaData instanceof Array) || metaData.size() < 2) {
-            return;
-        }
-
-        switch (metaData[1] as Number) {
-            case STORAGE_TILE_TYPE_DICT:
-            case STORAGE_TILE_TYPE_BITMAP: // fallthrough
-                Storage.deleteValue(tileKey(key));
-                break;
-            case STORAGE_TILE_TYPE_ERRORED:
-                // noop its just the meta key
-                break;
-        }
+        // all tile types are just stored as a single key and metadata now
+        // so just delete both, even if they are not there (some meta data stores 'errored tiles', and they do not have a tile, but its faster to assume it does rather than read then delete)
+        Storage.deleteValue(metaKey(key));
+        Storage.deleteValue(tileKey(key));
     }
 
     // if this setting is changed whist the app is not running it will leave tile dangling in storage, and we have no way to know they are there, so guess thats up to the user to clear the storage
