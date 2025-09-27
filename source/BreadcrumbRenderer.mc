@@ -1091,7 +1091,7 @@ class BreadcrumbRenderer {
         // Information text on top of progress bar
         dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
         var pagesStr = "\nPages: ";
-        for (var i = 0; i < breadcrumbContext.tileCache._storageTileCache._pageCount; i++) {
+        for (var i = 0; i < breadcrumbContext.tileCache._storageTileCache._pageSizes.size(); i++) {
             if (i != 0) {
                 pagesStr += ", ";
             }

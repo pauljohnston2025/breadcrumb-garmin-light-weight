@@ -88,8 +88,7 @@ class JsonWebTileRequestHandler {
         tileKeyStr as String,
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
-    ) {
-    }
+    ) {}
 
     function handle(
         responseCode as Number,
@@ -302,8 +301,7 @@ class JsonWebTileRequestHandler {
 
 (:noCompanionTiles)
 class JsonPelletLoadHandler {
-    function initialize(tileCache as TileCache) {
-    }
+    function initialize(tileCache as TileCache) {}
 
     function handle(
         responseCode as Number,
@@ -370,8 +368,7 @@ class ImageWebTileRequestHandler {
         fullTileKeyStr as String,
         tileCacheVersion as Number,
         onlySeedStorage as Boolean
-    ) {
-    }
+    ) {}
 
     function handle(
         responseCode as Number,
@@ -614,12 +611,13 @@ typedef StorageTileDataType as [Number, Dictionary or WatchUi.BitmapResource or 
 
 (:noStorage)
 class StorageTileCache {
+    var _pageCount as Number = 0;
+    var _totalTileCount as Number = 0;
+    var _pageSizes as Array<Number> = [0];
     function initialize(settings as Settings, cachedValues as CachedValues) {}
     function setup() as Void {}
 
-    function get(
-        tileKeyStr as String
-    ) as StorageTileDataType? {
+    function get(tileKeyStr as String) as StorageTileDataType? {
         return null;
     }
     function haveTile(tileKeyStr as String) as Boolean {
@@ -653,6 +651,7 @@ class StorageTileCache {
         bitmap as WatchUi.BitmapResource
     ) as Void {}
     function clearValues() as Void {}
+    function setNewPageCount(newPageCount as Number) as Void {}
 }
 
 (:storage)
@@ -684,10 +683,8 @@ class StorageTileCache {
 
         // Instead of loading all keys, we load the total count of tiles across all pages.
         var totalCount = Storage.getValue("totalTileCount");
-        if (totalCount != null) {
-            _totalTileCount = totalCount as Number;
-        } else {
-            _totalTileCount = 0;
+        if (totalCount instanceof Number) {
+            _totalTileCount = totalCount;
         }
     }
 
@@ -696,7 +693,7 @@ class StorageTileCache {
             _pageCount = 1;
         }
         _pageSizes = new [_pageCount] as Array<Number>;
-        for (var i = 0; i < _pageCount; i++) {
+        for (var i = 0; i < _pageSizes.size(); i++) {
             _pageSizes[i] = 0;
         }
 
@@ -720,7 +717,7 @@ class StorageTileCache {
     }
 
     private function populateInitialPageSizes() as Void {
-        for (var i = 0; i < _pageCount; i++) {
+        for (var i = 0; i < _pageSizes.size(); i++) {
             loadPage(i);
             _pageSizes[i] = _currentPageKeys.size();
         }
@@ -765,17 +762,9 @@ class StorageTileCache {
 
         // Use bitwise shifting to pack z, gridY, and gridX into a single 64-bit Long.
         // This is extremely robust and avoids "magic number" multipliers that can fail
-        // with large coordinates. It creates a unique, sequential ID for each block.
-        // We allocate bits for each component:
-        // - z (zoom): 5 bits (up to zoom 31)
-        // - gridY: 29 bits
-        // - gridX: 30 bits
-        // This structure ensures that changes in gridX are the most granular, followed
-        // by gridY, perfectly matching the 'for y { for x { ... } }' access pattern.
+        // with large coordinates.
         var combinedId = (z.toLong() << 59) | (y.toLong() << 30) | x.toLong();
 
-        // The modulo maps the sequential block IDs across the available pages.
-        // Because the ID is sequential, adjacent blocks will likely be on the same page.
         var res = absN((combinedId % _pageCount).toNumber());
         // logT("tile: " + x + "-" + y + "-" + z + " page: " + res);
         return res;
@@ -789,14 +778,10 @@ class StorageTileCache {
         return TILES_TILE_PREFIX + tileKeyStr;
     }
 
-    function loadIfSinglePage() as Void {}
-
-    function get(
-        tileKeyStr as String
-    ) as StorageTileDataType? {
+    function get(tileKeyStr as String) as StorageTileDataType? {
         // if we are only a single page, load and do a quicker check (it should already be loaded)
-        // if we are a multi page, we will spend more time loading the page then we would the meta dta key, so just load the meta data
-        if (_totalTileCount == 1) {
+        // if we are a multi page, we will spend more time loading the page then we would the meta data key, so just load the meta data
+        if (_pageCount == 1) {
             loadPage(0);
             if (_currentPageKeys.indexOf(tileKeyStr) < 0) {
                 // we do not have the tile key
@@ -847,10 +832,10 @@ class StorageTileCache {
     function haveTile(tileKeyStr as String) as Boolean {
         // need to check for expired tiles
         // we could call get, but that also loads the tile data, and increments the "lastUsed" time
-        
+
         // if we are only a single page, load and do a quicker check (it should already be loaded)
-        // if we are a multi page, we will spend more time loading the page then we would the meta dta key, so just load the meta data
-        if (_totalTileCount == 1) {
+        // if we are a multi page, we will spend more time loading the page then we would the meta data key, so just load the meta data
+        if (_pageCount == 1) {
             loadPage(0);
             if (_currentPageKeys.indexOf(tileKeyStr) < 0) {
                 // we do not have the tile key
@@ -957,10 +942,13 @@ class StorageTileCache {
 
         // This is a new tile.
         _currentPageKeys.add(tileKeyStr);
-        _pageSizes[pageIndex]++;
+        var _currentPageSize = 0;
+        if (pageIndex >= 0 && pageIndex < _pageSizes.size()) {
+            // never meant to not be within range, but monkeyc explodes if it isn't
+            _pageSizes[pageIndex]++;
+            _currentPageSize = _pageSizes[pageIndex];
+        }
         _totalTileCount++;
-        // If keyIndex is not -1, it's an existing tile being updated.
-        // We still proceed to save its new metadata below.
 
         try {
             // update our tracking first, we do not want to loose tiles because we stored them, but could then not update the tracking
@@ -987,7 +975,7 @@ class StorageTileCache {
         }
 
         // Check if this page is getting too large, and evict its oldest tile.
-        if (_pageSizes[pageIndex] >= _maxPageSize) {
+        if (_currentPageSize >= _maxPageSize) {
             evictOldestTileFromPage();
         }
 
@@ -1000,7 +988,7 @@ class StorageTileCache {
         return true;
     }
 
-    private function safeAdd(key as String, data as PropertyValueType) as Boolean {
+    private function safeAdd(key as String, data as PropertyValueType) as Void {
         try {
             Storage.setValue(key, data);
         } catch (e) {
@@ -1012,23 +1000,18 @@ class StorageTileCache {
 
                 logE("tile storage full: " + e.getErrorMessage());
                 evictLeastRecentlyUsedTile();
-                return false;
+                return;
             }
 
             logE("failed tile storage add: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
         }
-        return true;
     }
 
     private function evictOldestTileFromPage() as Void {
         if (_currentPageIndex < 0 || _currentPageIndex >= _pageSizes.size()) {
             logE("evicting from page thats not loaded");
             return;
-        }
-
-        if (_currentPageKeys.size() == 0) {
-            return; // Nothing to evict.
         }
 
         var oldestTime = null;
@@ -1064,7 +1047,11 @@ class StorageTileCache {
             _currentPageKeys.remove(oldestKey);
             _pageSizes[_currentPageIndex]--;
             _totalTileCount--;
-            // The calling function is responsible for saving the page and total count.
+
+            // keep our tracking up to date
+            saveCurrentPage();
+            safeSetStorage("totalTileCount", _totalTileCount); 
+
             logT("Evicted tile " + oldestKey + " from page " + _currentPageIndex);
         }
     }
@@ -1120,8 +1107,6 @@ class StorageTileCache {
         pageCountUpdated();
     }
 
-    function ignoredProgress(value as Float) as Void {}
-
     function reset() as Void {
         // called when storage is purged underneath us, we just need to reset our state rather than do the for loop
         clearValues(); // should be fairly fast unless we happen to be on page 0 - in which case it will try and delete by meta data, which will not be queryable, but it handles that, so a single for loop worst case.
@@ -1141,7 +1126,7 @@ class StorageTileCache {
         _currentPageIndex = -1;
         _totalTileCount = 0;
         Storage.deleteValue("totalTileCount");
-        for (var i = 0; i < _pageCount; i++) {
+        for (var i = 0; i < _pageSizes.size(); i++) {
             _pageSizes[i] = 0;
         }
     }

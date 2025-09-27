@@ -1326,7 +1326,7 @@ class CachedValues {
         var keys = seedingInProgressTiles.keys();
         for (var i = 0; i < seedingInProgressTiles.size(); ++i) {
             var key = keys[i];
-            var item = seedingInProgressTiles[key] as [Number, Number, Number];
+            // var item = seedingInProgressTiles[key] as [Number, Number, Number];
             // logT("checking if tile completed x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
 
             if (tileCache._storageTileCache.haveTile(key)) {

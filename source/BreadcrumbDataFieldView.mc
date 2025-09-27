@@ -986,7 +986,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         dc.drawText(x, y, Graphics.FONT_XTINY, combined, Graphics.TEXT_JUSTIFY_CENTER);
         y += spacing;
         var pagesStr = "ps: ";
-        for (var i = 0; i < _breadcrumbContext.tileCache._storageTileCache._pageCount; i++) {
+        for (var i = 0; i < _breadcrumbContext.tileCache._storageTileCache._pageSizes.size(); i++) {
             if (i != 0) {
                 pagesStr += ", ";
             }
