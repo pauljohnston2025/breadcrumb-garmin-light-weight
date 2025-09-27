@@ -338,9 +338,6 @@ class JsonPelletLoadHandler {
 
         if (responseCode != 200) {
             logE("JsonPelletLoadHandler failed with: " + responseCode);
-            if (responseCode > 0) {
-                mustUpdate(); // probably because the companion app is out of date and does not have the route (maybe check 404 instead of any http error code)
-            }
             return;
         }
 
