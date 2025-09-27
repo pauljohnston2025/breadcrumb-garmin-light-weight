@@ -252,6 +252,7 @@ class JsonWebTileRequestHandler {
         if (!(paletteId instanceof Number)) {
             logE("wrong paletteId type, not number: " + paletteId);
             _tileCache.addErroredTile(_tileKeyStr, _tileCacheVersion, "WPID", false);
+            mustUpdate();
             return;
         }
 
