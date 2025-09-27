@@ -763,14 +763,6 @@ class StorageTileCache {
             return 0;
         }
 
-        // This determines how many tiles are grouped into a single block.
-        // A larger size means a bigger map area is on the same page, reducing page
-        // loads during panning.
-        var blockSize = _cachedValues.blockSize;
-
-        var gridX = x / blockSize;
-        var gridY = y / blockSize;
-
         // Use bitwise shifting to pack z, gridY, and gridX into a single 64-bit Long.
         // This is extremely robust and avoids "magic number" multipliers that can fail
         // with large coordinates. It creates a unique, sequential ID for each block.
@@ -780,7 +772,7 @@ class StorageTileCache {
         // - gridX: 30 bits
         // This structure ensures that changes in gridX are the most granular, followed
         // by gridY, perfectly matching the 'for y { for x { ... } }' access pattern.
-        var combinedId = (z.toLong() << 59) | (gridY.toLong() << 30) | gridX.toLong();
+        var combinedId = (z.toLong() << 59) | (y.toLong() << 30) | x.toLong();
 
         // The modulo maps the sequential block IDs across the available pages.
         // Because the ID is sequential, adjacent blocks will likely be on the same page.
