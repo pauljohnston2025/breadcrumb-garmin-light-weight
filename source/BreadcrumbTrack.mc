@@ -56,17 +56,17 @@ class OffTrackInfo {
 }
 
 class BreadcrumbTrack {
-    // the data sotred on this class is scaled (coordinates are prescaled since scale changes are rare - but renders occur alot)
+    // the data stored on this class is scaled (coordinates are prescaled since scale changes are rare - but renders occur a lot)
     // scaled coordinates will be marked with // SCALED - anything that uses them needs to take scale into account
     var lastClosePointIndex as Number?;
     // gets updated when track data is loaded, set to first point on track
-    // also gets updated wehnever we calculate off track
+    // also gets updated whenever we calculate off track
     // there is one odity with storing lastClosePoint, if the user gets closer to another section of the track we will keep
     // telling them to go back to where they left the track. Acceptable, since the user should do their entire planned route.
     // If they rejoin the track at another point we pick up that they are on track correctly.
     // Multi routes also makes this issue slightly more annoying, in a rare case where a user has left one route, and done another route,
     // when we get close to the first route (if we are still off track) it will snap to the last point they left the route, rather than the start.
-    // such a small edge case, that I only found in a random test setup, the performance benifits of caching the lastClosePoint
+    // such a small edge case, that I only found in a random test setup, the performance benefits of caching the lastClosePoint
     // outweigh the chances users will run into this edge case. To solve it we have to process the whole route every time,
     // though we already do this in a multi route setup, we might parse off track alerts for all the other routes then get to the one we are on.
     // single route use case is more common though, so we will optimise for that. in multi route we could store 'last route we were on'
@@ -323,8 +323,10 @@ class BreadcrumbTrack {
         updateBoundingBox(newPoint);
         // todo have a local ref to settings
         if (coordinates.restrictPoints(getApp()._breadcrumbContext.settings.maxTrackPoints)) {
-            // a resize occured, calculate important data again
+            // a resize occurred, calculate important data again
             updatePointDataFromAllPoints();
+            // opt to remove more points then less, to ensure we get the bad point, or 1 of the good points instead
+            possibleBadPointsAdded = Math.ceil(possibleBadPointsAdded / 2.0f).toNumber();
             return true;
         }
 
@@ -386,6 +388,7 @@ class BreadcrumbTrack {
     // call on first start
     function onStart() as Void {
         logD("onStart");
+        System.println("" + Time.now().value() + " onStart");
         // check from startup, and also clear the current coordinates,
         // anything we got before start is invalid
         coordinates.clear();
@@ -405,6 +408,7 @@ class BreadcrumbTrack {
             onStart();
         }
         logD("onStartResume");
+        System.println("" + Time.now().value() + " onStartResume");
         // check from startup
         seenStartupPoints = 0;
         possibleBadPointsAdded = 0;
@@ -412,7 +416,8 @@ class BreadcrumbTrack {
     }
 
     function handlePointAddStartup(newPoint as RectangularPoint) as [Boolean, Boolean] {
-        // genreal p-lan of this function is
+        System.println("" + Time.now().value() + " handlePointAddStartup");
+        // general plan of this function is
         // add data to both startup array and raw array (so we can start drawing points immediately, without the need for patching both arrays together)
         // on unstable points, remove points from both arrays
         // if the main coordinates array has been sliced in half through `restrictPoints()`
@@ -420,18 +425,23 @@ class BreadcrumbTrack {
         var lastStartupPoint = coordinates.lastPoint();
         if (lastStartupPoint == null) {
             // nothing to compare against, add the point to both arrays
+            System.println("" + Time.now().value() + " handlePointAddStartup no data yet");
             return [true, addPointRaw(newPoint, 0f)];
         }
 
         var stabilityCheckDistance = lastStartupPoint.distanceTo(newPoint);
         if (stabilityCheckDistance < minDistanceMScaled) {
             // point too close, no need to add, but its still a good point
+            System.println("" + Time.now().value() + " handlePointAddStartup point too close");
             seenStartupPoints++;
             return [false, false];
         }
 
+        System.println("" + Time.now().value() + " handlePointAddStartup stabilityCheckDistance: " + stabilityCheckDistance.format("%.3f"));
+
         // allow large distances when we have just started, we need to get the first point to work from after a resume
-        if (stabilityCheckDistance > maxDistanceMScaled && seenStartupPoints != 0) {
+        if (stabilityCheckDistance > maxDistanceMScaled && possibleBadPointsAdded != 0) {
+            System.println("" + Time.now().value() + " too far away");
             // we are unstable, remove all our stability check points
             seenStartupPoints = 0;
             coordinates.removeLastCountPoints(possibleBadPointsAdded);
@@ -444,9 +454,14 @@ class BreadcrumbTrack {
         seenStartupPoints++;
         possibleBadPointsAdded++;
         if (seenStartupPoints == RESTART_STABILITY_POINT_COUNT) {
+            System.println("" + Time.now().value() + " handlePointAddStartup finished");
             inRestartMode = false;
         }
 
+        System.println("" + Time.now().value() + " handlePointAddStartup added point");
+
+        // todo this could rescale underneath us, then we would remove the incorrect number of possibleBadPointsAdded if we get a bad point
+        // have attempted to handle this on rescale, it will remove 1 extra point if it was an odd number before entering
         return [true, addPointRaw(newPoint, stabilityCheckDistance)];
     }
 
@@ -530,11 +545,9 @@ class BreadcrumbTrack {
         minTurnAlertDistanceM as Number,
         cachedValues as CachedValues
     ) as [Number, Float]? {
-
         var currentSpeedPPS = 1f; // assume a slow walk if we cannot get the current speed
         var info = Activity.getActivityInfo();
-        if(info != null && info.currentSpeed != null)
-        {
+        if (info != null && info.currentSpeed != null) {
             currentSpeedPPS = info.currentSpeed as Float;
         }
 
@@ -543,7 +556,12 @@ class BreadcrumbTrack {
             currentSpeedPPS *= cachedValues.currentScale;
         }
 
-        var distancePixelsCheck = turnAlertDistancePx(currentSpeedPPS, turnAlertTimeS, minTurnAlertDistanceM, cachedValues.currentScale);
+        var distancePixelsCheck = turnAlertDistancePx(
+            currentSpeedPPS,
+            turnAlertTimeS,
+            minTurnAlertDistanceM,
+            cachedValues.currentScale
+        );
         var directionsRaw = directions._internalArrayBuffer; // raw dog access means we can do the calcs much faster
         var coordinatesRaw = coordinates._internalArrayBuffer; // raw dog access means we can do the calcs much faster
         // note: extremely short out and back sections with a single point may trigger strange alerts
@@ -561,10 +579,10 @@ class BreadcrumbTrack {
         //  |
         //  |
         // START
-        // 
+        //
         // When we come into the corner with 2 points (traveling to the right of the page), we get a turn alert (left), but then we check for the next turn alert (up to 5 points away).
         // This skips the point at the top of the page, but then checks the second point on the corner and tells us that we should then turn left (as if we were coming out of the corner).
-        // All of this happens before we even turn though, so we get 2 direction alerts very close together that are confusing, then it skips the OUT AND BACK SECTION turn alert, because it 
+        // All of this happens before we even turn though, so we get 2 direction alerts very close together that are confusing, then it skips the OUT AND BACK SECTION turn alert, because it
         // thinks we are already up to exiting the corner.
         //
         // Consider another case though where we intentionally skip going down the turn because we do not want to do the out and back since its so short, it should skip ahead to the next direction.
@@ -580,7 +598,7 @@ class BreadcrumbTrack {
         //  |
         //  |
         // START
-        // 
+        //
         // We need to ensure we look ahead, because although we are currently in range of the first turn we did, we want to tell the user that they are in range of another turn.
         // If off track alerts are enabled, we know when we have moved closer to the next turn, but if they are not enabled, we need to ensure the user gets the next turn alert.
         //
@@ -596,7 +614,7 @@ class BreadcrumbTrack {
         //  |
         //  |
         // START
-        // 
+        //
         // So we need the lookahead, but it does not work very well for short out and back sections- we will just have to live with this. They should be rare.
         // I should probably write some unit test code for these 3 cases ...
 
@@ -615,9 +633,14 @@ class BreadcrumbTrack {
                 checkPoint.x,
                 checkPoint.y
             );
-            // if we have slowed down still keep the larger perimeter, if we speed up when we exit the corner we also need to take the higher speed so we do not clear 
+            // if we have slowed down still keep the larger perimeter, if we speed up when we exit the corner we also need to take the higher speed so we do not clear
             // the index and then add it straight back again when the distance increases because the speed increased
-            var oldDistancePixelsCheck = turnAlertDistancePx(maxF(lastDirectionSpeedPPS, currentSpeedPPS), turnAlertTimeS, minTurnAlertDistanceM, cachedValues.currentScale);
+            var oldDistancePixelsCheck = turnAlertDistancePx(
+                maxF(lastDirectionSpeedPPS, currentSpeedPPS),
+                turnAlertTimeS,
+                minTurnAlertDistanceM,
+                cachedValues.currentScale
+            );
             stillNearTheLastDirectionPoint = oldLastDirectionPointDistance < oldDistancePixelsCheck;
             if (stillNearTheLastDirectionPoint) {
                 // only use it if we are still close, otherwise we will get locked to this coordinate when we move forwards if we do not know our current position on the track
@@ -824,7 +847,7 @@ class BreadcrumbTrack {
         }
 
         lastClosePoint = new RectangularPoint(lastClosestX, lastClosestY, 0f);
-        return new OffTrackInfo(false, lastClosePoint, false); // we are not on track, therefore cannot be travelling in reverse
+        return new OffTrackInfo(false, lastClosePoint, false); // we are not on track, therefore cannot be traveling in reverse
     }
 
     // returns [if a new point was added to the track, if a complex operation occurred]
@@ -851,6 +874,7 @@ class BreadcrumbTrack {
 
         if (distance > maxDistanceMScaled) {
             // it's too far away, and likely a glitch
+            System.println("" + Time.now().value() + " rejecting far point");
             return [false, false];
         }
 

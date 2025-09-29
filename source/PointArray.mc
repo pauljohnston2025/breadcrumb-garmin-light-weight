@@ -4,11 +4,12 @@ import Toybox.Activity;
 import Toybox.Math;
 import Toybox.Application;
 import Toybox.System;
+import Toybox.Time;
 
 const ARRAY_POINT_SIZE = 3;
 
 // cached values
-// we should probbaly do this per latitude to get an estimate and just use a lookup table
+// we should probably do this per latitude to get an estimate and just use a lookup table
 const _lonConversion as Float = 20037508.34f / 180.0f;
 const _pi360 as Float = Math.PI / 360.0f;
 const _pi180 as Float = Math.PI / 180.0f;
@@ -59,6 +60,7 @@ class RectangularPoint {
         var lonRect = lon * _lonConversion;
 
         var point = new RectangularPoint(lonRect.toFloat(), latRect.toFloat(), altitude);
+        // System.println("" + Time.now().value() + " lonRect: " + lonRect.format("%.3f") + " latRect: " + latRect.format("%.3f"));
         if (!point.valid()) {
             return null;
         }
