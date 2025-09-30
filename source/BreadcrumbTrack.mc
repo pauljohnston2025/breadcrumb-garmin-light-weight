@@ -59,9 +59,10 @@ class BreadcrumbTrack {
     // the data stored on this class is scaled (coordinates are prescaled since scale changes are rare - but renders occur a lot)
     // scaled coordinates will be marked with // SCALED - anything that uses them needs to take scale into account
     var lastClosePointIndex as Number?;
+    var _lastDistanceToNextPoint as Float?;
     // gets updated when track data is loaded, set to first point on track
     // also gets updated whenever we calculate off track
-    // there is one odity with storing lastClosePoint, if the user gets closer to another section of the track we will keep
+    // there is one oddity with storing lastClosePoint, if the user gets closer to another section of the track we will keep
     // telling them to go back to where they left the track. Acceptable, since the user should do their entire planned route.
     // If they rejoin the track at another point we pick up that they are on track correctly.
     // Multi routes also makes this issue slightly more annoying, in a rare case where a user has left one route, and done another route,
@@ -108,6 +109,7 @@ class BreadcrumbTrack {
         lastDirectionIndex = -1;
         lastDirectionSpeedPPS = -1f;
         lastClosePointIndex = null;
+        _lastDistanceToNextPoint = null;
         lastClosePoint = null; // we want to recalculate off track, since the cheveron direction will change
         writeToDisk(ROUTE_KEY); // write ourselves back to storage in reverse, so next time we load (on app restart) it is correct
     }
@@ -120,6 +122,7 @@ class BreadcrumbTrack {
         lastDirectionSpeedPPS = -1f;
         lastClosePoint = null;
         lastClosePointIndex = null;
+        _lastDistanceToNextPoint = null;
     }
 
     function rescale(scaleFactor as Float) as Void {
@@ -725,13 +728,56 @@ class BreadcrumbTrack {
         );
     }
 
+    function updateOffTrackInfo(
+        newIndex as Number,
+        checkPoint as RectangularPoint,
+        nextX as Float,
+        nextY as Float,
+        distToSegmentAndSegPoint as [Decimal, Float, Float]
+    ) as OffTrackInfo {
+        var oldLastClosePointIndex = lastClosePointIndex;
+        var oldLastDistanceToNextPoint = _lastDistanceToNextPoint;
+
+        // if the index goes backwards, we are moving backwards
+        var wrongDirection =
+            oldLastClosePointIndex != null && newIndex != null && oldLastClosePointIndex > newIndex;
+
+        // Calculate distance to the next point (the end of the current segment)
+        var newDistanceToEnd = distance(checkPoint.x, checkPoint.y, nextX, nextY);
+
+        // Check for wrong direction on the *same* segment
+        if (
+            oldLastClosePointIndex != null &&
+            oldLastClosePointIndex == newIndex &&
+            oldLastDistanceToNextPoint != null &&
+            newDistanceToEnd > oldLastDistanceToNextPoint
+        ) {
+            wrongDirection = true;
+        }
+
+        // Store the new distance and index for the next check
+        _lastDistanceToNextPoint = newDistanceToEnd;
+        lastClosePointIndex = newIndex;
+        lastClosePoint = new RectangularPoint(
+            distToSegmentAndSegPoint[1],
+            distToSegmentAndSegPoint[2],
+            0f
+        );
+
+        if (wrongDirection) {
+            lastDirectionIndex = -1; // reset direction alerts
+            lastDirectionSpeedPPS = -1f;
+        }
+        return new OffTrackInfo(true, lastClosePoint, wrongDirection);
+    }
+
     // checkpoint should already be scaled, as should distanceCheck
     function checkOffTrack(checkPoint as RectangularPoint, distanceCheck as Float) as OffTrackInfo {
         // logD("checking off track: " + storageIndex);
-        // the big annying thing with off track alerts is that routes do not have evenly spaced points
-        // if the route goes in a straight line, there is only 2 points, these can be frther than the alert distance
+        // the big annoying thing with off track alerts is that routes do not have evenly spaced points
+        // if the route goes in a straight line, there is only 2 points, these can be further than the alert distance
         // larger routes also have further spaced apart points (since we are limited to 500ish points per route to be able to transfer them from phone)
-        // this means we could be ontrack, but between 2 points
+        // this means we could be on track, but between 2 points
         // this makes the calculation significantly harder :(, since we have to draw a line between each set of points and see if the user is
         // within some limit of that line
         var sizeRaw = coordinates.size();
@@ -744,11 +790,11 @@ class BreadcrumbTrack {
         var oldLastClosePointIndex = lastClosePointIndex;
         if (lastClosePointIndex != null) {
             var lastClosePointRawStart = lastClosePointIndex * ARRAY_POINT_SIZE;
-            // note: this algoriithm will likely fail if the user is doing the track in the oposite direction
+            // note: this algorithm will likely fail if the user is doing the track in the opposite direction
             // but we resort to scanning all the points below anyway
             // this for loop is optimised for on track, and navigating in the direction of the track
-            // it should result in only a single itteration in most cases, as they get closer to the next point
-            // we need at least 2 points of reference to be able to itterate the for loop,
+            // it should result in only a single iteration in most cases, as they get closer to the next point
+            // we need at least 2 points of reference to be able to iterate the for loop,
             // if we were the second to last point the for loop will never run
             if (lastClosePointRawStart <= sizeRaw - 2 * ARRAY_POINT_SIZE) {
                 endSecondScanAtRaw = lastClosePointRawStart + ARRAY_POINT_SIZE; // the second scan needs to include endSecondScanAtRaw, or we would skip a point in the overlap
@@ -771,13 +817,13 @@ class BreadcrumbTrack {
                     );
 
                     if (distToSegmentAndSegPoint[0] < distanceCheck) {
-                        lastClosePointIndex = (i - 1) / ARRAY_POINT_SIZE;
-                        lastClosePoint = new RectangularPoint(
-                            distToSegmentAndSegPoint[1],
-                            distToSegmentAndSegPoint[2],
-                            0f
+                        return updateOffTrackInfo(
+                            (i - ARRAY_POINT_SIZE) / ARRAY_POINT_SIZE,
+                            checkPoint,
+                            nextX,
+                            nextY,
+                            distToSegmentAndSegPoint
                         );
-                        return new OffTrackInfo(true, lastClosePoint, false); // we are travelling in the correct direction, as we found a point in the end of the array
                     }
 
                     lastPointX = nextX;
@@ -807,21 +853,13 @@ class BreadcrumbTrack {
                 nextY
             );
             if (distToSegmentAndSegPoint[0] < distanceCheck) {
-                lastClosePointIndex = (i - 1) / ARRAY_POINT_SIZE;
-                lastClosePoint = new RectangularPoint(
-                    distToSegmentAndSegPoint[1],
-                    distToSegmentAndSegPoint[2],
-                    0f
+                return updateOffTrackInfo(
+                    (i - ARRAY_POINT_SIZE) / ARRAY_POINT_SIZE,
+                    checkPoint,
+                    nextX,
+                    nextY,
+                    distToSegmentAndSegPoint
                 );
-                var wrongDirection =
-                    oldLastClosePointIndex != null &&
-                    lastClosePointIndex != null &&
-                    oldLastClosePointIndex > lastClosePointIndex;
-                if (wrongDirection) {
-                    lastDirectionIndex = -1; // reset the direction index once we go back, this is so we can revisit the direction again if we go past it again
-                    lastDirectionSpeedPPS = -1f;
-                }
-                return new OffTrackInfo(true, lastClosePoint, wrongDirection);
             }
 
             if (distToSegmentAndSegPoint[0] < lastClosestDist) {
