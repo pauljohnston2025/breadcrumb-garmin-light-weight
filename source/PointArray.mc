@@ -224,13 +224,15 @@ class PointArray {
         // we need to do this without creating a new array, since we do not want to
         // double the memory size temporarily
         // slice() will create a new array, we avoid this by using our custom class
-        for (var i = 0, j = 0; i < _size; i += ARRAY_POINT_SIZE * 2, j += ARRAY_POINT_SIZE) {
+        var i = 0;
+        var j = 0;
+        for (i = 0, j = 0; i < _size; i += ARRAY_POINT_SIZE * 2, j += ARRAY_POINT_SIZE) {
             _internalArrayBuffer[j] = _internalArrayBuffer[i];
             _internalArrayBuffer[j + 1] = _internalArrayBuffer[i + 1];
             _internalArrayBuffer[j + 2] = _internalArrayBuffer[i + 2];
         }
 
-        resize((ARRAY_POINT_SIZE * maxPoints) / 2);
+        resize(j);
         logD("restrictPoints occurred");
         return true;
     }
