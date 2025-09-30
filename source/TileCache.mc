@@ -1176,6 +1176,7 @@ class TileCache {
             return;
         }
 
+        logT("new colour palette loaded: " + id);
         _paletteId = id as Number;
         _palette = data as Array<Number>;
     }
