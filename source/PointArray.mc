@@ -60,7 +60,6 @@ class RectangularPoint {
         var lonRect = lon * _lonConversion;
 
         var point = new RectangularPoint(lonRect.toFloat(), latRect.toFloat(), altitude);
-        // System.println("" + Time.now().value() + " lonRect: " + lonRect.format("%.3f") + " latRect: " + latRect.format("%.3f"));
         if (!point.valid()) {
             return null;
         }

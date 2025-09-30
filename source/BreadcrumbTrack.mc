@@ -388,7 +388,6 @@ class BreadcrumbTrack {
     // call on first start
     function onStart() as Void {
         logD("onStart");
-        System.println("" + Time.now().value() + " onStart");
         // check from startup, and also clear the current coordinates,
         // anything we got before start is invalid
         coordinates.clear();
@@ -408,7 +407,6 @@ class BreadcrumbTrack {
             onStart();
         }
         logD("onStartResume");
-        System.println("" + Time.now().value() + " onStartResume");
         // check from startup
         seenStartupPoints = 0;
         possibleBadPointsAdded = 0;
@@ -416,7 +414,6 @@ class BreadcrumbTrack {
     }
 
     function handlePointAddStartup(newPoint as RectangularPoint) as [Boolean, Boolean] {
-        System.println("" + Time.now().value() + " handlePointAddStartup");
         // general plan of this function is
         // add data to both startup array and raw array (so we can start drawing points immediately, without the need for patching both arrays together)
         // on unstable points, remove points from both arrays
@@ -425,23 +422,18 @@ class BreadcrumbTrack {
         var lastStartupPoint = coordinates.lastPoint();
         if (lastStartupPoint == null) {
             // nothing to compare against, add the point to both arrays
-            System.println("" + Time.now().value() + " handlePointAddStartup no data yet");
             return [true, addPointRaw(newPoint, 0f)];
         }
 
         var stabilityCheckDistance = lastStartupPoint.distanceTo(newPoint);
         if (stabilityCheckDistance < minDistanceMScaled) {
             // point too close, no need to add, but its still a good point
-            System.println("" + Time.now().value() + " handlePointAddStartup point too close");
             seenStartupPoints++;
             return [false, false];
         }
 
-        System.println("" + Time.now().value() + " handlePointAddStartup stabilityCheckDistance: " + stabilityCheckDistance.format("%.3f"));
-
         // allow large distances when we have just started, we need to get the first point to work from after a resume
         if (stabilityCheckDistance > maxDistanceMScaled && possibleBadPointsAdded != 0) {
-            System.println("" + Time.now().value() + " too far away");
             // we are unstable, remove all our stability check points
             seenStartupPoints = 0;
             coordinates.removeLastCountPoints(possibleBadPointsAdded);
@@ -454,11 +446,8 @@ class BreadcrumbTrack {
         seenStartupPoints++;
         possibleBadPointsAdded++;
         if (seenStartupPoints == RESTART_STABILITY_POINT_COUNT) {
-            System.println("" + Time.now().value() + " handlePointAddStartup finished");
             inRestartMode = false;
         }
-
-        System.println("" + Time.now().value() + " handlePointAddStartup added point");
 
         // todo this could rescale underneath us, then we would remove the incorrect number of possibleBadPointsAdded if we get a bad point
         // have attempted to handle this on rescale, it will remove 1 extra point if it was an odd number before entering
@@ -798,7 +787,6 @@ class BreadcrumbTrack {
             lastClosePointIndex = null; // we have to search the start of the range now
         }
 
-        // System.println("lastClosePointIndex: " + lastClosePointIndex);
         var lastPointX = coordinatesRaw[0];
         var lastPointY = coordinatesRaw[1];
         // The below for loop only runs when we are off track, or when the user is navigating the track in the reverse direction
@@ -874,7 +862,6 @@ class BreadcrumbTrack {
 
         if (distance > maxDistanceMScaled) {
             // it's too far away, and likely a glitch
-            System.println("" + Time.now().value() + " rejecting far point");
             return [false, false];
         }
 
