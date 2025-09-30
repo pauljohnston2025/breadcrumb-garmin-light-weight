@@ -2031,10 +2031,10 @@ class BreadcrumbRenderer {
 
         dc.drawText(
             0,
-            yHalfPhysical - 15,
+            yHalfPhysical,
             Graphics.FONT_XTINY,
             startAtDisplay.format("%.0f"),
-            Graphics.TEXT_JUSTIFY_LEFT
+            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
         );
         if (vScale != 0) {
             // prevent division by 0

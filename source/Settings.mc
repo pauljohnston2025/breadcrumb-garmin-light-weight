@@ -846,6 +846,9 @@ class Settings {
         // configured tile server max/min on the companion app
         // assert(tileUrl.equals(COMPANION_APP_TILE_URL));
 
+        // if the users goes custom and has the companion app url, we still do not update the tiles layers
+        // this is because they may be artificially capping the tileLayerMax property eg. a tile server on the phone that has 20 layers, but the user only wants 
+        // 15 layers on the watch in order to be able to run offline tiles and store them all.
         if (mapChoice != 1) {
             // we are no longer on the companion app, abort
             return;
