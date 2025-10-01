@@ -804,9 +804,9 @@ class StorageTileCache {
         }
 
         switch (tileMeta[1] as Number) {
-            case STORAGE_TILE_TYPE_DICT:
+            case STORAGE_TILE_TYPE_DICT: // fallthrough
             // bitmap has to just load as a single image (we cannot slice it because we cannot store buffered bitmaps, only the original bitmap), it could be over the 32Kb limit, but we have no other choice
-            case STORAGE_TILE_TYPE_BITMAP: // fallthrough
+            case STORAGE_TILE_TYPE_BITMAP: 
                 // no need to check type of the getValue call, handling code checks it
                 return [
                     200,
