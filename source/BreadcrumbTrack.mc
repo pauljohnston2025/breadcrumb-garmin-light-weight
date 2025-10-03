@@ -139,6 +139,9 @@ class BreadcrumbTrack {
         }
         minDistanceMScaled = minDistanceMScaled * scaleFactor;
         maxDistanceMScaled = maxDistanceMScaled * scaleFactor;
+        if (_lastDistanceToNextPoint != null) {
+            _lastDistanceToNextPoint = _lastDistanceToNextPoint * scaleFactor;
+        }
     }
 
     function handleRouteV2(
