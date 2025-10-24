@@ -742,11 +742,10 @@ class BreadcrumbTrack {
         var oldLastDistanceToNextPoint = _lastDistanceToNextPoint;
 
         // if the index goes backwards, we are moving backwards
-        var wrongDirection =
-            oldLastClosePointIndex != null && newIndex != null && oldLastClosePointIndex > newIndex;
+        var wrongDirection = oldLastClosePointIndex != null && oldLastClosePointIndex > newIndex;
 
         // Calculate distance to the next point (the end of the current segment)
-        var newDistanceToEnd = distance(checkPoint.x, checkPoint.y, nextX, nextY);
+        var newDistanceToEnd = distance(distToSegmentAndSegPoint[1], distToSegmentAndSegPoint[2], nextX, nextY);
 
         // Check for wrong direction on the *same* segment
         if (
