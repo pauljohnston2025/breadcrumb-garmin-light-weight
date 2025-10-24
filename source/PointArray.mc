@@ -220,18 +220,33 @@ class PointArray {
             return false;
         }
 
+        if (_size / ARRAY_POINT_SIZE <= 1) {
+            return false; // we don't have any points, user must have set maxPoints really low (0 or negative)
+        }
+
+        // Always preserve the last point
+        var lastPoint = lastPoint();
+
         // we need to do this without creating a new array, since we do not want to
         // double the memory size temporarily
         // slice() will create a new array, we avoid this by using our custom class
-        var i = 0;
         var j = 0;
-        for (i = 0, j = 0; i < _size; i += ARRAY_POINT_SIZE * 2, j += ARRAY_POINT_SIZE) {
+        // Iterate and cull every second point, but exclude the original last point from the loop
+        var sizeWithoutLastPoint = _size - ARRAY_POINT_SIZE;
+        for (var i = 0; i < sizeWithoutLastPoint; i += ARRAY_POINT_SIZE * 2) {
             _internalArrayBuffer[j] = _internalArrayBuffer[i];
             _internalArrayBuffer[j + 1] = _internalArrayBuffer[i + 1];
             _internalArrayBuffer[j + 2] = _internalArrayBuffer[i + 2];
+            j += ARRAY_POINT_SIZE;
         }
 
         resize(j);
+
+        // Now, add the preserved last point to the end of the culled array
+        if (lastPoint != null) {
+            add(lastPoint);
+        }
+
         logD("restrictPoints occurred");
         return true;
     }

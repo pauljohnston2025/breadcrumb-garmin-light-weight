@@ -320,7 +320,7 @@ class WebRequestHandler {
     // so we would have to build a new array (and then copy all elements) and we have to do this twice, for pending and pendingHashes
     // not worth it since its only when a tile server setting changes, and maxPendingWebRequests should be low enough that we eventually get to the task
     // this method just guarantees it is sent, and not dropped based on maxPendingWebRequests logic (because we could starve ourselves out, and never send things that must be sent)
-    function addHighPriority(webReq as WebRequest) {
+    function addHighPriority(webReq as WebRequest) as Void {
         var hash = webReq.hash;
         if (pendingHashes.indexOf(hash) > -1) {
             // logD("Dropping req for: " + hash);

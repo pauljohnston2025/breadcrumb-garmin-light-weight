@@ -790,7 +790,6 @@ class BreadcrumbTrack {
 
         var endSecondScanAtRaw = sizeRaw;
         var coordinatesRaw = coordinates._internalArrayBuffer; // raw dog access means we can do the calcs much faster (and do not need to create a point with altitude)
-        var oldLastClosePointIndex = lastClosePointIndex;
         if (lastClosePointIndex != null) {
             var lastClosePointRawStart = lastClosePointIndex * ARRAY_POINT_SIZE;
             // note: this algorithm will likely fail if the user is doing the track in the opposite direction
