@@ -486,7 +486,7 @@ Trigger an alert when you leave a route by `Off Track Distance`.
 
 ### Wrong Direction Alerts
 
-Trigger an alert when you navigate the track in the wrong direction. Note: this can take up to twice as long as [Off Track Check Interval](#off-track-check-interval) to detect travel in the wrong direction.
+Trigger an alert when you navigate the track in the wrong direction.
 
 ### Turn Alert Time (s)
 
