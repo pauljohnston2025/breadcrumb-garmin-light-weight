@@ -697,7 +697,7 @@ class CachedValues {
         }
 
         if (newScale == 0f) {
-            return false; // dont allow silly scales
+            return false; // don't allow silly scales
         }
 
         var scaleFactor = newScale;

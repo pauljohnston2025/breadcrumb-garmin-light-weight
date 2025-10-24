@@ -533,6 +533,7 @@ class BreadcrumbRenderer {
         for (var i = 0; i < size; ++i) {
             var directionRaw = directionsRaw[i];
             var coordsIndex = directionRaw & 0xffff;
+            // blind trust that the phone app sent the correct data and we are not accessing out of bounds array access
             var pixelX = coordinatesRaw[coordsIndex * ARRAY_POINT_SIZE];
             var pixelY = coordinatesRaw[coordsIndex * ARRAY_POINT_SIZE + 1];
             var x = rotateAroundScreenXOffsetFactoredIn + (pixelX - centerPosition.x);
@@ -988,6 +989,7 @@ class BreadcrumbRenderer {
         for (var i = 0; i < size; ++i) {
             var directionRaw = directionsRaw[i];
             var coordsIndex = directionRaw & 0xffff;
+            // blind trust that the phone app sent the correct data and we are not accessing out of bounds array access
             var nextX = coordinatesRaw[coordsIndex * ARRAY_POINT_SIZE];
             var nextY = coordinatesRaw[coordsIndex * ARRAY_POINT_SIZE + 1];
 

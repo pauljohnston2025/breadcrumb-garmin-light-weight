@@ -7,6 +7,8 @@ import Toybox.Application;
 using Toybox.Time;
 using Toybox.Time.Gregorian;
 
+const WRONG_DIRECTION_TOLERANCE_M = 2; // meters
+
 const TRACK_ID = -1;
 const MIN_DISTANCE_M = 5; // meters
 const RESTART_STABILITY_POINT_COUNT = 10; // number of points in a row that need to be within RESTART_STABILITY_DISTANCE_M to be considered a valid course
@@ -622,6 +624,7 @@ class BreadcrumbTrack {
         if (lastDirectionIndex >= 0 && lastDirectionIndex < directions.pointSize()) {
             startAt = lastDirectionIndex;
             var oldCoordinatesIndexTemp = directionsRaw[lastDirectionIndex] & 0xffff;
+            // blind trust that the phone app sent the correct data and we are not accessing out of bounds array access
             var oldLastDirectionPointDistance = distance(
                 coordinatesRaw[oldCoordinatesIndexTemp * ARRAY_POINT_SIZE],
                 coordinatesRaw[oldCoordinatesIndexTemp * ARRAY_POINT_SIZE + 1],
@@ -671,6 +674,7 @@ class BreadcrumbTrack {
                 return null;
             }
 
+            // blind trust that the phone app sent the correct data and we are not accessing out of bounds array access
             var distancePx = distance(
                 coordinatesRaw[coordinatesIndex * ARRAY_POINT_SIZE],
                 coordinatesRaw[coordinatesIndex * ARRAY_POINT_SIZE + 1],
@@ -743,16 +747,33 @@ class BreadcrumbTrack {
 
         // if the index goes backwards, we are moving backwards
         var wrongDirection = oldLastClosePointIndex != null && oldLastClosePointIndex > newIndex;
+        // needed for breakpoints in debug
+        // if (wrongDirection) {
+        //     logD("wrong direction");
+        // }
 
         // Calculate distance to the next point (the end of the current segment)
-        var newDistanceToEnd = distance(distToSegmentAndSegPoint[1], distToSegmentAndSegPoint[2], nextX, nextY);
+        var newDistanceToEnd = distance(
+            distToSegmentAndSegPoint[1],
+            distToSegmentAndSegPoint[2],
+            nextX,
+            nextY
+        );
+
+        var currentScale = getApp()._breadcrumbContext.cachedValues.currentScale;
+        var scaleMultiplier = currentScale;
+        if (scaleMultiplier == 0f) {
+            scaleMultiplier = 1f;
+        }
 
         // Check for wrong direction on the *same* segment
         if (
             oldLastClosePointIndex != null &&
             oldLastClosePointIndex == newIndex &&
             oldLastDistanceToNextPoint != null &&
-            newDistanceToEnd > oldLastDistanceToNextPoint
+            // prevent any float rounding errors, and make sure they have gone back by at least some amount
+            newDistanceToEnd >
+                oldLastDistanceToNextPoint + WRONG_DIRECTION_TOLERANCE_M * scaleMultiplier
         ) {
             wrongDirection = true;
         }
@@ -809,7 +830,7 @@ class BreadcrumbTrack {
                     var nextX = coordinatesRaw[i];
                     var nextY = coordinatesRaw[i + 1];
 
-                    var distToSegmentAndSegPoint = calculateDistancePointToSegment(
+                    var distToCurrentSegmentAndPoint = calculateDistancePointToSegment(
                         checkPoint,
                         lastPointX,
                         lastPointY,
@@ -817,13 +838,61 @@ class BreadcrumbTrack {
                         nextY
                     );
 
-                    if (distToSegmentAndSegPoint[0] < distanceCheck) {
+                    if (distToCurrentSegmentAndPoint[0] < distanceCheck) {
+                        // We are on track relative to the current segment.
+                        // BUT, let's check if we are even closer to the NEXT segment.
+
+                        // If we do not do this, then on tight switch backs we will think we are still on the old segment, and then a wrong direction alert will trigger
+                        //
+                        // ie.
+                        // * = users last position (where the last off track info computed it thought we were)
+                        // U = users current position
+                        // + = the current projected position for the user (its further away from the corner - this will trigger wrong direction alert)
+                        //
+                        //
+                        //  *\
+                        //  | \
+                        //  +  U
+                        //  |
+                        //
+                        // The nextSegmentIndex check makes sure we jump ahead to the next segment if we can, eg.
+                        // 
+                        //  *\
+                        //  | \
+                        //  |  +U
+                        //  |
+                        var nextSegmentIndex = i + ARRAY_POINT_SIZE;
+                        if (nextSegmentIndex < sizeRaw) {
+                            var nextSegmentNextX = coordinatesRaw[nextSegmentIndex];
+                            var nextSegmentNextY = coordinatesRaw[nextSegmentIndex + 1];
+
+                            var distToNextSegmentAndPoint = calculateDistancePointToSegment(
+                                checkPoint,
+                                nextX, // Start of next segment
+                                nextY, // Start of next segment
+                                nextSegmentNextX,
+                                nextSegmentNextY
+                            );
+
+                            // If we are closer to the next segment, use that one instead.
+                            if (distToNextSegmentAndPoint[0] < distToCurrentSegmentAndPoint[0]) {
+                                return updateOffTrackInfo(
+                                    i / ARRAY_POINT_SIZE, // Index of the next segment's START point
+                                    checkPoint,
+                                    nextSegmentNextX,
+                                    nextSegmentNextY,
+                                    distToNextSegmentAndPoint
+                                );
+                            }
+                        }
+
+                        // Otherwise, the current segment is the best fit.
                         return updateOffTrackInfo(
                             (i - ARRAY_POINT_SIZE) / ARRAY_POINT_SIZE,
                             checkPoint,
                             nextX,
                             nextY,
-                            distToSegmentAndSegPoint
+                            distToCurrentSegmentAndPoint
                         );
                     }
 
@@ -832,6 +901,7 @@ class BreadcrumbTrack {
                 }
             }
             lastClosePointIndex = null; // we have to search the start of the range now
+            _lastDistanceToNextPoint = null; // we need to also reset the wrong direction tracking, we do not want it to go backwards when we rejoin the track
         }
 
         var lastPointX = coordinatesRaw[0];
