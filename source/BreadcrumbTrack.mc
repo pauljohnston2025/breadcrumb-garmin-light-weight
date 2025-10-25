@@ -534,6 +534,56 @@ class BreadcrumbTrack {
         return [closestSegmentDistance, closestX, closestY];
     }
 
+    function weAreStillCloseToTheLastDirectionPoint() as Boolean {
+        // note: this logic is the same as in checkDirections but is only needed for when we go backwards on the path
+        // so we can skip a heap of logic, checkDirections is more optimised for when it needs to check a heap more things
+        var checkPoint = getApp()._breadcrumbContext.track.lastPoint();
+        if (checkPoint == null) {
+            return false;
+        }
+
+        var cachedValues = getApp()._breadcrumbContext.cachedValues;
+        var directionsRaw = directions._internalArrayBuffer; // raw dog access means we can do the calcs much faster
+        var coordinatesRaw = coordinates._internalArrayBuffer; // raw dog access means we can do the calcs much faster
+
+        var settings = getApp()._breadcrumbContext.settings;
+        var turnAlertTimeS = settings.turnAlertTimeS;
+        var minTurnAlertDistanceM = settings.minTurnAlertDistanceM;
+
+        var currentSpeedPPS = 1f; // assume a slow walk if we cannot get the current speed
+        var info = Activity.getActivityInfo();
+        if (info != null && info.currentSpeed != null) {
+            currentSpeedPPS = info.currentSpeed as Float;
+        }
+
+        // it's in meters before this point then switches to pixels per second
+        if (cachedValues.currentScale != 0f) {
+            currentSpeedPPS *= cachedValues.currentScale;
+        }
+
+        if (lastDirectionIndex < 0 || lastDirectionIndex >= directions.pointSize()) {
+            return false;
+        }
+
+        var oldCoordinatesIndexTemp = directionsRaw[lastDirectionIndex] & 0xffff;
+        // blind trust that the phone app sent the correct data and we are not accessing out of bounds array access
+        var oldLastDirectionPointDistance = distance(
+            coordinatesRaw[oldCoordinatesIndexTemp * ARRAY_POINT_SIZE],
+            coordinatesRaw[oldCoordinatesIndexTemp * ARRAY_POINT_SIZE + 1],
+            checkPoint.x,
+            checkPoint.y
+        );
+        // if we have slowed down still keep the larger perimeter, if we speed up when we exit the corner we also need to take the higher speed so we do not clear
+        // the index and then add it straight back again when the distance increases because the speed increased
+        var oldDistancePixelsCheck = turnAlertDistancePx(
+            maxF(lastDirectionSpeedPPS, currentSpeedPPS),
+            turnAlertTimeS,
+            minTurnAlertDistanceM,
+            cachedValues.currentScale
+        );
+        return oldLastDirectionPointDistance < oldDistancePixelsCheck;
+    }
+
     // checkpoint should already be scaled, as should distanceCheck
     // returns [turnAngleDeg, distancePx] or null if no direction within range
     function checkDirections(
@@ -788,8 +838,12 @@ class BreadcrumbTrack {
         );
 
         if (wrongDirection) {
-            lastDirectionIndex = -1; // reset direction alerts
-            lastDirectionSpeedPPS = -1f;
+            // only reset this if we have left the radius area
+            // we do not want to reset if we are still near the last direction point, because that would make us get multiple alerts. One for the wrong direction, and then another one for the turn.
+            if (!weAreStillCloseToTheLastDirectionPoint()) {
+                lastDirectionIndex = -1; // reset direction alerts
+                lastDirectionSpeedPPS = -1f;
+            }
         }
         return new OffTrackInfo(true, lastClosePoint, wrongDirection);
     }
@@ -856,7 +910,7 @@ class BreadcrumbTrack {
                         //  |
                         //
                         // The nextSegmentIndex check makes sure we jump ahead to the next segment if we can, eg.
-                        // 
+                        //
                         //  *\
                         //  | \
                         //  |  +U
