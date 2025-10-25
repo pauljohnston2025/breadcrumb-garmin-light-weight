@@ -8,6 +8,7 @@ using Toybox.Time;
 using Toybox.Time.Gregorian;
 
 const WRONG_DIRECTION_TOLERANCE_M = 2; // meters
+const SKIP_FORWARD_TOLERANCE_M = 2; // meters
 
 const TRACK_ID = -1;
 const MIN_DISTANCE_M = 5; // meters
@@ -928,8 +929,23 @@ class BreadcrumbTrack {
                                 nextSegmentNextY
                             );
 
+                            var currentScale =
+                                getApp()._breadcrumbContext.cachedValues.currentScale;
+                            var scaleMultiplier = currentScale;
+                            if (scaleMultiplier == 0f) {
+                                scaleMultiplier = 1f;
+                            }
+
                             // If we are closer to the next segment, use that one instead.
-                            if (distToNextSegmentAndPoint[0] < distToCurrentSegmentAndPoint[0]) {
+                            // eg. distToNextSegmentAndPoint[0] - distToCurrentSegmentAndPoint[0]
+                            //     20.5 - 20 = 0.5  // if its pretty close we can also use it, as long as its also less than distanceCheck eg. if it were 30 away it would be too far, but might still be less than the tolerance
+                            //     20 - 20.5 = -0.5 if its larger the values go negative - excellent we are closer
+                            var compareDistance =
+                                distToNextSegmentAndPoint[0] - distToCurrentSegmentAndPoint[0];
+                            if (
+                                distToNextSegmentAndPoint[0] < distanceCheck &&
+                                compareDistance < SKIP_FORWARD_TOLERANCE_M * scaleMultiplier
+                            ) {
                                 return updateOffTrackInfo(
                                     i / ARRAY_POINT_SIZE, // Index of the next segment's START point
                                     checkPoint,

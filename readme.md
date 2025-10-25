@@ -32,7 +32,7 @@ You can also manually add a text file `BreadcrumbDataField.TXT` to the log direc
 
 # Development
 
-Must port forward both adb and the tile server for the simulator to be able to fetch tiles from the comapnion app
+Must port forward both adb and the tile server for the simulator to be able to fetch tiles from the companion app
 
 * adb forward tcp:8080 tcp:8080
 * adb forward tcp:7381 tcp:7381
@@ -84,7 +84,7 @@ A more thorough explanation for a different app can be found at: https://support
 
 # Known Issues
 
-Some screens appear to have an offset applied to the [dc](https://developer.garmin.com/connect-iq/api-docs/Toybox/Graphics/Dc.html), that I cannot find a way to correct. Sometimes this offset occurs on my own physical device, and other times there is no offset. If anyone knows how to solve this, please let me know. I believe this is an issue with garmins datafield obscurity, since you can have the datafield take up only part of the screen. The problem still occurs when the datafield takes up the whole screen though (I think garmin reservese certain areas of the screen for thier own ui components). Note this clipping may also be noticed on different parts of the screen if bufferred map rotations are enabled, since everything drawn to the dc is offset.
+Some screens appear to have an offset applied to the [dc](https://developer.garmin.com/connect-iq/api-docs/Toybox/Graphics/Dc.html), that I cannot find a way to correct. Sometimes this offset occurs on my own physical device, and other times there is no offset. If anyone knows how to solve this, please let me know. I believe this is an issue with garmins datafield obscurity, since you can have the datafield take up only part of the screen. The problem still occurs when the datafield takes up the whole screen though (I think garmin reserves certain areas of the screen for their own ui components). Note this clipping may also be noticed on different parts of the screen if buffered map rotations are enabled, since everything drawn to the dc is offset.
 
 Simplest reproduction example, it appears the device context for drawing is already offset (but only sometimes).
 
