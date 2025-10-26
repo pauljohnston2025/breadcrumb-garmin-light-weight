@@ -953,7 +953,7 @@ class BreadcrumbTrack {
                             // But the user is still traveling up the page, so when they actually reach segment (2) we then think they are going backwards in the wrong direction because we incorrectly jumped forwards to segments (2,3,4).
                             // To prevent this we should choose larger values for check interval, and have a really small SKIP_FORWARD_TOLERANCE_M.
                             // setting SKIP_FORWARD_TOLERANCE_M = 0 results in essentially the same old code 'distToNextSegmentAndPoint[0] <= distToCurrentSegmentAndPoint[0]' note: its '<=' and not just '<'. 
-                            // Checking just '<' can result in wrong direction alerts too because it will never switch to the second segment if they are colinear, and then looks like we are going backwards.
+                            // Checking just '<' can result in wrong direction alerts too because it will never switch to the second segment if they are colinear, and then look like we are going backwards.
                             var compareDistance =
                                 distToNextSegmentAndPoint[0] - distToCurrentSegmentAndPoint[0];
                             if (
