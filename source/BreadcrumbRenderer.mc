@@ -19,12 +19,7 @@ class BreadcrumbRenderer {
     var _disableMapProgress as Number = 0;
     var settings as Settings;
     var _cachedValues as CachedValues;
-    var _crosshair as BitmapResource;
-    var _nosmoking as BitmapResource;
-    var _leftArrow as BitmapResource;
-    var _rightArrow as BitmapResource;
-    var _upArrow as BitmapResource;
-    var _downArrow as BitmapResource;
+    var customFont as WatchUi.FontResource;
 
     // units in mm (float/int) to label
     var SCALE_NAMES as Dictionary<Number, String> =
@@ -133,12 +128,7 @@ class BreadcrumbRenderer {
     function initialize(settings as Settings, cachedValues as CachedValues) {
         self.settings = settings;
         _cachedValues = cachedValues;
-        _crosshair = WatchUi.loadResource(Rez.Drawables.Crosshair) as WatchUi.BitmapResource;
-        _nosmoking = WatchUi.loadResource(Rez.Drawables.NoSmoking) as WatchUi.BitmapResource;
-        _leftArrow = WatchUi.loadResource(Rez.Drawables.LeftArrow) as WatchUi.BitmapResource;
-        _rightArrow = WatchUi.loadResource(Rez.Drawables.RightArrow) as WatchUi.BitmapResource;
-        _upArrow = WatchUi.loadResource(Rez.Drawables.UpArrow) as WatchUi.BitmapResource;
-        _downArrow = WatchUi.loadResource(Rez.Drawables.DownArrow) as WatchUi.BitmapResource;
+        customFont = WatchUi.loadResource(Rez.Fonts.CustomFont) as WatchUi.FontResource;
     }
 
     function getScaleSizeGeneric(
@@ -1447,22 +1437,14 @@ class BreadcrumbRenderer {
         var scaleFromEdge = 75; // guestimate
 
         if (_cachedValues.fixedPosition != null || _cachedValues.scale != null) {
-            try {
-                dc.drawBitmap2(
-                    returnToUserX - _crosshair.getWidth() / 2,
-                    returnToUserY - _crosshair.getHeight() / 2,
-                    _crosshair,
-                    {
-                        :tintColor => settings.uiColour,
-                    }
-                );
-            } catch (e) {
-                // not sure what this exception was see above
-                var message = e.getErrorMessage();
-                logE("failed drawBitmap2 (render ui): " + message);
-                ++$.globalExceptionCounter;
-                incNativeColourFormatErrorIfMessageMatches(message);
-            }
+            // crosshair
+            dc.drawText(
+                returnToUserX,
+                returnToUserY,
+                customFont,
+                "A",
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            );
         }
 
         if (settings.displayLatLong) {
@@ -1500,46 +1482,53 @@ class BreadcrumbRenderer {
         }
 
         if (settings.mode == MODE_MAP_MOVE) {
-            try {
-                dc.drawBitmap2(0, yHalfPhysical - _leftArrow.getHeight() / 2, _leftArrow, {
-                    :tintColor => settings.uiColour,
-                });
-                dc.drawBitmap2(
-                    physicalScreenWidth - _rightArrow.getWidth(),
-                    yHalfPhysical - _rightArrow.getHeight() / 2,
-                    _rightArrow,
-                    {
-                        :tintColor => settings.uiColour,
-                    }
+            // left arrow
+            dc.drawText(
+                0,
+                yHalfPhysical,
+                customFont,
+                "D",
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            );
+            // right arrow
+            dc.drawText(
+                physicalScreenWidth,
+                yHalfPhysical,
+                customFont,
+                "C",
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            );
+            // up arrow
+            dc.drawText(
+                xHalfPhysical,
+                0,
+                customFont,
+                "E",
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            );
+            if (settings.getAttribution() == null || !settings.mapEnabled) {
+                // down arrow
+                dc.drawText(
+                    xHalfPhysical,
+                    physicalScreenHeight,
+                    customFont,
+                    "B",
+                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
                 );
-                dc.drawBitmap2(xHalfPhysical - _upArrow.getWidth() / 2, 0, _upArrow, {
-                    :tintColor => settings.uiColour,
-                });
-                if (settings.getAttribution() == null || !settings.mapEnabled) {
-                    dc.drawBitmap2(
-                        xHalfPhysical - _downArrow.getWidth() / 2,
-                        physicalScreenHeight - _downArrow.getHeight(),
-                        _downArrow,
-                        {
-                            :tintColor => settings.uiColour,
-                        }
-                    );
-                }
-            } catch (e) {
-                // not sure what this exception was see above
-                var message = e.getErrorMessage();
-                logE("failed drawBitmap2 (render ui 2): " + message);
-                ++$.globalExceptionCounter;
-                incNativeColourFormatErrorIfMessageMatches(message);
             }
             return;
         }
 
         // plus at the top of screen
         if (!_cachedValues.scaleCanInc) {
-            dc.drawBitmap2(xHalfPhysical - _nosmoking.getWidth() / 2, 0, _nosmoking, {
-                :tintColor => settings.uiColour,
-            });
+            // no smoking
+            dc.drawText(
+                xHalfPhysical,
+                0,
+                customFont,
+                "F",
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+            );
         } else {
             dc.drawLine(
                 xHalfPhysical - halfLineLength,
@@ -1558,13 +1547,13 @@ class BreadcrumbRenderer {
         if (settings.getAttribution() == null || !settings.mapEnabled) {
             // minus at the bottom
             if (!_cachedValues.scaleCanDec) {
-                dc.drawBitmap2(
-                    xHalfPhysical - _nosmoking.getWidth() / 2,
-                    physicalScreenHeight - _nosmoking.getHeight() - 3, // small padding for physcial device clipping
-                    _nosmoking,
-                    {
-                        :tintColor => settings.uiColour,
-                    }
+                // no smoking
+                dc.drawText(
+                    xHalfPhysical,
+                    physicalScreenHeight,
+                    customFont,
+                    "F",
+                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
                 );
             } else {
                 dc.drawLine(
