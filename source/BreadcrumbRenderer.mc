@@ -6,6 +6,7 @@ import Toybox.WatchUi;
 import Toybox.Communications;
 import Toybox.Graphics;
 
+const NO_SMOKING_RADIUS = 10.0f;
 const DESIRED_SCALE_PIXEL_WIDTH as Float = 100.0f;
 const DESIRED_ELEV_SCALE_PIXEL_WIDTH as Float = 50.0f;
 // note sure why this has anything to do with DESIRED_SCALE_PIXEL_WIDTH, should just be whatever tile layer 0 equates to for the screen size
@@ -1438,13 +1439,31 @@ class BreadcrumbRenderer {
 
         if (_cachedValues.fixedPosition != null || _cachedValues.scale != null) {
             // crosshair
-            dc.drawText(
-                returnToUserX,
-                returnToUserY,
-                customFont,
-                "A",
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-            );
+            var centerX = returnToUserX;
+            var centerY = returnToUserY;
+            var size = physicalScreenHeight / 8.0f;
+            var halfSize = size / 2.0f;
+            // Scale factor to convert 100x100 SVG coordinates to the target size
+            var scale = size / 100.0f;
+
+            // Draw the outer circle and lines
+            var penWidth3 = 3 * scale < 1 ? 1 : (3 * scale).toNumber();
+            dc.setPenWidth(penWidth3);
+
+            // Vertical line
+            dc.drawLine(centerX, centerY - halfSize, centerX, centerY + halfSize);
+            // Horizontal line
+            dc.drawLine(centerX - halfSize, centerY, centerX + halfSize, centerY);
+            // Outer circle (r=35)
+            dc.drawCircle(centerX, centerY, 35 * scale);
+
+            // Draw the middle circle
+            var penWidth4 = 4 * scale < 1 ? 1 : (4 * scale).toNumber();
+            dc.setPenWidth(penWidth4);
+            dc.drawCircle(centerX, centerY, 25 * scale);
+
+            // Draw the inner, filled circle
+            dc.fillCircle(centerX, centerY, 15 * scale);
         }
 
         if (settings.displayLatLong) {
@@ -1522,13 +1541,7 @@ class BreadcrumbRenderer {
         // plus at the top of screen
         if (!_cachedValues.scaleCanInc) {
             // no smoking
-            dc.drawText(
-                xHalfPhysical,
-                0,
-                customFont,
-                "F",
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-            );
+            drawNoSmokingSign(dc, xHalfPhysical, NO_SMOKING_RADIUS);
         } else {
             dc.drawLine(
                 xHalfPhysical - halfLineLength,
@@ -1548,13 +1561,7 @@ class BreadcrumbRenderer {
             // minus at the bottom
             if (!_cachedValues.scaleCanDec) {
                 // no smoking
-                dc.drawText(
-                    xHalfPhysical,
-                    physicalScreenHeight,
-                    customFont,
-                    "F",
-                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-                );
+                drawNoSmokingSign(dc, xHalfPhysical, physicalScreenHeight - NO_SMOKING_RADIUS);
             } else {
                 dc.drawLine(
                     xHalfPhysical - halfLineLength,
@@ -1597,6 +1604,34 @@ class BreadcrumbRenderer {
         if (settings.mapEnabled) {
             renderTileCacheButton(dc);
         }
+    }
+
+    function drawNoSmokingSign(dc as Dc, x as Float, y as Float) as Void {
+        var PEN_WIDTH = 1;
+        dc.setPenWidth(PEN_WIDTH);
+
+        // Draw the circle
+        dc.drawCircle(x, y, NO_SMOKING_RADIUS);
+
+        // TODO consider hard coding these once they are locked in
+
+        // --- Draw the Diagonal Line ---
+        // Calculate the endpoints so the line touches the *inner* edge of the circle's stroke.
+        // The radius for the line's endpoints is the outer radius minus the full pen width.
+        var lineEndpointRadius = NO_SMOKING_RADIUS - PEN_WIDTH;
+
+        // For a 45-degree line, the x and y offsets from the center are equal.
+        // Using Pythagorean theorem: offset^2 + offset^2 = radius^2
+        // So, offset = radius / sqrt(2)
+        var offset = lineEndpointRadius / Math.sqrt(2);
+
+        // Calculate the start (top-left) and end (bottom-right) points of the line
+        var startX = x - offset;
+        var startY = y - offset;
+        var endX = x + offset;
+        var endY = y + offset;
+
+        dc.drawLine(startX, startY, endX, endY);
     }
 
     function getScaleDecIncAmount(direction as Number) as Float {
