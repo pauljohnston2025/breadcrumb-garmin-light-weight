@@ -12,8 +12,8 @@ const DESIRED_ELEV_SCALE_PIXEL_WIDTH as Float = 50.0f;
 // note sure why this has anything to do with DESIRED_SCALE_PIXEL_WIDTH, should just be whatever tile layer 0 equates to for the screen size
 const MIN_SCALE as Float = DESIRED_SCALE_PIXEL_WIDTH / 1000000000.0f;
 
-const ARROW_SIZE = 30.0f;
-const ARROW_PEN_WIDTH = 4;
+const ARROW_SIZE = 20.0f;
+const ARROW_PEN_WIDTH = 2;
 
 class BreadcrumbRenderer {
     // todo put into ui class
@@ -23,7 +23,6 @@ class BreadcrumbRenderer {
     var _disableMapProgress as Number = 0;
     var settings as Settings;
     var _cachedValues as CachedValues;
-    var customFont as WatchUi.FontResource;
 
     // units in mm (float/int) to label
     var SCALE_NAMES as Dictionary<Number, String> =
@@ -132,7 +131,6 @@ class BreadcrumbRenderer {
     function initialize(settings as Settings, cachedValues as CachedValues) {
         self.settings = settings;
         _cachedValues = cachedValues;
-        customFont = WatchUi.loadResource(Rez.Fonts.CustomFont) as WatchUi.FontResource;
     }
 
     function getScaleSizeGeneric(
@@ -1507,37 +1505,47 @@ class BreadcrumbRenderer {
             dc.setPenWidth(ARROW_PEN_WIDTH);
             var halfArrowSize = ARROW_SIZE / 2.0f;
 
-             // --- Draw LEFT and RIGHT Arrows ---
-            // Calculate the shared Y coordinates for the horizontal arrows
+            // --- Draw LEFT and RIGHT Arrows ---
+            // Y coordinates for the top and bottom points of the chevron
             var yTop = yHalfPhysical - halfArrowSize;
             var yBottom = yHalfPhysical + halfArrowSize;
+            
+            // The X coordinate where the chevron points meet the shaft
+            var xChevronPoint = halfArrowSize;
 
-            // Draw LEFT Arrow
-            dc.drawLine(0, yHalfPhysical, ARROW_SIZE, yTop);
-            dc.drawLine(ARROW_SIZE, yTop, ARROW_SIZE, yBottom);
-            dc.drawLine(ARROW_SIZE, yBottom, 0, yHalfPhysical);
+            // Draw LEFT Arrow (<--)
+            // Tip is at (0, yHalfPhysical)
+            dc.drawLine(0, yHalfPhysical, xChevronPoint, yTop);       // Upper chevron line
+            dc.drawLine(0, yHalfPhysical, xChevronPoint, yBottom);     // Lower chevron line
+            dc.drawLine(0, yHalfPhysical, ARROW_SIZE, yHalfPhysical); // Shaft
 
-            // Draw RIGHT Arrow (reuses yTop and yBottom)
-            var xLeft = physicalScreenWidth - ARROW_SIZE;
-            dc.drawLine(physicalScreenWidth, yHalfPhysical, xLeft, yBottom);
-            dc.drawLine(xLeft, yBottom, xLeft, yTop);
-            dc.drawLine(xLeft, yTop, physicalScreenWidth, yHalfPhysical);
+            // Draw RIGHT Arrow (-->)
+            // Tip is at (screenWidth, yHalfPhysical)
+            xChevronPoint = physicalScreenWidth - halfArrowSize;
+            dc.drawLine(physicalScreenWidth, yHalfPhysical, xChevronPoint, yTop);       // Upper chevron line
+            dc.drawLine(physicalScreenWidth, yHalfPhysical, xChevronPoint, yBottom);     // Lower chevron line
+            dc.drawLine(physicalScreenWidth, yHalfPhysical, physicalScreenWidth - ARROW_SIZE, yHalfPhysical); // Shaft
 
             // --- Draw UP and DOWN Arrows ---
-            // Calculate the shared X coordinates for the vertical arrows
-            xLeft = xHalfPhysical - halfArrowSize;
+            // X coordinates for the left and right points of the chevron
+            var xLeft = xHalfPhysical - halfArrowSize;
             var xRight = xHalfPhysical + halfArrowSize;
 
+            // The Y coordinate where the chevron points meet the shaft
+            var yChevronPoint = halfArrowSize;
+
             // Draw UP Arrow
-            dc.drawLine(xHalfPhysical, 0, xLeft, ARROW_SIZE);
-            dc.drawLine(xLeft, ARROW_SIZE, xRight, ARROW_SIZE);
-            dc.drawLine(xRight, ARROW_SIZE, xHalfPhysical, 0);
+            // Tip is at (xHalf, 0)
+            dc.drawLine(xHalfPhysical, 0, xLeft, yChevronPoint);      // Left chevron line
+            dc.drawLine(xHalfPhysical, 0, xRight, yChevronPoint);     // Right chevron line
+            dc.drawLine(xHalfPhysical, 0, xHalfPhysical, ARROW_SIZE); // Shaft
             if (settings.getAttribution() == null || !settings.mapEnabled) {
-                // Draw DOWN Arrow (reuses xLeft and xRight)
-                yTop = physicalScreenHeight - ARROW_SIZE;
-                dc.drawLine(xHalfPhysical, physicalScreenHeight, xRight, yTop);
-                dc.drawLine(xRight, yTop, xLeft, yTop);
-                dc.drawLine(xLeft, yTop, xHalfPhysical, physicalScreenHeight);
+                // Draw DOWN Arrow
+                // Tip is at (xHalf, screenHeight)
+                yChevronPoint = physicalScreenHeight - halfArrowSize;
+                dc.drawLine(xHalfPhysical, physicalScreenHeight, xLeft, yChevronPoint);      // Left chevron line
+                dc.drawLine(xHalfPhysical, physicalScreenHeight, xRight, yChevronPoint);     // Right chevron line
+                dc.drawLine(xHalfPhysical, physicalScreenHeight, xHalfPhysical, physicalScreenHeight - ARROW_SIZE); // Shaft
             }
             return;
         }
