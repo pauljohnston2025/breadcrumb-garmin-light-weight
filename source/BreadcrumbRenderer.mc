@@ -14,6 +14,7 @@ const MIN_SCALE as Float = DESIRED_SCALE_PIXEL_WIDTH / 1000000000.0f;
 
 const ARROW_SIZE = 20.0f;
 const ARROW_PEN_WIDTH = 2;
+const ARROW_WALL_OFFSET = 6.0f;
 
 class BreadcrumbRenderer {
     // todo put into ui class
@@ -1442,29 +1443,24 @@ class BreadcrumbRenderer {
             // crosshair
             var centerX = returnToUserX;
             var centerY = returnToUserY;
-            var size = physicalScreenHeight / 8.0f;
-            var halfSize = size / 2.0f;
-            // Scale factor to convert 100x100 SVG coordinates to the target size
-            var scale = size / 100.0f;
+            var halfSize = 25;
 
             // Draw the outer circle and lines
-            var penWidth3 = 3 * scale < 1 ? 1 : (3 * scale).toNumber();
-            dc.setPenWidth(penWidth3);
+            dc.setPenWidth(2);
 
             // Vertical line
             dc.drawLine(centerX, centerY - halfSize, centerX, centerY + halfSize);
             // Horizontal line
             dc.drawLine(centerX - halfSize, centerY, centerX + halfSize, centerY);
             // Outer circle (r=35)
-            dc.drawCircle(centerX, centerY, 35 * scale);
+            dc.drawCircle(centerX, centerY, 18);
 
             // Draw the middle circle
-            var penWidth4 = 4 * scale < 1 ? 1 : (4 * scale).toNumber();
-            dc.setPenWidth(penWidth4);
-            dc.drawCircle(centerX, centerY, 25 * scale);
+            dc.setPenWidth(3);
+            dc.drawCircle(centerX, centerY, 12);
 
             // Draw the inner, filled circle
-            dc.fillCircle(centerX, centerY, 15 * scale);
+            dc.fillCircle(centerX, centerY, 7);
         }
 
         if (settings.displayLatLong) {
@@ -1506,46 +1502,43 @@ class BreadcrumbRenderer {
             var halfArrowSize = ARROW_SIZE / 2.0f;
 
             // --- Draw LEFT and RIGHT Arrows ---
-            // Y coordinates for the top and bottom points of the chevron
+            // Shared Y coordinates for the horizontal arrow chevrons
             var yTop = yHalfPhysical - halfArrowSize;
             var yBottom = yHalfPhysical + halfArrowSize;
-            
-            // The X coordinate where the chevron points meet the shaft
-            var xChevronPoint = halfArrowSize;
 
-            // Draw LEFT Arrow (<--)
-            // Tip is at (0, yHalfPhysical)
-            dc.drawLine(0, yHalfPhysical, xChevronPoint, yTop);       // Upper chevron line
-            dc.drawLine(0, yHalfPhysical, xChevronPoint, yBottom);     // Lower chevron line
-            dc.drawLine(0, yHalfPhysical, ARROW_SIZE, yHalfPhysical); // Shaft
+            // Draw LEFT Arrow (<--) with offset
+            var tipX = ARROW_WALL_OFFSET;
+            var xChevronPoint = tipX + halfArrowSize;
+            dc.drawLine(tipX, yHalfPhysical, xChevronPoint, yTop); // Upper chevron line
+            dc.drawLine(tipX, yHalfPhysical, xChevronPoint, yBottom); // Lower chevron line
+            dc.drawLine(tipX, yHalfPhysical, tipX + ARROW_SIZE, yHalfPhysical); // Shaft
 
-            // Draw RIGHT Arrow (-->)
-            // Tip is at (screenWidth, yHalfPhysical)
-            xChevronPoint = physicalScreenWidth - halfArrowSize;
-            dc.drawLine(physicalScreenWidth, yHalfPhysical, xChevronPoint, yTop);       // Upper chevron line
-            dc.drawLine(physicalScreenWidth, yHalfPhysical, xChevronPoint, yBottom);     // Lower chevron line
-            dc.drawLine(physicalScreenWidth, yHalfPhysical, physicalScreenWidth - ARROW_SIZE, yHalfPhysical); // Shaft
+            // Draw RIGHT Arrow (-->) with offset
+            tipX = physicalScreenWidth - ARROW_WALL_OFFSET;
+            xChevronPoint = tipX - halfArrowSize;
+            dc.drawLine(tipX, yHalfPhysical, xChevronPoint, yTop); // Upper chevron line
+            dc.drawLine(tipX, yHalfPhysical, xChevronPoint, yBottom); // Lower chevron line
+            dc.drawLine(tipX, yHalfPhysical, tipX - ARROW_SIZE, yHalfPhysical); // Shaft
 
             // --- Draw UP and DOWN Arrows ---
-            // X coordinates for the left and right points of the chevron
+            // Shared X coordinates for the vertical arrow chevrons
             var xLeft = xHalfPhysical - halfArrowSize;
             var xRight = xHalfPhysical + halfArrowSize;
 
-            // The Y coordinate where the chevron points meet the shaft
-            var yChevronPoint = halfArrowSize;
+            // Draw UP Arrow with offset
+            var tipY = ARROW_WALL_OFFSET;
+            var yChevronPoint = tipY + halfArrowSize;
+            dc.drawLine(xHalfPhysical, tipY, xLeft, yChevronPoint); // Left chevron line
+            dc.drawLine(xHalfPhysical, tipY, xRight, yChevronPoint); // Right chevron line
+            dc.drawLine(xHalfPhysical, tipY, xHalfPhysical, tipY + ARROW_SIZE); // Shaft
 
-            // Draw UP Arrow
-            // Tip is at (xHalf, 0)
-            dc.drawLine(xHalfPhysical, 0, xLeft, yChevronPoint);      // Left chevron line
-            dc.drawLine(xHalfPhysical, 0, xRight, yChevronPoint);     // Right chevron line
-            dc.drawLine(xHalfPhysical, 0, xHalfPhysical, ARROW_SIZE); // Shaft
             if (settings.getAttribution() == null || !settings.mapEnabled) {
-                // Draw DOWN Arrow
-                // Tip is at (xHalf, screenHeight)
-                yChevronPoint = physicalScreenHeight - halfArrowSize;
-                dc.drawLine(xHalfPhysical, physicalScreenHeight, xLeft, yChevronPoint);      // Left chevron line
-                dc.drawLine(xHalfPhysical, physicalScreenHeight, xRight, yChevronPoint);     // Right chevron line
-                dc.drawLine(xHalfPhysical, physicalScreenHeight, xHalfPhysical, physicalScreenHeight - ARROW_SIZE); // Shaft
+                // Draw DOWN Arrow with offset
+                tipY = physicalScreenHeight - ARROW_WALL_OFFSET;
+                yChevronPoint = tipY - halfArrowSize;
+                dc.drawLine(xHalfPhysical, tipY, xLeft, yChevronPoint); // Left chevron line
+                dc.drawLine(xHalfPhysical, tipY, xRight, yChevronPoint); // Right chevron line
+                dc.drawLine(xHalfPhysical, tipY, xHalfPhysical, tipY - ARROW_SIZE); // Shaft
             }
             return;
         }
@@ -1619,7 +1612,7 @@ class BreadcrumbRenderer {
     }
 
     function drawNoSmokingSign(dc as Dc, x as Float, y as Float) as Void {
-        var PEN_WIDTH = 1;
+        var PEN_WIDTH = 2;
         dc.setPenWidth(PEN_WIDTH);
 
         // Draw the circle
