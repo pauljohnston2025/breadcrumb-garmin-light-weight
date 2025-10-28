@@ -12,6 +12,9 @@ const DESIRED_ELEV_SCALE_PIXEL_WIDTH as Float = 50.0f;
 // note sure why this has anything to do with DESIRED_SCALE_PIXEL_WIDTH, should just be whatever tile layer 0 equates to for the screen size
 const MIN_SCALE as Float = DESIRED_SCALE_PIXEL_WIDTH / 1000000000.0f;
 
+const ARROW_SIZE = 30.0f;
+const ARROW_PEN_WIDTH = 4;
+
 class BreadcrumbRenderer {
     // todo put into ui class
     var _clearRouteProgress as Number = 0;
@@ -1501,39 +1504,40 @@ class BreadcrumbRenderer {
         }
 
         if (settings.mode == MODE_MAP_MOVE) {
-            // left arrow
-            dc.drawText(
-                0,
-                yHalfPhysical,
-                customFont,
-                "D",
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-            );
-            // right arrow
-            dc.drawText(
-                physicalScreenWidth,
-                yHalfPhysical,
-                customFont,
-                "C",
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-            );
-            // up arrow
-            dc.drawText(
-                xHalfPhysical,
-                0,
-                customFont,
-                "E",
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-            );
+            dc.setPenWidth(ARROW_PEN_WIDTH);
+            var halfArrowSize = ARROW_SIZE / 2.0f;
+
+             // --- Draw LEFT and RIGHT Arrows ---
+            // Calculate the shared Y coordinates for the horizontal arrows
+            var yTop = yHalfPhysical - halfArrowSize;
+            var yBottom = yHalfPhysical + halfArrowSize;
+
+            // Draw LEFT Arrow
+            dc.drawLine(0, yHalfPhysical, ARROW_SIZE, yTop);
+            dc.drawLine(ARROW_SIZE, yTop, ARROW_SIZE, yBottom);
+            dc.drawLine(ARROW_SIZE, yBottom, 0, yHalfPhysical);
+
+            // Draw RIGHT Arrow (reuses yTop and yBottom)
+            var xLeft = physicalScreenWidth - ARROW_SIZE;
+            dc.drawLine(physicalScreenWidth, yHalfPhysical, xLeft, yBottom);
+            dc.drawLine(xLeft, yBottom, xLeft, yTop);
+            dc.drawLine(xLeft, yTop, physicalScreenWidth, yHalfPhysical);
+
+            // --- Draw UP and DOWN Arrows ---
+            // Calculate the shared X coordinates for the vertical arrows
+            xLeft = xHalfPhysical - halfArrowSize;
+            var xRight = xHalfPhysical + halfArrowSize;
+
+            // Draw UP Arrow
+            dc.drawLine(xHalfPhysical, 0, xLeft, ARROW_SIZE);
+            dc.drawLine(xLeft, ARROW_SIZE, xRight, ARROW_SIZE);
+            dc.drawLine(xRight, ARROW_SIZE, xHalfPhysical, 0);
             if (settings.getAttribution() == null || !settings.mapEnabled) {
-                // down arrow
-                dc.drawText(
-                    xHalfPhysical,
-                    physicalScreenHeight,
-                    customFont,
-                    "B",
-                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-                );
+                // Draw DOWN Arrow (reuses xLeft and xRight)
+                yTop = physicalScreenHeight - ARROW_SIZE;
+                dc.drawLine(xHalfPhysical, physicalScreenHeight, xRight, yTop);
+                dc.drawLine(xRight, yTop, xLeft, yTop);
+                dc.drawLine(xLeft, yTop, xHalfPhysical, physicalScreenHeight);
             }
             return;
         }
