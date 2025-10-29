@@ -9,6 +9,51 @@ Companion app can be found at [Companion App](https://github.com/pauljohnston202
 
 ---
 
+There are several different apps/datafields on the connect-iq store all with similar breadcrumb functionality 
+
+Each one has its own repository mirror
+I could use monkey barrels to share common code, but barrels have a memory overhead, and I only expect 1 of these apps/datafields to be installed at a time.
+I also expect the merge conflicts will be easier to deal with rather than a whole heap of (:excludeAnnotations)
+Doing it this way also means each repo has 0 dependents and s fully stand-alone. 
+
+The original project is https://github.com/pauljohnston2025/breadcrumb-garmin it contains the main datafield with all features on supported watches.
+
+The current mirrors are: 
+
+* [BreadcrumbDataField](https://github.com/pauljohnston2025/breadcrumb-garmin) 
+  * Type - DataField
+  * Full breadcrumb trail with map tile support
+* [BreadcrumbApp](https://github.com/pauljohnston2025/breadcrumb-garmin-app)
+  * Upstream mirror - https://github.com/pauljohnston2025/breadcrumb-garmin
+  * Type - App
+  * An app instead of a datafield
+  * Full breadcrumb trail with map tile support
+  * Adds more control
+    * Support for non-touch screen devices, as it can handle button press events
+    * Touch screens can drag the map around to pan
+  * Supports more features on more devices (the app has larger memory limits than a datafield)
+* [LWBreadcrumbDataField](https://github.com/pauljohnston2025/breadcrumb-garmin-light-weight)
+  * Upstream mirror - https://github.com/pauljohnston2025/breadcrumb-garmin
+  * Type - DataField
+  * Full breadcrumb trail (no map tile support)
+* [ULBreadcrumbDataField](https://github.com/pauljohnston2025/breadcrumb-garmin-ulta-light)
+  * Upstream mirror - https://github.com/pauljohnston2025/breadcrumb-garmin-light-weight
+  * Type - DataField
+  * Limited breadcrumb trail (no map support)
+  * This is the lightest weight datafield and is supported on more devices, it is restricted to 1 route and 1 track and alot of customisation is missing
+  * Use this if 
+
+The companion app supports al
+
+To ensure versions do not overlap the Versioning scheme is: 
+
+0.X -> BreadcrumbDataField (0-9.X reserved)
+10.X -> BreadcrumbApp (10-19.X reserved)
+20.X -> LWBreadcrumbDataField (20-29.X reserved)
+30.X -> ULBreadcrumbDataField (30-39.X reserved)
+
+---
+
 # Bug Reports
 
 To aid in the fastest resolution, please include.
