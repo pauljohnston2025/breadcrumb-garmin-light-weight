@@ -35,27 +35,6 @@ class BreadcrumbDataFieldDelegate extends WatchUi.InputDelegate {
             return false;
         }
 
-        if (cachedValues.seeding()) {
-            // we are displaying the tile seed screen, only allow cancel
-            if (y < hitboxSize) {
-                // top of screen
-                cachedValues.cancelCacheCurrentMapArea();
-            }
-            return true;
-        }
-
-        if (renderer.handleStartCacheRoute(x, y)) {
-            return true;
-        }
-
-        if (renderer.handleStartMapEnable(x, y)) {
-            return true;
-        }
-
-        if (renderer.handleStartMapDisable(x, y)) {
-            return true;
-        }
-
         if (renderer.handleClearRoute(x, y)) {
             // returns true if it handles touches on top left
             // also blocks input if we are in the menu

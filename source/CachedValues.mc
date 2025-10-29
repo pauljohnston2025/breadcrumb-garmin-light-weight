@@ -90,9 +90,6 @@ class CachedValues {
     // cache some important maths to make everything faster
     // things set to -1 are updated on the first layout/calculate call
 
-    // updated when settings change
-    var smallTilesPerScaledTile as Number = -1;
-    var smallTilesPerFullTile as Number = -1;
     // updated when user manually pans around screen
     var fixedPosition as RectangularPoint?; // NOT SCALED - raw meters
     var scale as Float? = null; // fixed map scale, when manually zooming or panning around map
@@ -131,69 +128,9 @@ class CachedValues {
     var rotateAroundScreenY as Float = physicalScreenHeight / 2f;
     var rotateAroundScreenXOffsetFactoredIn as Float = rotateAroundScreenX - bufferedBitmapOffsetX;
     var rotateAroundScreenYOffsetFactoredIn as Float = rotateAroundScreenY;
-    var mapScreenWidth as Float = physicalScreenWidth;
-    var mapScreenHeight as Float = physicalScreenHeight;
-    var mapBitmapOffsetX as Float = 0f;
-    var mapBitmapOffsetY as Float = 0f;
     var rotateAroundMinScreenDim as Float = -1f;
     var rotateAroundMaxScreenDim as Float = -1f;
     var rotationMatrix as AffineTransform = new AffineTransform();
-
-    // map related fields updated whenever scale changes
-    var mapDataCanBeUsed as Boolean = false;
-    var earthsCircumference as Float = 40075016.686f;
-    var originShift as Float = earthsCircumference / 2.0; // Half circumference of Earth
-    var tileZ as Number = -1;
-    var tileScaleFactor as Float = -1f;
-    var tileScalePixelSize as Number = -1;
-    var tileOffsetX as Number = -1;
-    var tileOffsetY as Number = -1;
-    var tileCountX as Number = -1;
-    var tileCountY as Number = -1;
-    var firstTileX as Number = -1;
-    var firstTileY as Number = -1;
-
-    // todo store all these in a 'seeding' class so the variables are not using memory when the seeding is not happening
-    (:storage)
-    var seedingZ as Number = -1; // -1 means not seeding
-    (:storage)
-    var seedingRectanglarTopLeft as RectangularPoint = new RectangularPoint(0f, 0f, 0f);
-    (:storage)
-    var seedingRectanglarBottomRight as RectangularPoint = new RectangularPoint(0f, 0f, 0f);
-    (:storage)
-    var seedingUpToTileX as Number = 0;
-    (:storage)
-    var seedingUpToTileY as Number = 0;
-    (:storage)
-    var seedingTilesLeftRightValid as Boolean = false;
-    (:storage)
-    var seedingUpToRoute as Number = 0;
-    (:storage)
-    var seedingUpToRoutePoint as Number = 0;
-    (:storage)
-    var seedingUpToRoutePointPartial as SegmentPointIterator? = null;
-    // we need this one for some functions, its never read only written to in (:noStorage) mode
-    var seedingMapCacheDistanceM as Float = -1f;
-    // todo remove the dictionary for memory perf, but it's only populated during a seed so should not be too bad
-    (:storage)
-    var seedingInProgressTiles as Dictionary<String, [Number, Number, Number]> =
-        ({}) as Dictionary<String, [Number, Number, Number]>;
-    (:storage)
-    var seedingFirstTileX as Number = 0;
-    (:storage)
-    var seedingFirstTileY as Number = 0;
-    (:storage)
-    var seedingLastTileX as Number = 0;
-    (:storage)
-    var seedingLastTileY as Number = 0;
-
-    function atMinTileLayer() as Boolean {
-        return tileZ == _settings.tileLayerMin;
-    }
-
-    function atMaxTileLayer() as Boolean {
-        return tileZ == _settings.tileLayerMax;
-    }
 
     function initialize(settings as Settings) {
         self._settings = settings;
@@ -208,16 +145,9 @@ class CachedValues {
     }
 
     function setup() as Void {
-        smallTilesPerScaledTile = Math.ceil(
-            _settings.scaledTileSize / _settings.tileSize.toFloat()
-        ).toNumber();
-        smallTilesPerFullTile = Math.ceil(
-            _settings.fullTileSize / _settings.tileSize.toFloat()
-        ).toNumber();
         fixedPosition = null;
         // will be changed whenever scale is adjusted, falls back to metersAroundUser when no scale
         mapMoveDistanceM = _settings.metersAroundUser.toFloat() * _settings.mapMoveScreenSize;
-        seedingMapCacheDistanceM = _settings.metersAroundUser.toFloat() * 0.5;
         recalculateAll();
     }
 
@@ -271,17 +201,9 @@ class CachedValues {
     }
 
     /** returns true if a rescale occurred */
-    function updateScaleCenterAndMap() as Boolean {
+    function updateScaleCenter() as Boolean {
         var newScale = getNewScaleAndUpdateCenter();
         var rescaleOccurred = handleNewScale(newScale);
-        if (_settings.mapEnabled) {
-            updateMapData();
-        }
-        if (currentScale != 0f) {
-            mapMoveDistanceM =
-                (rotateAroundMaxScreenDim * _settings.mapMoveScreenSize) / currentScale;
-            seedingMapCacheDistanceM = (rotateAroundMaxScreenDim * 0.5) / currentScale;
-        }
         return rescaleOccurred;
     }
 
@@ -324,82 +246,6 @@ class CachedValues {
         return getApp()._breadcrumbContext.track.coordinates.lastPoint() == null
             ? null
             : getApp()._breadcrumbContext.track.boundingBox;
-    }
-
-    // needs to be called whenever the screen moves to a new bounding box
-    function updateMapData() as Void {
-        if (currentScale == 0f || smallTilesPerScaledTile == 0) {
-            // do not divide by zero my good friends
-            // we do not have a scale calculated yet
-            return;
-        }
-
-        var centerPositionRaw = centerPosition.rescale(1 / currentScale);
-
-        // 2 to 15 see https://opentopomap.org/#map=2/-43.2/305.9
-        var desiredResolution = 1 / currentScale;
-        var z = calculateTileLevel(desiredResolution);
-        tileZ = minN(maxN(z, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
-
-        var tileWidthM = (
-            earthsCircumference /
-            Math.pow(2, tileZ) /
-            smallTilesPerScaledTile
-        ).toFloat();
-        var halfScreenWidthM = mapScreenWidth / 2.0f / currentScale;
-        var halfScreenHeightM = mapScreenHeight / 2.0f / currentScale;
-
-        // where the screen corner starts
-        var screenLeftM = centerPositionRaw.x - halfScreenWidthM;
-        var screenTopM = centerPositionRaw.y + halfScreenHeightM;
-
-        // find which tile we are closest to
-        var mapBitmapOffsetXM = mapBitmapOffsetX / currentScale;
-        var mapBitmapOffsetYM = mapBitmapOffsetY / currentScale;
-        firstTileX = ((screenLeftM + originShift - mapBitmapOffsetXM) / tileWidthM).toNumber();
-        firstTileY = ((originShift - screenTopM - mapBitmapOffsetYM) / tileWidthM).toNumber();
-
-        // remember, lat/long is a different coordinate system (the lower we are the more negative we are)
-        //  x calculations are the same - more left = more negative
-        //  tile inside graph
-        // 90
-        //    | 0,0 1,0   tile
-        //    | 0,1 1,1
-        //    |____________________
-        //  -180,-90              180
-        var firstTileLeftM = firstTileX * tileWidthM - originShift;
-        var firstTileTopM = originShift - firstTileY * tileWidthM;
-
-        // var screenToTilePixelRatio = minScreenDim / _settings.tileSize;
-        // var screenToTileMRatio = minScreenDimM / tileWidthM;
-        // var scaleFactor = screenToTilePixelRatio / screenToTileMRatio; // we need to stretch or shrink the tiles by this much
-        // simplification of above calculation
-        tileScaleFactor = (currentScale * tileWidthM) / _settings.tileSize;
-        // eg. tile = 10m screen = 10m tile = 256pixel screen = 360pixel scaleFactor = 1.4 each tile pixel needs to become 1.4 sceen pixels
-        // eg. 2
-        //     tile = 20m screen = 10m tile = 256pixel screen = 360pixel scaleFactor = 2.8 we only want to render half the tile, so we only have half the pixels
-        //     screenToTileMRatio = 0.5 screenToTilePixelRatio = 1.4
-        // eg. 3
-        //     tile = 10m screen = 20m tile = 256pixel screen = 360pixel scaleFactor = 0.7 we need 2 tiles, each tile pixel needs to be squashed into screen pixels
-        //     screenToTileMRatio = 2 screenToTilePixelRatio = 1.4
-        //
-
-        // how many pixels on the screen the tile should take up this can be smaller or larger than the actual tile,
-        // depending on if we scale up or down
-        // find the closest pixel size
-        tileScalePixelSize = Math.round(_settings.tileSize * tileScaleFactor).toNumber();
-
-        // find the closest pixel size
-        tileOffsetX = Math.round(
-            (firstTileLeftM - screenLeftM) * currentScale + mapBitmapOffsetX
-        ).toNumber();
-        tileOffsetY = Math.round(
-            (screenTopM - firstTileTopM) * currentScale + mapBitmapOffsetY
-        ).toNumber();
-
-        tileCountX = Math.ceil((-tileOffsetX + mapScreenWidth) / tileScalePixelSize).toNumber();
-        tileCountY = Math.ceil((-tileOffsetY + mapScreenHeight) / tileScalePixelSize).toNumber();
-        mapDataCanBeUsed = true;
     }
 
     /** returns true if a rescale occurred */
@@ -460,8 +306,7 @@ class CachedValues {
         if (currentlyZoomingAroundUser != weShouldZoomAroundUser) {
             currentlyZoomingAroundUser = weShouldZoomAroundUser;
             updateUserRotationElements(getCenterUserOffsetY());
-            var ret = updateScaleCenterAndMap();
-            _settings.clearPendingWebRequests();
+            var ret = updateScaleCenter();
             getApp()._view.resetRenderTime();
             return ret;
         }
@@ -478,7 +323,7 @@ class CachedValues {
         yHalfPhysical = physicalScreenHeight / 2f;
 
         updateVirtualScreenSize();
-        updateScaleCenterAndMap();
+        updateScaleCenter();
     }
 
     (:inline)
@@ -493,10 +338,7 @@ class CachedValues {
         var centerUserOffsetY = getCenterUserOffsetY();
 
         virtualScreenWidth = physicalScreenWidth; // always the same, just using naming for consistency
-        if (
-            _settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
-            _settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING
-        ) {
+        if (_settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING) {
             if (centerUserOffsetY >= 0.5) {
                 virtualScreenHeight = physicalScreenHeight * centerUserOffsetY * 2;
             } else {
@@ -519,53 +361,14 @@ class CachedValues {
             rotateAroundScreenY = physicalScreenHeight * centerUserOffsetY;
             rotateAroundMinScreenDim = minVirtualScreenDim;
             rotateAroundMaxScreenDim = maxVirtualScreenDim;
-            mapScreenWidth = rotateAroundMaxScreenDim;
-            mapScreenHeight = rotateAroundMaxScreenDim;
-
-            if (
-                _settings.renderMode == RENDER_MODE_UNBUFFERED_NO_ROTATION ||
-                _settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
-            ) {
-                // attempt to reduce the number of map tiles needed in render modes without rotations
-                // rotation mode still needs all the map tiles, since it could rotate to any of them at any point
-                // RENDER_MODE_BUFFERED_ROTATING is a pretty rarely used mode, so not sure its worth this.
-                // we do not modify virtual screen size, since that would mean the buffered bitmap would change size and need updating too. We could do it for RENDER_MODE_UNBUFFERED_ROTATING only.
-                mapScreenWidth = physicalScreenWidth;
-                mapScreenHeight = physicalScreenHeight;
-            }
         } else {
             rotateAroundScreenX = xHalfPhysical;
             rotateAroundScreenY = yHalfPhysical;
             rotateAroundMinScreenDim = minPhysicalScreenDim;
             rotateAroundMaxScreenDim = maxPhysicalScreenDim;
-            mapScreenWidth = physicalScreenWidth;
-            mapScreenHeight = physicalScreenHeight;
         }
 
-        mapBitmapOffsetX = 0f;
-        mapBitmapOffsetY = 0f;
-
-        if (_settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION) {
-            // draw it top left, so we can make our map tiles less (and possibly reduce the whole bitmap size)
-            bufferedBitmapOffsetX = 0f;
-            bufferedBitmapOffsetY = 0f;
-
-            rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX - bufferedBitmapOffsetX;
-            rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY - bufferedBitmapOffsetY;
-
-            if (currentlyZoomingAroundUser) {
-                mapBitmapOffsetY = rotateAroundScreenY - yHalfPhysical;
-            }
-        } else if (_settings.renderMode == RENDER_MODE_BUFFERED_ROTATING) {
-            bufferedBitmapOffsetX = -(rotateAroundMaxScreenDim - physicalScreenWidth) / 2f;
-            bufferedBitmapOffsetY = -(rotateAroundMaxScreenDim - physicalScreenHeight);
-            rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX - bufferedBitmapOffsetX;
-            rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY - bufferedBitmapOffsetY;
-
-            if (centerUserOffsetY >= 0.5 && currentlyZoomingAroundUser) {
-                rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY; // draw straight to the buffered canvas, since the canvas top matches our top
-            }
-        } else if (_settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING) {
+        if (_settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING) {
             // unbuffered mode -> draws straight to dc
             rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX;
             rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY;
@@ -587,10 +390,6 @@ class CachedValues {
         } else {
             // RENDER_MODE_UNBUFFERED_NO_ROTATION
             // unbuffered mode -> draws straight to dc
-            if (currentlyZoomingAroundUser) {
-                mapBitmapOffsetY = rotateAroundScreenY - yHalfPhysical;
-            }
-
             rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX;
             rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY;
         }
@@ -609,13 +408,6 @@ class CachedValues {
     }
 
     function calculateScale(maxDistanceM as Float) as Float {
-        if (_settings.scaleRestrictedToTileLayers() && _settings.mapEnabled) {
-            return tileLayerScale(maxDistanceM);
-        }
-        return calculateScaleStandard(maxDistanceM);
-    }
-
-    function calculateScaleStandard(maxDistanceM as Float) as Float {
         if (scale != null) {
             return scale;
         }
@@ -629,49 +421,6 @@ class CachedValues {
         // but this would only work for squares, so 0.75 fudge factor for circle
         // watch face
         return (rotateAroundMinScreenDim / maxDistanceM) * 0.75;
-    }
-
-    function nextTileLayerScale(direction as Number) as Float {
-        var scaleL = scale;
-        if (smallTilesPerFullTile == 0 || scaleL == null || scaleL == 0f) {
-            return 0f;
-        }
-
-        var currentZ = calculateTileLevel(1 / scaleL);
-        currentZ = minN(maxN(currentZ, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits, otherwise we can decreent/increment outside the range if we are already at a bad scale
-        var nextZ = currentZ + direction;
-
-        nextZ = minN(maxN(nextZ, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
-        var tileWidthM2 = earthsCircumference / Math.pow(2, nextZ) / smallTilesPerFullTile;
-        var ret = (_settings.tileSize / tileWidthM2).toFloat();
-        // atMinTileLayer = ret == _settings.tileLayerMin;
-        // atMaxTileLayer = ret == _settings.tileLayerMax;
-        return ret;
-    }
-
-    function tileLayerScale(maxDistanceM as Float) as Float {
-        var perfectScale = calculateScaleStandard(maxDistanceM);
-
-        if (perfectScale == 0f || smallTilesPerFullTile == 0) {
-            return perfectScale; // do not divide by 0
-        }
-
-        // only allow map tile scale levels so that we can render the tiles without any gaps, and at the correct size
-        // todo cache these calcs, it is for the slower devices after all
-        var desiredResolution = 1 / perfectScale;
-        var z = calculateTileLevel(desiredResolution);
-        z = minN(maxN(z, _settings.tileLayerMin), _settings.tileLayerMax); // cap to our limits
-
-        // we want these ratios to be the same
-        // var minScreenDimM = _minScreenDim / currentScale;
-        // var screenToTileMRatio = minScreenDimM / tileWidthM;
-        // var screenToTilePixelRatio = minScreenDim / _settings.tileSize;
-        var tileWidthM2 = earthsCircumference / Math.pow(2, z) / smallTilesPerFullTile;
-        //  var screenToTilePixelRatio = _minScreenDim / settings.tileSize;
-
-        // note: this gets as close as it can to the zoom level, some route clipping might occur
-        // we have to go to the largertile sizes so that we can see the whole route
-        return (_settings.tileSize / tileWidthM2).toFloat();
     }
 
     /** returns the new scale */
@@ -721,15 +470,9 @@ class CachedValues {
 
     function recalculateAll() as Void {
         logT("recalculating all cached values from settings/routes change");
-        smallTilesPerScaledTile = Math.ceil(
-            _settings.scaledTileSize / _settings.tileSize.toFloat()
-        ).toNumber();
-        smallTilesPerFullTile = Math.ceil(
-            _settings.fullTileSize / _settings.tileSize.toFloat()
-        ).toNumber();
         updateFixedPositionFromSettings();
         updateVirtualScreenSize();
-        updateScaleCenterAndMap();
+        updateScaleCenter();
     }
 
     function updateFixedPositionFromSettings() as Void {
@@ -742,33 +485,20 @@ class CachedValues {
         }
     }
 
-    // Desired resolution (meters per pixel)
-    function calculateTileLevel(desiredResolution as Float) as Number {
-        var zF = Math.log(
-            earthsCircumference / (_settings.tileSize * desiredResolution) / smallTilesPerFullTile,
-            2
-        );
-
-        return Math.round(zF).toNumber();
-    }
-
     function moveLatLong(
         xMoveUnrotated as Float,
         yMoveUnrotated as Float,
         xMoveRotated as Float,
         yMoveRotated as Float
     ) as Void {
-        var updateScreen = setPositionAndScaleIfNotSet();
+        setPositionAndScaleIfNotSet();
         var latlong = getNewLatLong(xMoveUnrotated, yMoveUnrotated, xMoveRotated, yMoveRotated);
 
         if (latlong != null) {
             _settings.setFixedPositionRaw(latlong[0], latlong[1]);
         }
         updateFixedPositionFromSettings();
-        updateScaleCenterAndMap();
-        if (updateScreen) {
-            getApp()._view.updateScratchPadBitmap();
-        }
+        updateScaleCenter();
         getApp()._view.resetRenderTime();
     }
 
@@ -784,10 +514,7 @@ class CachedValues {
             logE("unreachable, fixedPositionL is null");
             return null;
         }
-        if (
-            _settings.renderMode == RENDER_MODE_UNBUFFERED_NO_ROTATION ||
-            _settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
-        ) {
+        if (_settings.renderMode == RENDER_MODE_UNBUFFERED_NO_ROTATION) {
             return RectangularPoint.xyToLatLon(
                 fixedPositionL.x + xMoveUnrotated,
                 fixedPositionL.y + yMoveUnrotated
@@ -881,8 +608,7 @@ class CachedValues {
         }
     }
 
-    // returns true if the screen needs to be updated
-    function setPositionAndScaleIfNotSet() as Boolean {
+    function setPositionAndScaleIfNotSet() as Void {
         // we need to set a fixed scale so that a user moving does not change the zoom level randomly whilst they are viewing a map and panning
         if (scale == null) {
             var scaleToSet = currentScale;
@@ -894,7 +620,7 @@ class CachedValues {
 
         if (fixedPosition != null) {
             // we are already good to go
-            return false;
+            return;
         }
 
         var center = getScreenCenter();
@@ -911,7 +637,7 @@ class CachedValues {
             logE("currentScale not set when it should be");
             fixedPosition = center;
             updateVirtualScreenSize();
-            return true;
+            return;
         }
 
         var xAddM = unrotatedOffsetXPx / currentScale;
@@ -922,10 +648,9 @@ class CachedValues {
 
         // logT("new fixed pos: " + fixedPosition);
         // all code paths that call into here also call
-        // updateScaleCenterAndMap so we will avoid calling it here
+        // updateScaleCenter so we will avoid calling it here
         // but we must update the screen size, and tell the view about it
         updateVirtualScreenSize();
-        return true;
     }
 
     function getScreenCenter() as RectangularPoint {
@@ -961,17 +686,15 @@ class CachedValues {
 
     function returnToUser() as Void {
         // set fixed position recalculates all on us
-        _settings.setFixedPosition(null, null, true);
+        _settings.setFixedPosition(null, null);
         setScale(null);
-        getApp()._view.updateScratchPadBitmap();
     }
 
     function setScale(_scale as Float?) as Void {
         scale = _scale;
         // be very careful about putting null into properties, it breaks everything
         if (scale == null) {
-            _settings.clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
-            updateScaleCenterAndMap();
+            updateScaleCenter();
             // this is not the best guess, but will only require the user to tap zoom once to see that it cannot zoom
             // getScaleDecIncAmount() only works when the scale is not null. We could update it to use the currentScale if scale is null?
             // they are not actually in a user scale in this case though, so makes sense to show that we are tracking the users desired zoom instead of ours
@@ -981,485 +704,7 @@ class CachedValues {
             return;
         }
 
-        _settings.clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
-        updateScaleCenterAndMap();
+        updateScaleCenter();
         getApp()._view.resetRenderTime();
-    }
-
-    (:noStorage)
-    function cancelCacheCurrentMapArea() as Void {}
-
-    (:storage)
-    function cancelCacheCurrentMapArea() as Void {
-        seedingZ = -1;
-        seedingRectanglarTopLeft = new RectangularPoint(0f, 0f, 0f);
-        seedingRectanglarBottomRight = new RectangularPoint(0f, 0f, 0f);
-        seedingUpToTileX = 0;
-        seedingUpToTileY = 0;
-        seedingFirstTileX = 0;
-        seedingFirstTileY = 0;
-        seedingLastTileX = 0;
-        seedingLastTileY = 0;
-        seedingTilesLeftRightValid = false;
-        seedingUpToRoute = 0;
-        seedingUpToRoutePoint = 0;
-        seedingUpToRoutePointPartial = null;
-        seedingInProgressTiles = ({}) as Dictionary<String, [Number, Number, Number]>;
-    }
-
-    (:noStorage)
-    function startCacheCurrentMapArea() as Void {}
-    (:storage)
-    function startCacheCurrentMapArea() as Void {
-        if (!_settings.mapEnabled) {
-            return;
-        }
-
-        if (!_settings.storageMapTilesOnly && !_settings.cacheTilesInStorage) {
-            // storage tiles are not enabled, do not allow seeding
-            return;
-        }
-
-        var tileCache = getApp()._breadcrumbContext.tileCache;
-        // If we do not clear the in memory tile cache the image tiles sometimes cause us to crash.
-        // Think its because the graphics pool runs out of memory, and makeImageRequest fails with
-        // Error: System Error
-        // Details: failed inside handle_image_callback
-        tileCache.clearValuesWithoutStorage();
-
-        // start at max, and move towards min.
-        // It's slower to do the lower layers first, but means if we run out of storage the higher layers will still be cached, so we will get a better experience.
-        // Rather than having all the fine details, but no overview, we at least get the overview tiles. Users can set tileLayerMin and tileLayerMax if they would prefer to cache only a single layer.
-        seedingZ = _settings.tileLayerMax;
-        // todo store current x and y for the for loop, also need to store the max/min tile coords
-        // seedingX = ...
-        // seedingY = ...
-    }
-    (:noStorage)
-    function seeding() as Boolean {
-        return false;
-    }
-
-    (:storage)
-    function seeding() as Boolean {
-        return seedingZ >= 0 || seedingInProgressTiles.size() != 0;
-    }
-
-    (:noStorage)
-    function stepCacheCurrentMapArea() as Boolean {
-        return false;
-    }
-    (:storage)
-    function stepCacheCurrentMapArea() as Boolean {
-        if (!seeding()) {
-            return false;
-        }
-
-        if (seedingZ >= _settings.tileLayerMin && seedNextTilesToStorage()) {
-            seedingZ--;
-            // don't reset them, we need them for the debug screen
-            // seedingUpToTileX = 0;
-            // seedingUpToTileY = 0;
-            // seedingFirstTileX = 0;
-            // seedingFirstTileY = 0;
-            // seedingLastTileX = 0;
-            // seedingLastTileY = 0;
-            seedingTilesLeftRightValid = false;
-            seedingUpToRoute = 0;
-            seedingUpToRoutePoint = 0;
-            seedingUpToRoutePointPartial = null;
-            // definitely DO NOT reset seedingInProgressTiles, or we will loose the last 50 or so outstanding requests 'maxTilesAtATime'
-            // seedingInProgressTiles = ({}) as Dictionary<String, [Number, Number, Number]>;
-        }
-
-        if (seedingInProgressTiles.size() != 0) {
-            // keep seeding them until they are all done
-            removeFromSeedingInProgressTilesAndSeedThem();
-            return true;
-        }
-
-        if (seedingZ < _settings.tileLayerMin) {
-            // no more seeding
-            cancelCacheCurrentMapArea();
-            return false;
-        }
-
-        return true;
-    }
-
-    // null indicates no more tiles
-    (:storage)
-    function nextSeedingTileKey() as [Number, Number, Number]? {
-        // DANGEROUS - could trigger watchdog
-        var counter = 0;
-        while (true) {
-            ++counter;
-            if (counter > 20) {
-                // we should not take any amount of time to do this
-                // the while loop only moves the state machine forward
-                // one iteration each for
-                //
-                // next route (routes might not be enabled so X maxRoutes)
-                // next point in route
-                // next partial point between route points
-                // get the tile coordinates from the partial point
-                // inc tile x
-                // inc tile y
-
-                // most will return within 1 or 2 iterations, some will take more to increment each level of the loop
-                logE("we reached or recursion limit");
-                seedingTilesLeftRightValid = false;
-                return null; // pretend we are done, something seems wrong
-            }
-
-            if (seedingTilesLeftRightValid) {
-                // grab the current tile
-                var x = seedingUpToTileX;
-                var y = seedingUpToTileY;
-
-                // var tilesPerXRow = seedingLastTileX - seedingFirstTileX;
-                // var seedingTilesOnThisLayer = tilesPerXRow * (seedingLastTileY - seedingFirstTileY);
-                // var seedingTilesProgressForThisLayer =
-                //     tilesPerXRow * (seedingUpToTileY - seedingFirstTileY) +
-                //     seedingUpToTileX -
-                //     seedingFirstTileX;
-
-                // logT(
-                //     "up to tile " + seedingTilesProgressForThisLayer + "/" + seedingTilesOnThisLayer
-                // );
-
-                if (_settings.storageSeedBoundingBox && seedingUpToTileY >= seedingLastTileY) {
-                    // we have returned to the function after the last tile layer
-                    // we have finished this layer, go onto the next
-                    // the last tile will not be returned though, since we exit too early
-                    // logT("completed layer, going to next: " + seedingZ);
-                    return null;
-                }
-
-                // increment for the next call
-                ++seedingUpToTileX;
-                if (seedingUpToTileX >= seedingLastTileX) {
-                    seedingUpToTileX = seedingFirstTileX;
-                    ++seedingUpToTileY;
-                }
-
-                if (seedingUpToTileY >= seedingLastTileY) {
-                    // we were on our last tile for this partial point, reset for the next layer
-                    seedingTilesLeftRightValid = _settings.storageSeedBoundingBox;
-                    // in storageSeedBoundingBox we use this tile counters as the way to know we are on the last tile, so we need to keep seedingTilesLeftRightValid and check that we are beyond the limits
-                    // we still need to return this tile though
-                }
-
-                // logT("getting tile x: " + x + " y: " + y + " z: " + seedingZ);
-                return [x, y, seedingZ];
-            }
-
-            if (_settings.storageSeedBoundingBox) {
-                // no complicated route logic, just move onto the next layer and get the full bounding box
-                var centerRectangular = getScreenCenter();
-                seedingRectanglarTopLeft = new RectangularPoint(
-                    centerRectangular.x - seedingMapCacheDistanceM,
-                    centerRectangular.y + seedingMapCacheDistanceM,
-                    0f
-                );
-                seedingRectanglarBottomRight = new RectangularPoint(
-                    centerRectangular.x + seedingMapCacheDistanceM,
-                    centerRectangular.y - seedingMapCacheDistanceM,
-                    0f
-                );
-            } else {
-                var routes = getApp()._breadcrumbContext.routes;
-                // might be no enabled routes? or the routes might have no coordinates. Guess we just have to return finished?
-                if (routes.size() == 0 || !_settings.atLeast1RouteEnabled()) {
-                    // set up a tile to be downloaded, so that 'seedNextTilesToStorageBoundingBox' returns true
-                    seedingTilesLeftRightValid = false;
-                    return null; // there is nothing to process
-                }
-
-                if (seedingUpToRoute >= routes.size()) {
-                    seedingUpToRoute = 0;
-                    seedingUpToRoutePoint = 0;
-                    seedingUpToRoutePointPartial = null;
-                    return null; // we have processed all the routes
-                }
-
-                var route = routes[seedingUpToRoute];
-                if (!_settings.routeEnabled(route.storageIndex)) {
-                    ++seedingUpToRoute;
-                    seedingUpToRoutePoint = 0;
-                    seedingUpToRoutePointPartial = null;
-                    continue; // call me again asap
-                }
-                var routePoint = route.coordinates.getPoint(seedingUpToRoutePoint);
-                var nextRoutePoint = route.coordinates.getPoint(seedingUpToRoutePoint + 1);
-                if (routePoint == null || nextRoutePoint == null) {
-                    // we are at the end of the route, no more points, move onto the next route
-                    ++seedingUpToRoute;
-                    seedingUpToRoutePoint = 0;
-                    seedingUpToRoutePointPartial = null;
-                    continue; // call me again asap
-                }
-
-                var divisor = currentScale;
-                if (divisor == 0f) {
-                    // we should always have a current scale at this point, since we manually set scale (or we are caching map tiles)
-                    logE("Warning: current scale was somehow not set");
-                    divisor = 1f;
-                }
-
-                if (seedingUpToRoutePointPartial == null) {
-                    var tileWidthM =
-                        earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
-                    seedingUpToRoutePointPartial = new SegmentPointIterator(
-                        routePoint.x / divisor,
-                        routePoint.y / divisor,
-                        nextRoutePoint.x / divisor,
-                        nextRoutePoint.y / divisor,
-                        tileWidthM.toFloat() / 2.0f // we only need to step at half the tile distance, this guarantees we do not miss any tiles (if we have a large gap in coordinates)
-                    );
-                }
-
-                var nextPoint = (seedingUpToRoutePointPartial as SegmentPointIterator).next();
-                if (nextPoint == null) {
-                    // we are onto the next route point
-                    ++seedingUpToRoutePoint;
-                    seedingUpToRoutePointPartial = null;
-                    continue; // call us again soon asap
-                }
-
-                // we have reached a new point, update the our bounding box for the point
-                seedingRectanglarTopLeft = new RectangularPoint(
-                    nextPoint[0] - _settings.storageSeedRouteDistanceM,
-                    nextPoint[1] + _settings.storageSeedRouteDistanceM,
-                    0f
-                );
-
-                seedingRectanglarBottomRight = new RectangularPoint(
-                    nextPoint[0] + _settings.storageSeedRouteDistanceM,
-                    nextPoint[1] - _settings.storageSeedRouteDistanceM,
-                    0f
-                );
-            }
-
-            var tileWidthM = earthsCircumference / Math.pow(2, seedingZ) / smallTilesPerScaledTile;
-
-            // find which tile we are closest to
-            seedingFirstTileX = (
-                (seedingRectanglarTopLeft.x + originShift) /
-                tileWidthM
-            ).toNumber();
-            seedingFirstTileY = (
-                (originShift - seedingRectanglarTopLeft.y) /
-                tileWidthM
-            ).toNumber();
-            // last tile is open ended range (+1)
-            seedingLastTileX =
-                ((seedingRectanglarBottomRight.x + originShift) / tileWidthM).toNumber() + 1;
-            seedingLastTileY =
-                ((originShift - seedingRectanglarBottomRight.y) / tileWidthM).toNumber() + 1;
-
-            seedingUpToTileX = seedingFirstTileX;
-            seedingUpToTileY = seedingFirstTileY;
-            seedingTilesLeftRightValid = true;
-            continue;
-        }
-
-        seedingTilesLeftRightValid = false;
-        return null; // should always return from the while loop above, this should be unreachable, but pretend we are finished if we hit here
-    }
-
-    (:storage)
-    function seedNextTilesToStorage() as Boolean {
-        var tileCache = getApp()._breadcrumbContext.tileCache;
-        // could use Bresenham's Line Algorithm to find all tiles on the path
-        // instead we split the routes points up into segments, and download all the tiles for each point in the route,
-        // factoring in the max distance around the route to cache
-
-        // each point is downloaded as a bounding box, there will be overlaps
-        // this is also highly inefficient, as there might only be one tile for the entire route ayt low zoom levels, but we still try and get the same
-        // tile over and over
-        removeFromSeedingInProgressTilesAndSeedThem(); // do not call in for loop, we want to break out so we do not get watchdog errors
-
-        // max 10 outstanding requests, and 10 lots of work for the watchdog, work is variable depending on nextSeedingTileKey complexity
-        // we also need the `i` variable tracking it, because on the lower layers we can add the same tile multiple times. eg. layer 0 all the route points will likely point at a single tile, but we still have to precess the entire route
-        var maxTilesAtATime = MAX_TILES_AT_A_TIME;
-        maxTilesAtATime = minN(maxTilesAtATime, _settings.storageTileCacheSize);
-        // logD("starting for");
-        for (
-            var i = 0;
-            i < maxTilesAtATime && seedingInProgressTiles.size() < maxTilesAtATime;
-            ++i
-        ) {
-            var nextTileKey = nextSeedingTileKey();
-            // logD("tile:" + nextTileKey);
-            if (nextTileKey == null) {
-                // we are finished the z layer, move on to the next
-                return true;
-            }
-
-            var hash = tileKeyHash(nextTileKey[0], nextTileKey[1], nextTileKey[2]);
-
-            // only add it if it's not already present
-            if (seedingInProgressTiles.hasKey(hash)) {
-                // logD("already had it");
-                continue;
-            }
-
-            // logD("adding");
-            // we might already have the tile in the storage cache, queue it up anyway so we reach our terminating condition faster
-            seedingInProgressTiles[hash] = nextTileKey;
-            // logT(
-            //     "seeding tile x: " +
-            //         nextTileKey[0] +
-            //         " y: " +
-            //         nextTileKey[1] +
-            //         " z: " +
-            //         nextTileKey[2] +
-            //         " seedingInProgressTiles size: " +
-            //         seedingInProgressTiles.size()
-            // );
-            tileCache.seedTileToStorage(hash, nextTileKey[0], nextTileKey[1], nextTileKey[2]);
-        }
-
-        return false; // only the for loop may return that we are completed
-    }
-
-    (:storage)
-    function removeFromSeedingInProgressTilesAndSeedThem() as Void {
-        var tileCache = getApp()._breadcrumbContext.tileCache;
-        var toRemove = [];
-        var keys = seedingInProgressTiles.keys();
-        for (var i = 0; i < seedingInProgressTiles.size(); ++i) {
-            var key = keys[i];
-            // var item = seedingInProgressTiles[key] as [Number, Number, Number];
-            // logT("checking if tile completed x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
-
-            if (tileCache._storageTileCache.haveTile(key)) {
-                // logT("we have tile x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
-                toRemove.add(key);
-            }
-        }
-
-        // logT("toremove size: " + toRemove.size());
-        // logT("seedingInProgressTiles size: " + seedingInProgressTiles.size());
-
-        for (var i = 0; i < toRemove.size(); ++i) {
-            var key = toRemove[i];
-            seedingInProgressTiles.remove(key as String);
-        }
-
-        // update our key indexes
-        keys = seedingInProgressTiles.keys();
-        for (var i = 0; i < seedingInProgressTiles.size(); ++i) {
-            var key = keys[i];
-            var item = seedingInProgressTiles[key] as [Number, Number, Number];
-            // we better request it again, it might not have reached the web handler before
-            // logT("seeding tile again x: " + item[0] + " y: " + item[1] + " z: " + item[2]);
-            tileCache.seedTileToStorage(key, item[0], item[1], item[2]);
-        }
-    }
-
-    (:storage)
-    function seedingProgress() as [String, Float] {
-        // The total number of layers to process is the difference + 1.
-        // e.g., from layer 15 down to 10 is (15 - 10) + 1 = 6 layers.
-        var tileLayers = (_settings.tileLayerMax - _settings.tileLayerMin + 1).toFloat();
-        tileLayers = maxF(tileLayers, 1f);
-        var currentTileLayerProgress = (_settings.tileLayerMax - seedingZ).toFloat();
-
-        if (seedingZ < 0) {
-            // we are just waiting on the last few to finish
-            var size = seedingInProgressTiles.size();
-            return [
-                size.toString() + " remaining",
-                (MAX_TILES_AT_A_TIME - size) / MAX_TILES_AT_A_TIME.toFloat(),
-            ];
-        }
-
-        if (_settings.storageSeedBoundingBox) {
-            // simple tile layer progress, since we do not know how many tile per layer without some complex math
-            // if we are on the first layer (currentTileLayerProgress=0) we still want something to be shown, so add 1 to each field
-            var overallProgress = (currentTileLayerProgress + 1) / (tileLayers + 1);
-            var tilesPerXRow = seedingLastTileX - seedingFirstTileX;
-            var seedingTilesOnThisLayer = tilesPerXRow * (seedingLastTileY - seedingFirstTileY);
-            var seedingTilesProgressForThisLayer =
-                tilesPerXRow * (seedingUpToTileY - seedingFirstTileY) +
-                seedingUpToTileX -
-                seedingFirstTileX;
-
-            var percentageStr =
-                seedingTilesOnThisLayer == 0
-                    ? ""
-                    : "(" +
-                      (
-                          (seedingTilesProgressForThisLayer / seedingTilesOnThisLayer.toFloat()) *
-                          100
-                      ).format("%.1f") +
-                      "%)";
-            return [
-                seedingTilesProgressForThisLayer +
-                    "/" +
-                    seedingTilesOnThisLayer +
-                    " " +
-                    percentageStr,
-                overallProgress,
-            ];
-        }
-
-        var routes = getApp()._breadcrumbContext.routes;
-        if (seedingUpToRoute >= routes.size()) {
-            return ["Route: " + seedingUpToRoute + "/" + routes.size(), 0f];
-        }
-
-        var totalPointsPerLayer = 0;
-        var totalPointsUntilRoute = 0;
-        for (var i = 0; i < routes.size(); i++) {
-            var route = routes[i];
-            if (!_settings.routeEnabled(route.storageIndex)) {
-                continue;
-            }
-
-            var routeCoordsPontSize = route.coordinates.pointSize();
-
-            if (i < seedingUpToRoute) {
-                totalPointsUntilRoute += routeCoordsPontSize;
-            }
-            totalPointsPerLayer += routeCoordsPontSize;
-        }
-
-        // if we are on the first layer (currentTileLayerProgress=0) we still want something to be shown, so add 1 to each field
-        var totalPointsChecked =
-            currentTileLayerProgress * totalPointsPerLayer +
-            totalPointsUntilRoute +
-            seedingUpToRoutePoint +
-            1;
-        var totalPointsToCheck = tileLayers * totalPointsPerLayer + 1;
-        var overallProgress = totalPointsChecked / totalPointsToCheck;
-
-        var coords = routes[seedingUpToRoute].coordinates;
-        var points = coords.pointSize();
-        var pointsPercentStr =
-            points == 0
-                ? ""
-                : " (" + ((seedingUpToRoutePoint.toFloat() / points) * 100).format("%.1f") + "%)";
-        return [
-            "Route: " +
-                (seedingUpToRoute + 1) +
-                "/" +
-                routes.size() +
-                " P: " +
-                seedingUpToRoutePoint +
-                "/" +
-                points +
-                pointsPercentStr +
-                "\n" +
-                (seedingLastTileX - seedingFirstTileX) +
-                " X " +
-                (seedingLastTileY - seedingFirstTileY) +
-                " Tiles (" +
-                _settings.storageSeedRouteDistanceM.format("%.1f") +
-                "m)",
-            overallProgress,
-        ];
     }
 }

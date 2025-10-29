@@ -32,9 +32,7 @@
 
     <setting propertyKey="@Properties.renderMode" title="@Strings.renderModeTitle">
         <settingConfig type="list">
-            <listEntry value="0">@Strings.renderModeBufferedRotating</listEntry>
             <listEntry value="1">@Strings.renderModeUnbufferedRotating</listEntry>
-            <listEntry value="2">@Strings.renderModeBufferedNoRotating</listEntry>
             <listEntry value="3">@Strings.renderModeNoBufferedNoRotating</listEntry>
         </settingConfig>
     </setting>
@@ -71,153 +69,17 @@
         </setting>
     <!-- </group> -->
 
-    <setting propertyKey="@Properties.mapEnabled" title="@Strings.mapEnabledTitle">
-        <settingConfig type="boolean"/>
+    <setting propertyKey="@Properties.mapMoveScreenSize" title="@Strings.mapMoveScreenSizeTitle">
+        <settingConfig type="numeric" min="0" max="1"/>
     </setting>
-    <!-- <group id="mapSettings" title="@Strings.mapsettingsTitle" enableIfTrue="@Properties.mapEnabled"> -->
-        <setting propertyKey="@Properties.tileCacheSize" title="@Strings.tileCacheSizeTitle" prompt="@Strings.tileCacheSizePrompt">
-            <settingConfig type="numeric" min="0"/>
-        </setting>
 
-        <setting propertyKey="@Properties.mapMoveScreenSize" title="@Strings.mapMoveScreenSizeTitle">
-            <settingConfig type="numeric" min="0" max="1"/>
-        </setting>
+    <setting propertyKey="@Properties.fixedLatitude" title="@Strings.fixedLatitude" prompt="@Strings.fixedLatitudePrompt">
+        <settingConfig type="numeric" min="-90" max="90"/>
+    </setting>
 
-        <setting propertyKey="@Properties.tileCachePadding" title="@Strings.tileCachePaddingTitle">
-            <settingConfig type="numeric" min="0"/>
-        </setting>
-        
-        <setting propertyKey="@Properties.maxPendingWebRequests" title="@Strings.maxPendingWebRequests">
-            <settingConfig type="numeric" min="0" max="100"/>
-        </setting>
-        
-        <setting propertyKey="@Properties.disableMapsFailureCount" title="@Strings.disableMapsFailureCountTitle">
-            <settingConfig type="numeric" min="0"/>
-        </setting>
-
-        <setting propertyKey="@Properties.httpErrorTileTTLS" title="@Strings.httpErrorTileTTLSTitle">
-            <settingConfig type="numeric" min="0"/>
-        </setting>
-
-        <setting propertyKey="@Properties.errorTileTTLS" title="@Strings.errorTileTTLSTitle">
-            <settingConfig type="numeric" min="0"/>
-        </setting>
-
-        <setting propertyKey="@Properties.fixedLatitude" title="@Strings.fixedLatitude" prompt="@Strings.fixedLatitudePrompt">
-            <settingConfig type="numeric" min="-90" max="90"/>
-        </setting>
-
-        <setting propertyKey="@Properties.fixedLongitude" title="@Strings.fixedLongitude" prompt="@Strings.fixedLongitudePrompt">
-            <settingConfig type="numeric" min="-180" max="180"/>
-        </setting>
-
-        <setting propertyKey="@Properties.scaleRestrictedToTileLayers" title="@Strings.scaleRestrictedToTileLayersTitle">
-            <settingConfig type="boolean"/>
-        </setting>
-        <setting propertyKey="@Properties.packingFormat" title="@Strings.packingFormatTitle">
-            <settingConfig type="list">
-                <listEntry value="0">@Strings.packingFormatDefault</listEntry>
-                <listEntry value="1">@Strings.packingFormatYUV</listEntry>
-                <listEntry value="2">@Strings.packingFormatPNG</listEntry>
-                <listEntry value="3">@Strings.packingFormatJPG</listEntry>
-            </settingConfig>
-        </setting>
-
-        <setting propertyKey="@Properties.useDrawBitmap" title="@Strings.useDrawBitmapTitle">
-            <settingConfig type="boolean"/>
-        </setting>
-    <!-- </group> -->
-    <!-- <group id="tileServerSettings" title="@Strings.tileServerSettingsTitle" enableIfTrue="@Properties.mapEnabled"> -->
-        <setting propertyKey="@Properties.mapChoice" title="@Strings.mapChoice">
-            <settingConfig type="list">
-                <listEntry value="0">@Strings.custom</listEntry>
-                <listEntry value="1">@Strings.companionApp</listEntry>
-                <listEntry value="2">@Strings.openTopoMap</listEntry>
-                <listEntry value="3">@Strings.esriWorldImagery</listEntry>
-                <listEntry value="4">@Strings.esriWorldStreetMap</listEntry>
-                <listEntry value="5">@Strings.esriWorldTopoMap</listEntry>
-                <listEntry value="6">@Strings.esriWorldTransportation</listEntry>
-                <listEntry value="7">@Strings.esriWorldDarkGrayBase</listEntry>
-                <listEntry value="8">@Strings.esriWorldHillshade</listEntry>
-                <listEntry value="9">@Strings.esriWorldHillshadeDark</listEntry>
-                <listEntry value="10">@Strings.esriWorldLightGrayBase</listEntry>
-                <listEntry value="11">@Strings.esriUSATopoMaps</listEntry>
-                <listEntry value="12">@Strings.esriWorldOceanBase</listEntry>
-                <listEntry value="13">@Strings.esriWorldShadedRelief</listEntry>
-                <listEntry value="14">@Strings.esriNatGeoWorldMap</listEntry>
-                <listEntry value="15">@Strings.esriWorldNavigationCharts</listEntry>
-                <listEntry value="16">@Strings.esriWorldPhysicalMap</listEntry>
-                <listEntry value="17">@Strings.openStreetMapcyclosm</listEntry>
-                <listEntry value="18">@Strings.stadiaAlidadeSmooth</listEntry>
-                <listEntry value="19">@Strings.stadiaAlidadeSmoothDark</listEntry>
-                <listEntry value="20">@Strings.stadiaOutdoors</listEntry>
-                <listEntry value="21">@Strings.stadiaStamenToner</listEntry>
-                <listEntry value="22">@Strings.stadiaStamenTonerLite</listEntry>
-                <listEntry value="23">@Strings.stadiaStamenTerrain</listEntry>
-                <listEntry value="24">@Strings.stadiaStamenWatercolor</listEntry>
-                <listEntry value="25">@Strings.stadiaOSMBright</listEntry>
-                <listEntry value="26">@Strings.cartoVoyager</listEntry>
-                <listEntry value="27">@Strings.cartoDarkMatter</listEntry>
-                <listEntry value="28">@Strings.cartoDarkLightAll</listEntry>
-                <listEntry value="29">@Strings.mapyBasic</listEntry>
-                <listEntry value="30">@Strings.mapyOutdoor</listEntry>
-                <listEntry value="31">@Strings.mapyWinter</listEntry>
-                <listEntry value="32">@Strings.mapyAerial</listEntry>
-            </settingConfig>
-        </setting>
-        <setting propertyKey="@Properties.tileUrl" title="@Strings.tileUrlTitle" prompt="@Strings.tileUrlPrompt">
-            <settingConfig type="alphaNumeric"/>
-        </setting>
-
-        <setting propertyKey="@Properties.authToken" title="@Strings.authTokenTitle">
-            <settingConfig type="alphaNumeric"/>
-        </setting>
-
-        <setting propertyKey="@Properties.tileSize" title="@Strings.layerTileSize" prompt="@Strings.tileSizePrompt">
-            <settingConfig type="numeric" min="2" max="256"/>
-        </setting>
-
-        <setting propertyKey="@Properties.scaledTileSize" title="@Strings.scaledTileSizeTitle" prompt="@Strings.scaledTileSizePrompt">
-            <settingConfig type="numeric" min="2" max="256"/>
-        </setting>
-
-        <setting propertyKey="@Properties.tileLayerMax" title="@Strings.tileLayerMaxTitle" prompt="@Strings.tileLayerMaxPrompt">
-            <settingConfig type="numeric" min="0"/>
-        </setting>
-
-        <setting propertyKey="@Properties.tileLayerMin" title="@Strings.tileLayerMinTitle" prompt="@Strings.tileLayerMinPrompt">
-            <settingConfig type="numeric" min="0"/>
-        </setting>
-
-        <setting propertyKey="@Properties.fullTileSize" title="@Strings.fullTileSizeTitle" prompt="@Strings.fullTileSizePrompt">
-            <settingConfig type="numeric" min="2" max="256"/>
-        </setting>
-    <!-- </group> -->
-    <!-- <group id="mapStorageSettings" title="@Strings.mapStorageSettingsTitle" enableIfTrue="@Properties.mapEnabled"> -->
-        <setting propertyKey="@Properties.cacheTilesInStorage" title="@Strings.cacheTilesInStorageTitle">
-            <settingConfig type="boolean"/>
-        </setting>
-        
-        <setting propertyKey="@Properties.storageMapTilesOnly" title="@Strings.storageMapTilesOnlyTitle">
-            <settingConfig type="boolean"/>
-        </setting>
-        
-        <setting propertyKey="@Properties.storageTileCacheSize" title="@Strings.storageTileCacheSizeTitle">
-            <settingConfig type="numeric" min="0"/>
-        </setting>
-        
-        <setting propertyKey="@Properties.storageTileCachePageCount" title="@Strings.storageTileCachePageCountTitle">
-            <settingConfig type="numeric" min="1"/>
-        </setting>
-
-        <setting propertyKey="@Properties.storageSeedBoundingBox" title="@Strings.storageSeedBoundingBoxTitle">
-            <settingConfig type="boolean"/>
-        </setting>
-
-        <setting propertyKey="@Properties.storageSeedRouteDistanceM" title="@Strings.storageSeedRouteDistanceMTitle">
-            <settingConfig type="numeric" min="0"/>
-        </setting>
-    <!-- </group> -->
+    <setting propertyKey="@Properties.fixedLongitude" title="@Strings.fixedLongitude" prompt="@Strings.fixedLongitudePrompt">
+        <settingConfig type="numeric" min="-180" max="180"/>
+    </setting>
 
     <!-- <group id="offTrackAlertsGroup" title="@Strings.offTrackAlertsGroupTitle"> -->
         <setting propertyKey="@Properties.offTrackAlertsDistanceM" title="@Strings.offTrackAlertsDistanceMTitle">
@@ -307,18 +169,6 @@
 
         <setting propertyKey="@Properties.drawLineToClosestTrack" title="@Strings.drawLineToClosestTrackTitle">
             <settingConfig type="boolean"/>
-        </setting>
-
-        <setting propertyKey="@Properties.showTileBorders" title="@Strings.showTileBordersTitle">
-            <settingConfig type="boolean"/>
-        </setting>
-
-        <setting propertyKey="@Properties.showErrorTileMessages" title="@Strings.showErrorTileMessagesTitle">
-            <settingConfig type="boolean"/>
-        </setting>
-
-        <setting propertyKey="@Properties.tileErrorColour" title="@Strings.tileErrorColourTitle" prompt="@Strings.colourPrompt">
-            <settingConfig type="alphaNumeric"/>
         </setting>
 
         <setting propertyKey="@Properties.includeDebugPageInOnScreenUi" title="@Strings.includeDebugPageInOnScreenUiTitle">

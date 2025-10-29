@@ -15,9 +15,9 @@ enum /* Protocol */ {
     PROTOCOL_RETURN_TO_USER = 3,
     PROTOCOL_REQUEST_SETTINGS = 4,
     PROTOCOL_SAVE_SETTINGS = 5,
-    PROTOCOL_COMPANION_APP_TILE_SERVER_CHANGED = 6, // generally because a new url has been selected on the companion app
+    /* PROTOCOL_COMPANION_APP_TILE_SERVER_CHANGED = 6, // generally because a new url has been selected on the companion app  */
     PROTOCOL_ROUTE_DATA2 = 7, // an optimised form of PROTOCOL_ROUTE_DATA, so we do not trip the watchdog
-    PROTOCOL_CACHE_CURRENT_AREA = 8,
+    /* PROTOCOL_CACHE_CURRENT_AREA = 8, */
 }
 
 enum /* ProtocolSend */ {
@@ -100,11 +100,6 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         return [_view, new BreadcrumbDataFieldDelegate(_breadcrumbContext)];
     }
 
-    (:noSettingsView)
-    function getSettingsView() as [Views] or [Views, InputDelegates] or Null {
-        return [new $.Rez.Menus.SettingsMapAttribution(), new $.SettingsMapAttributionDelegate()];
-    }
-
     (:settingsView)
     function getSettingsView() as [Views] or [Views, InputDelegates] or Null {
         var settings = new $.SettingsMain();
@@ -177,7 +172,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
                 var lat = rawData[0] as Float;
                 var long = rawData[1] as Float;
-                _breadcrumbContext.settings.setFixedPosition(lat, long, true);
+                _breadcrumbContext.settings.setFixedPosition(lat, long);
 
                 if (rawData.size() >= 3) {
                     // also sets the scale, since user has providedd how many meters they want to see
@@ -196,7 +191,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 logT("got send settings req: " + rawData);
                 var settings = _breadcrumbContext.settings.asDict();
                 // logT("sending settings"+ settings);
-                _breadcrumbContext.webRequestHandler.transmit(
+                Communications.transmit(
                     [PROTOCOL_SEND_SETTINGS, settings],
                     {},
                     new SettingsSent()
@@ -213,45 +208,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
                 );
                 _breadcrumbContext.settings.onSettingsChanged(); // reload anything that has changed
                 return;
-            } else if (type == PROTOCOL_COMPANION_APP_TILE_SERVER_CHANGED) {
-                // use to just be PROTOCOL_DROP_TILE_CACHE
-                logT("got tile cache changed req: " + rawData);
-                // they could be using a custom tile server that points to the companion app and has a custom max/min tile layer, we need to clear the cache in this case but not update the tile server settings
-                if (!_breadcrumbContext.settings.tileUrl.equals(COMPANION_APP_TILE_URL)) {
-                    logT("not using the companion app tile server");
-                    return;
-                }
-                // this is not perfect, some web requests could be about to complete and add a tile to the cache
-                // maybe we should go into a backoff period? or just allow manual purge from phone app for if something goes wrong
-                // currently tiles have no expiry
-                _breadcrumbContext.tileCache._storageTileCache.clearValues();
-                _breadcrumbContext.settings.clearTileCache();
-                _breadcrumbContext.settings.clearPendingWebRequests();
-
-                if (rawData.size() >= 2) {
-                    // also sets the max/min tile layers
-                    _breadcrumbContext.settings.companionChangedToMaxMin(
-                        rawData[0] as Number,
-                        rawData[1] as Number
-                    );
-                }
-
-                if (rawData.size() >= 4) {
-                    _breadcrumbContext.tileCache.updatePalette(
-                        rawData[2] as Number?,
-                        rawData[3] as Array?
-                    );
-                }
-
-                return;
-            } else if (type == PROTOCOL_CACHE_CURRENT_AREA) {
-                // use to just be PROTOCOL_DROP_TILE_CACHE
-                logT("got tile cache current area req: " + rawData);
-
-                _breadcrumbContext.cachedValues.startCacheCurrentMapArea();
-
-                return;
-            }
+            } 
 
             logE("Unknown message type: " + type);
             mustUpdate();

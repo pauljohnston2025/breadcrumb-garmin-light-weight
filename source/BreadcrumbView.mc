@@ -208,7 +208,6 @@ class DirectionAlert extends WatchUi.DataFieldAlert {
 class BreadcrumbDataFieldView extends WatchUi.DataField {
     var offTrackInfo as OffTrackInfo = new OffTrackInfo(true, null, false);
     var _breadcrumbContext as BreadcrumbContext;
-    var _scratchPadBitmap as BufferedBitmap?;
     var settings as Settings;
     var _cachedValues as CachedValues;
     var lastOffTrackAlertNotified as Number = 0;
@@ -223,7 +222,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     // Set the label of the data field here.
     function initialize(breadcrumbContext as BreadcrumbContext) {
         _breadcrumbContext = breadcrumbContext;
-        _scratchPadBitmap = null;
         DataField.initialize();
         settings = _breadcrumbContext.settings;
         _cachedValues = _breadcrumbContext.cachedValues;
@@ -261,7 +259,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         _cachedValues.setScreenSize(dc.getWidth(), dc.getHeight());
         var textDim = dc.getTextDimensions("1234", Graphics.FONT_XTINY);
         _breadcrumbContext.breadcrumbRenderer.setElevationAndUiData(textDim[0] * 1.0f);
-        updateScratchPadBitmap();
     }
 
     function onWorkoutStarted() as Void {
@@ -346,30 +343,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 logD("rescale occurred");
                 return;
             }
-            // this is here due to stack overflow bug when requests trigger the next request
-            // only try 3 times, do not want to schedule heaps if they complete immediately, could hit watchdog
-            // this should be minimal work, it only starts the web request, it should never complete straight away with data
-            for (var i = 0; i < 3; ++i) {
-                if (!_breadcrumbContext.webRequestHandler.startNextIfWeCan()) {
-                    break;
-                }
-            }
-
-            if (_cachedValues.stepCacheCurrentMapArea()) {
-                return;
-            }
-
-            // perf only seed tiles when we need to (zoom level changes or user moves)
-            // could possibly be moved into cached values when map data changes - though map data may not change but we nuked the pending web requests - safer here
-            // or we have to do multiple seeds if pending web requests is low
-            // needs to be before _computeCounter for when we load tiles from storage (we can only load 1 tile per second)
-            if (_breadcrumbContext.mapRenderer.seedTiles()) {
-                // we loaded a tile from storage, which could be a significantly costly task,
-                // do not trip the watchdog, be safe and return
-                // if tile cacheSize is not large enough, this could result in no tracking, since all tiles could potentially be pulled from storage
-                // but black squares will appear on the screen, alerting the user that something is wrong
-                return;
-            }
         }
 
         // slow down the calls to onActivityInfo as its a heavy operation checking
@@ -381,15 +354,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         _computeCounter = 0;
 
         var settings = _breadcrumbContext.settings;
-        var disableMapsFailureCount = settings.disableMapsFailureCount;
-        if (
-            disableMapsFailureCount != 0 &&
-            _breadcrumbContext.webRequestHandler._errorCount > disableMapsFailureCount
-        ) {
-            logE("disabling maps, too many errors");
-            settings.setMapEnabled(false);
-        }
-
         var newPoint = _breadcrumbContext.track.pointFromActivityInfo(info);
         if (newPoint != null) {
             if (_cachedValues.currentScale != 0f) {
@@ -402,7 +366,7 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 // todo: PERF only update this if the new point added changed the bounding box
                 // its pretty good atm though, only recalculates once every few seconds, and only
                 // if a point is added
-                _cachedValues.updateScaleCenterAndMap();
+                _cachedValues.updateScaleCenter();
                 var epoch = Time.now().value();
                 if (epoch - settings.offTrackCheckIntervalS < lastOffTrackAlertChecked) {
                     return;
@@ -514,40 +478,11 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         imageAlert = null;
         imageAlertShowAt = 0;
         // render mode could have changed
-        updateScratchPadBitmap();
         resetRenderTime();
     }
 
     function resetRenderTime() as Void {
         _lastFullRenderTime = 0; // map panning needs to redraw map immediately
-    }
-
-    function updateScratchPadBitmap() as Void {
-        try {
-            if (
-                settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
-                settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
-            ) {
-                // make sure we are at the correct size (settings/layout change at any point)
-                // could optimise this to be done in cached values rather than every render
-                var width = _cachedValues.maxVirtualScreenDim.toNumber();
-                var height = _cachedValues.maxVirtualScreenDim.toNumber();
-                if (
-                    _scratchPadBitmap == null ||
-                    _scratchPadBitmap.getWidth() != width ||
-                    _scratchPadBitmap.getHeight() != height
-                ) {
-                    _scratchPadBitmap = null; // null out the old one first, otherwise we have 2 bit bitmaps allocated at the same time
-                    // assuming garbage collection will run immediately, or when trying to allocate the next it will clean up the old one
-                    _scratchPadBitmap = newBitmap(width, height);
-                }
-            } else {
-                _scratchPadBitmap = null; // settigns have disabled it - clean up after ourselves on next render
-            }
-        } catch (e) {
-            logE("failed to allocate buffered bitmap: " + e.getErrorMessage());
-            ++$.globalExceptionCounter;
-        }
     }
 
     // did some testing on real device
@@ -588,19 +523,10 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
 
         // logD("onUpdate");
         var renderer = _breadcrumbContext.breadcrumbRenderer;
-        if (renderer.renderTileSeedUi(dc)) {
-            return;
-        }
         if (renderer.renderClearTrackUi(dc)) {
             return;
         }
-        if (renderer.renderMapEnable(dc)) {
-            return;
-        }
-        if (renderer.renderMapDisable(dc)) {
-            return;
-        }
-
+        
         // mode should be stored here, but is needed for rendering the ui
         // should structure this way better, but oh well (renderer per mode etc.)
         if (settings.mode == MODE_ELEVATION) {
@@ -620,7 +546,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         if (settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING) {
             renderUnbufferedRotating(dc);
         } else {
-            renderMain(dc);
+            var routes = _breadcrumbContext.routes;
+            var track = _breadcrumbContext.track;
+            rederUnrotated(dc, routes, track);
         }
 
         var routes = _breadcrumbContext.routes;
@@ -633,7 +561,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 }
                 var routeColour = settings.routeColour(route.storageIndex);
                 if (
-                    settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
                     settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING
                 ) {
                     renderer.renderTrackName(dc, route, routeColour);
@@ -654,117 +581,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         if (lastPoint != null) {
             renderer.renderUser(dc, lastPoint);
         }
-
-        if (settings.mapEnabled) {
-            var attrib = settings.getAttribution();
-            if (attrib != null) {
-                try {
-                    dc.drawBitmap2(
-                        _cachedValues.xHalfPhysical - attrib.getWidth() / 2,
-                        _cachedValues.physicalScreenHeight - 25,
-                        attrib,
-                        {
-                            :tintColor => settings.uiColour,
-                        }
-                    );
-                } catch (e) {
-                    var message = e.getErrorMessage();
-                    logE("failed drawBitmap2 (attribution): " + message);
-                    ++$.globalExceptionCounter;
-                    incNativeColourFormatErrorIfMessageMatches(message);
-                }
-            }
-        }
-    }
-
-    function renderMain(dc as Dc) as Void {
-        // _renderCounter++;
-        // // slow down the calls to onUpdate as its a heavy operation, we will only render every second time (effectively 2 seconds)
-        // // this should save some battery, and hopefully the screen stays as the old renderred value
-        // // this will mean that we will need to wait this long for the inital render too
-        // // perhaps we could base it on speed or 'user is looking at watch'
-        // // and have a touch override?
-        // if (_renderCounter != 2) {
-        //   View.onUpdate(dc);
-        //   return;
-        // }
-
-        // _renderCounter = 0;
-        // looks like view must do a render (not doing a render causes flashes), perhaps we can store our rendered state to a buffer to load from?
-
-        var routes = _breadcrumbContext.routes;
-        var track = _breadcrumbContext.track;
-
-        if (
-            settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
-            settings.renderMode == RENDER_MODE_BUFFERED_NO_ROTATION
-        ) {
-            if (_scratchPadBitmap == null) {
-                // we somehow have not allocated it yet, eg. onLayout could be called but throw because the bitmap is not available yet
-                // we should probably track this and auto magically switch modes
-                updateScratchPadBitmap();
-            }
-            var scratchPadBitmapLocal = _scratchPadBitmap;
-            if (scratchPadBitmapLocal == null) {
-                // if its still null, we were unable to create the bitmap in the graphics pool
-                dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_BLACK);
-                dc.clear();
-                dc.drawText(
-                    _cachedValues.xHalfPhysical,
-                    _cachedValues.yHalfPhysical,
-                    Graphics.FONT_XTINY,
-                    "COULD NOT ALLOCATE BUFFER\nSWITCH RENDER MODE",
-                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-                );
-                return; // should never happen, but be safe
-            }
-
-            // only render once to buffer then back off for a bit
-            // need to force rerender on scale change
-            var epoch = Time.now().value();
-            if (
-                epoch - _lastFullRenderTime > settings.recalculateIntervalS ||
-                _lastFullRenderScale != _cachedValues.currentScale
-            ) {
-                // FULL_RENDER_INTERVAL_S is only to take into account user moving (which we are also backing off)
-                // if they stop and scale changes we will redraw immediately
-                // if they rotate we will draw rotations straight away
-                _lastFullRenderTime = epoch;
-                _lastFullRenderScale = _cachedValues.currentScale;
-                var scratchPadBitmapDc = scratchPadBitmapLocal.getDc();
-                rederUnrotated(scratchPadBitmapDc, routes, track);
-            }
-
-            try {
-                if (settings.renderMode == RENDER_MODE_BUFFERED_ROTATING) {
-                    dc.drawBitmap2(0, 0, scratchPadBitmapLocal, {
-                        // :bitmapX =>
-                        // :bitmapY =>
-                        // :bitmapWidth =>
-                        // :bitmapHeight =>
-                        // :tintColor =>
-                        // :filterMode =>
-                        :transform => _cachedValues.rotationMatrix,
-                    });
-                } else {
-                    // todo make buffered no rotation mode have a smaller buffer size (we can draw to it the same as dc if its set to the physical screen size)
-                    dc.drawBitmap(
-                        _cachedValues.bufferedBitmapOffsetX,
-                        _cachedValues.bufferedBitmapOffsetY,
-                        scratchPadBitmapLocal
-                    );
-                }
-            } catch (e) {
-                var message = e.getErrorMessage();
-                logE("failed drawBitmap2 (view class): " + message);
-                ++$.globalExceptionCounter;
-                incNativeColourFormatErrorIfMessageMatches(message);
-            }
-            return;
-        }
-
-        // RENDER_MODE_UNBUFFERED_NO_ROTATION
-        rederUnrotated(dc, routes, track);
     }
 
     (:noUnbufferedRotations)
@@ -775,11 +591,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         var routes = _breadcrumbContext.routes;
         var track = _breadcrumbContext.track;
 
-        var mapRenderer = _breadcrumbContext.mapRenderer;
         var renderer = _breadcrumbContext.breadcrumbRenderer;
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
-        mapRenderer.renderMap(dc);
         for (var i = 0; i < routes.size(); ++i) {
             var route = routes[i];
             if (!settings.routeEnabled(route.storageIndex)) {
@@ -810,11 +624,9 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         track as BreadcrumbTrack
     ) as Void {
         var renderer = _breadcrumbContext.breadcrumbRenderer;
-        var mapRenderer = _breadcrumbContext.mapRenderer;
 
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
-        mapRenderer.renderMapUnrotated(dc);
         for (var i = 0; i < routes.size(); ++i) {
             var route = routes[i];
             if (!settings.routeEnabled(route.storageIndex)) {
@@ -941,28 +753,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             x,
             y,
             Graphics.FONT_XTINY,
-            "pendingWeb: " +
-                _breadcrumbContext.webRequestHandler.pending.size() +
-                " t: " +
-                _breadcrumbContext.webRequestHandler.pendingTransmit.size(),
-            Graphics.TEXT_JUSTIFY_CENTER
-        );
-        y += spacing;
-        dc.drawText(
-            x,
-            y,
-            Graphics.FONT_XTINY,
-            "outstanding: " +
-                _breadcrumbContext.webRequestHandler._outstandingCount +
-                " web: " +
-                _breadcrumbContext.webRequestHandler.outstandingHashes.size(),
-            Graphics.TEXT_JUSTIFY_CENTER
-        );
-        y += spacing;
-        dc.drawText(
-            x,
-            y,
-            Graphics.FONT_XTINY,
             "lastAlert: " +
                 (epoch - lastOffTrackAlertNotified) +
                 "s check: " +
@@ -970,29 +760,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
                 "s",
             Graphics.TEXT_JUSTIFY_CENTER
         );
-        y += spacing;
-        var combined = "lastWebRes: " + _breadcrumbContext.webRequestHandler._lastResult;
-
-        if (settings.storageMapTilesOnly) {
-            combined = "<storage only>";
-        }
-
-        combined +=
-            "  tiles: " +
-            _breadcrumbContext.tileCache._internalCache.size() +
-            " s: " +
-            _breadcrumbContext.tileCache._storageTileCache._totalTileCount;
-
-        dc.drawText(x, y, Graphics.FONT_XTINY, combined, Graphics.TEXT_JUSTIFY_CENTER);
-        y += spacing;
-        var pagesStr = "ps: ";
-        for (var i = 0; i < _breadcrumbContext.tileCache._storageTileCache._pageSizes.size(); i++) {
-            if (i != 0) {
-                pagesStr += ", ";
-            }
-            pagesStr += _breadcrumbContext.tileCache._storageTileCache._pageSizes[i];
-        }
-        dc.drawText(x, y, Graphics.FONT_XTINY, pagesStr, Graphics.TEXT_JUSTIFY_CENTER);
         y += spacing;
         var distToLastStr = "NA";
         var lastPoint = _breadcrumbContext.track.lastPoint();
@@ -1071,47 +838,13 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
             Graphics.TEXT_JUSTIFY_CENTER
         );
         y += spacing;
-        dc.drawText(
-            x,
-            y,
-            Graphics.FONT_XTINY,
-            "tileLayer: " +
-                _cachedValues.tileZ +
-                " atMin: " +
-                (_cachedValues.atMinTileLayer() ? "Y" : "N") +
-                " atMax: " +
-                (_cachedValues.atMaxTileLayer() ? "Y" : "N"),
-            Graphics.TEXT_JUSTIFY_CENTER
-        );
-        y += spacing;
-        dc.drawText(
-            x,
-            y,
-            Graphics.FONT_XTINY,
-            "webErr: " +
-                _breadcrumbContext.webRequestHandler._errorCount +
-                " webOk: " +
-                _breadcrumbContext.webRequestHandler._successCount,
-            Graphics.TEXT_JUSTIFY_CENTER
-        );
-        y += spacing;
-        var hits = _breadcrumbContext.tileCache._hits.toFloat();
-        var misses = _breadcrumbContext.tileCache._misses;
-        var total = hits + misses;
-        var percentage = 0;
-        if (total > 0) {
-            // do not divide by 0 my good friends
-            percentage = (hits * 100) / total;
-        }
         var currentSpeedMPS = 0f;
         var info = Activity.getActivityInfo();
         if (info != null && info.currentSpeed != null) {
             currentSpeedMPS = info.currentSpeed as Float;
         }
         var cacheHits =
-            "cacheHits: " +
-            percentage.format("%.1f") +
-            "% s: " +
+            "speed: " +
             currentSpeedMPS.format("%.1f") +
             "m/s";
         dc.drawText(x, y, Graphics.FONT_XTINY, cacheHits, Graphics.TEXT_JUSTIFY_CENTER);

@@ -1,23 +1,13 @@
 <strings>
-    <string id="AppName">BreadcrumbDataField</string>
-    <string id="settingsTitle">Breadcrumb Data Field</string>
+    <string id="AppName">LWBreadcrumbDataField</string>
+    <string id="settingsTitle">Light Weight Breadcrumb Data Field</string>
 
-    <string id="layerTileSize">Tile Size (pixels)</string>
-    <string id="tileLayerMaxTitle">Tile Layer Max</string>
-    <string id="tileLayerMaxPrompt">15</string>
-    <string id="tileLayerMinTitle">Tile Layer Min</string>
-    <string id="tileLayerMinPrompt">2</string>
-    <string id="tileCacheSizeTitle">Tile Cache Size (tiles)</string>
     <string id="modeTitle">Display Mode</string>
     <string id="elevationModeTitle">Elevation Mode</string>
     <string id="elevationModeStacked">Stacked</string>
     <string id="elevationModeOrderedRoutes">Ordered Routes</string>
-    <string id="tileUrlTitle">Tile Url</string>
-    <string id="authTokenTitle">Auth Token</string>
-    <string id="tileUrlPrompt">https://fancytileserver/{z}/{x}/{y}.png</string>
     <string id="elevationMode">Elevation</string>
     <string id="trackRouteMode">Track/Route</string>
-    <string id="mapEnabledTitle">Map Enabled</string>
     <string id="trackColourTitle">Track Colour</string>
     <string id="defaultRouteColourTitle">Default Route Colour</string>
     <string id="routeColourTitle">Route Colour</string>
@@ -38,8 +28,6 @@
     <string id="offTrackWrongDirectionTitle">Wrong Direction Alerts</string>
     <string id="drawCheveronsTitle">Draw Cheverons</string>
     <string id="drawLineToClosestPointTitle">Draw Line To Closest Point</string>
-    <string id="disableMapsFailureCountTitle">Disable Maps After X Failures (0 for unlimited failures)</string>
-    <string id="disableMapsFailureCountTitleShort">Disable After Failures</string>
     <string id="elevationColourTitle">Elevation Colour</string>
     <string id="clearStorage">Clear Storage</string>
     <string id="returnToUserTitle">Return To User</string>
@@ -74,8 +62,6 @@
     <string id="fixedLongitude">Fixed Latitude</string>
     <string id="fixedLongitudePrompt">0 - disabled, -180 to 180</string>
     <string id="recalculateIntervalSTitle">Compute Interval (s)</string>
-    <string id="tileCachePaddingTitle">Tile Cache Padding (tiles)</string>
-    <string id="useDrawBitmapTitle">Use Draw Bitmap (legacy)</string>
     <string id="packingFormatTitle">Packing Format</string>
     <string id="packingFormatDefault">Default</string>
     <string id="packingFormatYUV">YUV</string>
@@ -83,31 +69,11 @@
     <string id="packingFormatJPG">JPG</string>
 
 
-    <string id="mapStorageSettingsTitle">Offline Tile Storage</string>
-    <string id="cacheTilesInStorageTitle">Store Tiles For Offline Use</string>
-    <string id="storageMapTilesOnlyTitle">Only Use Stored Tiles (no ble data)</string>
-    <string id="storageTileCacheSizeTitle">Storage Tile Cache Size (tiles)</string>
-    <string id="storageTileCachePageCountTitle">Storage Tile Page Count (pages)</string>
-    <string id="storageSeedBoundingBoxTitle">Seed Entire Bounding Box</string>
-    <string id="storageSeedRouteDistanceMTitle">Seed Route Path Distance (m)</string>
-
     <string id="coloursTitle">Colours</string>
-    <string id="mapsettingsTitle">Map</string>
-    <string id="tileServerSettingsTitle">Tile Server</string>
     <string id="debugSettingsTitle">Debug</string>
 
-    <string id="tileSizePrompt">Pixels per tile x and y</string>
-    <string id="fullTileSizeTitle">Full Tile Size</string>
-    <string id="scaledTileSizeTitle">Scaled Tile Size</string>
-    <string id="fullTileSizePrompt">Tile server tile size - 256 usually </string>
-    <string id="scaledTileSizePrompt">smaller = faster but more blurry</string>
-    <string id="tileCacheSizePrompt">Number of tiles to cache</string>
     <string id="colourPrompt">Colour in AARRGGBB format</string>
     <string id="displayLatLongTitle">Display Lat/Long</string>
-    <string id="scaleRestrictedToTileLayersTitle">Restrict Scale To Tile Layers</string>
-    <string id="cacheCurrentArea">Cache Current Area</string>
-    <string id="cancelCacheDownload">Cancel Cache Download</string>
-    <string id="clearCachedTiles">Clear Cached Tiles.\nThis is Slow!\nBe Patient!</string>
 
     <string id="routesTitle">Routes</string>
     <string id="routeId">Id</string>
@@ -120,20 +86,8 @@
     <string id="debug">Debug</string>
     <string id="clearRoutes">Clear All Routes</string>
 
-    <string id="mapChoice">Map Choice</string>
-    <string id="custom">Custom</string>
-    <string id="openTopoMap">OpenTopoMap</string>
-    <string id="esriWorldImagery">Esri - World Imagery</string>
-    <string id="esriWorldStreetMap">Esri - World Street Map</string>
-    <string id="esriWorldTopoMap">Esri - World Topo Map</string>
-
-    <string id="httpErrorTileTTLSTitle">Http Error Tile TTL (s)</string>
-    <string id="errorTileTTLSTitle">Error Tile TTL (s)</string>
     <string id="showPointsTitle">Show Points</string>
     <string id="drawLineToClosestTrackTitle">Draw Line To Closest Track</string>
-    <string id="showTileBordersTitle">Show Tile Borders</string>
-    <string id="showErrorTileMessagesTitle">Show Error Tile Messages</string>
-    <string id="tileErrorColourTitle">Tile Error Colour</string>
     <string id="includeDebugPageInOnScreenUiTitle">Include Debug Page In On Screen Ui</string>
 
     <string id="turnAlertTimeSTitle">Turn Alert Time (s)</string>
@@ -145,15 +99,6 @@
     <string id="showDirectionPointTextUnderIndexTitle">Show Turn Point Text Under Index</string>
 
 
-    <string id="enableMaps1">Enable maps. This breaks on some devices. Are you sure?</string>
-    <string id="enableMaps2">Confirm map enable</string>
-    <string id="enableMaps3">Enabling maps, LAST CHANCE!!!</string>
-    <string id="disableMaps1">Disable maps. Are you sure?</string>
-    <string id="disableMaps2">Confirm map disable</string>
-    <string id="disableMaps3">Disabling maps, LAST CHANCE!!!</string>
-    <string id="startTileCache1">Start tile caching. This breaks on some devices. Are you sure?</string>
-    <string id="startTileCache2">Confirm start tile caching</string>
-    <string id="startTileCache3">Start tile caching, LAST CHANCE!!!</string>
     <string id="clearRoutes1">Clearing all routes, are you sure?</string>
     <string id="clearRoutes2">Confirm route clear</string>
     <string id="clearRoutes3">Clearing all routes, LAST CHANCE!!!</string>

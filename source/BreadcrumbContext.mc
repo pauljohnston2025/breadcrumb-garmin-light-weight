@@ -9,9 +9,6 @@ class BreadcrumbContext {
     var breadcrumbRenderer as BreadcrumbRenderer;
     var routes as Array<BreadcrumbTrack>;
     var track as BreadcrumbTrack;
-    var webRequestHandler as WebRequestHandler;
-    var tileCache as TileCache;
-    var mapRenderer as MapRenderer;
 
     // Set the label of the data field here.
     function initialize() {
@@ -21,16 +18,11 @@ class BreadcrumbContext {
         routes = [];
         track = new BreadcrumbTrack(TRACK_ID, "", settings.maxTrackPoints);
         breadcrumbRenderer = new BreadcrumbRenderer(settings, cachedValues);
-
-        webRequestHandler = new WebRequestHandler(settings);
-        tileCache = new TileCache(webRequestHandler, settings, cachedValues);
-        mapRenderer = new MapRenderer(tileCache, settings, cachedValues);
     }
 
     function setup() as Void {
         settings.setup(); // we want to make sure everything is done later
         cachedValues.setup();
-        tileCache.setup();
 
         // routes loaded from storage will be rescaled on the first calculate in cached values
         // had a bug where routes were still in storage, but removed from settings, so load everything that is enabled (up to 10 routes)

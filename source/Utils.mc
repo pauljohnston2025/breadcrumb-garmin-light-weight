@@ -46,34 +46,6 @@ function isnan(a as Float) as Boolean {
     return a != a;
 }
 
-class BitmapCreateError extends Lang.Exception {
-    function initialize() {
-        Exception.initialize();
-    }
-
-    function getErrorMessage() as String? {
-        return "failed bitmap create";
-    }
-}
-
-// https://developer.garmin.com/connect-iq/core-topics/graphics/#graphics
-// we must call get and keep the reference otherwise it can get cleanup up from under us
-// not too bad for temporaries, but terrible for tiles (they can not be garbage collected)
-function newBitmap(width as Number, height as Number) as Graphics.BufferedBitmap {
-    var options = {
-        :width => width,
-        :height => height,
-    };
-
-    var bitmap = Graphics.createBufferedBitmap(options).get();
-    if (!(bitmap instanceof BufferedBitmap)) {
-        logE("Could not allocate buffered bitmap");
-        throw new BitmapCreateError();
-    }
-
-    return bitmap;
-}
-
 (:debug,:inline)
 function logLevel(lvl as String, message as String) as Void {
     System.println("" + Time.now().value() + " " + lvl + " " + message);
@@ -106,63 +78,6 @@ function logT(message as String) as Void {
 (:release,:inline)
 function logT(message as String) as Void {}
 
-(:scaledbitmap)
-function drawScaledBitmapHelper(
-    dc as Dc,
-    x as Numeric,
-    y as Numeric,
-    width as Numeric,
-    height as Numeric,
-    bitmap as BitmapType
-) as Void {
-    dc.drawScaledBitmap(x, y, width, height, bitmap);
-}
-
-(:noscaledbitmap)
-function drawScaledBitmapHelper(
-    dc as Dc,
-    x as Numeric,
-    y as Numeric,
-    width as Numeric,
-    height as Numeric,
-    bitmap as BitmapType
-) as Void {
-    // is there any reason not to move this into main code and just use AffineTransform every time - even for devices that support drawScaledBitmap?
-    // I assume one has a performance benifit over the other?
-    // need to test which is better (or if there is any noticible difference)
-    // todo cache this transform so we do nto need to recreate every time
-    var tileScaleFactor = getApp()._breadcrumbContext.cachedValues.tileScaleFactor;
-    var scaleMatrix = new AffineTransform();
-    scaleMatrix.scale(tileScaleFactor, tileScaleFactor); // scale
-    try {
-        // a horrible fix for "Source must be native color format"
-        // see https://forums.garmin.com/developer/connect-iq/f/discussion/360257/bitmap-native-color-format-venusq2
-        // and https://forums.garmin.com/developer/connect-iq/i/bug-reports/bitmap-png-format-bug-fr-165-venu-sq-2
-        // the packing formats in the drawbles must have automaticPalette="false" and possibly packingFormat="default"
-        // but it then appears makeImageRequest tiles also fail (even when using :packingFormat => Communications.PACKING_FORMAT_DEFAULT)
-        // dc.drawBitmap(x, y, bitmap);
-        // need to add this as a user setting, test device is instinct 3 45mm. not sure if this is simulator bug, or if it happens on real deivce too (other reports seem to indicate it happens to real device)
-        dc.drawBitmap2(x, y, bitmap, {
-            :transform => scaleMatrix,
-            // Use bilinear filtering for smoother results when rotating/scaling (less noticible tearing)
-            :filterMode => Graphics.FILTER_MODE_BILINEAR,
-        });
-    } catch (e) {
-        var message = e.getErrorMessage();
-        logE("failed drawBitmap2 (drawScaledBitmapHelper): " + message);
-        ++$.globalExceptionCounter;
-        incNativeColourFormatErrorIfMessageMatches(message);
-    }
-}
-
-function incNativeColourFormatErrorIfMessageMatches(message as String?) as Void {
-    // message seems to be the only way, could not find type
-    // full message is "Source must be native color format", but that was not comparing equal for some reason (perhaps trailing white space)
-    if (message != null && message.find("native color format") != null) {
-        ++$.sourceMustBeNativeColorFormatCounter;
-    }
-}
-
 function padStart(str as String?, targetLength as Number, padChar as Char) as String {
     var currentStr = str == null ? "" : str;
     var currentLength = currentStr.length();
@@ -182,29 +97,6 @@ function padStart(str as String?, targetLength as Number, padChar as Char) as St
     }
 
     return padding + currentStr;
-}
-
-function stringReplaceFirst(
-    originalString as String,
-    target as String,
-    replacement as String
-) as String {
-    var index = originalString.find(target);
-
-    if (index == null) {
-        return originalString; // Target not found, return original string
-    }
-
-    var newString =
-        originalString.substring(0, index) +
-        replacement +
-        originalString.substring(index + target.length(), originalString.length());
-
-    return newString;
-}
-
-function isHttpResponseCode(responseCode as Number) as Boolean {
-    return responseCode > 0;
 }
 
 function distance(x1 as Float, y1 as Float, x2 as Float, y2 as Float) as Float {

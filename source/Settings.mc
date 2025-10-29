@@ -38,10 +38,10 @@ enum /*UiMode*/ {
 }
 
 enum /*RenderMode*/ {
-    RENDER_MODE_BUFFERED_ROTATING,
-    RENDER_MODE_UNBUFFERED_ROTATING,
-    RENDER_MODE_BUFFERED_NO_ROTATION,
-    RENDER_MODE_UNBUFFERED_NO_ROTATION,
+    /*RENDER_MODE_BUFFERED_ROTATING = 0,*/
+    RENDER_MODE_UNBUFFERED_ROTATING = 1,
+    /* RENDER_MODE_BUFFERED_NO_ROTATION = 2,*/
+    RENDER_MODE_UNBUFFERED_NO_ROTATION = 3,
     RENDER_MODE_MAX,
 }
 
@@ -50,265 +50,6 @@ enum /*RenderMode*/ {
     ALERT_TYPE_ALERT,
     ALERT_TYPE_IMAGE,
     ALERT_TYPE_MAX,
-}
-
-enum /*AttributionType*/ {
-    /*ATTRIBUTION_GOOGLE,*/
-    ATTRIBUTION_OPENTOPOMAP = 1,
-    ATTRIBUTION_ESRI,
-    ATTRIBUTION_OPENSTREETMAP,
-    ATTRIBUTION_STADIA,
-    ATTRIBUTION_CARTO,
-    ATTRIBUTION_MAPY,
-}
-
-enum /*UrlPrefix*/ {
-    URL_PREFIX_NONE,
-    URL_PREFIX_ESRI,
-    URL_PREFIX_STADIA,
-    URL_PREFIX_CARTO,
-    URL_PREFIX_MAPY,
-}
-
-enum /*AuthTokenType*/ {
-    AUTH_TOKEN_TYPE_NONE,
-    AUTH_TOKEN_TYPE_STADIA,
-    AUTH_TOKEN_TYPE_MAPY,
-}
-
-const COMPANION_APP_TILE_URL = "http://127.0.0.1:8080";
-
-(:imageTiles)
-class TileServerInfo {
-    var attributionType as Number;
-    var urlPrefix as Number;
-    var authTokenType as Number;
-    var urlTemplate as String;
-    var tileLayerMin as Number;
-    var tileLayerMax as Number;
-    function initialize(
-        attributionType as Number,
-        urlPrefix as Number,
-        authTokenType as Number,
-        urlTemplate as ResourceId,
-        tileLayerMin as Number,
-        tileLayerMax as Number
-    ) {
-        me.attributionType = attributionType;
-        me.urlPrefix = urlPrefix;
-        me.authTokenType = authTokenType;
-        me.urlTemplate = WatchUi.loadResource(urlTemplate) as String;
-        me.tileLayerMin = tileLayerMin;
-        me.tileLayerMax = tileLayerMax;
-    }
-}
-
-(:imageTiles)
-function getUrlPrefix(prefix as Number) as String {
-    if (prefix == URL_PREFIX_NONE) {
-        return "";
-    } else if (prefix == URL_PREFIX_ESRI) {
-        return WatchUi.loadResource(Rez.Strings.esriPrefix) as String;
-    } else if (prefix == URL_PREFIX_STADIA) {
-        return WatchUi.loadResource(Rez.Strings.stadiaPrefix) as String;
-    } else if (prefix == URL_PREFIX_CARTO) {
-        return WatchUi.loadResource(Rez.Strings.cartoPrefix) as String;
-    } else if (prefix == URL_PREFIX_MAPY) {
-        return WatchUi.loadResource(Rez.Strings.mapyPrefix) as String;
-    }
-
-    return "";
-}
-
-(:imageTiles)
-function getAuthTokenSuffix(type as Number) as String {
-    switch (type) {
-        case AUTH_TOKEN_TYPE_NONE:
-            return "";
-        case AUTH_TOKEN_TYPE_STADIA:
-            return "?api_key={authToken}";
-        case AUTH_TOKEN_TYPE_MAPY:
-            return "?apiKey={authToken}";
-    }
-
-    return "";
-}
-
-(:noImageTiles)
-function getTileServerInfo(id as Number) as TileServerInfo? {
-    return null;
-}
-
-(:highMemory)
-function getTileServerInfo(id as Number) as TileServerInfo? {
-    // prettier-ignore
-    // This is an array instead of a dict because dict does not render correctly, also arrays are faster
-    // 0 => null, // special custom (no tile property changes will happen)
-    // 1 => null, // special companion app (only the tileUrl will be updated)
-    switch(id)
-    {
-        case 2:
-            // open topo
-            return new TileServerInfo(ATTRIBUTION_OPENTOPOMAP, URL_PREFIX_NONE, AUTH_TOKEN_TYPE_NONE, Rez.Strings.openTopoMapUrlTemplate, 0, 15); // OpenTopoMap
-            // google - cannot use returns 404 - works from companion app (userAgent sent)
-            // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", 0, 20), // "Google - Hybrid"
-            // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", 0, 20), // "Google - Satellite"
-            // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", 0, 20), // "Google - Road"
-            // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}", 0, 20), // "Google - Terain"
-            // arcgis (esri) - note some of these have been removed due to not enough coverage, and others have had layermin/max altered for australian coverage
-            // _Reference maps are all the same - just the location names removing them
-            // Note: when testing on the simulator, some of theese occasionaly seem to produce   
-            // Error: Invalid Value
-            // Details: failed inside handle_image_callback
-        case 3:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldImageryTemplate, 0, 20); // Esri - World Imagery
-        case 4:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldStreetMapTemplate, 0, 19); // Esri - World Street Map
-        case 5:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldTopoMapTemplate, 0, 19); // Esri - World Topo Map
-        case 6:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldTransportationTemplate, 0, 15); // Esri - World Transportation
-        case 7:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldDarkGrayBaseTemplate, 0, 16); // Esri - World Dark Gray Base
-        case 8:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldHillshadeTemplate, 0, 16); // Esri - World Hillshade
-        case 9:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldHillshadeDarkTemplate, 0, 16); // Esri - World Hillshade Dark
-        case 10:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldLightGrayBaseTemplate, 0, 16); // Esri - World Light Gray Base
-        case 11:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriUsaTopoMapsTemplate, 0, 15); // Esri - USA Topo Maps
-        case 12:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldOceanBaseTemplate, 0, 13); // Esri - World Ocean Base
-        case 13:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldShadedReliefTemplate, 0, 13); // Esri - World Shaded Relief
-        case 14:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriNatgeoWorldMapTemplate, 0, 12); // Esri - NatGeo World Map
-        case 15:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldNavigationChartsTemplate, 0, 10); // Esri - World Navigation Charts
-        case 16:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldPhysicalMapTemplate, 0, 8); // Esri - World Physical Map
-        case 17:
-            // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
-            return new TileServerInfo(ATTRIBUTION_OPENSTREETMAP, URL_PREFIX_NONE, AUTH_TOKEN_TYPE_NONE, Rez.Strings.openstreetmapCyclosmTemplate, 0, 20); // OpenStreetMap - cyclosm
-        case 18:
-            // stadia (also includes stamen) https://docs.stadiamaps.com/themes/
-            return new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, Rez.Strings.stadiaAlidadeSmoothTemplate, 0, 20); // Stadia - Alidade Smooth (auth required)
-        case 19:
-            return new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, Rez.Strings.stadiaAlidadeSmoothDarkTemplate, 0, 20); // Stadia - Alidade Smooth Dark (auth required)
-        case 20:
-            return new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, Rez.Strings.stadiaOutdoorsTemplate, 0, 20); // Stadia - Outdoors (auth required)
-        case 21:
-            return new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, Rez.Strings.stadiaStamenTonerTemplate, 0, 20); // Stadia - Stamen Toner (auth required)
-        case 22:
-            return new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, Rez.Strings.stadiaStamenTonerLiteTemplate, 0, 20); // Stadia - Stamen Toner Lite (auth required)
-        case 23:
-            return new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, Rez.Strings.stadiaStamenTerrainTemplate, 0, 20); // Stadia - Stamen Terrain (auth required)
-        case 24:
-            return new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, Rez.Strings.stadiaStamenWatercolorTemplate, 0, 16); // Stadia - Stamen Watercolor (auth required)
-        case 25:
-            return new TileServerInfo(ATTRIBUTION_STADIA, URL_PREFIX_STADIA, AUTH_TOKEN_TYPE_STADIA, Rez.Strings.stadiaOsmBrightTemplate, 0, 20); // Stadia - OSM Bright (auth required)
-        case 26:
-            // carto
-            return new TileServerInfo(ATTRIBUTION_CARTO, URL_PREFIX_CARTO, AUTH_TOKEN_TYPE_NONE, Rez.Strings.cartoVoyagerTemplate, 0, 20); // Carto - Voyager
-        case 27:
-            return new TileServerInfo(ATTRIBUTION_CARTO, URL_PREFIX_CARTO, AUTH_TOKEN_TYPE_NONE, Rez.Strings.cartoDarkMatterTemplate, 0, 20); // Carto - Dark Matter
-        case 28:
-            return new TileServerInfo(ATTRIBUTION_CARTO, URL_PREFIX_CARTO, AUTH_TOKEN_TYPE_NONE, Rez.Strings.cartoLightAllTemplate, 0, 20); // Carto - Light All
-        case 29:
-            // Mapy
-            return new TileServerInfo(ATTRIBUTION_MAPY, URL_PREFIX_MAPY, AUTH_TOKEN_TYPE_MAPY, Rez.Strings.mapyBasicTemplate, 0, 19); // Mapy - Basic
-        case 30:
-            return new TileServerInfo(ATTRIBUTION_MAPY, URL_PREFIX_MAPY, AUTH_TOKEN_TYPE_MAPY, Rez.Strings.mapyOutdoorTemplate, 0, 19); // Mapy - Outdoor
-        case 31:
-            return new TileServerInfo(ATTRIBUTION_MAPY, URL_PREFIX_MAPY, AUTH_TOKEN_TYPE_MAPY, Rez.Strings.mapyWinterTemplate, 0, 19); // Mapy - Winter
-        case 32:
-            return new TileServerInfo(ATTRIBUTION_MAPY, URL_PREFIX_MAPY, AUTH_TOKEN_TYPE_MAPY, Rez.Strings.mapyAerialTemplate, 0, 13); // Mapy - Aerial
-    }
-    return null;
-}
-
-(:lowMemory)
-function getTileServerInfo(id as Number) as TileServerInfo? {
-    // prettier-ignore
-    // This is an array instead of a dict because dict does not render correctly, also arrays are faster
-    // 0 => null, // special custom (no tile property changes will happen)
-    // 1 => null, // special companion app (only the tileUrl will be updated)
-    switch(id)
-    {
-        case 2:
-            // open topo
-            return new TileServerInfo(ATTRIBUTION_OPENTOPOMAP, URL_PREFIX_NONE, AUTH_TOKEN_TYPE_NONE, Rez.Strings.openTopoMapUrlTemplate, 0, 15); // OpenTopoMap
-            // google - cannot use returns 404 - works from companion app (userAgent sent)
-            // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", 0, 20), // "Google - Hybrid"
-            // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", 0, 20), // "Google - Satellite"
-            // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", 0, 20), // "Google - Road"
-            // new TileServerInfo(ATTRIBUTION_GOOGLE, "https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}", 0, 20), // "Google - Terain"
-            // arcgis (esri) - note some of these have been removed due to not enough coverage, and others have had layermin/max altered for australian coverage
-            // _Reference maps are all the same - just the location names removing them
-            // Note: when testing on the simulator, some of theese occasionaly seem to produce   
-            // Error: Invalid Value
-            // Details: failed inside handle_image_callback
-        case 3:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldImageryTemplate, 0, 20); // Esri - World Imagery
-        case 4:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldStreetMapTemplate, 0, 19); // Esri - World Street Map
-        case 5:
-            return new TileServerInfo(ATTRIBUTION_ESRI, URL_PREFIX_ESRI, AUTH_TOKEN_TYPE_NONE, Rez.Strings.esriWorldTopoMapTemplate, 0, 19); // Esri - World Topo Map
-    }
-    return null;
-}
-
-(:companionTiles)
-class TileUpdateHandler {
-    var mapChoiceVersion as Number;
-    function initialize(_mapChoiceVersion as Number) {
-        mapChoiceVersion = _mapChoiceVersion;
-    }
-
-    function handle(
-        responseCode as Number,
-        data as
-            Dictionary or
-                String or
-                Iterator or
-                WatchUi.BitmapResource or
-                Graphics.BitmapReference or
-                Null
-    ) as Void {
-        if (responseCode != 200) {
-            logE("failed TUH: " + responseCode);
-            openTileServer();
-            return;
-        }
-
-        var settings = getApp()._breadcrumbContext.settings;
-        if (settings.mapChoiceVersion != mapChoiceVersion || settings.mapChoice != 1) {
-            // we have either changed version (and sent out another request that will update), or its no longer the companion app set as the desired choice
-            return;
-        }
-
-        if (!(data instanceof Dictionary)) {
-            logE("failed TUH: wrong type" + data);
-            return;
-        }
-
-        settings.companionChangedToMaxMin(
-            data["tileLayerMin"] as Number,
-            data["tileLayerMax"] as Number
-        );
-    }
-
-    function openTileServer() as Void {
-        // PROTOCOL_SEND_OPEN_APP will not work if the tile server is disabled :(
-        // also send a toast
-        getApp()._breadcrumbContext.webRequestHandler.transmit(
-            [PROTOCOL_SEND_OPEN_APP],
-            {},
-            getApp()._commStatus
-        );
-        WatchUi.showToast("Tile Server Reponse Failed", {});
-    }
 }
 
 // we are getting dangerously close to the app settings limit
@@ -322,96 +63,14 @@ class TileUpdateHandler {
 // * Reset sim app data and remove apps
 // * Works fine
 class Settings {
-    // todo only load these when needed (but cache them)
-    (:imageTiles)
-    var attributionImage as WatchUi.BitmapResource =
-        WatchUi.loadResource(Rez.Drawables.OpenTopMapAttribution) as BitmapResource;
-    var attributionImageType as Number = ATTRIBUTION_OPENTOPOMAP;
-
-    // should be a multiple of 256 (since thats how tiles are stored, though the companion app will render them scaled for you)
-    // we will support rounding up though. ie. if we use 50 the 256 tile will be sliced into 6 chunks on the phone, this allows us to support more pixel sizes.
-    // so math.ceil should be used what figuring out how many meters a tile is.
-    // eg. maybe we cannot do 128 but we can do 120 (this would limit the number of tiles, but the resolution would be slightly off)
-
-    // The smaller tile size, mainly for use with companion app, allows slicing scaledTileSize into smaller tiles
-    (:companionTiles)
-    var tileSize as Number = 64;
-    (:noCompanionTiles)
-    var tileSize as Number = 192;
-
-    var fullTileSize as Number = 256; // The tile size on the tile server
-    // The tile size to scale images to, results in significantly smaller downloads (and faster speeds) but makes image slightly blurry.
-    // 190 seems to be a good compromise between speed and crisp images. it does not effect the image too much, but gives us about 2X the speed.
-    // 128 is a bit too blurry, but would be fine on some maps (anything without words)
-    var scaledTileSize as Number = 192; // should be a multiple of the default tileSize
-    // website says: Worldwide, Zoom to 17. (Zoom limited to 15 on website opentopomap.org)
-    // real world test showed 17 produced errors (maybe you need to be authed to get this?)
-    var tileLayerMax as Number = 15;
-    var tileLayerMin as Number = 0;
-    // there is both a memory limit to the number of tiles we can store, as well as a storage limit
-    // for now this is both, though we may be able to store more than we can in memory
-    // so we could use the storage as a tile cache, and revert to loading from there, as it would be much faster than
-    // fetching over bluetooth
-    // not sure if we can even store bitmaps into storage, it says only BitmapResource
-    // id have to serialise it to an array and back out (might not be too hard)
-    // 64 is enough to render outside the screen a bit 64*64 tiles with 64 tiles gives us 512*512 worth of pixel data
-
-    // did some tests in the sim (render mode buffered rotations - so we also have the giant scratchpad bitmap active, suspect that why memory starts at ~115.0k)
-    // no tiles 114.8kb used memory
-    // 36 64*64 tiles 132.5kb = ~0.491
-    // 64 64*64 tiles 144.9kb = ~0.4703125 per 64*64 tile
-    // make image request
-    // cleared 115.0k
-    // 18 192*192 tiles 120.3k = ~0.294k per tile - less than the 64*64 tiles possibly because it stored as an optimised png image instead of a bitmap?
-    // 64 64*64 tiles 145.0k = ~0.468 per tile
-    // what I did notice though is that I can have many more tiles of 64*64 even though each tile is larger. The 192*192 image tiles crash the system at ~20 tiles with OOM errors.
-    // Think its not registering correctly with System.getSystemStats().usedMemory, since its graphics memory pool
-    // 95 64*64 tiles 180.0k (though sim was spitting out error saying it could not render) = ~ 0.684
-    // so its ~0.000146484375k per pixel
-    // there appears to be some overhead though
-
-    // with render mode unbuffered roatations (no scratchpad bitmap)
-    // 100 64*64 tiles 174.0k
-    // cleared after we are now at 132.4K - go figure, larger than with the scratchpad
-
-    // restart sim with nothing render mode unbuffered rotations (no scratchpad bitmap)
-    // cleared - 114.9K
-    // changed render mode to buffered rotations - 115.1K so scratchpad has almost 0 effect?
-    // a small route is like 3K
-    // graphics memory pool is
-
-    // using the memory view (which crashes constantly) instead of the on device System.getSystemStats().usedMemory
-    // graphics pool memeory only
-    // 36 64*64 tiles 16496b =  .45822k per tile          // note: this is about the same as previous calcs, image resources must be stored differently to bufferedbitmaps
-    // 13 192X192 tiles 73840b = 5.680k per tile  0.000154k per pixel - consistent with previous calcs
-
-    const BYTES_PER_PIXEL = 0.15f;
-    (:companionTiles)
-    var tileCacheSize as Number = 64;
-    (:noCompanionTiles)
-    var tileCacheSize as Number = 8;
     var mode as Number = MODE_NORMAL;
     var elevationMode as Number = ELEVATION_MODE_STACKED;
-    var mapEnabled as Boolean = false;
-    // cache the tiles in storage when they are loaded, allows for fully offline maps
-    // unfortunately buffered bitmaps cannot be stored into storage (resources and BitMapResources can be, but not the buffered kind)
-    // so we need to store the result of makeImageRequest or makeWebRequest
-    var cacheTilesInStorage as Boolean = false;
-    var storageMapTilesOnly as Boolean = false;
-    // storage seems to fill up around 200 with 192*192 tiles from image requests
-    // can be much larger for companion app is used, since the tiles can be much smaller with TILE_DATA_TYPE_BASE64_FULL_COLOUR
-    // saw a crash around 513 tiles, which would be from our internal array StorageTileCache._tilesInStorage
-    var storageTileCacheSize as Number = 150;
-    var storageSeedBoundingBox as Boolean = false; // seed entire bounding box
-    var storageSeedRouteDistanceM as Float = 10f; // if seeding based on route (storageSeedBoundingBox = false) seed this far around the route
-    var storageTileCachePageCount as Number = 1;
-
+    
     var trackColour as Number = Graphics.COLOR_GREEN;
     var defaultRouteColour as Number = Graphics.COLOR_BLUE;
     var elevationColour as Number = Graphics.COLOR_ORANGE;
     var userColour as Number = Graphics.COLOR_ORANGE;
-    // this should probably be the same as tileCacheSize? since there is no point having 20 outstanding if we can only store 10 of them
-    var maxPendingWebRequests as Number = 5;
+    
     // Renders around the users position
     var metersAroundUser as Number = 500; // keep this fairly high by default, too small and the map tiles start to go blurry
     var centerUserOffsetY as Float = 0.5f; // fraction of the screen to move the user down the page 0.5 - user appears in center, 0.75 - user appears 3/4 down the screen. Useful to see more of the route in front of the user.
@@ -421,27 +80,11 @@ class Settings {
     var uiMode as Number = UI_MODE_SHOW_ALL;
     var fixedLatitude as Float? = null;
     var fixedLongitude as Float? = null;
-    // supports place holders such as
-    // use http://127.0.0.1:8080 for companion app
-    // but you can also use something like https://a.tile.opentopomap.org/{z}/{x}/{y}.png
-    // to make this work on the emulator you ned to run
-    // adb forward tcp:8080 tcp:8080
-    (:companionTiles)
-    var tileUrl as String = COMPANION_APP_TILE_URL;
-    (:noCompanionTiles)
-    var tileUrl as String = "https://a.tile.opentopomap.org/{z}/{x}/{y}.png";
-    var authToken as String = "";
-    var requiresAuth as Boolean = false;
-    (:companionTiles)
-    var mapChoice as Number = 0;
-    (:noCompanionTiles)
-    var mapChoice as Number = 2;
-    var mapChoiceVersion as Number = 0;
+    
     // see keys below in routes = getArraySchema(...)
     // see oddity with route name and route loading new in context.newRoute
     var routes as Array<Dictionary> = [];
     var routesEnabled as Boolean = true;
-    var disableMapsFailureCount as Number = 200; // 0 for unlimited
     var displayRouteNames as Boolean = true;
     var normalModeColour as Number = Graphics.COLOR_BLUE;
     var uiColour as Number = Graphics.COLOR_DK_GRAY;
@@ -461,22 +104,13 @@ class Settings {
 
     var drawLineToClosestPoint as Boolean = true;
     var displayLatLong as Boolean = true;
-    private var _scaleRestrictedToTileLayers as Boolean = false; // scale will be restricted to the tile layers - could do more optimised render in future
-    // https://developer.garmin.com/connect-iq/api-docs/Toybox/Communications.html#PackingFormat-module
-    // some devices do not support other colour pallets, and need to use default pallet and drawBitmap instead of drawBitmap2
-    var packingFormat as Number = 1;
-    var useDrawBitmap as Boolean = false; // implies scaleRestrictedToTileLayers, since the renders will be off if we do not
 
     // scratchpad used for rotations, but it also means we have a large bitmap stored around
     // I will also use that bitmap for re-renders though, and just do rotations every render rather than re-drawing all the tracks/tiles again
-    var renderMode as Number = RENDER_MODE_BUFFERED_ROTATING;
+    var renderMode as Number = RENDER_MODE_UNBUFFERED_ROTATING;
     // how many seconds should we wait before even considering the next point
     // changes in speed/angle/zoom are not effected by this number. Though maybe they should be?
     var recalculateIntervalS as Number = 5;
-    // pre seed tiles on either side of the viewable area
-    var tileCachePadding as Number = 0;
-    var httpErrorTileTTLS as Number = 60;
-    var errorTileTTLS as Number = 20; // other errors are from garmin ble connection issues, retry faster by default
     var turnAlertTimeS as Number = -1; // -1 disables the check
     var minTurnAlertDistanceM as Number = -1; // -1 disables the check
     var maxTrackPoints as Number = 400;
@@ -484,15 +118,12 @@ class Settings {
     // bunch of debug settings
     var showPoints as Boolean = false;
     var drawLineToClosestTrack as Boolean = false;
-    var showTileBorders as Boolean = false;
-    var showErrorTileMessages as Boolean = false;
-    var tileErrorColour as Number = Graphics.COLOR_BLACK;
     var includeDebugPageInOnScreenUi as Boolean = false;
     var drawHitBoxes as Boolean = false;
     var showDirectionPoints as Boolean = false;
     var showDirectionPointTextUnderIndex as Number = 0;
 
-    // these settings can only be modified externally, but we cahe them for faster/easier lookup
+    // these settings can only be modified externally, but we cache them for faster/easier lookup
     // https://www.youtube.com/watch?v=LasrD6SZkZk&ab_channel=JaylaB
     var distanceImperialUnits as Boolean =
         System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE;
@@ -550,10 +181,9 @@ class Settings {
         fixedLongitude = long;
         Application.Properties.setValue("fixedLatitude", lat);
         Application.Properties.setValue("fixedLongitude", long);
-        clearPendingWebRequests();
     }
 
-    function setFixedPosition(lat as Float?, long as Float?, clearRequests as Boolean) as Void {
+    function setFixedPosition(lat as Float?, long as Float?) as Void {
         // logT("moving to: " + lat + " " + long);
         // be very careful about putting null into properties, it breaks everything
         if (lat == null || !(lat instanceof Float)) {
@@ -572,9 +202,6 @@ class Settings {
         if (latIsBasicallyNull || longIsBasicallyNull) {
             fixedLatitude = null;
             fixedLongitude = null;
-            if (clearRequests) {
-                clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
-            }
             updateCachedValues();
             return;
         }
@@ -583,15 +210,11 @@ class Settings {
         // updateCachedValues(); already called by the above sets
         // var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y);
         // logT("round trip conversion result: " + latlong);
-        if (clearRequests) {
-            clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
-        }
     }
 
     function setFixedPositionWithoutUpdate(
         lat as Float?,
-        long as Float?,
-        clearRequests as Boolean
+        long as Float?
     ) as Void {
         // logT("moving to: " + lat + " " + long);
         // be very careful about putting null into properties, it breaks everything
@@ -611,9 +234,6 @@ class Settings {
         if (latIsBasicallyNull || longIsBasicallyNull) {
             fixedLatitude = null;
             fixedLongitude = null;
-            if (clearRequests) {
-                clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
-            }
             updateCachedValues();
             return;
         }
@@ -622,9 +242,6 @@ class Settings {
         // updateCachedValues(); already called by the above sets
         // var latlong = RectangularPoint.xyToLatLon(fixedPosition.x, fixedPosition.y);
         // logT("round trip conversion result: " + latlong);
-        if (clearRequests) {
-            clearPendingWebRequests(); // we want the new position to render faster, that might be the same position, which is fine they queue up pretty quick
-        }
     }
 
     function setValue(key as String, value as PropertyValueType) as Void {
@@ -644,288 +261,6 @@ class Settings {
     }
 
     (:settingsView)
-    function setMapChoice(value as Number) as Void {
-        setMapChoiceWithoutSideEffect(value);
-        setValueSideEffect();
-        mapChoiceChanged();
-    }
-
-    function setMapChoiceWithoutSideEffect(value as Number) as Void {
-        mapChoice = value;
-        Application.Properties.setValue("mapChoice", mapChoice);
-    }
-
-    function mapChoiceChanged() as Void {
-        updateMapChoiceChange(mapChoice);
-        updateCachedValues();
-        updateViewSettings();
-    }
-
-    function authMissing() as Boolean {
-        return requiresAuth && authToken.equals("");
-    }
-
-    (:noImageTiles)
-    function getAttribution() as WatchUi.BitmapResource? {
-        return null;
-    }
-
-    (:imageTiles)
-    function getAttribution() as WatchUi.BitmapResource? {
-        if (mapChoice == 0) {
-            // custom - no way to know which tile server
-            return null;
-        } else if (mapChoice == 1) {
-            // companion app - attributions in the companion app (no way to know what image tiles we are getting)
-            return null;
-        }
-
-        var tileServerInfo = getTileServerInfo(mapChoice);
-        if (tileServerInfo == null) {
-            return null; // invalid selection
-        }
-
-        if (tileServerInfo.attributionType != attributionImageType) {
-            switch (tileServerInfo.attributionType) {
-                case ATTRIBUTION_OPENTOPOMAP:
-                    attributionImage =
-                        WatchUi.loadResource(Rez.Drawables.OpenTopMapAttribution) as BitmapResource;
-                    break;
-                case ATTRIBUTION_ESRI:
-                    attributionImage =
-                        WatchUi.loadResource(Rez.Drawables.EsriAttribution) as BitmapResource;
-                    break;
-                case ATTRIBUTION_OPENSTREETMAP:
-                    attributionImage =
-                        WatchUi.loadResource(Rez.Drawables.OpenStreetMapAttribution) as
-                        BitmapResource;
-                    break;
-                case ATTRIBUTION_STADIA:
-                    attributionImage =
-                        WatchUi.loadResource(Rez.Drawables.StadiaAttribution) as BitmapResource;
-                    break;
-                case ATTRIBUTION_CARTO:
-                    attributionImage =
-                        WatchUi.loadResource(Rez.Drawables.CartoAttribution) as BitmapResource;
-                    break;
-                case ATTRIBUTION_MAPY:
-                    attributionImage =
-                        WatchUi.loadResource(Rez.Drawables.MapyAttribution) as BitmapResource;
-                    break;
-            }
-        }
-
-        attributionImageType = tileServerInfo.attributionType;
-        return attributionImage;
-    }
-
-    (:lowMemory)
-    function maxTileCacheSizeGuess() as Number {
-        return 8; // its in graphics memory, so it `should` be fine
-    }
-
-    // this is a wild guess, its only used to try and protect users
-    // they can set it higher after configuring the tile server choice, or custom mode is full hands off
-    // this is just to ry and limit it for users when they ar simply selecting a new map choice
-    (:highMemory)
-    function maxTileCacheSizeGuess() as Number {
-        var ROUTE_SIZE_BYTES = 7000; // a large route loaded onto the device
-        // var MAX_CACHE_SIZE_USER_PROTECT_BYTES = 80 /*tiles*/ *64*64 /*tile size*/ * BYTES_PER_PIXEL;
-        var availableMemBytes = System.getSystemStats().totalMemory - 116000; // magic number we saw in testing with 0 routes loaded
-        availableMemBytes -= ROUTE_SIZE_BYTES * routeMax();
-        var OVERHEAD_PER_BITMAP_BYTES = 650; // larger image tiles seem to work better (we want smaller tiles to be effected by this more)
-        // I pretty much want perfectSize to be ~20 for large image tiles (192*192) and ~90 for small buffered bitmap tiles (64*64)
-        // so adjust OVERHEAD_PER_BITMAP_BYTES accordingly
-        // all calcs done on venu2s, smaller memory watches will be smaller
-        var perfectSize =
-            availableMemBytes / (tileSize * tileSize * BYTES_PER_PIXEL + OVERHEAD_PER_BITMAP_BYTES);
-        return maxN(1, Math.floor(perfectSize * 0.85).toNumber()); // give ourselves a bit of a buffer
-    }
-
-    function maxStorageTileCacheSizeGuess() as Number {
-        // StorageTileCache._tilesInStorage is the limiting factor for companion app tiles when using TILE_DATA_TYPE_BASE64_FULL_COLOUR
-        // but storage size is the limiting factor for 192*192 image tiles
-        // since there is no way to know if we are using TILE_DATA_TYPE_BASE64_FULL_COLOUR or some other mode we will just assume its that
-        // see notes above on storageTileCacheSize variable
-        return maxTileCacheSizeGuess() * 4; // this will result in ~64 for image tiles and ~324 for companion app 64*64 tiles
-    }
-
-    (:noCompanionTiles)
-    function updateCompanionAppMapChoiceChange() as Void {}
-    (:companionTiles)
-    function updateCompanionAppMapChoiceChange() as Void {
-        // setting back to defaults otherwise when we chose companion app we will not get the correct tilesize and it will crash
-        var defaultSettings = new Settings();
-        // we want a tile layer that all tile servers should be able to show, it should also be low enough that users see there is a problem
-        // these values will be updated by companion app when tile server changes, or the query below
-        setTileLayerMaxWithoutSideEffect(8);
-        setTileLayerMinWithoutSideEffect(0);
-        if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
-            setTileUrlWithoutSideEffect(COMPANION_APP_TILE_URL);
-        }
-        if (fullTileSize != defaultSettings.fullTileSize) {
-            setFullTileSizeWithoutSideEffect(defaultSettings.fullTileSize);
-        }
-        if (scaledTileSize != defaultSettings.scaledTileSize) {
-            setScaledTileSizeWithoutSideEffect(defaultSettings.scaledTileSize);
-        }
-        if (tileSize != defaultSettings.tileSize) {
-            setTileSizeWithoutSideEffect(defaultSettings.tileSize);
-        }
-        var tileCacheMax = maxTileCacheSizeGuess();
-        if (tileCacheSize > tileCacheMax) {
-            logD("limiting tile cache size to: " + tileCacheMax);
-            setTileCacheSizeWithoutSideEffect(tileCacheMax);
-        }
-        var storageTileCacheSizeMax = maxStorageTileCacheSizeGuess();
-        if (storageTileCacheSize > storageTileCacheSizeMax) {
-            logD("limiting storage tile cache size to: " + storageTileCacheSizeMax);
-            setStorageTileCacheSizeWithoutSideEffect(storageTileCacheSizeMax);
-        }
-
-        // grab the min and max from the tile server
-        getApp()._breadcrumbContext.webRequestHandler.addHighPriority(
-            new JsonRequest(
-                "TUH-" + mapChoiceVersion,
-                tileUrl + "/tileServerDetails",
-                {},
-                new TileUpdateHandler(mapChoiceVersion)
-            )
-        );
-
-        return;
-    }
-
-    (:noImageTiles)
-    function updateTileServerMapChoiceChange(tileServerInfo as TileServerInfo) as Void {}
-
-    (:imageTiles)
-    function updateTileServerMapChoiceChange(tileServerInfo as TileServerInfo) as Void {
-        var defaultSettings = new Settings();
-        // auth token added later
-        var newUrl =
-            getUrlPrefix(tileServerInfo.urlPrefix) +
-            tileServerInfo.urlTemplate +
-            getAuthTokenSuffix(tileServerInfo.authTokenType);
-        if (!tileUrl.equals(newUrl)) {
-            // set url last to clear tile cache (if needed)
-            setTileUrlWithoutSideEffect(newUrl);
-        }
-        if (tileLayerMax != tileServerInfo.tileLayerMax) {
-            setTileLayerMaxWithoutSideEffect(tileServerInfo.tileLayerMax);
-        }
-        if (tileLayerMin != tileServerInfo.tileLayerMin) {
-            setTileLayerMinWithoutSideEffect(tileServerInfo.tileLayerMin);
-        }
-        if (fullTileSize != 256) {
-            setFullTileSizeWithoutSideEffect(256);
-        }
-        // todo: reduce this to 128 for better results
-        if (scaledTileSize != defaultSettings.scaledTileSize) {
-            setScaledTileSizeWithoutSideEffect(defaultSettings.scaledTileSize);
-        }
-        if (tileSize != defaultSettings.scaledTileSize) {
-            setTileSizeWithoutSideEffect(defaultSettings.scaledTileSize);
-        }
-        var tileCacheMax = maxTileCacheSizeGuess();
-        if (tileCacheSize > tileCacheMax) {
-            logD("limiting tile cache size to: " + tileCacheMax);
-            setTileCacheSizeWithoutSideEffect(tileCacheMax);
-        }
-        var storageTileCacheSizeMax = maxStorageTileCacheSizeGuess();
-        if (storageTileCacheSize > storageTileCacheSizeMax) {
-            logD("limiting storage tile cache size to: " + storageTileCacheSizeMax);
-            setStorageTileCacheSizeWithoutSideEffect(storageTileCacheSizeMax);
-        }
-    }
-
-    function companionChangedToMaxMin(minLayer as Number, maxLayer as Number) as Void {
-        // we need to to force the url to be companion app
-        // update to be custom (since companion app url will override tile layers)
-        // This does mean when the users selects companion app on the watch settings it might not match the currently
-        // configured tile server max/min on the companion app
-        // assert(tileUrl.equals(COMPANION_APP_TILE_URL));
-
-        // if the users goes custom and has the companion app url, we still do not update the tiles layers
-        // this is because they may be artificially capping the tileLayerMax property eg. a tile server on the phone that has 20 layers, but the user only wants 
-        // 15 layers on the watch in order to be able to run offline tiles and store them all.
-        if (mapChoice != 1) {
-            // we are no longer on the companion app, abort
-            return;
-        }
-
-        setTileLayerMaxWithoutSideEffect(maxLayer);
-        setTileLayerMinWithoutSideEffect(minLayer);
-        setValueSideEffect();
-    }
-
-    function updateMapChoiceChange(value as Number) as Void {
-        // we need to store the last one we processed seperately so we can know on startup if the setting changed underneath us
-        var lastMapChoice = Application.Storage.getValue("lastMapChoice");
-        if (lastMapChoice == null || (lastMapChoice instanceof Number and lastMapChoice != value)) {
-            updateMapChoiceChangeInner(value);
-        }
-        safeSetStorage("lastMapChoice", value);
-    }
-
-    function updateMapChoiceChangeInner(value as Number) as Void {
-        ++mapChoiceVersion;
-
-        if (value == 0) {
-            // custom - leave everything alone
-            return;
-        } else if (value == 1) {
-            // companion app
-            updateCompanionAppMapChoiceChange();
-            return;
-        }
-
-        var tileServerInfo = getTileServerInfo(value);
-        if (tileServerInfo == null) {
-            return; // invalid selection
-        }
-        updateTileServerMapChoiceChange(tileServerInfo);
-    }
-
-    (:settingsView)
-    function setTileUrl(_tileUrl as String) as Void {
-        setTileUrlWithoutSideEffect(_tileUrl);
-        setValueSideEffect();
-    }
-
-    function setTileUrlWithoutSideEffect(_tileUrl as String) as Void {
-        tileUrl = _tileUrl;
-        Application.Properties.setValue("tileUrl", tileUrl);
-        tileUrlChanged();
-    }
-
-    function tileUrlChanged() as Void {
-        clearPendingWebRequests();
-        clearTileCache();
-        clearTileCacheStats();
-        clearWebStats();
-        updateRequiresAuth();
-
-        // prompts user to open the app
-        if (tileUrl.equals(COMPANION_APP_TILE_URL) && !storageMapTilesOnly) {
-            // we could also send a toast, but the transmit allows us to open the app easier on the phone
-            // even though the phone side is a bit of a hack (ConnectIQMessageReceiver cannot parse the data), it's still better than having to manualy open the app.
-            transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
-        }
-    }
-
-    function updateRequiresAuth() as Void {
-        requiresAuth = tileUrl.find("{authToken}") != null;
-    }
-
-    (:settingsView)
-    function setAuthToken(value as String) as Void {
-        authToken = value;
-        setValue("authToken", authToken);
-        tileServerPropChanged();
-    }
-
-    (:settingsView)
     function setZoomAtPaceSpeedMPS(mps as Float) as Void {
         zoomAtPaceSpeedMPS = mps;
         setValue("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
@@ -939,44 +274,12 @@ class Settings {
 
     (:settingsView)
     function setFixedLatitude(value as Float) as Void {
-        setFixedPosition(value, fixedLongitude, true);
+        setFixedPosition(value, fixedLongitude);
     }
 
     (:settingsView)
     function setFixedLongitude(value as Float) as Void {
-        setFixedPosition(fixedLatitude, value, true);
-    }
-
-    (:settingsView)
-    function setMaxPendingWebRequests(value as Number) as Void {
-        maxPendingWebRequests = value;
-        setValue("maxPendingWebRequests", maxPendingWebRequests);
-    }
-
-    (:settingsView)
-    function setTileSize(value as Number) as Void {
-        setTileSizeWithoutSideEffect(value);
-        setValueSideEffect();
-    }
-    function setTileSizeWithoutSideEffect(value as Number) as Void {
-        tileSize = value;
-        if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
-            tileSize = scaledTileSize;
-        }
-        Application.Properties.setValue("tileSize", tileSize);
-        tileServerPropChanged();
-    }
-
-    function tileServerPropChanged() as Void {
-        clearPendingWebRequests();
-        clearTileCache();
-    }
-
-    (:settingsView)
-    function setHttpErrorTileTTLS(value as Number) as Void {
-        httpErrorTileTTLS = value;
-        setValue("httpErrorTileTTLS", httpErrorTileTTLS);
-        tileServerPropChanged();
+        setFixedPosition(fixedLatitude, value);
     }
 
     (:settingsView)
@@ -1009,92 +312,6 @@ class Settings {
     function setShowDirectionPointTextUnderIndex(value as Number) as Void {
         showDirectionPointTextUnderIndex = value;
         setValue("showDirectionPointTextUnderIndex", showDirectionPointTextUnderIndex);
-    }
-
-    (:settingsView)
-    function setErrorTileTTLS(value as Number) as Void {
-        errorTileTTLS = value;
-        setValue("errorTileTTLS", errorTileTTLS);
-        tileServerPropChanged();
-    }
-
-    (:settingsView)
-    function setFullTileSize(value as Number) as Void {
-        setFullTileSizeWithoutSideEffect(value);
-        setValueSideEffect();
-    }
-    function setFullTileSizeWithoutSideEffect(value as Number) as Void {
-        fullTileSize = value;
-        Application.Properties.setValue("fullTileSize", fullTileSize);
-        tileServerPropChanged();
-    }
-
-    (:settingsView)
-    function setScaledTileSize(value as Number) as Void {
-        setScaledTileSizeWithoutSideEffect(value);
-        setValueSideEffect();
-    }
-    function setScaledTileSizeWithoutSideEffect(value as Number) as Void {
-        scaledTileSize = value;
-        if (useDrawBitmap) {
-            scaledTileSize = fullTileSize;
-        }
-        Application.Properties.setValue("scaledTileSize", scaledTileSize);
-        if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
-            setTileSizeWithoutSideEffect(scaledTileSize);
-        }
-        tileServerPropChanged();
-    }
-
-    (:settingsView)
-    function setPackingFormat(value as Number) as Void {
-        setPackingFormatWithoutSideEffect(value);
-        setValueSideEffect();
-    }
-    function setPackingFormatWithoutSideEffect(value as Number) as Void {
-        packingFormat = value;
-        Application.Properties.setValue("packingFormat", packingFormat);
-        tileServerPropChanged();
-    }
-
-    (:settingsView)
-    function setUseDrawBitmap(value as Boolean) as Void {
-        setUseDrawBitmapWithoutSideEffect(value);
-        setValueSideEffect();
-    }
-    function setUseDrawBitmapWithoutSideEffect(value as Boolean) as Void {
-        useDrawBitmap = value;
-        Application.Properties.setValue("useDrawBitmap", useDrawBitmap);
-        if (useDrawBitmap) {
-            setScaledTileSizeWithoutSideEffect(fullTileSize);
-        }
-        tileServerPropChanged();
-    }
-
-    (:settingsView)
-    function setTileLayerMax(value as Number) as Void {
-        setTileLayerMaxWithoutSideEffect(value);
-        setValueSideEffect();
-    }
-    function setTileLayerMaxWithoutSideEffect(value as Number) as Void {
-        tileLayerMax = value;
-        Application.Properties.setValue("tileLayerMax", tileLayerMax);
-    }
-
-    (:settingsView)
-    function setTileLayerMin(value as Number) as Void {
-        setTileLayerMinWithoutSideEffect(value);
-        setValueSideEffect();
-    }
-    function setTileLayerMinWithoutSideEffect(value as Number) as Void {
-        tileLayerMin = value;
-        Application.Properties.setValue("tileLayerMin", tileLayerMin);
-    }
-
-    (:settingsView)
-    function setDisableMapsFailureCount(value as Number) as Void {
-        disableMapsFailureCount = value;
-        setValue("disableMapsFailureCount", disableMapsFailureCount);
     }
 
     (:settingsView)
@@ -1153,75 +370,6 @@ class Settings {
     }
 
     (:settingsView)
-    function setTileCacheSize(value as Number) as Void {
-        setTileCacheSizeWithoutSideEffect(value);
-        setValueSideEffect();
-    }
-    function setTileCacheSizeWithoutSideEffect(value as Number) as Void {
-        var oldTileCacheSize = tileCacheSize;
-        tileCacheSize = value;
-        Application.Properties.setValue("tileCacheSize", tileCacheSize);
-
-        if (oldTileCacheSize > tileCacheSize) {
-            // only nuke tile cache if we reduce the number of tiles we can store
-            tileCacheSizeReduced();
-        }
-    }
-
-    function tileCacheSizeReduced() as Void {
-        clearPendingWebRequests();
-        getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // do not remove our cached tiles, we only reduced the caches size, so they are still valid
-    }
-
-    function storageTileCacheSizeReduced() as Void {
-        getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues();
-    }
-
-    (:settingsView)
-    function setStorageTileCacheSize(value as Number) as Void {
-        setStorageTileCacheSizeWithoutSideEffect(value);
-        setValueSideEffect();
-    }
-    function setStorageTileCacheSizeWithoutSideEffect(value as Number) as Void {
-        var oldStorageTileCacheSize = storageTileCacheSize;
-        storageTileCacheSize = value;
-        Application.Properties.setValue("storageTileCacheSize", storageTileCacheSize);
-
-        if (oldStorageTileCacheSize > storageTileCacheSize) {
-            // only nuke storage tile cache if we reduce the number of tiles we can store
-            storageTileCacheSizeReduced();
-        }
-    }
-
-    (:settingsView)
-    function setStorageTileCachePageCount(value as Number) as Void {
-        var oldStorageTileCachePageCount = storageTileCachePageCount;
-        storageTileCachePageCount = value;
-        if (oldStorageTileCachePageCount != storageTileCachePageCount) {
-            storageTilePageCountChanged();
-        }
-        setValue("storageTileCachePageCount", storageTileCachePageCount);
-    }
-
-    function storageTilePageCountChanged() as Void {
-        getApp()._breadcrumbContext.tileCache._storageTileCache.setNewPageCount(
-            storageTileCachePageCount
-        );
-    }
-
-    (:settingsView)
-    function setTileCachePadding(value as Number) as Void {
-        tileCachePadding = value;
-        setValue("tileCachePadding", tileCachePadding);
-    }
-
-    (:settingsView)
-    function setStorageSeedRouteDistanceM(value as Float) as Void {
-        storageSeedRouteDistanceM = value;
-        setValue("storageSeedRouteDistanceM", storageSeedRouteDistanceM);
-    }
-
-    (:settingsView)
     function setMapMoveScreenSize(value as Float) as Void {
         mapMoveScreenSize = value;
         setValue("mapMoveScreenSize", mapMoveScreenSize);
@@ -1240,49 +388,6 @@ class Settings {
         setValue("recalculateIntervalS", recalculateIntervalS);
     }
 
-    function setMapEnabled(_mapEnabled as Boolean) as Void {
-        setMapEnabledRaw(_mapEnabled);
-        setValue("mapEnabled", mapEnabled);
-    }
-
-    function setMapEnabledRaw(_mapEnabled as Boolean) as Void {
-        mapEnabled = _mapEnabled;
-        mapEnabledChanged();
-    }
-
-    function mapEnabledChanged() as Void {
-        if (!mapEnabled) {
-            getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // do not remove our cached tiles, we might just be temporarily disabling maps
-            clearPendingWebRequests();
-            clearTileCacheStats();
-            clearWebStats();
-            return;
-        }
-
-        // prompts user to open the app
-        if (tileUrl.equals(COMPANION_APP_TILE_URL) && !storageMapTilesOnly) {
-            // we could also send a toast, but the transmit allows us to open the app easier on the phone
-            // even though the phone side is a bit of a hack (ConnectIQMessageReceiver cannot parse the data), it's still better than having to manualy open the app.
-            transmit([PROTOCOL_SEND_OPEN_APP], {}, getApp()._commStatus);
-        }
-    }
-
-    (:settingsView)
-    function setCacheTilesInStorage(value as Boolean) as Void {
-        cacheTilesInStorage = value;
-        setValue("cacheTilesInStorage", cacheTilesInStorage);
-
-        if (!cacheTilesInStorage) {
-            tileServerPropChanged();
-        }
-    }
-
-    (:settingsView)
-    function setStorageMapTilesOnly(value as Boolean) as Void {
-        storageMapTilesOnly = value;
-        setValue("storageMapTilesOnly", storageMapTilesOnly);
-    }
-
     (:settingsView)
     function setDrawLineToClosestPoint(value as Boolean) as Void {
         drawLineToClosestPoint = value;
@@ -1299,17 +404,6 @@ class Settings {
     function setDrawLineToClosestTrack(value as Boolean) as Void {
         drawLineToClosestTrack = value;
         setValue("drawLineToClosestTrack", drawLineToClosestTrack);
-    }
-    (:settingsView)
-    function setShowTileBorders(value as Boolean) as Void {
-        showTileBorders = value;
-        setValue("showTileBorders", showTileBorders);
-    }
-    (:settingsView)
-    function setShowErrorTileMessages(value as Boolean) as Void {
-        showErrorTileMessages = value;
-        setValue("showErrorTileMessages", showErrorTileMessages);
-        getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // remove the errored tiles from cache and redraw
     }
     (:settingsView)
     function setIncludeDebugPageInOnScreenUi(value as Boolean) as Void {
@@ -1334,11 +428,6 @@ class Settings {
         displayLatLong = value;
         setValue("displayLatLong", displayLatLong);
     }
-
-    function scaleRestrictedToTileLayers() as Boolean {
-        return _scaleRestrictedToTileLayers || useDrawBitmap;
-    }
-
     (:settingsView)
     function setDisplayRouteNames(_displayRouteNames as Boolean) as Void {
         displayRouteNames = _displayRouteNames;
@@ -1492,11 +581,6 @@ class Settings {
         saveRoutes();
     }
     
-    function storageCleared() as Void {
-        // routes are already cleared seperately through context
-        safeSetStorage("lastMapChoice", mapChoice); // make sure we do not reload our map choice
-    }
-
     function clearRoute(routeId as Number) as Void {
         var routeIndex = getRouteIndexById(routeId);
         if (routeIndex == null) {
@@ -1551,13 +635,6 @@ class Settings {
     }
 
     (:settingsView)
-    function setTileErrorColour(value as Number) as Void {
-        tileErrorColour = value;
-        setValue("tileErrorColour", tileErrorColour.format("%X"));
-        getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // remove the errored tiles from cache and redraw
-    }
-
-    (:settingsView)
     function setUserColour(value as Number) as Void {
         userColour = value;
         setValue("userColour", userColour.format("%X"));
@@ -1587,44 +664,6 @@ class Settings {
         setValue("elevationColour", elevationColour.format("%X"));
     }
 
-    function toggleMapEnabled() as Void {
-        if (mapEnabled) {
-            setMapEnabled(false);
-            return;
-        }
-
-        setMapEnabled(true);
-    }
-
-    function toggleUseDrawBitmap() as Void {
-        if (useDrawBitmap) {
-            setUseDrawBitmapWithoutSideEffect(false);
-            tileServerPropChanged();
-            setValueSideEffect();
-            return;
-        }
-
-        setUseDrawBitmapWithoutSideEffect(true);
-        tileServerPropChanged();
-        setValueSideEffect();
-    }
-
-    (:settingsView)
-    function toggleStorageSeedBoundingBox() as Void {
-        storageSeedBoundingBox = !storageSeedBoundingBox;
-        setValue("storageSeedBoundingBox", storageSeedBoundingBox);
-    }
-    (:settingsView)
-    function toggleCacheTilesInStorage() as Void {
-        cacheTilesInStorage = !cacheTilesInStorage;
-        setValue("cacheTilesInStorage", cacheTilesInStorage);
-        tileServerPropChanged();
-    }
-    (:settingsView)
-    function toggleStorageMapTilesOnly() as Void {
-        storageMapTilesOnly = !storageMapTilesOnly;
-        setValue("storageMapTilesOnly", storageMapTilesOnly);
-    }
     (:settingsView)
     function toggleDrawLineToClosestPoint() as Void {
         drawLineToClosestPoint = !drawLineToClosestPoint;
@@ -1639,17 +678,6 @@ class Settings {
     function toggleDrawLineToClosestTrack() as Void {
         drawLineToClosestTrack = !drawLineToClosestTrack;
         setValue("drawLineToClosestTrack", drawLineToClosestTrack);
-    }
-    (:settingsView)
-    function toggleShowTileBorders() as Void {
-        showTileBorders = !showTileBorders;
-        setValue("showTileBorders", showTileBorders);
-    }
-    (:settingsView)
-    function toggleShowErrorTileMessages() as Void {
-        showErrorTileMessages = !showErrorTileMessages;
-        setValue("showErrorTileMessages", showErrorTileMessages);
-        getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // remove the errored tiles from cache and redraw
     }
     (:settingsView)
     function toggleIncludeDebugPageInOnScreenUi() as Void {
@@ -1670,11 +698,6 @@ class Settings {
     function toggleDisplayLatLong() as Void {
         displayLatLong = !displayLatLong;
         setValue("displayLatLong", displayLatLong);
-    }
-    (:settingsView)
-    function toggleScaleRestrictedToTileLayers() as Void {
-        _scaleRestrictedToTileLayers = !_scaleRestrictedToTileLayers;
-        setValue("scaleRestrictedToTileLayers", _scaleRestrictedToTileLayers);
     }
     (:settingsView)
     function toggleDisplayRouteNames() as Void {
@@ -1710,10 +733,6 @@ class Settings {
             mode = MODE_NORMAL;
         }
 
-        if (mode == MODE_MAP_MOVE && !mapEnabled) {
-            nextMode();
-        }
-
         if (mode == MODE_DEBUG && !includeDebugPageInOnScreenUi) {
             nextMode();
         }
@@ -1736,30 +755,6 @@ class Settings {
         setZoomAtPaceMode(zoomAtPaceMode);
     }
 
-    function clearTileCache() as Void {
-        getApp()._breadcrumbContext.tileCache.clearValues();
-    }
-
-    function clearStorageTiles() as Void {
-        getApp()._breadcrumbContext.tileCache._storageTileCache.clearValues();
-    }
-
-    function transmit(
-        content as Application.PersistableType,
-        options as Dictionary?,
-        listener as Communications.ConnectionListener
-    ) as Void {
-        getApp()._breadcrumbContext.webRequestHandler.transmit(content, options, listener);
-    }
-
-    function clearTileCacheStats() as Void {
-        getApp()._breadcrumbContext.tileCache.clearStats();
-    }
-
-    function clearPendingWebRequests() as Void {
-        getApp()._breadcrumbContext.webRequestHandler.clearValues();
-    }
-
     function updateViewSettings() as Void {
         getApp()._view.onSettingsChanged();
     }
@@ -1779,10 +774,6 @@ class Settings {
 
     function updateCachedValues() as Void {
         getApp()._breadcrumbContext.cachedValues.recalculateAll();
-    }
-
-    function clearWebStats() as Void {
-        getApp()._breadcrumbContext.webRequestHandler.clearStats();
     }
 
     function clearContextRoutes() as Void {
@@ -2085,48 +1076,23 @@ class Settings {
 
         // note: this pulls the defaults from whatever we have at the top of the file these may differ from the defaults in properties.xml
         var defaultSettings = new Settings();
-        tileSize = defaultSettings.tileSize;
-        httpErrorTileTTLS = defaultSettings.httpErrorTileTTLS;
         turnAlertTimeS = defaultSettings.turnAlertTimeS;
         minTurnAlertDistanceM = defaultSettings.minTurnAlertDistanceM;
         maxTrackPoints = defaultSettings.maxTrackPoints;
         showDirectionPointTextUnderIndex = defaultSettings.showDirectionPointTextUnderIndex;
-        errorTileTTLS = defaultSettings.errorTileTTLS;
-        fullTileSize = defaultSettings.fullTileSize;
-        scaledTileSize = defaultSettings.scaledTileSize;
-        packingFormat = defaultSettings.packingFormat;
-        useDrawBitmap = defaultSettings.useDrawBitmap;
-        tileLayerMax = defaultSettings.tileLayerMax;
-        tileLayerMin = defaultSettings.tileLayerMin;
-        tileCacheSize = defaultSettings.tileCacheSize;
-        storageTileCacheSize = defaultSettings.storageTileCacheSize;
-        storageTileCachePageCount = defaultSettings.storageTileCachePageCount;
-        storageSeedBoundingBox = defaultSettings.storageSeedBoundingBox;
-        storageSeedRouteDistanceM = defaultSettings.storageSeedRouteDistanceM;
         centerUserOffsetY = defaultSettings.centerUserOffsetY;
         mapMoveScreenSize = defaultSettings.mapMoveScreenSize;
-        tileCachePadding = defaultSettings.tileCachePadding;
-        recalculateIntervalS = defaultSettings.recalculateIntervalS;
-        mode = defaultSettings.mode;
-        mapEnabled = defaultSettings.mapEnabled;
-        cacheTilesInStorage = defaultSettings.cacheTilesInStorage;
-        storageMapTilesOnly = defaultSettings.storageMapTilesOnly;
         drawLineToClosestPoint = defaultSettings.drawLineToClosestPoint;
         showPoints = defaultSettings.showPoints;
         drawLineToClosestTrack = defaultSettings.drawLineToClosestTrack;
-        showTileBorders = defaultSettings.showTileBorders;
-        showErrorTileMessages = defaultSettings.showErrorTileMessages;
         includeDebugPageInOnScreenUi = defaultSettings.includeDebugPageInOnScreenUi;
         drawHitBoxes = defaultSettings.drawHitBoxes;
         showDirectionPoints = defaultSettings.showDirectionPoints;
         displayLatLong = defaultSettings.displayLatLong;
-        _scaleRestrictedToTileLayers = defaultSettings.scaleRestrictedToTileLayers();
         trackColour = defaultSettings.trackColour;
         defaultRouteColour = defaultSettings.defaultRouteColour;
-        tileErrorColour = defaultSettings.tileErrorColour;
         elevationColour = defaultSettings.elevationColour;
         userColour = defaultSettings.userColour;
-        maxPendingWebRequests = defaultSettings.maxPendingWebRequests;
         metersAroundUser = defaultSettings.metersAroundUser;
         zoomAtPaceMode = defaultSettings.zoomAtPaceMode;
         zoomAtPaceSpeedMPS = defaultSettings.zoomAtPaceSpeedMPS;
@@ -2136,13 +1102,9 @@ class Settings {
         renderMode = defaultSettings.renderMode;
         fixedLatitude = defaultSettings.fixedLatitude;
         fixedLongitude = defaultSettings.fixedLongitude;
-        tileUrl = defaultSettings.tileUrl;
-        authToken = defaultSettings.authToken;
-        mapChoice = defaultSettings.mapChoice;
         routes = defaultSettings.routes;
         routesEnabled = defaultSettings.routesEnabled;
         displayRouteNames = defaultSettings.displayRouteNames;
-        disableMapsFailureCount = defaultSettings.disableMapsFailureCount;
         enableOffTrackAlerts = defaultSettings.enableOffTrackAlerts;
         offTrackWrongDirection = defaultSettings.offTrackWrongDirection;
         drawCheverons = defaultSettings.drawCheverons;
@@ -2160,10 +1122,6 @@ class Settings {
 
         // purge storage, all routes and caches
         Application.Storage.clearValues();
-        clearTileCache();
-        clearPendingWebRequests();
-        clearTileCacheStats();
-        clearWebStats();
         purgeRoutesFromContext();
         updateCachedValues();
         updateViewSettings();
@@ -2176,48 +1134,25 @@ class Settings {
 
         return (
             ({
-                "tileSize" => tileSize,
-                "httpErrorTileTTLS" => httpErrorTileTTLS,
                 "turnAlertTimeS" => turnAlertTimeS,
                 "minTurnAlertDistanceM" => minTurnAlertDistanceM,
                 "maxTrackPoints" => maxTrackPoints,
                 "showDirectionPointTextUnderIndex" => showDirectionPointTextUnderIndex,
-                "errorTileTTLS" => errorTileTTLS,
-                "fullTileSize" => fullTileSize,
-                "scaledTileSize" => scaledTileSize,
-                "packingFormat" => packingFormat,
-                "useDrawBitmap" => useDrawBitmap,
-                "tileLayerMax" => tileLayerMax,
-                "tileLayerMin" => tileLayerMin,
-                "tileCacheSize" => tileCacheSize,
-                "storageTileCacheSize" => storageTileCacheSize,
-                "storageTileCachePageCount" => storageTileCachePageCount,
-                "storageSeedBoundingBox" => storageSeedBoundingBox,
-                "storageSeedRouteDistanceM" => storageSeedRouteDistanceM,
                 "centerUserOffsetY" => centerUserOffsetY,
                 "mapMoveScreenSize" => mapMoveScreenSize,
-                "tileCachePadding" => tileCachePadding,
                 "recalculateIntervalS" => recalculateIntervalS,
                 "mode" => mode,
-                "mapEnabled" => mapEnabled,
-                "cacheTilesInStorage" => cacheTilesInStorage,
-                "storageMapTilesOnly" => storageMapTilesOnly,
                 "drawLineToClosestPoint" => drawLineToClosestPoint,
                 "showPoints" => showPoints,
                 "drawLineToClosestTrack" => drawLineToClosestTrack,
-                "showTileBorders" => showTileBorders,
-                "showErrorTileMessages" => showErrorTileMessages,
                 "includeDebugPageInOnScreenUi" => includeDebugPageInOnScreenUi,
                 "drawHitBoxes" => drawHitBoxes,
                 "showDirectionPoints" => showDirectionPoints,
                 "displayLatLong" => displayLatLong,
-                "scaleRestrictedToTileLayers" => scaleRestrictedToTileLayers(),
                 "trackColour" => trackColour.format("%X"),
                 "defaultRouteColour" => defaultRouteColour.format("%X"),
-                "tileErrorColour" => tileErrorColour.format("%X"),
                 "elevationColour" => elevationColour.format("%X"),
                 "userColour" => userColour.format("%X"),
-                "maxPendingWebRequests" => maxPendingWebRequests,
                 "metersAroundUser" => metersAroundUser,
                 "zoomAtPaceMode" => zoomAtPaceMode,
                 "zoomAtPaceSpeedMPS" => zoomAtPaceSpeedMPS,
@@ -2227,13 +1162,9 @@ class Settings {
                 "renderMode" => renderMode,
                 "fixedLatitude" => fixedLatitude == null ? 0f : fixedLatitude,
                 "fixedLongitude" => fixedLongitude == null ? 0f : fixedLongitude,
-                "tileUrl" => tileUrl,
-                "authToken" => authToken,
-                "mapChoice" => mapChoice,
                 "routes" => routesToSave(),
                 "routesEnabled" => routesEnabled,
                 "displayRouteNames" => displayRouteNames,
-                "disableMapsFailureCount" => disableMapsFailureCount,
                 "enableOffTrackAlerts" => enableOffTrackAlerts,
                 "offTrackWrongDirection" => offTrackWrongDirection,
                 "drawCheverons" => drawCheverons,
@@ -2276,11 +1207,9 @@ class Settings {
     function setup() as Void {
         // assert the map choice when we load the settings, as it may have been changed when the app was not running and onSettingsChanged might not be called
         loadSettings();
-        updateMapChoiceChange(mapChoice);
     }
 
     function loadSettingsPart1() as Void {
-        httpErrorTileTTLS = parseNumber("httpErrorTileTTLS", httpErrorTileTTLS);
         turnAlertTimeS = parseNumber("turnAlertTimeS", turnAlertTimeS);
         minTurnAlertDistanceM = parseNumber("minTurnAlertDistanceM", minTurnAlertDistanceM);
         maxTrackPoints = parseNumber("maxTrackPoints", maxTrackPoints);
@@ -2288,64 +1217,14 @@ class Settings {
             "showDirectionPointTextUnderIndex",
             showDirectionPointTextUnderIndex
         );
-        errorTileTTLS = parseNumber("errorTileTTLS", errorTileTTLS);
-        fullTileSize = parseNumber("fullTileSize", fullTileSize);
-        useDrawBitmap = parseBool("useDrawBitmap", useDrawBitmap);
-        packingFormat = parseNumber("packingFormat", packingFormat);
-        scaledTileSize = parseNumber("scaledTileSize", scaledTileSize);
-        if (useDrawBitmap) {
-            scaledTileSize = fullTileSize;
-        }
-        tileUrl = parseString("tileUrl", tileUrl);
-        tileSize = parseNumber("tileSize", tileSize);
-        if (!tileUrl.equals(COMPANION_APP_TILE_URL)) {
-            tileSize = scaledTileSize;
-        }
-        tileLayerMax = parseNumber("tileLayerMax", tileLayerMax);
-        tileLayerMin = parseNumber("tileLayerMin", tileLayerMin);
-        // logT("tileSize: " + tileSize);
-        if (tileSize < 2) {
-            tileSize = 2;
-        } else if (tileSize > 256) {
-            tileSize = 256;
-        }
-        if (fullTileSize < 2) {
-            fullTileSize = 2;
-        } else if (fullTileSize > 256) {
-            fullTileSize = 256;
-        }
-        if (scaledTileSize < 2) {
-            scaledTileSize = 2;
-        } else if (scaledTileSize > 256) {
-            scaledTileSize = 256;
-        }
-
-        tileCacheSize = parseNumber("tileCacheSize", tileCacheSize);
-        storageTileCacheSize = parseNumber("storageTileCacheSize", storageTileCacheSize);
-        storageTileCachePageCount = parseNumber(
-            "storageTileCachePageCount",
-            storageTileCachePageCount
-        );
-        storageSeedBoundingBox = parseBool("storageSeedBoundingBox", storageSeedBoundingBox);
-        storageSeedRouteDistanceM = parseFloat(
-            "storageSeedRouteDistanceM",
-            storageSeedRouteDistanceM
-        );
         centerUserOffsetY = parseFloat("centerUserOffsetY", centerUserOffsetY);
         mapMoveScreenSize = parseFloat("mapMoveScreenSize", mapMoveScreenSize);
-        tileCachePadding = parseNumber("tileCachePadding", tileCachePadding);
         recalculateIntervalS = parseNumber("recalculateIntervalS", recalculateIntervalS);
         recalculateIntervalS = recalculateIntervalS <= 0 ? 1 : recalculateIntervalS;
         mode = parseNumber("mode", mode);
-        mapEnabled = parseBool("mapEnabled", mapEnabled);
-        setMapEnabledRaw(mapEnabled); // prompt for app to open if needed
-        cacheTilesInStorage = parseBool("cacheTilesInStorage", cacheTilesInStorage);
-        storageMapTilesOnly = parseBool("storageMapTilesOnly", storageMapTilesOnly);
         drawLineToClosestPoint = parseBool("drawLineToClosestPoint", drawLineToClosestPoint);
         showPoints = parseBool("showPoints", showPoints);
         drawLineToClosestTrack = parseBool("drawLineToClosestTrack", drawLineToClosestTrack);
-        showTileBorders = parseBool("showTileBorders", showTileBorders);
-        showErrorTileMessages = parseBool("showErrorTileMessages", showErrorTileMessages);
         includeDebugPageInOnScreenUi = parseBool(
             "includeDebugPageInOnScreenUi",
             includeDebugPageInOnScreenUi
@@ -2353,10 +1232,6 @@ class Settings {
         drawHitBoxes = parseBool("drawHitBoxes", drawHitBoxes);
         showDirectionPoints = parseBool("showDirectionPoints", showDirectionPoints);
         displayLatLong = parseBool("displayLatLong", displayLatLong);
-        _scaleRestrictedToTileLayers = parseBool(
-            "scaleRestrictedToTileLayers",
-            _scaleRestrictedToTileLayers
-        );
         displayRouteNames = parseBool("displayRouteNames", displayRouteNames);
         enableOffTrackAlerts = parseBool("enableOffTrackAlerts", enableOffTrackAlerts);
         offTrackWrongDirection = parseBool("offTrackWrongDirection", offTrackWrongDirection);
@@ -2364,7 +1239,6 @@ class Settings {
         routesEnabled = parseBool("routesEnabled", routesEnabled);
         trackColour = parseColour("trackColour", trackColour);
         defaultRouteColour = parseColour("defaultRouteColour", defaultRouteColour);
-        tileErrorColour = parseColour("tileErrorColour", tileErrorColour);
         elevationColour = parseColour("elevationColour", elevationColour);
         userColour = parseColour("userColour", userColour);
         normalModeColour = parseColour("normalModeColour", normalModeColour);
@@ -2374,7 +1248,6 @@ class Settings {
         _routeMax = parseColour("routeMax", _routeMax);
         uiColour = parseColour("uiColour", uiColour);
         debugColour = parseColour("debugColour", debugColour);
-        maxPendingWebRequests = parseNumber("maxPendingWebRequests", maxPendingWebRequests);
         metersAroundUser = parseNumber("metersAroundUser", metersAroundUser);
         zoomAtPaceMode = parseNumber("zoomAtPaceMode", zoomAtPaceMode);
         zoomAtPaceSpeedMPS = parseFloat("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
@@ -2385,10 +1258,7 @@ class Settings {
 
         fixedLatitude = parseOptionalFloat("fixedLatitude", fixedLatitude);
         fixedLongitude = parseOptionalFloat("fixedLongitude", fixedLongitude);
-        setFixedPositionWithoutUpdate(fixedLatitude, fixedLongitude, false);
-        updateRequiresAuth();
-        authToken = parseString("authToken", authToken);
-        mapChoice = parseNumber("mapChoice", mapChoice);
+        setFixedPositionWithoutUpdate(fixedLatitude, fixedLongitude);
         routes = getArraySchema(
             "routes",
             ["routeId", "name", "enabled", "colour", "reversed"],
@@ -2402,7 +1272,6 @@ class Settings {
             routes
         );
         logT("parsed routes: " + routes);
-        disableMapsFailureCount = parseNumber("disableMapsFailureCount", disableMapsFailureCount);
         offTrackAlertsDistanceM = parseNumber("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
         offTrackAlertsMaxReportIntervalS = parseNumber(
             "offTrackAlertsMaxReportIntervalS",
@@ -2467,24 +1336,7 @@ class Settings {
         logT("onSettingsChanged: Setting Changed, loading");
         var oldRoutes = routes;
         var oldRouteMax = _routeMax;
-        var oldMapChoice = mapChoice;
-        var oldTileUrl = tileUrl;
-        var oldTileSize = tileSize;
-        var oldHttpErrorTileTTLS = httpErrorTileTTLS;
         var oldMaxTrackPoints = maxTrackPoints;
-        var oldErrorTileTTLS = errorTileTTLS;
-        var oldFullTileSize = fullTileSize;
-        var oldScaledTileSize = scaledTileSize;
-        var oldPackingFormat = packingFormat;
-        var oldUseDrawBitmap = useDrawBitmap;
-        var oldTileCacheSize = tileCacheSize;
-        var oldStorageTileCacheSize = storageTileCacheSize;
-        var oldStorageTileCachePageCount = storageTileCachePageCount;
-        var oldMapEnabled = mapEnabled;
-        var oldCacheTilesInStorage = cacheTilesInStorage;
-        var oldAuthToken = authToken;
-        var oldTileErrorColour = tileErrorColour;
-        var oldShowErrorTileMessages = showErrorTileMessages;
         loadSettings();
         // route settins do not work because garmins setting spage cannot edit them
         // when any property is modified, so we have to explain to users not to touch the settings, but we cannot because it looks
@@ -2511,53 +1363,8 @@ class Settings {
             routeMaxReduced();
         }
 
-        if (
-            oldTileErrorColour != tileErrorColour ||
-            oldShowErrorTileMessages != showErrorTileMessages
-        ) {
-            getApp()._breadcrumbContext.tileCache.clearValuesWithoutStorage(); // remove the errored tiles from cache and redraw
-        }
-
-        // run any tile cache clearing that we need to when map features change
-        if (!oldTileUrl.equals(tileUrl)) {
-            tileUrlChanged();
-        }
-        if (
-            oldTileSize != tileSize ||
-            oldHttpErrorTileTTLS != httpErrorTileTTLS ||
-            oldErrorTileTTLS != errorTileTTLS ||
-            oldFullTileSize != fullTileSize ||
-            oldScaledTileSize != scaledTileSize ||
-            oldUseDrawBitmap != useDrawBitmap ||
-            oldPackingFormat != packingFormat ||
-            oldCacheTilesInStorage != cacheTilesInStorage ||
-            !oldAuthToken.equals(authToken)
-        ) {
-            tileServerPropChanged();
-        }
-
-        if (oldStorageTileCacheSize > storageTileCacheSize) {
-            storageTileCacheSizeReduced();
-        }
-
-        if (oldStorageTileCachePageCount != storageTileCachePageCount) {
-            storageTilePageCountChanged();
-        }
-
-        if (oldTileCacheSize > tileCacheSize) {
-            tileCacheSizeReduced();
-        }
-
         if (oldMaxTrackPoints != maxTrackPoints) {
             maxTrackPointsChanged();
-        }
-
-        if (oldMapEnabled != mapEnabled) {
-            mapEnabledChanged();
-        }
-
-        if (oldMapChoice != mapChoice) {
-            updateMapChoiceChange(mapChoice);
         }
 
         setValueSideEffect();

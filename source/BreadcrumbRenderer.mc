@@ -19,9 +19,6 @@ const ARROW_WALL_OFFSET = 6.0f;
 class BreadcrumbRenderer {
     // todo put into ui class
     var _clearRouteProgress as Number = 0;
-    var _startCacheTilesProgress as Number = 0;
-    var _enableMapProgress as Number = 0;
-    var _disableMapProgress as Number = 0;
     var settings as Settings;
     var _cachedValues as CachedValues;
 
@@ -322,7 +319,6 @@ class BreadcrumbRenderer {
         var userPosRotatedX = rotateAroundScreenX + userPosUnrotatedX;
         var userPosRotatedY = rotateAroundScreenY - userPosUnrotatedY;
         if (
-            settings.renderMode == RENDER_MODE_BUFFERED_ROTATING ||
             settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING
         ) {
             userPosRotatedX =
@@ -347,7 +343,6 @@ class BreadcrumbRenderer {
         var triangleCenterY = userPosRotatedY;
 
         if (
-            settings.renderMode != RENDER_MODE_BUFFERED_ROTATING &&
             settings.renderMode != RENDER_MODE_UNBUFFERED_ROTATING
         ) {
             // todo: load user arrow from bitmap and draw rotated instead
@@ -1054,140 +1049,6 @@ class BreadcrumbRenderer {
         }
     }
 
-    (:noStorage)
-    function renderTileSeedUi(dc as Dc) as Boolean {
-        // no point adding render message, its never supported
-        return false;
-    }
-    (:storage)
-    function renderTileSeedUi(dc as Dc) as Boolean {
-        if (
-            renderLeftStartConfirmation(
-                dc,
-                _startCacheTilesProgress,
-                Rez.Strings.startTileCache1,
-                Rez.Strings.startTileCache2,
-                Rez.Strings.startTileCache3
-            )
-        ) {
-            return true;
-        }
-
-        var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
-        var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
-
-        if (!_cachedValues.seeding()) {
-            // not seeding, no ui
-            return false;
-        }
-
-        var breadcrumbContext = getApp()._breadcrumbContext;
-        dc.setColor(settings.uiColour, Graphics.COLOR_BLACK);
-        dc.clear();
-
-        var lineLength = 20;
-        var halfLineLength = lineLength / 2;
-        var lineFromEdge = 10;
-
-        var seedingProgress = _cachedValues.seedingProgress();
-        var overallProgress = seedingProgress[1];
-        // --- Draw Circular Progress Bar ---
-        var progressBarRadius =
-            (dc.getWidth() < dc.getHeight() ? dc.getWidth() : dc.getHeight()) / 2 - 5;
-        dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(10);
-        dc.drawArc(
-            xHalfPhysical,
-            yHalfPhysical,
-            progressBarRadius,
-            Graphics.ARC_CLOCKWISE,
-            90,
-            90 - (360 * overallProgress).toNumber()
-        );
-
-        // Information text on top of progress bar
-        dc.setColor(settings.uiColour, Graphics.COLOR_TRANSPARENT);
-        var pagesStr = "\nPages: ";
-        for (var i = 0; i < breadcrumbContext.tileCache._storageTileCache._pageSizes.size(); i++) {
-            if (i != 0) {
-                pagesStr += ", ";
-            }
-            pagesStr += breadcrumbContext.tileCache._storageTileCache._pageSizes[i];
-        }
-        var tileLayerStr =
-            _cachedValues.seedingZ < 0
-                ? "Finalising"
-                : "Caching Tile Layer " + _cachedValues.seedingZ;
-        dc.drawText(
-            xHalfPhysical,
-            yHalfPhysical,
-            Graphics.FONT_XTINY,
-            tileLayerStr +
-                "\n" +
-                seedingProgress[0] +
-                "\nPending Web: " +
-                breadcrumbContext.webRequestHandler.pending.size() +
-                " Running: " +
-                breadcrumbContext.webRequestHandler._outstandingCount +
-                "\n Storage: " +
-                breadcrumbContext.tileCache._storageTileCache._totalTileCount +
-                "/" +
-                settings.storageTileCacheSize +
-                pagesStr +
-                "\nWeb Error: " +
-                breadcrumbContext.webRequestHandler._errorCount +
-                " Web Ok: " +
-                breadcrumbContext.webRequestHandler._successCount +
-                "\nMem: " +
-                (System.getSystemStats().usedMemory / 1024f).format("%.1f") +
-                "K f: " +
-                (System.getSystemStats().freeMemory / 1024f).format("%.1f") +
-                "K" +
-                "\nLast Web Res: " +
-                breadcrumbContext.webRequestHandler._lastResult,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-        );
-
-        // cross at the top of the screen to cancel download
-        // could just do this with an X? but that looks a bit weird
-        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(8);
-        dc.drawLine(
-            xHalfPhysical - halfLineLength,
-            lineFromEdge,
-            xHalfPhysical + halfLineLength,
-            lineFromEdge + lineLength
-        );
-        dc.drawLine(
-            xHalfPhysical - halfLineLength,
-            lineFromEdge + lineLength,
-            xHalfPhysical + halfLineLength,
-            lineFromEdge
-        );
-
-        return true;
-    }
-
-    function renderMapEnable(dc as Dc) as Boolean {
-        return renderLeftStartConfirmation(
-            dc,
-            _enableMapProgress,
-            Rez.Strings.enableMaps1,
-            Rez.Strings.enableMaps2,
-            Rez.Strings.enableMaps3
-        );
-    }
-
-    function renderMapDisable(dc as Dc) as Boolean {
-        return renderLeftStartConfirmation(
-            dc,
-            _disableMapProgress,
-            Rez.Strings.disableMaps1,
-            Rez.Strings.disableMaps2,
-            Rez.Strings.disableMaps3
-        );
-    }
-
     function renderYNUi(
         dc as Dc,
         text as ResourceId,
@@ -1237,39 +1098,7 @@ class BreadcrumbRenderer {
         );
     }
 
-    function renderLeftStartConfirmation(
-        dc as Dc,
-        variable as Number,
-        text1 as ResourceId,
-        text2 as ResourceId,
-        text3 as ResourceId
-    ) as Boolean {
-        switch (variable) {
-            case 0:
-                break;
-            case 1:
-            case 3: {
-                // press left to confirm, right cancels
-                renderYNUi(
-                    dc as Dc,
-                    variable == 1 ? text1 : text3,
-                    "Y",
-                    "N",
-                    Graphics.COLOR_GREEN,
-                    Graphics.COLOR_RED
-                );
-                return true;
-            }
-            case 2: {
-                // press left to confirm, right cancels
-                renderYNUi(dc as Dc, text2, "N", "Y", Graphics.COLOR_RED, Graphics.COLOR_GREEN);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
+    
     function renderClearTrackUi(dc as Dc) as Boolean {
         switch (_clearRouteProgress) {
             case 0:
@@ -1302,25 +1131,6 @@ class BreadcrumbRenderer {
         }
 
         return false;
-    }
-
-    (:noStorage)
-    function renderTileCacheButton(dc as Dc) as Void {}
-    (:storage)
-    function renderTileCacheButton(dc as Dc) as Void {
-        var physicalScreenWidth = _cachedValues.physicalScreenWidth; // local lookup faster
-        var yHalfPhysical = _cachedValues.yHalfPhysical; // local lookup faster
-
-        if (settings.storageMapTilesOnly || settings.cacheTilesInStorage) {
-            // right of screen
-            dc.drawText(
-                physicalScreenWidth - halfHitboxSize,
-                yHalfPhysical,
-                Graphics.FONT_XTINY,
-                "G",
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-            );
-        }
     }
 
     (:noDrawHitBoxes)
@@ -1441,21 +1251,6 @@ class BreadcrumbRenderer {
             return;
         }
 
-        if (settings.mode != MODE_MAP_MOVE) {
-            // do not allow disabling maps from mapmove mode
-            var mapletter = "Y";
-            if (!settings.mapEnabled) {
-                mapletter = "N";
-            }
-            dc.drawText(
-                mapEnabledX,
-                mapEnabledY,
-                Graphics.FONT_XTINY,
-                mapletter,
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-            );
-        }
-
         // make this a const
         var halfLineLength = 10;
         var lineFromEdge = 10;
@@ -1554,14 +1349,12 @@ class BreadcrumbRenderer {
             dc.drawLine(xHalfPhysical, tipY, xRight, yChevronPoint); // Right chevron line
             dc.drawLine(xHalfPhysical, tipY, xHalfPhysical, tipY + ARROW_SIZE); // Shaft
 
-            if (settings.getAttribution() == null || !settings.mapEnabled) {
-                // Draw DOWN Arrow with offset
-                tipY = physicalScreenHeight - ARROW_WALL_OFFSET;
-                yChevronPoint = tipY - halfArrowSize;
-                dc.drawLine(xHalfPhysical, tipY, xLeft, yChevronPoint); // Left chevron line
-                dc.drawLine(xHalfPhysical, tipY, xRight, yChevronPoint); // Right chevron line
-                dc.drawLine(xHalfPhysical, tipY, xHalfPhysical, tipY - ARROW_SIZE); // Shaft
-            }
+            // Draw DOWN Arrow with offset
+            tipY = physicalScreenHeight - ARROW_WALL_OFFSET;
+            yChevronPoint = tipY - halfArrowSize;
+            dc.drawLine(xHalfPhysical, tipY, xLeft, yChevronPoint); // Left chevron line
+            dc.drawLine(xHalfPhysical, tipY, xRight, yChevronPoint); // Right chevron line
+            dc.drawLine(xHalfPhysical, tipY, xHalfPhysical, tipY - ARROW_SIZE); // Shaft
             return;
         }
 
@@ -1584,19 +1377,17 @@ class BreadcrumbRenderer {
             );
         }
 
-        if (settings.getAttribution() == null || !settings.mapEnabled) {
-            // minus at the bottom
-            if (!_cachedValues.scaleCanDec) {
-                // no smoking
-                drawNoSmokingSign(dc, xHalfPhysical, physicalScreenHeight - NO_SMOKING_RADIUS);
-            } else {
-                dc.drawLine(
-                    xHalfPhysical - halfLineLength,
-                    physicalScreenHeight - lineFromEdge,
-                    xHalfPhysical + halfLineLength,
-                    physicalScreenHeight - lineFromEdge
-                );
-            }
+        // minus at the bottom
+        if (!_cachedValues.scaleCanDec) {
+            // no smoking
+            drawNoSmokingSign(dc, xHalfPhysical, physicalScreenHeight - NO_SMOKING_RADIUS);
+        } else {
+            dc.drawLine(
+                xHalfPhysical - halfLineLength,
+                physicalScreenHeight - lineFromEdge,
+                xHalfPhysical + halfLineLength,
+                physicalScreenHeight - lineFromEdge
+            );
         }
 
         // M - default, moving is zoomed view, stopped if full view
@@ -1627,10 +1418,6 @@ class BreadcrumbRenderer {
             fvText,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
         );
-
-        if (settings.mapEnabled) {
-            renderTileCacheButton(dc);
-        }
     }
 
     function drawNoSmokingSign(dc as Dc, x as Float, y as Float) as Void {
@@ -1666,12 +1453,6 @@ class BreadcrumbRenderer {
         if (scale == null) {
             // wtf we never call this when its null
             return 0f;
-        }
-
-        if (settings.scaleRestrictedToTileLayers() && settings.mapEnabled) {
-            var desiredScale = _cachedValues.nextTileLayerScale(direction);
-            var toInc = desiredScale - scale;
-            return toInc;
         }
 
         var scaleKeys = settings.distanceImperialUnits ? SCALE_KEYS_IMPERIAL : SCALE_KEYS;
@@ -1811,121 +1592,8 @@ class BreadcrumbRenderer {
         // _disableMapProgress - 2
         // _clearRouteProgress - 3
         return (
-            (_startCacheTilesProgress != 0 && current != 0) ||
-            (_enableMapProgress != 0 && current != 1) ||
-            (_disableMapProgress != 0 && current != 2) ||
             (_clearRouteProgress != 0 && current != 3)
         );
-    }
-
-    (:noStorage)
-    function handleStartCacheRoute(x as Number, y as Number) as Boolean {
-        return false;
-    }
-    (:storage)
-    function handleStartCacheRoute(x as Number, y as Number) as Boolean {
-        if (exclusiveOpRunning(0)) {
-            return false; // something else is running, do not handle touch events
-        }
-
-        if (!settings.mapEnabled) {
-            _startCacheTilesProgress = 0;
-            return false; // maps are not enabled, we hide the start symbol in this case
-        }
-        var res = handleStartLeftYNUi(
-            x,
-            y,
-            _cachedValues.physicalScreenWidth - halfHitboxSize, // right of screen
-            _cachedValues.yHalfPhysical,
-            _startCacheTilesProgress,
-            _cachedValues.method(:startCacheCurrentMapArea)
-        );
-        _startCacheTilesProgress = res[1];
-        return res[0];
-    }
-
-    function handleStartMapEnable(x as Number, y as Number) as Boolean {
-        if (exclusiveOpRunning(1)) {
-            return false; // something else is running, do not handle touch events
-        }
-
-        if (settings.mapEnabled) {
-            _enableMapProgress = 0;
-            return false; // already enabled
-        }
-        var res = handleStartLeftYNUi(
-            x,
-            y,
-            mapEnabledX,
-            mapEnabledY,
-            _enableMapProgress,
-            settings.method(:toggleMapEnabled)
-        );
-        _enableMapProgress = res[1];
-        return res[0];
-    }
-    function handleStartMapDisable(x as Number, y as Number) as Boolean {
-        if (exclusiveOpRunning(2)) {
-            return false; // something else is running, do not handle touch events
-        }
-        if (!settings.mapEnabled) {
-            _disableMapProgress = 0;
-            return false; // already disabled
-        }
-        var res = handleStartLeftYNUi(
-            x,
-            y,
-            mapEnabledX,
-            mapEnabledY,
-            _disableMapProgress,
-            settings.method(:toggleMapEnabled)
-        );
-        _disableMapProgress = res[1];
-        return res[0];
-    }
-
-    function handleStartLeftYNUi(
-        x as Number,
-        y as Number,
-        hitboxX as Float,
-        hitboxY as Float,
-        variable as Number,
-        method as Method
-    ) as [Boolean, Number] {
-        var xHalfPhysical = _cachedValues.xHalfPhysical; // local lookup faster
-
-        if (settings.mode != MODE_NORMAL) {
-            return [false, variable]; // only normal mode can start y/n confirms atm
-        }
-        switch (variable) {
-            case 0:
-                // start location touched
-                if (inHitbox(x, y, hitboxX, hitboxY, halfHitboxSize)) {
-                    return [true, 1];
-                }
-                return [false, 0];
-            case 1:
-                // press left to confirm, right cancels
-                if (x < xHalfPhysical) {
-                    return [true, 2];
-                }
-                return [true, 0];
-
-            case 2:
-                // press right to confirm, left cancels
-                if (x > xHalfPhysical) {
-                    return [true, 3];
-                }
-                return [true, 0];
-            case 3:
-                // press left to confirm, right cancels
-                if (x < xHalfPhysical) {
-                    method.invoke();
-                }
-                return [true, 0];
-        }
-
-        return [false, variable];
     }
 
     function returnToUser() as Void {

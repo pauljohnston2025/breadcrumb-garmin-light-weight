@@ -9,7 +9,6 @@
     <menu-item id="settingsMainMaxTrackPoints" label="@Strings.maxTrackPointsTitle"/>
     <menu-item id="settingsMainZoomAtPace" label="@Strings.zoomAtPaceTitle"/>
     <menu-item id="settingsMainRoutes" label="@Strings.routesTitle"/>
-    <menu-item id="settingsMainMap" label="@Strings.mapsettingsTitle"/>
     <menu-item id="settingsMainAlerts" label="@Strings.offTrackAlertsGroupTitle"/>
     <menu-item id="settingsMainColours" label="@Strings.coloursTitle"/>
     <menu-item id="settingsMainDebug" label="@Strings.debugSettingsTitle"/>
