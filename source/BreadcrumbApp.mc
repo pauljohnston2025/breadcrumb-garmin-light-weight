@@ -6,10 +6,12 @@ import Toybox.WatchUi;
 import Toybox.Communications;
 import Toybox.Background;
 import Toybox.System;
+using Toybox.Time;
 
 var globalExceptionCounter as Number = 0;
 var sourceMustBeNativeColorFormatCounter as Number = 0;
 
+(:background)
 enum /* Protocol */ {
     // PROTOCOL_ROUTE_DATA = 0, - removed in favour of PROTOCOL_ROUTE_DATA2, users must update companion app
     // PROTOCOL_MAP_TILE = 1, - removed watch has pulled tiles from phone rather than phone pushing for a while
@@ -22,21 +24,23 @@ enum /* Protocol */ {
     /* PROTOCOL_CACHE_CURRENT_AREA = 8, */
 }
 
+(:background)
 enum /* ProtocolSend */ {
     PROTOCOL_SEND_OPEN_APP = 0,
     PROTOCOL_SEND_SETTINGS = 1,
 }
 
+(:background)
 class SettingsSent extends Communications.ConnectionListener {
     function initialize() {
         Communications.ConnectionListener.initialize();
     }
     function onComplete() {
-        logT("Settings sent");
+        logB("Settings sent");
     }
 
     function onError() {
-        logT("Settings send failed");
+        logB("Settings send failed");
     }
 }
 
@@ -71,9 +75,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     }
 
     // onStart() is called on application start up
-    (:typecheck(disableBackgroundCheck))
     function onStart(state as Dictionary?) as Void {
-        logT("onstart");
     }
 
     (:typecheck(disableBackgroundCheck))
@@ -98,6 +100,13 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
         if (Background has :registerForPhoneAppMessageEvent) {
             Background.registerForPhoneAppMessageEvent();
+        }
+        else {
+            // poll it every 5 minutes, this is not really ideal our phone app timeouts will have to wait for 5 minutes on older devices
+            var FIVE_MINUTES = new Time.Duration(5 * 60);
+            var eventTime = Time.now().add(FIVE_MINUTES);
+            Background.registerForTemporalEvent(eventTime);
+            logT("registerForTemporalEvent");
         }
         // to open settings to test the simulator has it in an obvious place
         // Settings -> Trigger App Settings (right down the bottom - almost off the screen)
@@ -212,12 +221,6 @@ function onPhone(data as Application.PersistableType) as Void {
             logT("got return to user req: " + rawData);
             _breadcrumbContextLocal.cachedValues.returnToUser();
             return;
-        } else if (type == PROTOCOL_REQUEST_SETTINGS) {
-            logT("got send settings req: " + rawData);
-            var settings = _breadcrumbContextLocal.settings.asDict();
-            // logT("sending settings"+ settings);
-            Communications.transmit([PROTOCOL_SEND_SETTINGS, settings], {}, new SettingsSent());
-            return;
         } else if (type == PROTOCOL_SAVE_SETTINGS) {
             logT("got save settings req: " + rawData);
             if (rawData.size() < 1) {
@@ -246,6 +249,15 @@ class BreadcrumbServiceDelegate extends System.ServiceDelegate {
         ServiceDelegate.initialize();
     }
 
+    function onTemporalEvent() {
+        logB("onTemporalEvent");
+        // only called from old devices that can not directly listen for phone app messages
+        if (Communications has :registerForPhoneAppMessages) {
+            logB("registering for phone messages");
+            Communications.registerForPhoneAppMessages(method(:onPhoneAppMessage));
+        }
+    }
+
     function onPhoneAppMessage(msg as Communications.PhoneAppMessage) as Void {
         logB("Background Service: Received phone message.");
         var data = msg.data as Array?;
@@ -254,6 +266,15 @@ class BreadcrumbServiceDelegate extends System.ServiceDelegate {
             Background.exit(null);
             return;
         }
+
+        var type = data[0] as Number;
+        if (type == PROTOCOL_REQUEST_SETTINGS) {
+            logB("got send settings req: ");
+            Communications.transmit([PROTOCOL_SEND_SETTINGS, settingsAsDict()], {}, new SettingsSent());
+            Background.exit(null);
+            return;
+        }
+
         Background.exit(data as Application.PropertyValueType);
     }
 

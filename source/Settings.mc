@@ -52,6 +52,66 @@ enum /*RenderMode*/ {
     ALERT_TYPE_MAX,
 }
 
+(:background)
+function settingsAsDict() as Dictionary<String, PropertyValueType> {
+    // all these return values should be identical to the storage value
+    // eg. nulls are exposed as 0
+    // colours are strings
+
+    return (
+        ({
+            "turnAlertTimeS" => Application.Properties.getValue("turnAlertTimeS"),
+            "minTurnAlertDistanceM" => Application.Properties.getValue("minTurnAlertDistanceM"),
+            "maxTrackPoints" => Application.Properties.getValue("maxTrackPoints"),
+            "showDirectionPointTextUnderIndex" => Application.Properties.getValue(
+                "showDirectionPointTextUnderIndex"
+            ),
+            "centerUserOffsetY" => Application.Properties.getValue("centerUserOffsetY"),
+            "mapMoveScreenSize" => Application.Properties.getValue("mapMoveScreenSize"),
+            "recalculateIntervalS" => Application.Properties.getValue("recalculateIntervalS"),
+            "mode" => Application.Properties.getValue(""),
+            "drawLineToClosestPoint" => Application.Properties.getValue("drawLineToClosestPoint"),
+            "showPoints" => Application.Properties.getValue("showPoints"),
+            "drawLineToClosestTrack" => Application.Properties.getValue("drawLineToClosestTrack"),
+            "includeDebugPageInOnScreenUi" => Application.Properties.getValue(
+                "includeDebugPageInOnScreenUi"
+            ),
+            "drawHitBoxes" => Application.Properties.getValue("drawHitBoxes"),
+            "showDirectionPoints" => Application.Properties.getValue("showDirectionPoints"),
+            "displayLatLong" => Application.Properties.getValue("displayLatLong"),
+            "trackColour" => Application.Properties.getValue("trackColour"),
+            "defaultRouteColour" => Application.Properties.getValue("defaultRouteColour"),
+            "elevationColour" => Application.Properties.getValue("elevationColour"),
+            "userColour" => Application.Properties.getValue("userColour"),
+            "metersAroundUser" => Application.Properties.getValue("metersAroundUser"),
+            "zoomAtPaceMode" => Application.Properties.getValue("zoomAtPaceMode"),
+            "zoomAtPaceSpeedMPS" => Application.Properties.getValue("zoomAtPaceSpeedMPS"),
+            "uiMode" => Application.Properties.getValue("uiMode"),
+            "elevationMode" => Application.Properties.getValue("elevationMode"),
+            "alertType" => Application.Properties.getValue("alertType"),
+            "renderMode" => Application.Properties.getValue("renderMode"),
+            "fixedLatitude" => Application.Properties.getValue("fixedLatitude"),
+            "fixedLongitude" => Application.Properties.getValue("fixedLongitude"),
+            "routes" => Application.Storage.getValue("routes"), // routes are saved to storage, does this even work on real devices? save/delete are documented to only work on 3.2.0
+            "routesEnabled" => Application.Properties.getValue("routesEnabled"),
+            "displayRouteNames" => Application.Properties.getValue("displayRouteNames"),
+            "enableOffTrackAlerts" => Application.Properties.getValue("enableOffTrackAlerts"),
+            "offTrackWrongDirection" => Application.Properties.getValue("offTrackWrongDirection"),
+            "drawCheverons" => Application.Properties.getValue("drawCheverons"),
+            "offTrackAlertsDistanceM" => Application.Properties.getValue("offTrackAlertsDistanceM"),
+            "offTrackAlertsMaxReportIntervalS" => Application.Properties.getValue(
+                "offTrackAlertsMaxReportIntervalS"
+            ),
+            "offTrackCheckIntervalS" => Application.Properties.getValue("offTrackCheckIntervalS"),
+            "normalModeColour" => Application.Properties.getValue("normalModeColour"),
+            "routeMax" => Application.Properties.getValue("routeMax"),
+            "uiColour" => Application.Properties.getValue("uiColour"),
+            "debugColour" => Application.Properties.getValue("debugColour"),
+            "resetDefaults" => Application.Properties.getValue("resetDefaults"),
+        }) as Dictionary<String, PropertyValueType>
+    );
+}
+
 // we are getting dangerously close to the app settings limit
 // was getting "Unable to serialize app data" in the sim, but after a restart worked fine
 // see
