@@ -14,7 +14,6 @@ base.excludeAnnotations = $(base.excludeAnnotations);tileBorders;showPoints;draw
 # we currently need 128.5Kb of memory
 
 highMemExcludes=noSettingsView;noUnbufferedRotations;noStorage;noCompanionTiles;lowMemory;noImageTiles
-# low memory devices only support image tiles, no companion app
 lowMemExcludes=settingsView;unbufferedRotations;storage;companionTiles;highMemory;noImageTiles
 
 
@@ -133,8 +132,8 @@ venu2.excludeAnnotations = $(venu2.excludeAnnotations);rectangle;noscaledbitmap;
 venu2.resourcePath = $(venu2.resourcePath);resources-high-memory
 venu2plus.excludeAnnotations = $(venu2plus.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
 venu2plus.resourcePath = $(venu2plus.resourcePath);resources-high-memory
-venu2s.excludeAnnotations = $(venu2s.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
-venu2s.resourcePath = $(venu2s.resourcePath);resources-high-memory
+venu2s.excludeAnnotations = $(venu2s.excludeAnnotations);rectangle;noscaledbitmap;$(lowMemExcludes)
+venu2s.resourcePath = $(venu2s.resourcePath);resources-low-memory
 venu3.excludeAnnotations = $(venu3.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
 venu3.resourcePath = $(venu3.resourcePath);resources-high-memory
 venu3s.excludeAnnotations = $(venu3s.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
