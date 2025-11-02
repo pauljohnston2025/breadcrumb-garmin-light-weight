@@ -75,8 +75,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     }
 
     // onStart() is called on application start up
-    function onStart(state as Dictionary?) as Void {
-    }
+    function onStart(state as Dictionary?) as Void {}
 
     (:typecheck(disableBackgroundCheck))
     function onBackgroundData(data as Application.PersistableType) as Void {
@@ -128,7 +127,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         $._view = new BreadcrumbDataFieldView($._breadcrumbContext as BreadcrumbContext);
     }
 
-    (:settingsView,:menu2)
+    (:settingsView,:menu2,:typecheck(disableBackgroundCheck))
     function getSettingsView() as [Views] or [Views, InputDelegates] or Null {
         var settings = new $.SettingsMain();
         return [settings, new $.SettingsMainDelegate(settings)];
@@ -252,10 +251,15 @@ class BreadcrumbServiceDelegate extends System.ServiceDelegate {
     function onTemporalEvent() {
         logB("onTemporalEvent");
         // only called from old devices that can not directly listen for phone app messages
+        // this seems to only work on some devices (tested on ven2s), and those devices generally already support onPhoneAppMessage directly from Background.registerForPhoneAppMessageEvent
+        // testing on the old 2.4 device (edge_1000) threw an error about registerForPhoneAppMessages symbol not found
+        // Im guessing it was only supported in datafields (or maybe background processes) after a certain point 
         if (Communications has :registerForPhoneAppMessages) {
-            logB("registering for phone messages");
+            logB("registering for phone messages in onTemporalEvent");
             Communications.registerForPhoneAppMessages(method(:onPhoneAppMessage));
         }
+
+        Background.exit(null);
     }
 
     function onPhoneAppMessage(msg as Communications.PhoneAppMessage) as Void {
@@ -270,7 +274,11 @@ class BreadcrumbServiceDelegate extends System.ServiceDelegate {
         var type = data[0] as Number;
         if (type == PROTOCOL_REQUEST_SETTINGS) {
             logB("got send settings req: ");
-            Communications.transmit([PROTOCOL_SEND_SETTINGS, settingsAsDict()], {}, new SettingsSent());
+            Communications.transmit(
+                [PROTOCOL_SEND_SETTINGS, settingsAsDict()],
+                {},
+                new SettingsSent()
+            );
             Background.exit(null);
             return;
         }

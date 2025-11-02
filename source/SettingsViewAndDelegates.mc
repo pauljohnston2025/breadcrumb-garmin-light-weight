@@ -157,7 +157,12 @@ class SettingsMain extends Rez.Menus.SettingsMain {
     }
 
     function rerender() as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         var modeString = "";
         switch (settings.mode) {
             case MODE_NORMAL:
@@ -230,7 +235,12 @@ class SettingsZoomAtPace extends Rez.Menus.SettingsZoomAtPace {
     }
 
     function rerender() as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         var modeString = "";
         switch (settings.zoomAtPaceMode) {
             case ZOOM_AT_PACE_MODE_PACE:
@@ -271,7 +281,12 @@ class SettingsAlerts extends Rez.Menus.SettingsAlerts {
     }
 
     function rerender() as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         alertsCommon(me, settings);
         safeSetSubLabel(
             me,
@@ -326,7 +341,12 @@ class SettingsAlertsDisabled extends Rez.Menus.SettingsAlertsDisabled {
     }
 
     function rerender() as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         alertsCommon(me, settings);
     }
 }
@@ -339,7 +359,12 @@ class SettingsColours extends Rez.Menus.SettingsColours {
     }
 
     function rerender() as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         safeSetIcon(me, :settingsColoursTrackColour, new ColourIcon(settings.trackColour));
         safeSetIcon(
             me,
@@ -366,7 +391,12 @@ class SettingsDebug extends Rez.Menus.SettingsDebug {
     }
 
     function rerender() as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         safeSetToggle(me, :settingsDebugShowPoints, settings.showPoints);
         safeSetToggle(me, :settingsDebugDrawLineToClosestTrack, settings.drawLineToClosestTrack);
         safeSetToggle(
@@ -538,7 +568,12 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
     }
 
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         var itemId = item.getId();
         if (itemId == :settingsMainMode) {
             WatchUi.pushView(
@@ -645,7 +680,10 @@ class ResetSettingsDelegate extends WatchUi.ConfirmationDelegate {
     }
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
-            $._breadcrumbContext.settings.resetDefaults();
+            var _breadcrumbContextLocal = $._breadcrumbContext;
+            if (_breadcrumbContextLocal != null) {
+                _breadcrumbContextLocal.settings.resetDefaults();
+            }
         }
 
         return true; // we always handle it
@@ -659,7 +697,10 @@ class ReturnToUserDelegate extends WatchUi.ConfirmationDelegate {
     }
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
-            $._breadcrumbContext.cachedValues.returnToUser();
+            var _breadcrumbContextLocal = $._breadcrumbContext;
+            if (_breadcrumbContextLocal != null) {
+                _breadcrumbContextLocal.cachedValues.returnToUser();
+            }
         }
 
         return true; // we always handle it
@@ -674,7 +715,10 @@ class ClearStorageDelegate extends WatchUi.ConfirmationDelegate {
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
             Application.Storage.clearValues(); // purge the storage, but we have to clean up all our classes that load from storage too
-            $._breadcrumbContext.clearRoutes(); // also clear the routes to mimic storage being removed
+            var _breadcrumbContextLocal = $._breadcrumbContext;
+            if (_breadcrumbContextLocal != null) {
+                _breadcrumbContextLocal.clearRoutes(); // also clear the routes to mimic storage being removed
+            }
         }
 
         return true; // we always handle it
@@ -692,7 +736,10 @@ class DeleteRouteDelegate extends WatchUi.ConfirmationDelegate {
     }
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
-            $._breadcrumbContext.clearRoute(routeId);
+            var _breadcrumbContextLocal = $._breadcrumbContext;
+            if (_breadcrumbContextLocal != null) {
+                _breadcrumbContextLocal.clearRoute(routeId);
+            }
 
             // WARNING: this is a massive hack, probably dependant on platform
             // just poping the vew and replacing does not work, because the confirmation is still active whilst we are in this function
@@ -722,7 +769,12 @@ class SettingsModeDelegate extends WatchUi.Menu2InputDelegate {
         me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         var itemId = item.getId();
         if (itemId == :settingsModeTrackRoute) {
             settings.setMode(MODE_NORMAL);
@@ -747,7 +799,12 @@ class SettingsUiModeDelegate extends WatchUi.Menu2InputDelegate {
         me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         var itemId = item.getId();
         if (itemId == :settingsUiModeShowall) {
             settings.setUiMode(UI_MODE_SHOW_ALL);
@@ -770,7 +827,12 @@ class SettingsElevationModeDelegate extends WatchUi.Menu2InputDelegate {
         me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         var itemId = item.getId();
         if (itemId == :settingsElevationModeStacked) {
             settings.setElevationMode(ELEVATION_MODE_STACKED);
@@ -791,7 +853,12 @@ class SettingsAlertTypeDelegate extends WatchUi.Menu2InputDelegate {
         me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         var itemId = item.getId();
         if (itemId == :settingsAlertTypeToast) {
             settings.setAlertType(ALERT_TYPE_TOAST);
@@ -814,7 +881,12 @@ class SettingsRenderModeDelegate extends WatchUi.Menu2InputDelegate {
         me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         var itemId = item.getId();
         if (itemId == :settingsRenderModeUnbufferedRotating) {
             settings.setRenderMode(RENDER_MODE_UNBUFFERED_ROTATING);
@@ -835,7 +907,12 @@ class SettingsZoomAtPaceDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         var itemId = item.getId();
         if (itemId == :settingsZoomAtPaceMode) {
             WatchUi.pushView(
@@ -980,7 +1057,12 @@ class SettingsZoomAtPaceModeDelegate extends WatchUi.Menu2InputDelegate {
         me.parent = parent;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         var itemId = item.getId();
         if (itemId == :settingsZoomAtPaceModePace) {
             settings.setZoomAtPaceMode(ZOOM_AT_PACE_MODE_PACE);
@@ -1091,7 +1173,12 @@ class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         var itemId = item.getId();
 
         if (itemId == :settingsAlertsOffTrackAlertsMaxReportIntervalS) {
@@ -1117,7 +1204,12 @@ class SettingsAlertsDisabledDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         var itemId = item.getId();
         onSelectAlertCommon(itemId, settings, view);
     }
@@ -1132,14 +1224,18 @@ class DummyView extends WatchUi.View {
 
 (:settingsView,:menu2)
 class ClearRoutesDelegate extends WatchUi.ConfirmationDelegate {
-    var settings as Settings;
     function initialize() {
         WatchUi.ConfirmationDelegate.initialize();
-        self.settings = $._breadcrumbContext.settings;
     }
     function onResponse(response as Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
-            $._breadcrumbContext.clearRoutes();
+            var _breadcrumbContextLocal = $._breadcrumbContext;
+            if (_breadcrumbContextLocal == null) {
+                breadcrumbContextWasNull();
+                return true;
+            }
+            var settings = _breadcrumbContextLocal.settings;
+            _breadcrumbContextLocal.clearRoutes();
 
             // WARNING: this is a massive hack, probably dependant on platform
             // just poping the vew and replacing does not work, because the confirmation is still active whilst we are in this function
@@ -1168,7 +1264,12 @@ class SettingsColoursDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         var itemId = item.getId();
         if (itemId == :settingsColoursTrackColour) {
             startPicker(
@@ -1230,7 +1331,12 @@ class SettingsDebugDelegate extends WatchUi.Menu2InputDelegate {
         me.view = view;
     }
     public function onSelect(item as WatchUi.MenuItem) as Void {
-        var settings = $._breadcrumbContext.settings;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var settings = _breadcrumbContextLocal.settings;
         var itemId = item.getId();
         if (itemId == :settingsDebugShowPoints) {
             settings.toggleShowPoints();
