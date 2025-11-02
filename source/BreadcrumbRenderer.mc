@@ -1574,7 +1574,10 @@ class BreadcrumbRenderer {
             case 3:
                 // press right to confirm, left cancels
                 if (x > xHalfPhysical) {
-                    getApp()._breadcrumbContext.clearRoutes();
+                    var _breadcrumbContextLocal = $._breadcrumbContext;
+                    if (_breadcrumbContextLocal != null) {
+                        _breadcrumbContextLocal.clearRoutes();
+                    }
                 }
                 _clearRouteProgress = 0;
                 return true;

@@ -128,10 +128,16 @@ class CachedValues {
 
     /** returns the new scale */
     function getNewScaleAndUpdateCenter() as Float {
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return 0f;
+        }
+
         if (currentlyZoomingAroundUser) {
             var renderDistanceM = _settings.metersAroundUser;
             if (!calcCenterPoint()) {
-                var lastPoint = getApp()._breadcrumbContext.track.coordinates.lastPoint();
+                var lastPoint = _breadcrumbContextLocal.track.coordinates.lastPoint();
                 if (lastPoint != null) {
                     centerPosition = lastPoint;
                     return calculateScale(renderDistanceM.toFloat());
@@ -139,7 +145,7 @@ class CachedValues {
                 // we are zooming around the user, but we do not have a last track point
                 // resort to using bounding box
                 var boundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
-                    getApp()._breadcrumbContext.routes,
+                    _breadcrumbContextLocal.routes,
                     null
                 );
                 calcCenterPointForBoundingBox(boundingBox);
@@ -150,10 +156,10 @@ class CachedValues {
         }
 
         var boundingBox = calcOuterBoundingBoxFromTrackAndRoutes(
-            getApp()._breadcrumbContext.routes,
+            _breadcrumbContextLocal.routes,
             // if no roues we will try and render the track instead
             _settings.zoomAtPaceMode == ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK &&
-                getApp()._breadcrumbContext.routes.size() != 0
+                _breadcrumbContextLocal.routes.size() != 0
                 ? null
                 : optionalTrackBoundingBox()
         );
@@ -162,9 +168,15 @@ class CachedValues {
     }
 
     function optionalTrackBoundingBox() as [Float, Float, Float, Float]? {
-        return getApp()._breadcrumbContext.track.coordinates.lastPoint() == null
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return null;
+        }
+
+        return _breadcrumbContextLocal.track.coordinates.lastPoint() == null
             ? null
-            : getApp()._breadcrumbContext.track.boundingBox;
+            : _breadcrumbContextLocal.track.boundingBox;
     }
 
     /** returns true if a rescale occurred */
@@ -198,7 +210,6 @@ class CachedValues {
         if (_currentSpeed != null) {
             currentSpeed = _currentSpeed;
         }
-
 
         var _elapsedDistance = activityInfo.elapsedDistance;
         if (_elapsedDistance != null) {
@@ -317,6 +328,12 @@ class CachedValues {
 
     /** returns true if the scale changed */
     function handleNewScale(newScale as Float) as Boolean {
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return false;
+        }
+
         if (abs(currentScale - newScale) < 0.000001) {
             // ignore any minor scale changes, esp if the scale is the same but float == does not work
             return false;
@@ -332,13 +349,16 @@ class CachedValues {
             scaleFactor = newScale / currentScale;
         }
 
-        var routes = getApp()._breadcrumbContext.routes;
+        var routes = _breadcrumbContextLocal.routes;
         for (var i = 0; i < routes.size(); ++i) {
             var route = routes[i];
             route.rescale(scaleFactor); // rescale all routes, even if they are not enabled
         }
-        getApp()._breadcrumbContext.track.rescale(scaleFactor);
-        getApp()._view.rescale(scaleFactor);
+        _breadcrumbContextLocal.track.rescale(scaleFactor);
+        var _viewLocal = $._view;
+        if (_viewLocal != null) {
+            _viewLocal.rescale(scaleFactor);
+        }
         centerPosition.rescaleInPlace(scaleFactor);
 
         currentScale = newScale;
@@ -458,7 +478,12 @@ class CachedValues {
             _settings.zoomAtPaceMode != ZOOM_AT_PACE_MODE_SHOW_ROUTES_WITHOUT_TRACK
         ) {
             // the hacks begin
-            var lastPoint = getApp()._breadcrumbContext.track.coordinates.lastPoint();
+            var _breadcrumbContextLocal = $._breadcrumbContext;
+            if (_breadcrumbContextLocal == null) {
+                breadcrumbContextWasNull();
+                return false;
+            }
+            var lastPoint = _breadcrumbContextLocal.track.coordinates.lastPoint();
             if (lastPoint != null) {
                 centerPosition = lastPoint;
                 return true;

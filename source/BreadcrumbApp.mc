@@ -4,6 +4,8 @@ import Toybox.Application;
 import Toybox.Lang;
 import Toybox.WatchUi;
 import Toybox.Communications;
+import Toybox.Background;
+import Toybox.System;
 
 var globalExceptionCounter as Number = 0;
 var sourceMustBeNativeColorFormatCounter as Number = 0;
@@ -38,6 +40,9 @@ class SettingsSent extends Communications.ConnectionListener {
     }
 }
 
+var _breadcrumbContext as BreadcrumbContext? = null;
+var _view as BreadcrumbDataFieldView? = null; // set in getInitialView so we do not get Circular dependency detected during initialization between '$' and '$.BreadcrumbDataFieldView'.
+
 // to get devices and their memory limits
 // cd <homedir>/AppData/Roaming/Garmin/ConnectIQ/Devices/
 // cat ./**/compiler.json | grep -E '"type": "datafield"|displayName' -B 1
@@ -45,20 +50,20 @@ class SettingsSent extends Communications.ConnectionListener {
 // for supported image formats of devices
 // cat ./**/compiler.json | grep -E 'imageFormats|displayName' -A 5
 // looks like if it does not have a key for "imageFormats" the device only supports native formats and "Source must be native color format" if trying to use anything else.
+(:background)
 class BreadcrumbDataFieldApp extends Application.AppBase {
-    var _breadcrumbContext as BreadcrumbContext;
-    var _view as BreadcrumbDataFieldView;
-
     function initialize() {
         AppBase.initialize();
-        _breadcrumbContext = new BreadcrumbContext();
-        _view = new BreadcrumbDataFieldView(_breadcrumbContext);
-        _breadcrumbContext.setup();
     }
 
+    (:typecheck(disableBackgroundCheck))
     function onSettingsChanged() as Void {
+        logT("onSettingsChanged");
         try {
-            _breadcrumbContext.settings.onSettingsChanged();
+            var _breadcrumbContextLocal = $._breadcrumbContext;
+            if (_breadcrumbContextLocal != null) {
+                _breadcrumbContextLocal.settings.onSettingsChanged();
+            }
         } catch (e) {
             logE("failed onSettingsChange: " + e.getErrorMessage());
             ++$.globalExceptionCounter;
@@ -66,11 +71,19 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     }
 
     // onStart() is called on application start up
+    (:typecheck(disableBackgroundCheck))
     function onStart(state as Dictionary?) as Void {
-        if (Communications has :registerForPhoneAppMessages) {
-            logT("registering for phone messages");
-            Communications.registerForPhoneAppMessages(method(:onPhone));
-        }
+        logT("onstart");
+    }
+
+    (:typecheck(disableBackgroundCheck))
+    function onBackgroundData(data as Application.PersistableType) as Void {
+        setupGlobals();
+        onPhone(data);
+    }
+
+    function getServiceDelegate() as [ServiceDelegate] {
+        return [new BreadcrumbServiceDelegate()];
     }
 
     // onStop() is called when your application is exiting
@@ -78,11 +91,32 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     function onStop(state as Dictionary?) as Void {}
 
     // Return the initial view of your application here
+    (:typecheck(disableBackgroundCheck))
     function getInitialView() as [Views] or [Views, InputDelegates] {
+        logT("Get initial view");
+        setupGlobals();
+
+        if (Background has :registerForPhoneAppMessageEvent) {
+            Background.registerForPhoneAppMessageEvent();
+        }
         // to open settings to test the simulator has it in an obvious place
         // Settings -> Trigger App Settings (right down the bottom - almost off the screen)
         // then to go back you need to Settings -> Time Out App Settings
-        return [_view, new BreadcrumbDataFieldDelegate(_breadcrumbContext)];
+        return [
+            $._view as BreadcrumbDataFieldView,
+            new BreadcrumbDataFieldDelegate($._breadcrumbContext as BreadcrumbContext),
+        ];
+    }
+
+    (:typecheck(disableBackgroundCheck))
+    function setupGlobals() as Void {
+        if ($._breadcrumbContext != null) {
+            return;
+        }
+
+        $._breadcrumbContext = new BreadcrumbContext();
+        ($._breadcrumbContext as BreadcrumbContext).setup();
+        $._view = new BreadcrumbDataFieldView($._breadcrumbContext as BreadcrumbContext);
     }
 
     (:settingsView,:menu2)
@@ -90,121 +124,140 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         var settings = new $.SettingsMain();
         return [settings, new $.SettingsMainDelegate(settings)];
     }
+}
 
-    function onPhone(msg as Communications.PhoneAppMessage) as Void {
-        try {
-            var data = msg.data as Array?;
-            if (data == null || !(data instanceof Array) || data.size() < 1) {
-                logE("Bad message: " + data);
+function onPhone(data as Application.PersistableType) as Void {
+    try {
+        if (data == null || !(data instanceof Array) || data.size() < 1) {
+            logE("Bad message: " + data);
+            mustUpdate();
+            return;
+        }
+
+        var type = data[0] as Number;
+        var rawData = data.slice(1, null);
+
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            logE("Breadcrumb context was null: " + data);
+            return;
+        }
+
+        if (type == PROTOCOL_ROUTE_DATA2) {
+            logT("Parsing route data 2");
+            // protocol:
+            //  name
+            //  [x, y, z]...  // latitude <float> and longitude <float> in rectangular coordinates, altitude <float> - pre calculated by the app
+            //  [x, y, angle, index] // direction data - pre calculated all floats
+            if (rawData.size() < 2) {
+                logT("Failed to parse route 2 data, bad length: " + rawData.size());
                 mustUpdate();
                 return;
             }
 
-            var type = data[0] as Number;
-            var rawData = data.slice(1, null);
-
-            if (type == PROTOCOL_ROUTE_DATA2) {
-                logT("Parsing route data 2");
-                // protocol:
-                //  name
-                //  [x, y, z]...  // latitude <float> and longitude <float> in rectangular coordinates, altitude <float> - pre calculated by the app
-                //  [x, y, angle, index] // direction data - pre calculated all floats
-                if (rawData.size() < 2) {
-                    logT("Failed to parse route 2 data, bad length: " + rawData.size());
+            var name = rawData[0] as String;
+            var routeData = rawData[1] as Array<Float>;
+            var directions = [] as Array<Number>; // back compat empty array
+            if (rawData.size() > 2) {
+                directions = rawData[2] as Array<Number>;
+            }
+            if (routeData.size() % ARRAY_POINT_SIZE == 0) {
+                var route = _breadcrumbContextLocal.newRoute(name);
+                if (route == null) {
+                    logE("Failed to add route");
                     mustUpdate();
                     return;
                 }
-
-                var name = rawData[0] as String;
-                var routeData = rawData[1] as Array<Float>;
-                var directions = [] as Array<Number>; // back compat empty array
-                if (rawData.size() > 2) {
-                    directions = rawData[2] as Array<Number>;
-                }
-                if (routeData.size() % ARRAY_POINT_SIZE == 0) {
-                    var route = _breadcrumbContext.newRoute(name);
-                    if (route == null) {
-                        logE("Failed to add route");
-                        mustUpdate();
-                        return;
-                    }
-                    var routeWrote = route.handleRouteV2(
-                        routeData,
-                        directions,
-                        _breadcrumbContext.cachedValues
-                    );
-                    logT("Parsing route data 2 complete, wrote to storage: " + routeWrote);
-                    if (!routeWrote) {
-                        _breadcrumbContext.clearRoute(route.storageIndex);
-                    }
-                    return;
-                }
-
-                logE(
-                    "Failed to parse route2 data, bad length: " +
-                        rawData.size() +
-                        " remainder: " +
-                        (rawData.size() % 3)
+                var routeWrote = route.handleRouteV2(
+                    routeData,
+                    directions,
+                    _breadcrumbContextLocal.cachedValues
                 );
-                mustUpdate();
-                return;
-            } else if (type == PROTOCOL_REQUEST_LOCATION_LOAD) {
-                // logT("parsing req location: " + rawData);
-                if (rawData.size() < 2) {
-                    logE("Failed to parse request load tile, bad length: " + rawData.size());
-                    return;
-                }
-
-                var lat = rawData[0] as Float;
-                var long = rawData[1] as Float;
-                _breadcrumbContext.settings.setFixedPosition(lat, long);
-
-                if (rawData.size() >= 3) {
-                    // also sets the scale, since user has providedd how many meters they want to see
-                    // note this ignores the 'restrict to tile layers' functionality
-                    var scale = _breadcrumbContext.cachedValues.calcScaleForScreenMeters(
-                        rawData[2] as Float
-                    );
-                    _breadcrumbContext.cachedValues.setScale(scale);
+                logT("Parsing route data 2 complete, wrote to storage: " + routeWrote);
+                if (!routeWrote) {
+                    _breadcrumbContextLocal.clearRoute(route.storageIndex);
                 }
                 return;
-            } else if (type == PROTOCOL_RETURN_TO_USER) {
-                logT("got return to user req: " + rawData);
-                _breadcrumbContext.cachedValues.returnToUser();
-                return;
-            } else if (type == PROTOCOL_REQUEST_SETTINGS) {
-                logT("got send settings req: " + rawData);
-                var settings = _breadcrumbContext.settings.asDict();
-                // logT("sending settings"+ settings);
-                Communications.transmit(
-                    [PROTOCOL_SEND_SETTINGS, settings],
-                    {},
-                    new SettingsSent()
-                );
-                return;
-            } else if (type == PROTOCOL_SAVE_SETTINGS) {
-                logT("got save settings req: " + rawData);
-                if (rawData.size() < 1) {
-                    logE("Failed to parse save settings request, bad length: " + rawData.size());
-                    return;
-                }
-                _breadcrumbContext.settings.saveSettings(
-                    rawData[0] as Dictionary<String, PropertyValueType>
-                );
-                _breadcrumbContext.settings.onSettingsChanged(); // reload anything that has changed
-                return;
-            } 
+            }
 
-            logE("Unknown message type: " + type);
+            logE(
+                "Failed to parse route2 data, bad length: " +
+                    rawData.size() +
+                    " remainder: " +
+                    (rawData.size() % 3)
+            );
             mustUpdate();
-        } catch (e) {
-            logE("failed onPhone: " + e.getErrorMessage());
-            mustUpdate();
-            ++$.globalExceptionCounter;
+            return;
+        } else if (type == PROTOCOL_REQUEST_LOCATION_LOAD) {
+            // logT("parsing req location: " + rawData);
+            if (rawData.size() < 2) {
+                logE("Failed to parse request load tile, bad length: " + rawData.size());
+                return;
+            }
+
+            var lat = rawData[0] as Float;
+            var long = rawData[1] as Float;
+            _breadcrumbContextLocal.settings.setFixedPosition(lat, long);
+
+            if (rawData.size() >= 3) {
+                // also sets the scale, since user has providedd how many meters they want to see
+                // note this ignores the 'restrict to tile layers' functionality
+                var scale = _breadcrumbContextLocal.cachedValues.calcScaleForScreenMeters(
+                    rawData[2] as Float
+                );
+                _breadcrumbContextLocal.cachedValues.setScale(scale);
+            }
+            return;
+        } else if (type == PROTOCOL_RETURN_TO_USER) {
+            logT("got return to user req: " + rawData);
+            _breadcrumbContextLocal.cachedValues.returnToUser();
+            return;
+        } else if (type == PROTOCOL_REQUEST_SETTINGS) {
+            logT("got send settings req: " + rawData);
+            var settings = _breadcrumbContextLocal.settings.asDict();
+            // logT("sending settings"+ settings);
+            Communications.transmit([PROTOCOL_SEND_SETTINGS, settings], {}, new SettingsSent());
+            return;
+        } else if (type == PROTOCOL_SAVE_SETTINGS) {
+            logT("got save settings req: " + rawData);
+            if (rawData.size() < 1) {
+                logE("Failed to parse save settings request, bad length: " + rawData.size());
+                return;
+            }
+            _breadcrumbContextLocal.settings.saveSettings(
+                rawData[0] as Dictionary<String, PropertyValueType>
+            );
+            _breadcrumbContextLocal.settings.onSettingsChanged(); // reload anything that has changed
+            return;
         }
+
+        logE("Unknown message type: " + type);
+        mustUpdate();
+    } catch (e) {
+        logE("failed onPhone: " + e.getErrorMessage());
+        mustUpdate();
+        ++$.globalExceptionCounter;
     }
 }
 
-function getApp() as BreadcrumbDataFieldApp {
-    return Application.getApp() as BreadcrumbDataFieldApp;
+(:background)
+class BreadcrumbServiceDelegate extends System.ServiceDelegate {
+    function initialize() {
+        ServiceDelegate.initialize();
+    }
+
+    function onPhoneAppMessage(msg as Communications.PhoneAppMessage) as Void {
+        logB("Background Service: Received phone message.");
+        var data = msg.data as Array?;
+        if (data == null || !(data instanceof Array) || data.size() < 1) {
+            logB("Bad message: " + data);
+            Background.exit(null);
+            return;
+        }
+        Background.exit(data as Application.PropertyValueType);
+    }
+
+    function getApp() as BreadcrumbDataFieldApp {
+        return Application.getApp() as BreadcrumbDataFieldApp;
+    }
 }

@@ -302,7 +302,12 @@ class Settings {
     }
 
     function maxTrackPointsChanged() as Void {
-        getApp()._breadcrumbContext.track.coordinates.restrictPointsToMaxMemory(maxTrackPoints);
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        _breadcrumbContextLocal.track.coordinates.restrictPointsToMaxMemory(maxTrackPoints);
     }
 
     (:settingsView,:menu2)
@@ -535,7 +540,10 @@ class Settings {
 
         var oldVal = routes[routeIndex]["reversed"];
         if (oldVal != value) {
-            getApp()._breadcrumbContext.reverseRouteId(routeId);
+            var _breadcrumbContextLocal = $._breadcrumbContext;
+            if (_breadcrumbContextLocal != null) {
+                _breadcrumbContextLocal.reverseRouteId(routeId);
+            }
         }
         routes[routeIndex]["reversed"] = value;
         saveRoutes();
@@ -750,11 +758,19 @@ class Settings {
     }
 
     function updateViewSettings() as Void {
-        getApp()._view.onSettingsChanged();
+        var _viewLocal = $._view;
+        if (_viewLocal != null) {
+            _viewLocal.onSettingsChanged();
+        }
     }
 
     function updateRouteSettings() as Void {
-        var contextRoutes = getApp()._breadcrumbContext.routes;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        var contextRoutes = _breadcrumbContextLocal.routes;
         for (var i = 0; i < contextRoutes.size(); ++i) {
             var route = contextRoutes[i];
             // we do not care if its curently disabled, nuke the data anyway
@@ -767,19 +783,39 @@ class Settings {
     }
 
     function updateCachedValues() as Void {
-        getApp()._breadcrumbContext.cachedValues.recalculateAll();
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        _breadcrumbContextLocal.cachedValues.recalculateAll();
     }
 
     function clearContextRoutes() as Void {
-        getApp()._breadcrumbContext.clearRoutes();
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        _breadcrumbContextLocal.clearRoutes();
     }
 
     function clearRouteFromContext(routeId as Number) as Void {
-        getApp()._breadcrumbContext.clearRouteId(routeId);
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        _breadcrumbContextLocal.clearRouteId(routeId);
     }
 
     function purgeRoutesFromContext() as Void {
-        getApp()._breadcrumbContext.purgeRoutes();
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return;
+        }
+        _breadcrumbContextLocal.purgeRoutes();
     }
 
     // some times these parserswere throwing when it was an empty strings seem to result in, or wrong type
@@ -819,10 +855,11 @@ class Settings {
                 } else {
                     // this could be a problem for older apis if the colour string is set with leading FF (or any high bit is set)
                     if (colourString.length() > 6) {
-                        colourString = colourString.substring(
-                            colourString.length() - 6,
-                            colourString.length()
-                        ) as String;
+                        colourString =
+                            colourString.substring(
+                                colourString.length() - 6,
+                                colourString.length()
+                            ) as String;
                     }
                     long = colourString.toNumberWithBase(16);
                 }
@@ -1307,7 +1344,10 @@ class Settings {
         var returnToUser = Application.Properties.getValue("returnToUser") as Boolean;
         if (returnToUser) {
             Application.Properties.setValue("returnToUser", false);
-            getApp()._breadcrumbContext.cachedValues.returnToUser();
+            var _breadcrumbContextLocal = $._breadcrumbContext;
+            if (_breadcrumbContextLocal != null) {
+                _breadcrumbContextLocal.cachedValues.returnToUser();
+            }
         }
 
         logT("loadSettings: Loading all settings");
@@ -1357,7 +1397,10 @@ class Settings {
             if (routeIndex != null) {
                 // we have the same route
                 if (oldRouteEntry["reversed"] != routes[routeIndex]["reversed"]) {
-                    getApp()._breadcrumbContext.reverseRouteId(oldRouteId);
+                    var _breadcrumbContextLocal = $._breadcrumbContext;
+                    if (_breadcrumbContextLocal != null) {
+                        _breadcrumbContextLocal.reverseRouteId(oldRouteId);
+                    }
                 }
 
                 continue;

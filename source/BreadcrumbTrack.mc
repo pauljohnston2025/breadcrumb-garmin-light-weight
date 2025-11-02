@@ -331,12 +331,15 @@ class BreadcrumbTrack {
         coordinates.add(newPoint);
         updateBoundingBox(newPoint);
         // todo have a local ref to settings
-        if (coordinates.restrictPoints(getApp()._breadcrumbContext.settings.maxTrackPoints)) {
-            // a resize occurred, calculate important data again
-            updatePointDataFromAllPoints();
-            // opt to remove more points then less, to ensure we get the bad point, or 1 of the good points instead
-            possibleBadPointsAdded = Math.ceil(possibleBadPointsAdded / 2.0f).toNumber();
-            return true;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal != null) {
+            if (coordinates.restrictPoints(_breadcrumbContextLocal.settings.maxTrackPoints)) {
+                // a resize occurred, calculate important data again
+                updatePointDataFromAllPoints();
+                // opt to remove more points then less, to ensure we get the bad point, or 1 of the good points instead
+                possibleBadPointsAdded = Math.ceil(possibleBadPointsAdded / 2.0f).toNumber();
+                return true;
+            }
         }
 
         return false;
@@ -538,16 +541,22 @@ class BreadcrumbTrack {
     function weAreStillCloseToTheLastDirectionPoint() as Boolean {
         // note: this logic is the same as in checkDirections but is only needed for when we go backwards on the path
         // so we can skip a heap of logic, checkDirections is more optimised for when it needs to check a heap more things
-        var checkPoint = getApp()._breadcrumbContext.track.lastPoint();
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return false;
+        }
+
+        var checkPoint = _breadcrumbContextLocal.track.lastPoint();
         if (checkPoint == null) {
             return false;
         }
 
-        var cachedValues = getApp()._breadcrumbContext.cachedValues;
+        var cachedValues = _breadcrumbContextLocal.cachedValues;
         var directionsRaw = directions._internalArrayBuffer; // raw dog access means we can do the calcs much faster
         var coordinatesRaw = coordinates._internalArrayBuffer; // raw dog access means we can do the calcs much faster
 
-        var settings = getApp()._breadcrumbContext.settings;
+        var settings = _breadcrumbContextLocal.settings;
         var turnAlertTimeS = settings.turnAlertTimeS;
         var minTurnAlertDistanceM = settings.minTurnAlertDistanceM;
 
@@ -811,7 +820,13 @@ class BreadcrumbTrack {
             nextY
         );
 
-        var currentScale = getApp()._breadcrumbContext.cachedValues.currentScale;
+        var _breadcrumbContextLocal = $._breadcrumbContext;
+        if (_breadcrumbContextLocal == null) {
+            breadcrumbContextWasNull();
+            return new OffTrackInfo(true, checkPoint, false);
+        }
+
+        var currentScale = _breadcrumbContextLocal.cachedValues.currentScale;
         var scaleMultiplier = currentScale;
         if (scaleMultiplier == 0f) {
             scaleMultiplier = 1f;
@@ -929,8 +944,13 @@ class BreadcrumbTrack {
                                 nextSegmentNextY
                             );
 
-                            var currentScale =
-                                getApp()._breadcrumbContext.cachedValues.currentScale;
+                            var _breadcrumbContextLocal = $._breadcrumbContext;
+                            if (_breadcrumbContextLocal == null) {
+                                breadcrumbContextWasNull();
+                                return new OffTrackInfo(true, checkPoint, false);
+                            }
+
+                            var currentScale = _breadcrumbContextLocal.cachedValues.currentScale;
                             var scaleMultiplier = currentScale;
                             if (scaleMultiplier == 0f) {
                                 scaleMultiplier = 1f;
@@ -952,7 +972,7 @@ class BreadcrumbTrack {
                             // As the user travels up the page on segment (1) they get closer to the 'x' point, which could jump forward to the next segment (2). If we check again instantly, it could jump forwards to the next segment (3), and then again jump to segment (4)
                             // But the user is still traveling up the page, so when they actually reach segment (2) we then think they are going backwards in the wrong direction because we incorrectly jumped forwards to segments (2,3,4).
                             // To prevent this we should choose larger values for check interval, and have a really small SKIP_FORWARD_TOLERANCE_M.
-                            // setting SKIP_FORWARD_TOLERANCE_M = 0 results in essentially the same old code 'distToNextSegmentAndPoint[0] <= distToCurrentSegmentAndPoint[0]' note: its '<=' and not just '<'. 
+                            // setting SKIP_FORWARD_TOLERANCE_M = 0 results in essentially the same old code 'distToNextSegmentAndPoint[0] <= distToCurrentSegmentAndPoint[0]' note: its '<=' and not just '<'.
                             // Checking just '<' can result in wrong direction alerts too because it will never switch to the second segment if they are colinear, and then look like we are going backwards.
                             var compareDistance =
                                 distToNextSegmentAndPoint[0] - distToCurrentSegmentAndPoint[0];

@@ -78,6 +78,15 @@ function logT(message as String) as Void {
 (:release,:inline)
 function logT(message as String) as Void {}
 
+(:debug,:inline,:background)
+function logB(message as String) as Void {
+    System.println("" + Time.now().value() + " " + "B" + " " + message);
+}
+
+(:release,:inline,:background)
+function logB(message as String) as Void {
+}
+
 function padStart(str as String?, targetLength as Number, padChar as Char) as String {
     var currentStr = str == null ? "" : str;
     var currentLength = currentStr.length();
@@ -170,4 +179,15 @@ function safeSetStorage(
 
 function mustUpdate() as Void {
     WatchUi.showToast(Rez.Strings.mustUpdate, {});
+}
+
+
+(:release)
+function breadcrumbContextWasNull() as Void {
+}
+    
+(:debug)
+function breadcrumbContextWasNull() as Void {
+    logE("breadcrumb context was null");
+    throw new Exception();
 }
