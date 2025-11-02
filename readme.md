@@ -11,7 +11,7 @@ Companion app can be found at [Companion App](https://github.com/pauljohnston202
 
 There are several different apps/datafields on the connect-iq store all with similar breadcrumb functionality 
 
-Each one has its own repository mirror
+Each one has its own repository mirror (git push --mirror https://github.com/pauljohnston2025/XXX.git)
 I could use monkey barrels to share common code, but barrels have a memory overhead, and I only expect 1 of these apps/datafields to be installed at a time.
 I also expect the merge conflicts will be easier to deal with rather than a whole heap of (:excludeAnnotations)
 Doing it this way also means each repo has 0 dependents and s fully stand-alone. 

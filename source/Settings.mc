@@ -307,7 +307,7 @@ class TileUpdateHandler {
             {},
             getApp()._commStatus
         );
-        WatchUi.showToast("Tile Server Reponse Failed", {});
+        WatchUi.showToast("Tile Server Response Failed", {});
     }
 }
 
