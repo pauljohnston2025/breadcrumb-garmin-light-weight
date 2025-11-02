@@ -5,7 +5,7 @@
         Use "Monkey C: Edit Application" from the Visual Studio Code command palette
         to update the application attributes.
     -->
-    <iq:application id="65f96e86-28e7-4c92-9c5e-1bf7954bde41" type="datafield" name="@Strings.AppName" entry="BreadcrumbDataFieldApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="5.0.0">
+    <iq:application id="65f96e86-28e7-4c92-9c5e-1bf7954bde41" type="datafield" name="@Strings.AppName" entry="BreadcrumbDataFieldApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="2.4.0">
         <!--
             Use the following from the Visual Studio Code comand palette to edit
             the build targets:
@@ -15,19 +15,35 @@
         -->
         <iq:products>
             <iq:product id="approachs50"/>
+            <iq:product id="approachs62"/>
             <iq:product id="approachs7042mm"/>
             <iq:product id="approachs7047mm"/>
             <iq:product id="d2airx10"/>
+            <iq:product id="d2charlie"/>
+            <iq:product id="d2delta"/>
+            <iq:product id="d2deltapx"/>
+            <iq:product id="d2deltas"/>
             <iq:product id="d2mach1"/>
             <iq:product id="descentg2"/>
+            <iq:product id="descentmk1"/>
+            <iq:product id="descentmk2"/>
+            <iq:product id="descentmk2s"/>
             <iq:product id="descentmk343mm"/>
             <iq:product id="descentmk351mm"/>
+            <iq:product id="edge1030"/>
+            <iq:product id="edge1030bontrager"/>
+            <iq:product id="edge1030plus"/>
             <iq:product id="edge1040"/>
             <iq:product id="edge1050"/>
+            <iq:product id="edge520plus"/>
+            <iq:product id="edge530"/>
             <iq:product id="edge540"/>
             <iq:product id="edge550"/>
+            <iq:product id="edge820"/>
+            <iq:product id="edge830"/>
             <iq:product id="edge840"/>
             <iq:product id="edge850"/>
+            <iq:product id="edge_1000"/>
             <iq:product id="edgeexplore2"/>
             <iq:product id="edgemtb"/>
             <iq:product id="enduro3"/>
@@ -35,6 +51,13 @@
             <iq:product id="epix2pro42mm"/>
             <iq:product id="epix2pro47mm"/>
             <iq:product id="epix2pro51mm"/>
+            <iq:product id="fenix5plus"/>
+            <iq:product id="fenix5splus"/>
+            <iq:product id="fenix5x"/>
+            <iq:product id="fenix5xplus"/>
+            <iq:product id="fenix6pro"/>
+            <iq:product id="fenix6spro"/>
+            <iq:product id="fenix6xpro"/>
             <iq:product id="fenix7"/>
             <iq:product id="fenix7pro"/>
             <iq:product id="fenix7pronowifi"/>
@@ -51,6 +74,7 @@
             <iq:product id="fenixe"/>
             <iq:product id="fr165"/>
             <iq:product id="fr165m"/>
+            <iq:product id="fr245m"/>
             <iq:product id="fr255"/>
             <iq:product id="fr255m"/>
             <iq:product id="fr255s"/>
@@ -59,13 +83,31 @@
             <iq:product id="fr265s"/>
             <iq:product id="fr57042mm"/>
             <iq:product id="fr57047mm"/>
+            <iq:product id="fr745"/>
+            <iq:product id="fr945"/>
+            <iq:product id="fr945lte"/>
             <iq:product id="fr955"/>
             <iq:product id="fr965"/>
             <iq:product id="fr970"/>
+            <iq:product id="gpsmap66"/>
+            <iq:product id="gpsmap67"/>
+            <iq:product id="gpsmap86"/>
+            <iq:product id="gpsmaph1"/>
             <iq:product id="instinct3amoled45mm"/>
             <iq:product id="instinct3amoled50mm"/>
+            <iq:product id="instinctcrossoveramoled"/>
             <iq:product id="marq2"/>
             <iq:product id="marq2aviator"/>
+            <iq:product id="marqadventurer"/>
+            <iq:product id="marqathlete"/>
+            <iq:product id="marqaviator"/>
+            <iq:product id="marqcaptain"/>
+            <iq:product id="marqcommander"/>
+            <iq:product id="marqexpedition"/>
+            <iq:product id="marqgolfer"/>
+            <iq:product id="montana7xx"/>
+            <iq:product id="oregon7xx"/>
+            <iq:product id="rino7xx"/>
             <iq:product id="system8preview"/>
             <iq:product id="venu2"/>
             <iq:product id="venu2plus"/>
