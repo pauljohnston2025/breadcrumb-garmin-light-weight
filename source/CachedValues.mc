@@ -4,79 +4,6 @@ import Toybox.Graphics;
 import Toybox.System;
 import Toybox.Activity;
 
-const MAX_TILES_AT_A_TIME = 50;
-
-// An iterator that walks along a line segment, yielding one point at a time.
-(:storage)
-class SegmentPointIterator {
-    private var _x1 as Float;
-    private var _y1 as Float;
-    private var _x2 as Float;
-    private var _y2 as Float;
-    private var _stepDistance as Float;
-
-    // State variables
-    private var _totalDistance as Float;
-    private var _dirX as Float;
-    private var _dirY as Float;
-    private var _distanceTraveled as Float;
-    private var _isFinished as Boolean;
-
-    // Constructor
-    function initialize(
-        x1 as Float,
-        y1 as Float,
-        x2 as Float,
-        y2 as Float,
-        stepDistanceM as Float
-    ) {
-        _x1 = x1;
-        _y1 = y1;
-        _x2 = x2;
-        _y2 = y2;
-        _stepDistance = stepDistanceM;
-
-        var dx = _x2 - _x1;
-        var dy = _y2 - _y1;
-        _totalDistance = Math.sqrt(dx * dx + dy * dy).toFloat();
-
-        if (_totalDistance > 0) {
-            _dirX = dx / _totalDistance;
-            _dirY = dy / _totalDistance;
-        } else {
-            _dirX = 0f;
-            _dirY = 0f;
-        }
-
-        _distanceTraveled = 0f;
-        _isFinished = false;
-    }
-
-    // Returns the next point [x, y] on the segment, or null if finished.
-    function next() as [Float, Float]? {
-        if (_isFinished) {
-            return null;
-        }
-
-        var point;
-        if (_distanceTraveled >= _totalDistance) {
-            // We have reached or passed the end. Return the exact end point.
-            point = [_x2, _y2];
-            _isFinished = true;
-        } else {
-            // Calculate the current point based on distance traveled.
-            var currentX = _x1 + _distanceTraveled * _dirX;
-            var currentY = _y1 + _distanceTraveled * _dirY;
-            point = [currentX, currentY];
-
-            // Advance our state for the next call.
-            _distanceTraveled += _stepDistance;
-        }
-
-        return point;
-    }
-}
-
 // https://developer.garmin.com/connect-iq/reference-guides/monkey-c-reference/
 // Monkey C is a message-passed language. When a function is called, the virtual machine searches a hierarchy at runtime in the following order to find the function:
 // Instance members of the class
@@ -307,7 +234,6 @@ class CachedValues {
             currentlyZoomingAroundUser = weShouldZoomAroundUser;
             updateUserRotationElements(getCenterUserOffsetY());
             var ret = updateScaleCenter();
-            getApp()._view.resetRenderTime();
             return ret;
         }
 
@@ -499,7 +425,6 @@ class CachedValues {
         }
         updateFixedPositionFromSettings();
         updateScaleCenter();
-        getApp()._view.resetRenderTime();
     }
 
     function getNewLatLong(
@@ -700,11 +625,9 @@ class CachedValues {
             // they are not actually in a user scale in this case though, so makes sense to show that we are tracking the users desired zoom instead of ours
             scaleCanInc = true;
             scaleCanDec = true;
-            getApp()._view.resetRenderTime();
             return;
         }
 
         updateScaleCenter();
-        getApp()._view.resetRenderTime();
     }
 }

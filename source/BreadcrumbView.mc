@@ -213,9 +213,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
     var lastOffTrackAlertNotified as Number = 0;
     var lastOffTrackAlertChecked as Number = 0;
     var _computeCounter as Number = 0;
-    var _lastFullRenderTime as Number = 0;
-    var _lastFullRenderScale as Float = 0f;
-    var FULL_RENDER_INTERVAL_S as Number = 5;
     var imageAlert as Alert? = null;
     var imageAlertShowAt as Number = 0;
 
@@ -477,12 +474,6 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         offTrackInfo = new OffTrackInfo(true, null, false);
         imageAlert = null;
         imageAlertShowAt = 0;
-        // render mode could have changed
-        resetRenderTime();
-    }
-
-    function resetRenderTime() as Void {
-        _lastFullRenderTime = 0; // map panning needs to redraw map immediately
     }
 
     // did some testing on real device
