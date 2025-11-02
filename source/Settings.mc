@@ -69,7 +69,7 @@ function settingsAsDict() as Dictionary<String, PropertyValueType> {
             "centerUserOffsetY" => Application.Properties.getValue("centerUserOffsetY"),
             "mapMoveScreenSize" => Application.Properties.getValue("mapMoveScreenSize"),
             "recalculateIntervalS" => Application.Properties.getValue("recalculateIntervalS"),
-            "mode" => Application.Properties.getValue(""),
+            "mode" => Application.Properties.getValue("mode"),
             "drawLineToClosestPoint" => Application.Properties.getValue("drawLineToClosestPoint"),
             "showPoints" => Application.Properties.getValue("showPoints"),
             "drawLineToClosestTrack" => Application.Properties.getValue("drawLineToClosestTrack"),

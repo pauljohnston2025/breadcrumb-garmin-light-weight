@@ -49,9 +49,7 @@
     <string id="centerUserOffsetYTitle">Center User Offset Y (ratio)</string>
     <string id="mapMoveScreenSizeTitle">Map Move Screen Size (ratio)</string>
     <string id="renderModeTitle">Render Mode</string>
-    <string id="renderModeBufferedRotating">Buffered Rotations - performance</string>
     <string id="renderModeUnbufferedRotating">Unbuffered Rotations - low memory</string>
-    <string id="renderModeBufferedNoRotating">Buffered Without Rotations - performance</string>
     <string id="renderModeNoBufferedNoRotating">No Buffer No Rotations - low memory</string>
     <string id="uiModeTitle">UI Mode</string>
     <string id="uiModeShowAll">Show On Top</string>
