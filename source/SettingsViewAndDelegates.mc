@@ -10,7 +10,7 @@ typedef Renderable as interface {
     function rerender() as Void;
 };
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsStringPicker extends MyTextPickerDelegate {
     private var callback as (Method(value as String) as Void);
     public var parent as Renderable;
@@ -40,7 +40,7 @@ class SettingsStringPicker extends MyTextPickerDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 function startPicker(
     picker as SettingsFloatPicker or SettingsColourPicker or SettingsNumberPicker
 ) as Void {
@@ -51,7 +51,7 @@ function startPicker(
     );
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 function safeSetSubLabel(
     menu as WatchUi.Menu2,
     id as Object,
@@ -70,7 +70,7 @@ function safeSetSubLabel(
     item.setSubLabel(value);
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 function safeSetLabel(menu as WatchUi.Menu2, id as Object, value as String or ResourceId) as Void {
     var itemIndex = menu.findItemById(id);
     if (itemIndex <= -1) {
@@ -85,7 +85,7 @@ function safeSetLabel(menu as WatchUi.Menu2, id as Object, value as String or Re
     item.setLabel(value);
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 function safeSetToggle(menu as WatchUi.Menu2, id as Object, value as Boolean) as Void {
     var itemIndex = menu.findItemById(id);
     if (itemIndex <= -1) {
@@ -105,7 +105,7 @@ function safeSetToggle(menu as WatchUi.Menu2, id as Object, value as Boolean) as
 // https://forums.garmin.com/developer/connect-iq/f/discussion/379406/vertically-center-icon-in-iconmenuitem-using-menu2#pifragment-1298=4
 const iconMenuWidthPercent = 0.6;
 
-(:settingsView)
+(:settingsView,:menu2)
 class ColourIcon extends WatchUi.Drawable {
     var colour as Number;
 
@@ -129,7 +129,7 @@ class ColourIcon extends WatchUi.Drawable {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 function safeSetIcon(menu as WatchUi.Menu2, id as Object, value as WatchUi.Drawable) as Void {
     var itemIndex = menu.findItemById(id);
     if (itemIndex <= -1) {
@@ -149,7 +149,7 @@ function safeSetIcon(menu as WatchUi.Menu2, id as Object, value as WatchUi.Drawa
 }
 
 // https://forums.garmin.com/developer/connect-iq/f/discussion/304179/programmatically-set-the-state-of-togglemenuitem
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsMain extends Rez.Menus.SettingsMain {
     function initialize() {
         Rez.Menus.SettingsMain.initialize();
@@ -222,7 +222,7 @@ class SettingsMain extends Rez.Menus.SettingsMain {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsZoomAtPace extends Rez.Menus.SettingsZoomAtPace {
     function initialize() {
         Rez.Menus.SettingsZoomAtPace.initialize();
@@ -263,7 +263,7 @@ class SettingsZoomAtPace extends Rez.Menus.SettingsZoomAtPace {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsAlerts extends Rez.Menus.SettingsAlerts {
     function initialize() {
         Rez.Menus.SettingsAlerts.initialize();
@@ -281,7 +281,7 @@ class SettingsAlerts extends Rez.Menus.SettingsAlerts {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 function alertsCommon(menu as WatchUi.Menu2, settings as Settings) as Void {
     safeSetSubLabel(
         menu,
@@ -318,7 +318,7 @@ function alertsCommon(menu as WatchUi.Menu2, settings as Settings) as Void {
     safeSetSubLabel(menu, :settingsAlertsAlertType, alertTypeString);
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsAlertsDisabled extends Rez.Menus.SettingsAlertsDisabled {
     function initialize() {
         Rez.Menus.SettingsAlertsDisabled.initialize();
@@ -331,7 +331,7 @@ class SettingsAlertsDisabled extends Rez.Menus.SettingsAlertsDisabled {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsColours extends Rez.Menus.SettingsColours {
     function initialize() {
         Rez.Menus.SettingsColours.initialize();
@@ -358,7 +358,7 @@ class SettingsColours extends Rez.Menus.SettingsColours {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsDebug extends Rez.Menus.SettingsDebug {
     function initialize() {
         Rez.Menus.SettingsDebug.initialize();
@@ -384,7 +384,7 @@ class SettingsDebug extends Rez.Menus.SettingsDebug {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsRoute extends Rez.Menus.SettingsRoute {
     var settings as Settings;
     var routeId as Number;
@@ -436,7 +436,7 @@ class SettingsRoute extends Rez.Menus.SettingsRoute {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsRoutes extends WatchUi.Menu2 {
     var settings as Settings;
     function initialize(settings as Settings) {
@@ -529,7 +529,7 @@ class SettingsRoutes extends WatchUi.Menu2 {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
     var view as SettingsMain;
     function initialize(view as SettingsMain) {
@@ -638,7 +638,7 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class ResetSettingsDelegate extends WatchUi.ConfirmationDelegate {
     function initialize() {
         WatchUi.ConfirmationDelegate.initialize();
@@ -652,7 +652,7 @@ class ResetSettingsDelegate extends WatchUi.ConfirmationDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class ReturnToUserDelegate extends WatchUi.ConfirmationDelegate {
     function initialize() {
         WatchUi.ConfirmationDelegate.initialize();
@@ -666,7 +666,7 @@ class ReturnToUserDelegate extends WatchUi.ConfirmationDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class ClearStorageDelegate extends WatchUi.ConfirmationDelegate {
     function initialize() {
         WatchUi.ConfirmationDelegate.initialize();
@@ -681,7 +681,7 @@ class ClearStorageDelegate extends WatchUi.ConfirmationDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class DeleteRouteDelegate extends WatchUi.ConfirmationDelegate {
     var routeId as Number;
     var settings as Settings;
@@ -714,7 +714,7 @@ class DeleteRouteDelegate extends WatchUi.ConfirmationDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsModeDelegate extends WatchUi.Menu2InputDelegate {
     var parent as SettingsMain;
     function initialize(parent as SettingsMain) {
@@ -739,7 +739,7 @@ class SettingsModeDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsUiModeDelegate extends WatchUi.Menu2InputDelegate {
     var parent as SettingsMain;
     function initialize(parent as SettingsMain) {
@@ -762,7 +762,7 @@ class SettingsUiModeDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsElevationModeDelegate extends WatchUi.Menu2InputDelegate {
     var parent as SettingsMain;
     function initialize(parent as SettingsMain) {
@@ -783,7 +783,7 @@ class SettingsElevationModeDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsAlertTypeDelegate extends WatchUi.Menu2InputDelegate {
     var parent as SettingsAlerts or SettingsAlertsDisabled;
     function initialize(parent as SettingsAlerts or SettingsAlertsDisabled) {
@@ -806,7 +806,7 @@ class SettingsAlertTypeDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsRenderModeDelegate extends WatchUi.Menu2InputDelegate {
     var parent as SettingsMain;
     function initialize(parent as SettingsMain) {
@@ -827,7 +827,7 @@ class SettingsRenderModeDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsZoomAtPaceDelegate extends WatchUi.Menu2InputDelegate {
     var view as SettingsZoomAtPace;
     function initialize(view as SettingsZoomAtPace) {
@@ -863,7 +863,7 @@ class SettingsZoomAtPaceDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsRoutesDelegate extends WatchUi.Menu2InputDelegate {
     var view as SettingsRoutes;
     var settings as Settings;
@@ -920,7 +920,7 @@ class SettingsRoutesDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsRouteDelegate extends WatchUi.Menu2InputDelegate {
     var view as SettingsRoute;
     var settings as Settings;
@@ -972,7 +972,7 @@ class SettingsRouteDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsZoomAtPaceModeDelegate extends WatchUi.Menu2InputDelegate {
     var parent as SettingsZoomAtPace;
     function initialize(parent as SettingsZoomAtPace) {
@@ -999,7 +999,7 @@ class SettingsZoomAtPaceModeDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 function checkAlertViewDisplay(
     oldView as SettingsAlerts or SettingsAlertsDisabled,
     settings as Settings
@@ -1024,7 +1024,7 @@ function checkAlertViewDisplay(
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 function onSelectAlertCommon(
     itemId as Object?,
     settings as Settings,
@@ -1083,7 +1083,7 @@ function onSelectAlertCommon(
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
     var view as SettingsAlerts;
     function initialize(view as SettingsAlerts) {
@@ -1109,7 +1109,7 @@ class SettingsAlertsDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsAlertsDisabledDelegate extends WatchUi.Menu2InputDelegate {
     var view as SettingsAlertsDisabled;
     function initialize(view as SettingsAlertsDisabled) {
@@ -1123,14 +1123,14 @@ class SettingsAlertsDisabledDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class DummyView extends WatchUi.View {
     function initialize() {
         View.initialize();
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class ClearRoutesDelegate extends WatchUi.ConfirmationDelegate {
     var settings as Settings;
     function initialize() {
@@ -1160,7 +1160,7 @@ class ClearRoutesDelegate extends WatchUi.ConfirmationDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsColoursDelegate extends WatchUi.Menu2InputDelegate {
     var view as SettingsColours;
     function initialize(view as SettingsColours) {
@@ -1222,7 +1222,7 @@ class SettingsColoursDelegate extends WatchUi.Menu2InputDelegate {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsDebugDelegate extends WatchUi.Menu2InputDelegate {
     var view as SettingsDebug;
     function initialize(view as SettingsDebug) {

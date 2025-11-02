@@ -25,19 +25,6 @@ enum /* ProtocolSend */ {
     PROTOCOL_SEND_SETTINGS = 1,
 }
 
-class CommStatus extends Communications.ConnectionListener {
-    function initialize() {
-        Communications.ConnectionListener.initialize();
-    }
-    function onComplete() {
-        logT("App start message sent");
-    }
-
-    function onError() {
-        logT("App start message fail");
-    }
-}
-
 class SettingsSent extends Communications.ConnectionListener {
     function initialize() {
         Communications.ConnectionListener.initialize();
@@ -61,8 +48,6 @@ class SettingsSent extends Communications.ConnectionListener {
 class BreadcrumbDataFieldApp extends Application.AppBase {
     var _breadcrumbContext as BreadcrumbContext;
     var _view as BreadcrumbDataFieldView;
-
-    var _commStatus as CommStatus = new CommStatus();
 
     function initialize() {
         AppBase.initialize();
@@ -100,7 +85,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
         return [_view, new BreadcrumbDataFieldDelegate(_breadcrumbContext)];
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function getSettingsView() as [Views] or [Views, InputDelegates] or Null {
         var settings = new $.SettingsMain();
         return [settings, new $.SettingsMainDelegate(settings)];

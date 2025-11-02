@@ -65,12 +65,12 @@ enum /*RenderMode*/ {
 class Settings {
     var mode as Number = MODE_NORMAL;
     var elevationMode as Number = ELEVATION_MODE_STACKED;
-    
+
     var trackColour as Number = Graphics.COLOR_GREEN;
     var defaultRouteColour as Number = Graphics.COLOR_BLUE;
     var elevationColour as Number = Graphics.COLOR_ORANGE;
     var userColour as Number = Graphics.COLOR_ORANGE;
-    
+
     // Renders around the users position
     var metersAroundUser as Number = 500; // keep this fairly high by default, too small and the map tiles start to go blurry
     var centerUserOffsetY as Float = 0.5f; // fraction of the screen to move the user down the page 0.5 - user appears in center, 0.75 - user appears 3/4 down the screen. Useful to see more of the route in front of the user.
@@ -80,7 +80,7 @@ class Settings {
     var uiMode as Number = UI_MODE_SHOW_ALL;
     var fixedLatitude as Float? = null;
     var fixedLongitude as Float? = null;
-    
+
     // see keys below in routes = getArraySchema(...)
     // see oddity with route name and route loading new in context.newRoute
     var routes as Array<Dictionary> = [];
@@ -148,25 +148,25 @@ class Settings {
         Application.Properties.setValue("mode", mode);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setElevationMode(value as Number) as Void {
         elevationMode = value;
         setValue("elevationMode", elevationMode);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setUiMode(_uiMode as Number) as Void {
         uiMode = _uiMode;
         setValue("uiMode", uiMode);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setAlertType(_alertType as Number) as Void {
         alertType = _alertType;
         setValue("alertType", alertType);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setRenderMode(_renderMode as Number) as Void {
         renderMode = _renderMode;
         setValue("renderMode", renderMode);
@@ -212,10 +212,7 @@ class Settings {
         // logT("round trip conversion result: " + latlong);
     }
 
-    function setFixedPositionWithoutUpdate(
-        lat as Float?,
-        long as Float?
-    ) as Void {
+    function setFixedPositionWithoutUpdate(lat as Float?, long as Float?) as Void {
         // logT("moving to: " + lat + " " + long);
         // be very careful about putting null into properties, it breaks everything
         if (lat == null || !(lat instanceof Float)) {
@@ -260,41 +257,41 @@ class Settings {
         setValue("zoomAtPaceMode", zoomAtPaceMode);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setZoomAtPaceSpeedMPS(mps as Float) as Void {
         zoomAtPaceSpeedMPS = mps;
         setValue("zoomAtPaceSpeedMPS", zoomAtPaceSpeedMPS);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setMetersAroundUser(value as Number) as Void {
         metersAroundUser = value;
         setValue("metersAroundUser", metersAroundUser);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setFixedLatitude(value as Float) as Void {
         setFixedPosition(value, fixedLongitude);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setFixedLongitude(value as Float) as Void {
         setFixedPosition(fixedLatitude, value);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setTurnAlertTimeS(value as Number) as Void {
         turnAlertTimeS = value;
         setValue("turnAlertTimeS", turnAlertTimeS);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setMinTurnAlertDistanceM(value as Number) as Void {
         minTurnAlertDistanceM = value;
         setValue("minTurnAlertDistanceM", minTurnAlertDistanceM);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setMaxTrackPoints(value as Number) as Void {
         var oldmaxTrackPoints = maxTrackPoints;
         maxTrackPoints = value;
@@ -308,34 +305,34 @@ class Settings {
         getApp()._breadcrumbContext.track.coordinates.restrictPointsToMaxMemory(maxTrackPoints);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setShowDirectionPointTextUnderIndex(value as Number) as Void {
         showDirectionPointTextUnderIndex = value;
         setValue("showDirectionPointTextUnderIndex", showDirectionPointTextUnderIndex);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setOffTrackAlertsDistanceM(value as Number) as Void {
         offTrackAlertsDistanceM = value;
         setValue("offTrackAlertsDistanceM", offTrackAlertsDistanceM);
         updateViewSettings();
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setOffTrackAlertsMaxReportIntervalS(value as Number) as Void {
         offTrackAlertsMaxReportIntervalS = value;
         setValue("offTrackAlertsMaxReportIntervalS", offTrackAlertsMaxReportIntervalS);
         updateViewSettings();
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setOffTrackCheckIntervalS(value as Number) as Void {
         offTrackCheckIntervalS = value;
         setValue("offTrackCheckIntervalS", offTrackCheckIntervalS);
         updateViewSettings();
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setRouteMax(value as Number) as Void {
         var oldRouteMax = _routeMax;
         _routeMax = value;
@@ -369,66 +366,66 @@ class Settings {
         saveRoutesNoSideEffect();
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setMapMoveScreenSize(value as Float) as Void {
         mapMoveScreenSize = value;
         setValue("mapMoveScreenSize", mapMoveScreenSize);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setCenterUserOffsetY(value as Float) as Void {
         centerUserOffsetY = value;
         setValue("centerUserOffsetY", centerUserOffsetY);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setRecalculateIntervalS(value as Number) as Void {
         recalculateIntervalS = value;
         recalculateIntervalS = recalculateIntervalS <= 0 ? 1 : recalculateIntervalS;
         setValue("recalculateIntervalS", recalculateIntervalS);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setDrawLineToClosestPoint(value as Boolean) as Void {
         drawLineToClosestPoint = value;
         setValue("drawLineToClosestPoint", drawLineToClosestPoint);
         updateViewSettings();
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setShowPoints(value as Boolean) as Void {
         showPoints = value;
         setValue("showPoints", showPoints);
     }
-    (:settingsView)
+    (:settingsView,:menu2)
     function setDrawLineToClosestTrack(value as Boolean) as Void {
         drawLineToClosestTrack = value;
         setValue("drawLineToClosestTrack", drawLineToClosestTrack);
     }
-    (:settingsView)
+    (:settingsView,:menu2)
     function setIncludeDebugPageInOnScreenUi(value as Boolean) as Void {
         includeDebugPageInOnScreenUi = value;
         setValue("includeDebugPageInOnScreenUi", includeDebugPageInOnScreenUi);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setDrawHitBoxes(value as Boolean) as Void {
         drawHitBoxes = value;
         setValue("drawHitBoxes", drawHitBoxes);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setShowDirectionPoints(value as Boolean) as Void {
         showDirectionPoints = value;
         setValue("showDirectionPoints", showDirectionPoints);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setDisplayLatLong(value as Boolean) as Void {
         displayLatLong = value;
         setValue("displayLatLong", displayLatLong);
     }
-    (:settingsView)
+    (:settingsView,:menu2)
     function setDisplayRouteNames(_displayRouteNames as Boolean) as Void {
         displayRouteNames = _displayRouteNames;
         setValue("displayRouteNames", displayRouteNames);
@@ -580,7 +577,7 @@ class Settings {
         routes = [];
         saveRoutes();
     }
-    
+
     function clearRoute(routeId as Number) as Void {
         var routeIndex = getRouteIndexById(routeId);
         if (routeIndex == null) {
@@ -616,110 +613,107 @@ class Settings {
         var toSave = routesToSave();
         // note toSave is Array<Dictionary<String, PropertyValueType>>
         // but the compiler only allows "Array<PropertyValueType>" even though the array of dicts seems to work on sim and real watch
-        safeSetStorage(
-            "routes",
-            toSave as Array<PropertyValueType>
-        );
+        safeSetStorage("routes", toSave as Array<PropertyValueType>);
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setTrackColour(value as Number) as Void {
         trackColour = value;
         setValue("trackColour", trackColour.format("%X"));
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setDefaultRouteColour(value as Number) as Void {
         defaultRouteColour = value;
         setValue("defaultRouteColour", defaultRouteColour.format("%X"));
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setUserColour(value as Number) as Void {
         userColour = value;
         setValue("userColour", userColour.format("%X"));
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setNormalModeColour(value as Number) as Void {
         normalModeColour = value;
         setValue("normalModeColour", normalModeColour.format("%X"));
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setDebugColour(value as Number) as Void {
         debugColour = value;
         setValue("debugColour", debugColour.format("%X"));
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setUiColour(value as Number) as Void {
         uiColour = value;
         setValue("uiColour", uiColour.format("%X"));
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function setElevationColour(value as Number) as Void {
         elevationColour = value;
         setValue("elevationColour", elevationColour.format("%X"));
     }
 
-    (:settingsView)
+    (:settingsView,:menu2)
     function toggleDrawLineToClosestPoint() as Void {
         drawLineToClosestPoint = !drawLineToClosestPoint;
         setValue("drawLineToClosestPoint", drawLineToClosestPoint);
     }
-    (:settingsView)
+    (:settingsView,:menu2)
     function toggleShowPoints() as Void {
         showPoints = !showPoints;
         setValue("showPoints", showPoints);
     }
-    (:settingsView)
+    (:settingsView,:menu2)
     function toggleDrawLineToClosestTrack() as Void {
         drawLineToClosestTrack = !drawLineToClosestTrack;
         setValue("drawLineToClosestTrack", drawLineToClosestTrack);
     }
-    (:settingsView)
+    (:settingsView,:menu2)
     function toggleIncludeDebugPageInOnScreenUi() as Void {
         includeDebugPageInOnScreenUi = !includeDebugPageInOnScreenUi;
         setValue("includeDebugPageInOnScreenUi", includeDebugPageInOnScreenUi);
     }
-    (:settingsView)
+    (:settingsView,:menu2)
     function toggleDrawHitBoxes() as Void {
         drawHitBoxes = !drawHitBoxes;
         setValue("drawHitBoxes", drawHitBoxes);
     }
-    (:settingsView)
+    (:settingsView,:menu2)
     function toggleShowDirectionPoints() as Void {
         showDirectionPoints = !showDirectionPoints;
         setValue("showDirectionPoints", showDirectionPoints);
     }
-    (:settingsView)
+    (:settingsView,:menu2)
     function toggleDisplayLatLong() as Void {
         displayLatLong = !displayLatLong;
         setValue("displayLatLong", displayLatLong);
     }
-    (:settingsView)
+    (:settingsView,:menu2)
     function toggleDisplayRouteNames() as Void {
         displayRouteNames = !displayRouteNames;
         setValue("displayRouteNames", displayRouteNames);
     }
-    (:settingsView)
+    (:settingsView,:menu2)
     function toggleEnableOffTrackAlerts() as Void {
         enableOffTrackAlerts = !enableOffTrackAlerts;
         setValue("enableOffTrackAlerts", enableOffTrackAlerts);
     }
-    (:settingsView)
+    (:settingsView,:menu2)
     function toggleOffTrackWrongDirection() as Void {
         offTrackWrongDirection = !offTrackWrongDirection;
         setValue("offTrackWrongDirection", offTrackWrongDirection);
     }
-    (:settingsView)
+    (:settingsView,:menu2)
     function toggleDrawCheverons() as Void {
         drawCheverons = !drawCheverons;
         setValue("drawCheverons", drawCheverons);
     }
-    (:settingsView)
+    (:settingsView,:menu2)
     function toggleRoutesEnabled() as Void {
         routesEnabled = !routesEnabled;
         setValue("routesEnabled", routesEnabled);
@@ -819,10 +813,24 @@ class Settings {
                 // anything with leading FF (when 8 characters supplied) needs to be a long, because its too big to fit in Number
                 // if a user chooses FFFFFFFF (white) it is (-1) which is fully transparent, should choose FFFFFF (no alpha) or something close like FFFFFFFE
                 // in any case we are currently ignoring alpha because we use setColor (text does not support alpha)
-                var long = colourString.toLongWithBase(16);
+                var long = null;
+                if (colourString has :toLongWithBase) {
+                    long = colourString.toLongWithBase(16);
+                } else {
+                    // this could be a problem for older apis if the colour string is set with leading FF (or any high bit is set)
+                    if (colourString.length() > 6) {
+                        colourString = colourString.substring(
+                            colourString.length() - 6,
+                            colourString.length()
+                        ) as String;
+                    }
+                    long = colourString.toNumberWithBase(16);
+                }
                 if (long == null) {
                     return defaultValue;
                 }
+                // may have been a number from previous toNumberWithBase call
+                long = long.toLong();
 
                 // calling tonumber breaks - because its out of range, but we need to set the alpha bits
                 var number = (long & 0xffffffffl).toNumber();

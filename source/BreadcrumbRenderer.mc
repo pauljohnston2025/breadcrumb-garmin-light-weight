@@ -310,21 +310,21 @@ class BreadcrumbRenderer {
         var centerPosition = _cachedValues.centerPosition; // local lookup faster
         var rotateCos = _cachedValues.rotateCos; // local lookup faster
         var rotateSin = _cachedValues.rotateSin; // local lookup faster
-        var rotateAroundScreenX = _cachedValues.rotateAroundScreenX; // local lookup faster
-        var rotateAroundScreenY = _cachedValues.rotateAroundScreenY; // local lookup faster
+        var rotateAroundScreenXOffsetFactoredIn = _cachedValues.rotateAroundScreenXOffsetFactoredIn; // local lookup faster
+        var rotateAroundScreenYOffsetFactoredIn = _cachedValues.rotateAroundScreenYOffsetFactoredIn; // local lookup faster
 
         var userPosUnrotatedX = usersLastLocation.x - centerPosition.x;
         var userPosUnrotatedY = usersLastLocation.y - centerPosition.y;
 
-        var userPosRotatedX = rotateAroundScreenX + userPosUnrotatedX;
-        var userPosRotatedY = rotateAroundScreenY - userPosUnrotatedY;
-        if (
-            settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING
-        ) {
+        var userPosRotatedX = rotateAroundScreenXOffsetFactoredIn + userPosUnrotatedX;
+        var userPosRotatedY = rotateAroundScreenYOffsetFactoredIn - userPosUnrotatedY;
+        if (settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING) {
             userPosRotatedX =
-                rotateAroundScreenX + rotateCos * userPosUnrotatedX - rotateSin * userPosUnrotatedY;
+                rotateAroundScreenXOffsetFactoredIn +
+                rotateCos * userPosUnrotatedX -
+                rotateSin * userPosUnrotatedY;
             userPosRotatedY =
-                rotateAroundScreenY -
+                rotateAroundScreenYOffsetFactoredIn -
                 (rotateSin * userPosUnrotatedX + rotateCos * userPosUnrotatedY);
         }
 
@@ -342,9 +342,7 @@ class BreadcrumbRenderer {
         var triangleCenterX = userPosRotatedX;
         var triangleCenterY = userPosRotatedY;
 
-        if (
-            settings.renderMode != RENDER_MODE_UNBUFFERED_ROTATING
-        ) {
+        if (settings.renderMode != RENDER_MODE_UNBUFFERED_ROTATING) {
             // todo: load user arrow from bitmap and draw rotated instead
             // we normally rotate the track, but we now need to rotate the user
             var triangleTopXRot =
@@ -1098,7 +1096,6 @@ class BreadcrumbRenderer {
         );
     }
 
-    
     function renderClearTrackUi(dc as Dc) as Boolean {
         switch (_clearRouteProgress) {
             case 0:
@@ -1591,9 +1588,7 @@ class BreadcrumbRenderer {
         // _enableMapProgress - 1
         // _disableMapProgress - 2
         // _clearRouteProgress - 3
-        return (
-            (_clearRouteProgress != 0 && current != 3)
-        );
+        return _clearRouteProgress != 0 && current != 3;
     }
 
     function returnToUser() as Void {

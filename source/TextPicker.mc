@@ -37,7 +37,7 @@ using Toybox.Application as App;
 using Toybox.Timer;
 import Toybox.Lang;
 
-(:settingsView)
+(:settingsView,:menu2)
 class TextPickerView extends Ui.View {
     // this is here for completeness but is likely calculated elsewhere in an app
     static const DEVICE_WIDTH = System.getDeviceSettings().screenHeight as Number;
@@ -230,7 +230,7 @@ class TextPickerView extends Ui.View {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class MyTextPickerDelegate extends Ui.BehaviorDelegate {
     var picker as TextPickerView?;
     var callback as (Method(text as String) as Boolean);

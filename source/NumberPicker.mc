@@ -5,7 +5,7 @@ import Toybox.Graphics;
 import Toybox.WatchUi;
 import Toybox.Lang;
 
-(:settingsView)
+(:settingsView,:menu2)
 class NumberPicker {
     private var currentVal as String;
     private var _charset as String;
@@ -208,7 +208,7 @@ class NumberPicker {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsFloatPicker extends NumberPicker {
     private var callback as (Method(value as Float) as Void);
     private var parent as Renderable;
@@ -230,7 +230,7 @@ class SettingsFloatPicker extends NumberPicker {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsNumberPicker extends NumberPicker {
     private var callback as (Method(value as Number) as Void);
     private var parent as Renderable;
@@ -254,7 +254,7 @@ class SettingsNumberPicker extends NumberPicker {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class SettingsColourPicker extends NumberPicker {
     private var callback as (Method(value as Number) as Void);
     private var parent as Renderable;
@@ -276,7 +276,7 @@ class SettingsColourPicker extends NumberPicker {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class RerenderIgnoredView extends WatchUi.View {
     function initialize() {
         View.initialize();
@@ -295,13 +295,13 @@ class RerenderIgnoredView extends WatchUi.View {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 function forceRefresh() as Void {
     WatchUi.requestUpdate(); // sometimes does not work, but lets call it anyway
     WatchUi.pushView(new RerenderIgnoredView(), null, WatchUi.SLIDE_IMMEDIATE);
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class NumberPickerView extends WatchUi.View {
     private var picker as NumberPicker;
 
@@ -328,7 +328,7 @@ class NumberPickerView extends WatchUi.View {
     }
 }
 
-(:settingsView)
+(:settingsView,:menu2)
 class NumberPickerDelegate extends WatchUi.BehaviorDelegate {
     private var picker as NumberPicker;
 

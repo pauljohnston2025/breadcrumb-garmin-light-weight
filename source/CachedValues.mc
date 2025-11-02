@@ -49,15 +49,9 @@ class CachedValues {
     var virtualScreenHeight as Float = System.getDeviceSettings().screenHeight.toFloat() as Float;
     var minVirtualScreenDim as Float = -1f;
     var maxVirtualScreenDim as Float = -1f;
-    var bufferedBitmapOffsetX as Float = -1f;
-    var bufferedBitmapOffsetY as Float = 0f; // only need for buffered rotation mode, with user offset values less than 0.5
-    var rotateAroundScreenX as Float = physicalScreenWidth / 2f;
-    var rotateAroundScreenY as Float = physicalScreenHeight / 2f;
-    var rotateAroundScreenXOffsetFactoredIn as Float = rotateAroundScreenX - bufferedBitmapOffsetX;
-    var rotateAroundScreenYOffsetFactoredIn as Float = rotateAroundScreenY;
+    var rotateAroundScreenXOffsetFactoredIn as Float = physicalScreenWidth / 2f;
+    var rotateAroundScreenYOffsetFactoredIn as Float = physicalScreenHeight / 2f;
     var rotateAroundMinScreenDim as Float = -1f;
-    var rotateAroundMaxScreenDim as Float = -1f;
-    var rotationMatrix as AffineTransform = new AffineTransform();
 
     function initialize(settings as Settings) {
         self._settings = settings;
@@ -66,9 +60,7 @@ class CachedValues {
         maxPhysicalScreenDim = maxF(physicalScreenWidth, physicalScreenHeight);
         minVirtualScreenDim = minF(virtualScreenWidth, virtualScreenHeight);
         maxVirtualScreenDim = maxF(virtualScreenWidth, virtualScreenHeight);
-        bufferedBitmapOffsetX = -(maxVirtualScreenDim - physicalScreenWidth) / 2f;
         rotateAroundMinScreenDim = minPhysicalScreenDim;
-        rotateAroundMaxScreenDim = maxPhysicalScreenDim;
     }
 
     function setup() as Void {
@@ -207,7 +199,6 @@ class CachedValues {
             currentSpeed = _currentSpeed;
         }
 
-        updateRotationMatrix();
 
         var _elapsedDistance = activityInfo.elapsedDistance;
         if (_elapsedDistance != null) {
@@ -283,54 +274,14 @@ class CachedValues {
 
     function updateUserRotationElements(centerUserOffsetY as Float) as Void {
         if (currentlyZoomingAroundUser) {
-            rotateAroundScreenX = virtualScreenWidth / 2f;
-            rotateAroundScreenY = physicalScreenHeight * centerUserOffsetY;
+            rotateAroundScreenXOffsetFactoredIn = virtualScreenWidth / 2f;
+            rotateAroundScreenYOffsetFactoredIn = physicalScreenHeight * centerUserOffsetY;
             rotateAroundMinScreenDim = minVirtualScreenDim;
-            rotateAroundMaxScreenDim = maxVirtualScreenDim;
         } else {
-            rotateAroundScreenX = xHalfPhysical;
-            rotateAroundScreenY = yHalfPhysical;
+            rotateAroundScreenXOffsetFactoredIn = xHalfPhysical;
+            rotateAroundScreenYOffsetFactoredIn = yHalfPhysical;
             rotateAroundMinScreenDim = minPhysicalScreenDim;
-            rotateAroundMaxScreenDim = maxPhysicalScreenDim;
         }
-
-        if (_settings.renderMode == RENDER_MODE_UNBUFFERED_ROTATING) {
-            // unbuffered mode -> draws straight to dc
-            rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX;
-            rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY;
-            bufferedBitmapOffsetX = rotateAroundScreenX;
-            bufferedBitmapOffsetY = rotateAroundScreenY;
-
-            if (currentlyZoomingAroundUser) {
-                bufferedBitmapOffsetX = -(rotateAroundMaxScreenDim - physicalScreenWidth) / 2f;
-                bufferedBitmapOffsetY = -(rotateAroundMaxScreenDim - physicalScreenHeight);
-                // dirty hacks, using bufferedBitmapOffsetX for map renderer to do the tile offsets
-                // if we use just mapBitmapOffsetX/mapBitmapOffsetY we get clipping
-                bufferedBitmapOffsetX = rotateAroundScreenX - bufferedBitmapOffsetX;
-                bufferedBitmapOffsetY = rotateAroundScreenY - bufferedBitmapOffsetY;
-
-                if (centerUserOffsetY >= 0.5) {
-                    bufferedBitmapOffsetY = rotateAroundScreenY;
-                }
-            }
-        } else {
-            // RENDER_MODE_UNBUFFERED_NO_ROTATION
-            // unbuffered mode -> draws straight to dc
-            rotateAroundScreenXOffsetFactoredIn = rotateAroundScreenX;
-            rotateAroundScreenYOffsetFactoredIn = rotateAroundScreenY;
-        }
-
-        updateRotationMatrix();
-    }
-
-    function updateRotationMatrix() as Void {
-        rotationMatrix = new AffineTransform();
-        rotationMatrix.translate(rotateAroundScreenX, rotateAroundScreenY); // move to center
-        rotationMatrix.rotate(-rotationRad); // rotate
-        rotationMatrix.translate(
-            -rotateAroundScreenXOffsetFactoredIn,
-            -rotateAroundScreenYOffsetFactoredIn
-        ); // move back to position
     }
 
     function calculateScale(maxDistanceM as Float) as Float {
@@ -551,8 +502,8 @@ class CachedValues {
         var center = getScreenCenter();
 
         // the current center can have an offset applied, we want the current middle of the screen to become our new fixed position location
-        var offsetXPx = xHalfPhysical - rotateAroundScreenX;
-        var offsetYPx = yHalfPhysical - rotateAroundScreenY;
+        var offsetXPx = xHalfPhysical - rotateAroundScreenXOffsetFactoredIn;
+        var offsetYPx = yHalfPhysical - rotateAroundScreenYOffsetFactoredIn;
 
         var unrotatedOffsetXPx = offsetXPx * rotateCos - offsetYPx * rotateSin;
         var unrotatedOffsetYPx = offsetXPx * rotateSin + offsetYPx * rotateCos;
