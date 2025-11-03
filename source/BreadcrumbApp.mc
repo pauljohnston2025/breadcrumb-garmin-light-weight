@@ -78,9 +78,15 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
     function onStart(state as Dictionary?) as Void {}
 
     (:typecheck(disableBackgroundCheck))
-    function onBackgroundData(data as Application.PersistableType) as Void {
+    function onBackgroundData(messages as Application.PersistableType) as Void {
         setupGlobals();
-        onPhone(data);
+        if (messages == null || !(messages instanceof Array)) {
+            return;
+        }
+
+        for (var i = 0; i < messages.size(); ++i) {
+            onPhone(messages[i]);
+        }
     }
 
     function getServiceDelegate() as [ServiceDelegate] {
@@ -256,19 +262,55 @@ class BreadcrumbServiceDelegate extends System.ServiceDelegate {
         if (Communications has :registerForPhoneAppMessages) {
             logB("registering for phone messages in onTemporalEvent");
             Communications.registerForPhoneAppMessages(method(:onPhoneAppMessage));
+        } else if (Communications has :setMailboxListener) {
+            // note this is from the 4.2.4 sdk samples im not sure if its needed
+            // it still does not seem to work in the sim for the edge_1000 device
+            // approachs62 is a 3.0.0 device and even it has registerForPhoneAppMessages thats meant to be in since api 1.4.0
+            // for some reason the sim edge_1000 2.4 device does not support it
+            logB("setting mailbox listener in onTemporalEvent");
+            Communications.setMailboxListener(method(:onMail));
         }
 
         Background.exit(null);
     }
 
-    function onPhoneAppMessage(msg as Communications.PhoneAppMessage) as Void {
+    public function onMail(mailIter as MailboxIterator) as Void {
+        logB("Background Service: Received mail.");
+        // note this is from the 4.2.4 sdk samples
+        var mail = mailIter.next();
+
+        var oldData = Background.getBackgroundData();
+        if (!(oldData instanceof Array)) {
+            oldData = [] as Array;
+        }
+
+        while (mail != null) {
+            if (handlePhoneMessage(mail as Array?)) {
+                Background.exit(null);
+            } else {
+                addWithLimit(oldData as Array, mail as Array);
+            }
+
+            // todo limit this while loop to only run for the first mail items
+            // the background process will get killed if we run for too long, so not a huge concern
+            mail = mailIter.next();
+        }
+
+        Communications.emptyMailbox();
+        Background.exit(oldData as Application.PropertyValueType);
+    }
+
+    private function addWithLimit(oldData as Array, data as Array) as Void {
+        // todo cap to some max number to prevent the size being too big
+        oldData.add(data);
+    }
+
+    // returns true if handled false if the data should be added to the background data buffer to be handled on the main process
+    private function handlePhoneMessage(data as Array?) as Boolean {
         try {
-            logB("Background Service: Received phone message.");
-            var data = msg.data as Array?;
             if (data == null || !(data instanceof Array) || data.size() < 1) {
                 logB("Bad message: " + data);
-                Background.exit(null);
-                return;
+                return true;
             }
 
             var type = data[0] as Number;
@@ -280,14 +322,30 @@ class BreadcrumbServiceDelegate extends System.ServiceDelegate {
                     new SettingsSent()
                 );
                 Background.exit(null);
-                return;
+                return true;
             }
-
-            Background.exit(data as Application.PropertyValueType);
         } catch (e) {
             logB("Error background: " + e.getErrorMessage());
+            return false;
+        }
+        return false;
+    }
+
+    function onPhoneAppMessage(msg as Communications.PhoneAppMessage) as Void {
+        logB("Background Service: Received phone message.");
+        var data = msg.data as Array?;
+
+        if (handlePhoneMessage(data)) {
             Background.exit(null);
         }
+
+        var oldData = Background.getBackgroundData();
+        if (!(oldData instanceof Array)) {
+            oldData = [] as Array;
+        }
+
+        addWithLimit(oldData as Array, data as Array);
+        Background.exit(oldData as Application.PropertyValueType);
     }
 
     function getApp() as BreadcrumbDataFieldApp {
