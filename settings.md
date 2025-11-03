@@ -22,6 +22,9 @@ Some helpful guides on adding data fields:
 - [For the venu range](https://support.garmin.com/en-AU/?faq=gyywAozBuAAGlvfzvR9VZ8&identifier=707572&searchQuery=data%20field&tab=topics)
 - [A more thorough explanation for a different app](https://support.garmin.com/en-AU/?faq=3HkHX1wT6U7TeNB7YHfiT7&identifier=707572&searchQuery=data%20field&tab=topics)
 
+
+Note: Some older devices less than API Level 3.2.0 are limited to messages from the companion app once every 5 minutes, this is a garmin limitation due to them not having support for Background.registerForPhoneAppMessageEvent. This means any route sending, settings loading, or any messages from the companion app can take up to 5 minutes to take effect. You can see your api version at https://developer.garmin.com/connect-iq/compatible-devices/. Any devices that support registering for phone ap messages should see no delay in the companion app messages, though will still need to have the datafield app in the foreground for some messages to take effect.
+
 ---
 
 All settings are editable from 4 places.

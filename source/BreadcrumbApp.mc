@@ -37,10 +37,12 @@ class SettingsSent extends Communications.ConnectionListener {
     }
     function onComplete() {
         logB("Settings sent");
+        Background.exit(null);
     }
 
     function onError() {
         logB("Settings send failed");
+        Background.exit(null);
     }
 }
 
@@ -286,7 +288,8 @@ class BreadcrumbServiceDelegate extends System.ServiceDelegate {
 
         while (mail != null) {
             if (handlePhoneMessage(mail as Array?)) {
-                Background.exit(null);
+                Communications.emptyMailbox();
+                return;
             } else {
                 addWithLimit(oldData as Array, mail as Array);
             }
@@ -306,10 +309,12 @@ class BreadcrumbServiceDelegate extends System.ServiceDelegate {
     }
 
     // returns true if handled false if the data should be added to the background data buffer to be handled on the main process
+    // if its handled we will call the background exit function at some point, the caller should not call it
     private function handlePhoneMessage(data as Array?) as Boolean {
         try {
             if (data == null || !(data instanceof Array) || data.size() < 1) {
                 logB("Bad message: " + data);
+                Background.exit(null);
                 return true;
             }
 
@@ -321,7 +326,6 @@ class BreadcrumbServiceDelegate extends System.ServiceDelegate {
                     {},
                     new SettingsSent()
                 );
-                Background.exit(null);
                 return true;
             }
         } catch (e) {
@@ -336,7 +340,8 @@ class BreadcrumbServiceDelegate extends System.ServiceDelegate {
         var data = msg.data as Array?;
 
         if (handlePhoneMessage(data)) {
-            Background.exit(null);
+            logB("Background Service: handled message.");
+            return;
         }
 
         var oldData = Background.getBackgroundData();

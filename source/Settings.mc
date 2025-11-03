@@ -54,9 +54,11 @@ enum /*RenderMode*/ {
 
 (:background)
 function settingsAsDict() as Dictionary<String, PropertyValueType> {
-    // all these return values should be identical to the storage value
-    // eg. nulls are exposed as 0
-    // colours are strings
+    var routes = Application.Storage.getValue("routes"); // routes are saved to storage, does this even work on real devices? save/delete are documented to only work on 3.2.0
+    if (routes == null) {
+        // its storage, not properties, so it can be null
+        routes = [];
+    }
 
     return (
         ({
@@ -92,7 +94,7 @@ function settingsAsDict() as Dictionary<String, PropertyValueType> {
             "renderMode" => Application.Properties.getValue("renderMode"),
             "fixedLatitude" => Application.Properties.getValue("fixedLatitude"),
             "fixedLongitude" => Application.Properties.getValue("fixedLongitude"),
-            "routes" => Application.Storage.getValue("routes"), // routes are saved to storage, does this even work on real devices? save/delete are documented to only work on 3.2.0
+            "routes" => routes,
             "routesEnabled" => Application.Properties.getValue("routesEnabled"),
             "displayRouteNames" => Application.Properties.getValue("displayRouteNames"),
             "enableOffTrackAlerts" => Application.Properties.getValue("enableOffTrackAlerts"),
