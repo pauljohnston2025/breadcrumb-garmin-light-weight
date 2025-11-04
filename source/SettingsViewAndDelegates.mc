@@ -225,6 +225,11 @@ class SettingsMain extends Rez.Menus.SettingsMain {
         );
         safeSetToggle(me, :settingsMainDisplayLatLong, settings.displayLatLong);
         safeSetSubLabel(me, :settingsMainMaxTrackPoints, settings.maxTrackPoints.toString());
+        safeSetSubLabel(
+            me,
+            :settingsMainMapMoveScreenSize,
+            settings.mapMoveScreenSize.format("%.2f")
+        );
     }
 }
 
@@ -322,11 +327,6 @@ class SettingsMap extends Rez.Menus.SettingsMap {
                 break;
         }
         safeSetSubLabel(me, :settingsMapPackingFormat, packingFormatString);
-        safeSetSubLabel(
-            me,
-            :settingsMapMapMoveScreenSize,
-            settings.mapMoveScreenSize.format("%.2f")
-        );
     }
 }
 
@@ -876,6 +876,14 @@ class SettingsMainDelegate extends WatchUi.Menu2InputDelegate {
         } else if (itemId == :settingsMainDebug) {
             var view = new SettingsDebug();
             WatchUi.pushView(view, new $.SettingsDebugDelegate(view), WatchUi.SLIDE_IMMEDIATE);
+        } else if (itemId == :settingsMainMapMoveScreenSize) {
+            startPicker(
+                new SettingsFloatPicker(
+                    settings.method(:setMapMoveScreenSize),
+                    settings.mapMoveScreenSize,
+                    view
+                )
+            );
         } else if (itemId == :settingsMainClearStorage) {
             var dialog = new WatchUi.Confirmation(
                 WatchUi.loadResource(Rez.Strings.clearStorage) as String
@@ -1584,14 +1592,6 @@ class SettingsMapDelegate extends WatchUi.Menu2InputDelegate {
                 new $.Rez.Menus.SettingsPackingFormat(),
                 new $.SettingsPackingFormatDelegate(view),
                 WatchUi.SLIDE_IMMEDIATE
-            );
-        } else if (itemId == :settingsMapMapMoveScreenSize) {
-            startPicker(
-                new SettingsFloatPicker(
-                    settings.method(:setMapMoveScreenSize),
-                    settings.mapMoveScreenSize,
-                    view
-                )
             );
         } else if (itemId == :settingsMapStorageSettings) {
             var view = new SettingsMapStorage();
