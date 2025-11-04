@@ -35,16 +35,16 @@ The current mirrors are:
     * Touch screens can drag the map around to pan
   * Supports more features on more devices (the app has larger memory limits than a datafield)
 * [LWBreadcrumbDataField](https://github.com/pauljohnston2025/breadcrumb-garmin-light-weight)
-  * Upstream mirror - https://github.com/pauljohnston2025/breadcrumb-garmin
+  * [Upstream mirror](https://github.com/pauljohnston2025/breadcrumb-garmin)
   * Type - DataField
   * Full breadcrumb trail (no map tile support)
-* [ULBreadcrumbDataField](https://github.com/pauljohnston2025/breadcrumb-garmin-ulta-light)
-  * Upstream mirror - https://github.com/pauljohnston2025/breadcrumb-garmin-light-weight
+* [ULBreadcrumbDataField](https://github.com/pauljohnston2025/breadcrumb-garmin-ultra-light)
+  * [Upstream mirror](https://github.com/pauljohnston2025/breadcrumb-garmin-light-weight)
   * Type - DataField
   * Limited breadcrumb trail (no map support)
   * This is the lightest weight datafield and is supported on more devices, it is restricted to 1 route and 1 track and alot of customisation is missing
 
-The companion app supports al
+The companion app supports all of the watch apps, but the watch app must be selected in the companion app settings
 
 To ensure versions do not overlap the Versioning scheme is: 
 
@@ -53,6 +53,13 @@ To ensure versions do not overlap the Versioning scheme is:
 20.X -> LWBreadcrumbDataField (20-29.X reserved)
 30.X -> ULBreadcrumbDataField (30-39.X reserved)
 
+
+To merge in the upstream do
+
+cd path/to/mirrored/repo  eg. breadcrumb-garmin-light-weight
+git remote add old-repo https://github.com/pauljohnston2025/breadcrumb-garmin.git
+git fetch old-repo
+git merge old-repo/master
 ---
 
 # Bug Reports
