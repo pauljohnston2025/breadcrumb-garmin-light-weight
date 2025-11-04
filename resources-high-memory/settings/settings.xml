@@ -48,6 +48,10 @@
     <setting propertyKey="@Properties.maxTrackPoints" title="@Strings.maxTrackPointsTitle">
         <settingConfig type="numeric" min="1"/>
     </setting>
+
+    <setting propertyKey="@Properties.mapMoveScreenSize" title="@Strings.mapMoveScreenSizeTitle">
+        <settingConfig type="numeric" min="0" max="1"/>
+    </setting>
     
     <!-- <group id="zoomAtPace" title="@Strings.zoomAtPaceTitle"> -->
         <setting propertyKey="@Properties.zoomAtPaceMode" title="@Strings.zoomAtPaceModeTitle">
@@ -79,10 +83,6 @@
 
     <setting propertyKey="@Properties.fixedLongitude" title="@Strings.fixedLongitude" prompt="@Strings.fixedLongitudePrompt">
         <settingConfig type="numeric" min="-180" max="180"/>
-    </setting>
-
-    <setting propertyKey="@Properties.mapMoveScreenSize" title="@Strings.mapMoveScreenSizeTitle">
-        <settingConfig type="numeric" min="0" max="1"/>
     </setting>
 
     <!-- <group id="offTrackAlertsGroup" title="@Strings.offTrackAlertsGroupTitle"> -->
