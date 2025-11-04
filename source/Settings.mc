@@ -1710,10 +1710,6 @@ class Settings {
             mode = MODE_NORMAL;
         }
 
-        if (mode == MODE_MAP_MOVE && !mapEnabled) {
-            nextMode();
-        }
-
         if (mode == MODE_DEBUG && !includeDebugPageInOnScreenUi) {
             nextMode();
         }
