@@ -300,12 +300,24 @@ class BreadcrumbServiceDelegate extends System.ServiceDelegate {
         }
 
         Communications.emptyMailbox();
-        Background.exit(oldData as Application.PropertyValueType);
+        try {
+            Background.exit(oldData as Application.PropertyValueType);
+        } catch (e instanceof Background.ExitDataSizeLimitException) {
+            if (oldData instanceof Array && oldData.size() > 0) {
+                var lastItem = oldData[oldData.size() - 1];
+                var newData = [lastItem];
+                Background.exit(newData as Application.PropertyValueType); // just exit with the last message
+            } else {
+                Background.exit([]); // clear it out its too big and also has no data in it?
+            }
+        }
     }
 
     private function addWithLimit(oldData as Array, data as Array) as Void {
-        // todo cap to some max number to prevent the size being too big
         oldData.add(data);
+        if (oldData.size() > 3) {
+            oldData.remove(oldData[0] as Object);
+        }
     }
 
     // returns true if handled false if the data should be added to the background data buffer to be handled on the main process
@@ -319,6 +331,8 @@ class BreadcrumbServiceDelegate extends System.ServiceDelegate {
             }
 
             var type = data[0] as Number;
+            var rawData = data.slice(1, null);
+
             if (type == PROTOCOL_REQUEST_SETTINGS) {
                 logB("got send settings req: ");
                 Communications.transmit(
@@ -350,7 +364,12 @@ class BreadcrumbServiceDelegate extends System.ServiceDelegate {
         }
 
         addWithLimit(oldData as Array, data as Array);
-        Background.exit(oldData as Application.PropertyValueType);
+        try {
+            Background.exit(oldData as Application.PropertyValueType);
+        } catch (e instanceof Background.ExitDataSizeLimitException) {
+            var newData = [data];
+            Background.exit(newData as Application.PropertyValueType); // just exit with the last message
+        }
     }
 
     function getApp() as BreadcrumbDataFieldApp {
