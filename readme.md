@@ -10,12 +10,15 @@ Companion app can be found at [Companion App](https://github.com/pauljohnston202
 
 There are several different apps/datafields on the connect-iq store all with similar breadcrumb functionality 
 
-Each one has its own repository mirror
+Each one has its own repository mirror (git push --mirror https://github.com/pauljohnston2025/XXX.git)
 I could use monkey barrels to share common code, but barrels have a memory overhead, and I only expect 1 of these apps/datafields to be installed at a time.
 I also expect the merge conflicts will be easier to deal with rather than a whole heap of (:excludeAnnotations)
 Doing it this way also means each repo has 0 dependents and s fully stand-alone. 
+There are multiple Datafield app types, so that users can install 2 alongside eachother if they want. eg. have both the BreadcrumbDataField and LWBreadcrumbDataField enabled at the same time so that if BreadcrumbDataField crashes from OOm or some high usage map task we can still navigate the planned route using LWBreadcrumbDataField.  If a user has 2 installed it would be good practice to disable alerts on one of the datafields, or you will get 2 independent alert for each 'off track' etc.
 
 The original project is https://github.com/pauljohnston2025/breadcrumb-garmin it contains the main datafield with all features on supported watches.
+
+note: some older devices will not support all opf the features (eg. routes/ device settings) This is a garmin limitation as those devices (<3.2.0 api) do not support phone app messages for datafields.
 
 The current mirrors are: 
 
@@ -40,7 +43,6 @@ The current mirrors are:
   * Type - DataField
   * Limited breadcrumb trail (no map support)
   * This is the lightest weight datafield and is supported on more devices, it is restricted to 1 route and 1 track and alot of customisation is missing
-  * Use this if 
 
 The companion app supports al
 

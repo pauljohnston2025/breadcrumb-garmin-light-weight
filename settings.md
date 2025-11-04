@@ -64,6 +64,10 @@ Determines if the current latitude and longitude are displayed on the watch scre
 
 The maximum number of coordinates to store for the current track the user is moving along. Each coordinate point contains a latitude, longitude and altitude. A smaller number should be used to conserve memory and cpu. Larger numbers results in a smoother track line drawn on screen.   
 
+### Map Move Screen Size
+
+How far to move across the screen when panning the map using the on screen ui. Relative to screen size, eg. 0.3 moves a third of the screen, 0.5 moves half the screen.   
+
 ---
 
 ### UI Mode
@@ -121,10 +125,6 @@ Route 1 - Blue, Route 2 - Red, Current Track - Green
 ### Compute Interval
 
 The number of seconds that need to elapse before we try and add or next track point. Higher values should result in better battery performance (less calculations), but will also mean you need to wait longer for the map and track to update. This setting is also used to control how often to refresh the buffer if using a buffered render mode. A lower number should be used for high speed activities such as cycling.
-
-### Map Move Screen Size
-
-How far to move across the screen when panning the map using the on screen ui. Relative to screen size, eg. 0.3 moves a third of the screen, 0.5 moves half the screen.   
 
 ---
 
