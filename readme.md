@@ -3,7 +3,6 @@ A garmin watch datafield that shows a breadcrumb trail. For watches that do not 
 Donations are always welcome, but not required: https://www.paypal.com/paypalme/pauljohnston2025
 
 Information on all the settings can be found in [Settings](settings.md)  
-note: Map support is disabled by default, but can be turned on in app settings, this is because map tile loading is memory intensive and may cause crashes on some devices. You must set `Tile Cache Size` if using maps to avoid crashes.    
 Companion app can be found at [Companion App](https://github.com/pauljohnston2025/breadcrumb-mobile.git)  
 [Companion App Releases](https://github.com/pauljohnston2025/breadcrumb-mobile/releases/latest)
 
@@ -92,22 +91,19 @@ Use the companion app to add a route that you can follow.
 Intended for use with round watches, but will work on others (might not look the best though).  
 Some watches/devices with touch support will be able switch between elevation and track view during activity.
 
-Target User: Hikers, backpackers, cyclists, trail runners, and outdoor enthusiasts seeking a flexible navigation tool for their Garmin watches. Especially valuable for users with Garmin devices that do not have built-in map support. Suitable for both on- and off-grid exploration, with customizable maps and route following capabilities.
+Target User: Hikers, backpackers, cyclists, trail runners, and outdoor enthusiasts seeking a flexible navigation tool for their Garmin watches. Especially valuable for users with Garmin devices that do not have built-in map support. Suitable for both on- and off-grid exploration and route following capabilities.
 
 Key Features:
 
-Breadcrumb Trail Navigation: Displays a route as a breadcrumb trail overlaid on a map, allowing users to easily follow the intended path. Brings map-based navigation to Garmin devices that do not have native map support.  
-Map Tile Loading (Online): Supports any tile server that uses EPSG:3857 image tiles.  
-Map Tile Loading (Offline): Loads pre-cached tile data from the companion app.  
+Breadcrumb Trail Navigation: Displays a route as a breadcrumb trail, allowing users to easily follow the intended path.
 Off-Track Alerts (needs to be enbaled in garmins setting menu, see below): Notifies the user when they deviate from the planned route.  
 Elevation Overview: Shows an elevation profile of the route, allowing users to anticipate upcoming climbs and descents.  
 Routing (companion app required): Users can import routes from Google Maps or GPX files using the companion app.  
 Customizable Settings: Fully customizable via the watch or Connect IQ settings. No companion app required for basic functionality.  
-Breadcrumb-Only Mode: (Optional) A simplified display mode showing only the breadcrumb trail, without the underlying map tiles, for increased battery life on devices with limited screen resolution or memory.
 
 Companion app:
 The companion app is available on my github: https://github.com/pauljohnston2025/breadcrumb-mobile.git  
-While all settings can be configured directly on the watch or through Connect IQ settings, the companion app unlocks powerful features such as offline map support via Bluetooth transfer and route loading. Currently, the companion app is only available on Android, but contributions from iOS developers are highly welcomed to expand platform support and bring these functionalities to a wider audience.
+While all settings can be configured directly on the watch or through Connect IQ settings, the companion app unlocks features such as route loading and settings configuration. Currently, the companion app is only available on Android, but contributions from iOS developers are highly welcomed to expand platform support and bring these functionalities to a wider audience.
 
 This is a datafield, not a full fledged app, it runs in the context of native activity.  
 The datafield is expected to be used to cover the full available area of a round watchface.    
@@ -129,7 +125,7 @@ A more thorough explanation for a different app can be found at: https://support
 
 # Known Issues
 
-Some screens appear to have an offset applied to the [dc](https://developer.garmin.com/connect-iq/api-docs/Toybox/Graphics/Dc.html), that I cannot find a way to correct. Sometimes this offset occurs on my own physical device, and other times there is no offset. If anyone knows how to solve this, please let me know. I believe this is an issue with garmins datafield obscurity, since you can have the datafield take up only part of the screen. The problem still occurs when the datafield takes up the whole screen though (I think garmin reserves certain areas of the screen for their own ui components). Note this clipping may also be noticed on different parts of the screen if buffered map rotations are enabled, since everything drawn to the dc is offset.
+Some screens appear to have an offset applied to the [dc](https://developer.garmin.com/connect-iq/api-docs/Toybox/Graphics/Dc.html), that I cannot find a way to correct. Sometimes this offset occurs on my own physical device, and other times there is no offset. If anyone knows how to solve this, please let me know. I believe this is an issue with garmins datafield obscurity, since you can have the datafield take up only part of the screen. The problem still occurs when the datafield takes up the whole screen though (I think garmin reserves certain areas of the screen for their own ui components).
 
 Simplest reproduction example, it appears the device context for drawing is already offset (but only sometimes).
 
@@ -146,17 +142,6 @@ The white areas in the bellow images show the issue.
 ![](images/screenoffsetvenu3.png)
 ![](images/screenoffsetvenu3s.png)
 
----
-
-# Map Tiles
-
-Powered by Esri: https://www.esri.com  
-OpenStreetMap: https://openstreetmap.org/copyright  
-OpenTopoMap: https://opentopomap.org/about  
-Google: https://cloud.google.com/maps-platform/terms https://policies.google.com/privacy  
-Carto: https://carto.com/attribution  
-Stadia: &copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>  
-Mapy: https://mapy.com/ https://api.mapy.com/copyright
 
 ---
 
