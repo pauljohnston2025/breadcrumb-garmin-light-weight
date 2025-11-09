@@ -161,8 +161,8 @@ d2mach2.resourcePath = $(d2mach2.resourcePath);resources-high-memory;resources-m
 # could add the epix api 1.2 as well
 approachs62.excludeAnnotations = $(approachs62.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
 approachs62.resourcePath = $(approachs62.resourcePath);resources-high-memory;resources-menu2
-d2charlie.excludeAnnotations = $(d2charlie.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
-d2charlie.resourcePath = $(d2charlie.resourcePath);resources-high-memory;resources-menu2
+d2charlie.excludeAnnotations = $(d2charlie.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes);menu2
+d2charlie.resourcePath = $(d2charlie.resourcePath);resources-high-memory
 d2delta.excludeAnnotations = $(d2delta.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
 d2delta.resourcePath = $(d2delta.resourcePath);resources-high-memory;resources-menu2
 d2deltapx.excludeAnnotations = $(d2deltapx.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
