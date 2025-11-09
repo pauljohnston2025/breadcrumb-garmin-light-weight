@@ -153,3 +153,7 @@ vivoactive5.excludeAnnotations = $(vivoactive5.excludeAnnotations);rectangle;sca
 vivoactive5.resourcePath = $(vivoactive5.resourcePath);resources-high-memory
 vivoactive6.excludeAnnotations = $(vivoactive6.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
 vivoactive6.resourcePath = $(vivoactive6.resourcePath);resources-high-memory
+etrextouch.excludeAnnotations = $(etrextouch.excludeAnnotations);rectangle;noscaledbitmap;$(lowMemExcludes)
+etrextouch.resourcePath = $(etrextouch.resourcePath);resources-low-memory
+d2mach2.excludeAnnotations = $(d2mach2.excludeAnnotations);rectangle;noscaledbitmap;$(lowMemExcludes)
+d2mach2.resourcePath = $(d2mach2.resourcePath);resources-low-memory
