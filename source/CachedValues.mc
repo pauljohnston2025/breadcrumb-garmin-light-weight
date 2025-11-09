@@ -149,7 +149,7 @@ class CachedValues {
                     null
                 );
                 calcCenterPointForBoundingBox(boundingBox);
-                return calculateScale(renderDistanceM.toFloat());
+                return getNewScaleFromBoundingBox(boundingBox);
             }
 
             return calculateScale(renderDistanceM.toFloat());
