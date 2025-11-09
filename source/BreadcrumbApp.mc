@@ -136,6 +136,7 @@ class BreadcrumbDataFieldApp extends Application.AppBase {
 
     (:settingsView,:menu2,:typecheck(disableBackgroundCheck))
     function getSettingsView() as [Views] or [Views, InputDelegates] or Null {
+        setupGlobals();
         var settings = new $.SettingsMain();
         return [settings, new $.SettingsMainDelegate(settings)];
     }
