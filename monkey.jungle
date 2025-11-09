@@ -151,6 +151,10 @@ vivoactive5.excludeAnnotations = $(vivoactive5.excludeAnnotations);rectangle;sca
 vivoactive5.resourcePath = $(vivoactive5.resourcePath);resources-high-memory;resources-menu2
 vivoactive6.excludeAnnotations = $(vivoactive6.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
 vivoactive6.resourcePath = $(vivoactive6.resourcePath);resources-high-memory;resources-menu2
+etrextouch.excludeAnnotations = $(etrextouch.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
+etrextouch.resourcePath = $(etrextouch.resourcePath);resources-high-memory;resources-menu2
+d2mach2.excludeAnnotations = $(d2mach2.excludeAnnotations);rectangle;noscaledbitmap;$(highMemExcludes)
+d2mach2.resourcePath = $(d2mach2.resourcePath);resources-high-memory;resources-menu2
 
 # < system 5 devices (anything with 131072 memory limit for datafields)
 # losest is probably the edge_1000 at API level 2.4
