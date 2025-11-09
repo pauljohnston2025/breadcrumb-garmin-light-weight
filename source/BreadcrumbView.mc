@@ -724,8 +724,8 @@ class BreadcrumbDataFieldView extends WatchUi.DataField {
         dc.clear();
         // its only a debug menu that should probably be optimised out in release, hard code to venu2s screen coordinates
         // it is actually pretty nice info, best guess on string sizes down the screen
-        var fieldCount = 14;
-        var y = 5;
+        var fieldCount = 9; // there is not actually 9 but this gives us nicer spacing
+        var y = 40; // start a bit further down
         var bottomSpacing = 5; // physical devices seem to clip the bottom of the datafield
         var spacing = (dc.getHeight() - y - bottomSpacing).toFloat() / fieldCount;
         var x = _cachedValues.xHalfPhysical;
