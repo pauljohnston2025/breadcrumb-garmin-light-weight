@@ -44,6 +44,7 @@
             <iq:product id="edge840"/>
             <iq:product id="edge850"/>
             <iq:product id="edge_1000"/>
+            <iq:product id="edgeexplore"/>
             <iq:product id="edgeexplore2"/>
             <iq:product id="edgemtb"/>
             <iq:product id="enduro3"/>
@@ -103,6 +104,7 @@
             <iq:product id="marqaviator"/>
             <iq:product id="marqcaptain"/>
             <iq:product id="marqcommander"/>
+            <iq:product id="marqdriver"/>
             <iq:product id="marqexpedition"/>
             <iq:product id="marqgolfer"/>
             <iq:product id="montana7xx"/>
