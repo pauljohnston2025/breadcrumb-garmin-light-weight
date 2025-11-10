@@ -47,13 +47,6 @@ The current mirrors are:
 
 The companion app supports all of the watch apps, but the watch app must be selected in the companion app settings.
 
-To ensure versions do not overlap the Versioning scheme is: 
-
-0.X -> BreadcrumbDataField (0-9.X reserved)  
-10.X -> BreadcrumbApp (10-19.X reserved)  
-20.X -> LWBreadcrumbDataField (20-29.X reserved)  
-30.X -> ULBreadcrumbDataField (30-39.X reserved)  
-
 
 ---
 
