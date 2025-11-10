@@ -83,7 +83,7 @@ To merge in the upstream do
 ```
 cd path/to/mirrored/repo  eg. breadcrumb-garmin-light-weight
 git remote add old-repo https://github.com/pauljohnston2025/breadcrumb-garmin.git
-git fetch old-repo
+git fetch old-repo --no-tags
 git merge old-repo/master
 ```
 
