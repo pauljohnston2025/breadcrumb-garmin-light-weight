@@ -391,7 +391,6 @@ class Settings {
         updateRouteSettings();
     }
 
-    (:settingsView,:menu2)
     function setZoomAtPaceMode(_zoomAtPaceMode as Number) as Void {
         zoomAtPaceMode = _zoomAtPaceMode;
         setValue("zoomAtPaceMode", zoomAtPaceMode);
